@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const SettingsPageClient = nextDynamic(() => import('./SettingsPageClient'), {
   loading: () => (
     <div
-      className="py-16 text-center text-sm text-[var(--color-text-muted)] animate-pulse"
+      className="py-16 text-center text-sm text-wibe-secondary animate-pulse"
       dir="rtl"
     >
       در حال بارگذاری تنظیمات…
@@ -31,7 +31,7 @@ export default async function AdminSettingsPage() {
     <Suspense
       fallback={
         <div
-          className="py-16 text-center text-sm text-[var(--color-text-muted)] animate-pulse"
+          className="py-16 text-center text-sm text-wibe-secondary animate-pulse"
           dir="rtl"
         >
           در حال بارگذاری تنظیمات…

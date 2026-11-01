@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic';
 function AuditSkeleton() {
   return (
     <div className="space-y-4" aria-hidden>
-      <div className="h-28 animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
-      <div className="h-80 animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
+      <div className="h-28 animate-pulse rounded-2xl bg-(--color-border-muted)" />
+      <div className="h-80 animate-pulse rounded-2xl bg-(--color-border-muted)" />
     </div>
   );
 }
@@ -42,8 +42,8 @@ export default async function AuditPage({
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-text)]">لاگ تغییرات</h1>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+        <h1 className="text-2xl font-bold text-(--color-text)">لاگ تغییرات</h1>
+        <p className="mt-1 text-sm text-wibe-secondary">
           تاریخچهٔ عملیات حساس ادمین. روی هر ردیف بزنید تا جزئیات را ببینید.
         </p>
       </div>

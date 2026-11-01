@@ -46,7 +46,7 @@ export default function PulseTabs({ active, riskBadge = 0 }: Props) {
             {showBadge && (
               <span
                 className={clsx(
-                  'min-w-[1.25rem] h-5 px-1 rounded-full text-xs font-bold flex items-center justify-center',
+                  'min-w-5 h-5 px-1 rounded-full text-xs font-bold flex items-center justify-center',
                   isActive ? 'bg-white/25 text-white' : 'bg-red-500 text-white'
                 )}
               >

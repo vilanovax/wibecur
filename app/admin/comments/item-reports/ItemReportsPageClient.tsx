@@ -44,7 +44,7 @@ const REASON_LABELS: Record<string, { label: string; className: string }> = {
   },
   other: {
     label: 'سایر',
-    className: 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border border-[var(--color-border)]',
+    className: 'bg-(--color-bg) text-wibe-secondary border border-(--color-border)',
   },
 };
 
@@ -102,10 +102,10 @@ export default function ItemReportsPageClient({
             <Package className="w-6 h-6 text-rose-600" />
           </span>
           <div>
-            <h1 className="text-2xl font-bold text-[var(--color-text)]">
+            <h1 className="text-2xl font-bold text-(--color-text)">
               ریپورت آیتم‌ها
             </h1>
-            <p className="text-sm text-[var(--color-text-muted)] mt-1">
+            <p className="text-sm text-wibe-secondary mt-1">
               مدیریت گزارش‌های ارسال‌شده برای آیتم‌ها
             </p>
           </div>
@@ -131,16 +131,16 @@ export default function ItemReportsPageClient({
         />
       )}
 
-      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-sm overflow-hidden">
         {reports.length === 0 ? (
           <div className="text-center py-12 px-4">
-            <Package className="w-12 h-12 text-[var(--color-text-muted)] mx-auto mb-3 opacity-40" />
-            <p className="text-[var(--color-text-muted)]">گزارشی یافت نشد</p>
+            <Package className="w-12 h-12 text-wibe-secondary mx-auto mb-3 opacity-40" />
+            <p className="text-wibe-secondary">گزارشی یافت نشد</p>
             {activeFilter !== 'all' && (
               <button
                 type="button"
                 onClick={() => handleFilterChange(undefined)}
-                className="mt-3 text-sm font-medium text-[var(--primary)] hover:underline"
+                className="mt-3 text-sm font-medium text-primary hover:underline"
               >
                 نمایش همه
               </button>
@@ -148,45 +148,45 @@ export default function ItemReportsPageClient({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm text-right">
-              <thead className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
+            <table className="w-full min-w-160 text-sm text-right">
+              <thead className="bg-(--color-bg) border-b border-(--color-border)">
                 <tr>
-                  <th className="px-4 py-3 font-medium text-[var(--color-text-muted)]">
+                  <th className="px-4 py-3 font-medium text-wibe-secondary">
                     آیتم
                   </th>
-                  <th className="px-4 py-3 font-medium text-[var(--color-text-muted)]">
+                  <th className="px-4 py-3 font-medium text-wibe-secondary">
                     دلیل
                   </th>
-                  <th className="px-4 py-3 font-medium text-[var(--color-text-muted)]">
+                  <th className="px-4 py-3 font-medium text-wibe-secondary">
                     گزارش‌دهنده
                   </th>
-                  <th className="px-4 py-3 font-medium text-[var(--color-text-muted)]">
+                  <th className="px-4 py-3 font-medium text-wibe-secondary">
                     تاریخ
                   </th>
-                  <th className="px-4 py-3 font-medium text-[var(--color-text-muted)]">
+                  <th className="px-4 py-3 font-medium text-wibe-secondary">
                     عملیات
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--color-border-muted)]">
+              <tbody className="divide-y divide-(--color-border-muted)">
                 {reports.map((report) => {
                   const reasonInfo = REASON_LABELS[report.reason] || REASON_LABELS.other;
                   return (
                     <tr
                       key={report.id}
-                      className={`hover:bg-[var(--color-bg)] ${
+                      className={`hover:bg-(--color-bg) ${
                         !report.resolved ? 'bg-rose-50/30' : ''
                       }`}
                     >
                       <td className="px-4 py-3">
                         <Link
                           href={`/admin/items/${report.itemId}/edit`}
-                          className="font-medium text-[var(--color-text)] hover:text-[var(--primary)] line-clamp-1"
+                          className="font-medium text-(--color-text) hover:text-primary line-clamp-1"
                         >
                           {report.items.title}
                         </Link>
                         {report.description && (
-                          <p className="text-xs text-[var(--color-text-muted)] line-clamp-1 mt-0.5">
+                          <p className="text-xs text-wibe-secondary line-clamp-1 mt-0.5">
                             {report.description}
                           </p>
                         )}
@@ -198,10 +198,10 @@ export default function ItemReportsPageClient({
                           {reasonInfo.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-[var(--color-text-muted)] text-xs">
+                      <td className="px-4 py-3 text-wibe-secondary text-xs">
                         {report.users.name ?? report.users.email}
                       </td>
-                      <td className="px-4 py-3 text-[var(--color-text-muted)] whitespace-nowrap">
+                      <td className="px-4 py-3 text-wibe-secondary whitespace-nowrap">
                         {formatRelativeTime(report.createdAt)}
                       </td>
                       <td className="px-4 py-3">

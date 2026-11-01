@@ -55,15 +55,15 @@ export default function ItemReportsKpiStrip({
             key={key}
             type="button"
             onClick={() => onFilter(resolvedParam)}
-            className={`rounded-2xl border bg-gradient-to-br ${accent} p-4 text-right transition-all hover:shadow-md ${
-              isActive ? 'ring-2 ring-[var(--primary)] ring-offset-2' : ''
+            className={`rounded-2xl border bg-linear-to-br ${accent} p-4 text-right transition-all hover:shadow-md ${
+              isActive ? 'ring-2 ring-(--primary) ring-offset-2' : ''
             }`}
           >
-            <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)] mb-2">
+            <div className="flex items-center gap-2 text-sm text-wibe-secondary mb-2">
               <Icon className="w-4 h-4" />
               {label}
             </div>
-            <p className="text-2xl font-bold tabular-nums text-[var(--color-text)]">
+            <p className="text-2xl font-bold tabular-nums text-(--color-text)">
               {value.toLocaleString('fa-IR')}
             </p>
           </button>

@@ -41,46 +41,46 @@ export default function CommentsTable({
     selectableComments.every((c) => selectedIds.has(c.id));
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div className="overflow-hidden rounded-xl border border-(--color-border) bg-(--color-surface)">
       <div className="overflow-x-auto max-h-[min(72vh,760px)] overflow-y-auto">
         <table className="w-full text-sm table-fixed">
-          <thead className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+          <thead className="sticky top-0 z-10 border-b border-(--color-border) bg-(--color-bg)">
             <tr dir="rtl">
-              <th className="px-2.5 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)] w-9">
+              <th className="px-2.5 py-2 text-right text-xs font-semibold text-wibe-secondary w-9">
                 <input
                   type="checkbox"
                   checked={allSelected}
                   onChange={(e) => onSelectAll(e.target.checked)}
                   aria-label="انتخاب همه"
-                  className="rounded border-[var(--color-border)] text-[var(--primary)] focus:ring-[var(--primary)]"
+                  className="rounded border-(--color-border) text-primary focus:ring-(--primary)"
                 />
               </th>
               <th
-                className={`px-2.5 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)] ${
-                  hideMetaColumns ? 'w-[28%]' : 'w-[160px]'
+                className={`px-2.5 py-2 text-right text-xs font-semibold text-wibe-secondary ${
+                  hideMetaColumns ? 'w-[28%]' : 'w-40'
                 }`}
               >
                 کاربر
               </th>
-              <th className="px-2.5 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-2.5 py-2 text-right text-xs font-semibold text-wibe-secondary">
                 متن کامنت
               </th>
               <th
-                className={`px-2.5 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)] ${
-                  hideMetaColumns ? 'w-[22%]' : 'w-[120px]'
+                className={`px-2.5 py-2 text-right text-xs font-semibold text-wibe-secondary ${
+                  hideMetaColumns ? 'w-[22%]' : 'w-30'
                 }`}
               >
                 آیتم
               </th>
               {!hideMetaColumns && (
                 <>
-                  <th className="px-2.5 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)] w-[88px]">
+                  <th className="px-2.5 py-2 text-right text-xs font-semibold text-wibe-secondary w-22">
                     تاریخ
                   </th>
-                  <th className="px-2.5 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)] w-[110px]">
+                  <th className="px-2.5 py-2 text-right text-xs font-semibold text-wibe-secondary w-27.5">
                     وضعیت
                   </th>
-                  <th className="px-2.5 py-2 text-right text-xs font-semibold text-[var(--color-text-muted)] w-[96px]">
+                  <th className="px-2.5 py-2 text-right text-xs font-semibold text-wibe-secondary w-24">
                     عملیات
                   </th>
                 </>

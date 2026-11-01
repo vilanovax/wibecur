@@ -33,10 +33,10 @@ export default function GenreGrid({ categorySlug }: GenreGridProps) {
           <Link
             key={genre.slug}
             href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(genre.label)}`}
-            className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-900 border border-gray-800 active:scale-[0.96] transition-transform min-h-[90px]"
+            className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-900 border border-gray-800 active:scale-[0.96] transition-transform min-h-22.5"
           >
             <span
-              className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${genre.gradient} text-2xl mb-2 shadow-lg`}
+              className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-linear-to-br ${genre.gradient} text-2xl mb-2 shadow-lg`}
             >
               {genre.icon}
             </span>

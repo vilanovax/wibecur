@@ -80,7 +80,7 @@ function PersonAvatar({
   roleIcon: string;
 }) {
   return (
-    <div className="relative size-20 shrink-0 overflow-hidden rounded-2xl bg-muted ring-1 ring-border lg:aspect-[3/4] lg:h-auto lg:w-52 xl:w-56">
+    <div className="relative size-20 shrink-0 overflow-hidden rounded-2xl bg-muted ring-1 ring-border lg:aspect-3/4 lg:h-auto lg:w-52 xl:w-56">
       {imageUrl ? (
         <ImageWithFallback
           src={imageUrl}
@@ -204,7 +204,7 @@ export default function PersonPageClient({
               return (
                 <Link key={item.id} href={`/items/${item.id}`} className="block min-w-0">
                   <Card className="h-full overflow-hidden bg-popover p-0">
-                    <div className="relative aspect-[2/3] w-full bg-muted">
+                    <div className="relative aspect-2/3 w-full bg-muted">
                       <LazyItemCoverImage
                         itemId={item.id}
                         title={item.title}

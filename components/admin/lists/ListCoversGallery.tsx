@@ -34,9 +34,9 @@ function CoverPreview({
 }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs font-semibold text-[var(--color-text)] mb-2">{label}</p>
+      <p className="text-xs font-semibold text-(--color-text) mb-2">{label}</p>
       <div
-        className={`relative w-full overflow-hidden rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg)] ${aspectClass}`}
+        className={`relative w-full overflow-hidden rounded-xl border border-(--color-border-muted) bg-(--color-bg) ${aspectClass}`}
       >
         {src?.trim() ? (
           <ImageWithFallback
@@ -50,9 +50,9 @@ function CoverPreview({
             fallbackClassName="w-full h-full"
           />
         ) : (
-          <div className="flex h-full min-h-[120px] flex-col items-center justify-center gap-2 p-4 text-center">
-            <ImageOff className="w-7 h-7 text-[var(--color-text-muted)]/50" />
-            <span className="text-xs text-[var(--color-text-muted)]">{emptyHint}</span>
+          <div className="flex h-full min-h-30 flex-col items-center justify-center gap-2 p-4 text-center">
+            <ImageOff className="w-7 h-7 text-wibe-secondary/50" />
+            <span className="text-xs text-wibe-secondary">{emptyHint}</span>
           </div>
         )}
       </div>
@@ -71,7 +71,7 @@ export default function ListCoversGallery({
 }: Props) {
   if (rows.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-[var(--color-border)] py-12 text-center text-sm text-[var(--color-text-muted)]">
+      <div className="rounded-xl border border-dashed border-(--color-border) py-12 text-center text-sm text-wibe-secondary">
         لیستی برای نمایش کاورها نیست.
       </div>
     );
@@ -87,20 +87,20 @@ export default function ListCoversGallery({
           return (
             <article
               key={row.id}
-              className={`rounded-2xl border bg-[var(--color-surface)] overflow-hidden shadow-[var(--shadow-card)] ${
+              className={`rounded-2xl border bg-(--color-surface) overflow-hidden shadow-(--shadow-card) ${
                 row.isFeatured
                   ? 'border-amber-400/60 ring-1 ring-amber-300/30'
-                  : 'border-[var(--color-border-muted)]'
+                  : 'border-(--color-border-muted)'
               } ${!row.isActive ? 'opacity-75' : ''}`}
             >
-              <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/30">
+              <div className="px-4 py-3 border-b border-(--color-border-muted) bg-(--color-bg)/30">
                 <div className="flex items-center gap-2 min-w-0">
-                  <h3 className="font-semibold text-sm text-[var(--color-text)] truncate" title={row.title}>
+                  <h3 className="font-semibold text-sm text-(--color-text) truncate" title={row.title}>
                     {row.title}
                   </h3>
                   {row.isFeatured ? <Star className="w-4 h-4 shrink-0 text-amber-500 fill-amber-500" /> : null}
                 </div>
-                <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                <p className="text-[11px] text-wibe-secondary mt-0.5">
                   {row.categoryIcon} {row.categoryName}
                   <span className="mx-1.5 opacity-30">·</span>
                   {row.itemCount.toLocaleString('fa-IR')} آیتم
@@ -112,14 +112,14 @@ export default function ListCoversGallery({
                   src={row.coverImage}
                   row={row}
                   label="کاور عمودی"
-                  aspectClass="aspect-[3/4] max-h-72"
+                  aspectClass="aspect-3/4 max-h-72"
                   emptyHint="کاور عمودی تنظیم نشده"
                 />
                 <CoverPreview
                   src={row.horizontalImage}
                   row={row}
                   label="بنر افقی"
-                  aspectClass="aspect-[16/9] max-h-44 sm:max-h-none"
+                  aspectClass="aspect-16/9 max-h-44 sm:max-h-none"
                   emptyHint="بنر افقی تنظیم نشده"
                 />
               </div>
@@ -129,7 +129,7 @@ export default function ListCoversGallery({
                   href={editHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-[var(--primary)] text-white hover:opacity-90"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-primary text-white hover:opacity-90"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                   ویرایش
@@ -138,7 +138,7 @@ export default function ListCoversGallery({
                   href={siteHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border border-(--color-border) hover:bg-(--color-bg)"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   سایت

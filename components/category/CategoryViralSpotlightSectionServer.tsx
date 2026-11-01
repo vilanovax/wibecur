@@ -42,8 +42,8 @@ export default function CategoryViralSpotlightSectionServer({
                 📋
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent" />
-            <span className="absolute end-3 top-3 rounded-full bg-warning px-2 py-1 text-xs font-semibold text-foreground">
+            <div className="absolute inset-0 bg-linear-to-t from-foreground/80 via-transparent to-transparent" />
+            <span className="absolute inset-e-3 top-3 rounded-full bg-warning px-2 py-1 text-xs font-semibold text-foreground">
               وایرال
             </span>
             <div className="absolute inset-x-0 bottom-0 p-4">

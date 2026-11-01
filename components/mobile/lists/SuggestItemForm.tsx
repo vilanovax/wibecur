@@ -507,7 +507,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
                     type="button"
                     onClick={handleFetchFromImdb}
                     disabled={fetchingFromImdb || !formData.title.trim()}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-linear-to-r from-yellow-500 to-orange-500 rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="جستجو از TMDb/IMDb"
                   >
                     {fetchingFromImdb ? (
@@ -679,7 +679,7 @@ export default function SuggestItemForm({ isOpen, onClose }: SuggestItemFormProp
           </div>
 
           {/* Footer with Submit Button */}
-          <div className="flex-shrink-0 border-t border-border bg-popover p-6">
+          <div className="shrink-0 border-t border-border bg-popover p-6">
             <div className="flex gap-3">
               <button
                 type="button"

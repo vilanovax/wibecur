@@ -111,8 +111,8 @@ export default function ViolationsPageClient({
             onClick={() => applyStatus(id)}
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               statusFilter === id
-                ? 'bg-[var(--primary)] text-white'
-                : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border border-[var(--color-border)] hover:text-[var(--color-text)]'
+                ? 'bg-primary text-white'
+                : 'bg-(--color-bg) text-wibe-secondary border border-(--color-border) hover:text-(--color-text)'
             }`}
           >
             {label}
@@ -120,7 +120,7 @@ export default function ViolationsPageClient({
         ))}
       </div>
 
-      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 mb-4">
+      <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-3 mb-4">
         <form
           className="flex gap-2"
           onSubmit={(e) => {
@@ -129,13 +129,13 @@ export default function ViolationsPageClient({
           }}
         >
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-wibe-secondary" />
             <input
               type="search"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="جستجو نام یا ایمیل کاربر…"
-              className="w-full pr-10 pl-9 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] focus:ring-2 focus:ring-[var(--primary)]/30"
+              className="w-full pr-10 pl-9 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg) focus:ring-2 focus:ring-(--primary)/30"
             />
             {searchInput && (
               <button
@@ -144,33 +144,33 @@ export default function ViolationsPageClient({
                   setSearchInput('');
                   applySearch('');
                 }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-[var(--color-border-muted)]"
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-(--color-border-muted)"
               >
-                <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+                <X className="w-4 h-4 text-wibe-secondary" />
               </button>
             )}
           </div>
           <button
             type="submit"
-            className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-medium shrink-0"
+            className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium shrink-0"
           >
             جستجو
           </button>
           <button
             type="button"
             onClick={() => router.refresh()}
-            className="p-2 rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)] shrink-0"
+            className="p-2 rounded-xl border border-(--color-border) hover:bg-(--color-bg) shrink-0"
             aria-label="بروزرسانی"
           >
-            <RefreshCw className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <RefreshCw className="w-4 h-4 text-wibe-secondary" />
           </button>
         </form>
       </div>
 
       {violations.length === 0 ? (
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-12 text-center">
-          <Ban className="w-12 h-12 mx-auto text-[var(--color-text-muted)] opacity-40 mb-3" />
-          <p className="text-[var(--color-text-muted)]">
+        <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-12 text-center">
+          <Ban className="w-12 h-12 mx-auto text-wibe-secondary opacity-40 mb-3" />
+          <p className="text-wibe-secondary">
             {initialSearch
               ? 'کاربری با این مشخصات یافت نشد'
               : statusFilter !== 'all'
@@ -181,7 +181,7 @@ export default function ViolationsPageClient({
             <button
               type="button"
               onClick={() => router.push('/admin/comments/violations')}
-              className="mt-3 text-sm text-[var(--primary)] hover:underline"
+              className="mt-3 text-sm text-primary hover:underline"
             >
               نمایش همه
             </button>

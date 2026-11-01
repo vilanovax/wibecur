@@ -15,7 +15,7 @@ type Props = {
 };
 
 const inputClass =
-  'w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] focus:ring-2 focus:ring-[var(--primary)]/30';
+  'w-full px-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg) focus:ring-2 focus:ring-(--primary)/30';
 
 function ToggleRow({
   label,
@@ -33,9 +33,9 @@ function ToggleRow({
   return (
     <div className="flex items-start justify-between gap-4 py-1">
       <div>
-        <span className="text-sm font-medium text-[var(--color-text)]">{label}</span>
+        <span className="text-sm font-medium text-(--color-text)">{label}</span>
         {description ? (
-          <p className="text-[11px] text-[var(--color-text-subtle)] mt-0.5 leading-relaxed">
+          <p className="text-[11px] text-(--color-text-subtle) mt-0.5 leading-relaxed">
             {description}
           </p>
         ) : null}
@@ -49,8 +49,8 @@ function ToggleRow({
           checked
             ? danger
               ? 'bg-amber-500'
-              : 'bg-[var(--primary)]'
-            : 'bg-[var(--color-border)]'
+              : 'bg-primary'
+            : 'bg-(--color-border)'
         }`}
       >
         <span
@@ -95,7 +95,7 @@ export default function MaintenanceModePanel({
       <SettingsSectionCard
         title="حالت اضطراری سایت"
         description="نمایش یک صفحه سفارشی به‌جای کل سایت — مناسب به‌روزرسانی و تغییرات مهم"
-        icon={<AlertTriangle className="w-5 h-5 text-[var(--primary)]" />}
+        icon={<AlertTriangle className="w-5 h-5 text-primary" />}
         footer={
           <SettingsSaveButton
             onClick={onSave}
@@ -127,7 +127,7 @@ export default function MaintenanceModePanel({
         />
 
         <div>
-          <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+          <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
             عنوان صفحه
           </label>
           <input
@@ -141,7 +141,7 @@ export default function MaintenanceModePanel({
         </div>
 
         <div>
-          <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+          <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
             زیرعنوان (اختیاری)
           </label>
           <input
@@ -155,24 +155,24 @@ export default function MaintenanceModePanel({
         </div>
 
         <div>
-          <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+          <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
             متن پیام
           </label>
           <textarea
             value={value.message}
             onChange={(e) => onChange({ message: e.target.value })}
             rows={4}
-            className={`${inputClass} resize-y min-h-[96px]`}
+            className={`${inputClass} resize-y min-h-24`}
             placeholder="توضیح کوتاه برای بازدیدکنندگان..."
             maxLength={2000}
           />
-          <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+          <p className="text-[11px] text-(--color-text-subtle) mt-1">
             {value.message.length}/2000 — خط جدید با Enter
           </p>
         </div>
 
         <div>
-          <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+          <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
             رنگ تأکید
           </label>
           <div className="flex items-center gap-3">
@@ -180,13 +180,13 @@ export default function MaintenanceModePanel({
               type="color"
               value={value.accentColor}
               onChange={(e) => onChange({ accentColor: e.target.value })}
-              className="h-10 w-14 rounded-lg border border-[var(--color-border)] cursor-pointer bg-transparent"
+              className="h-10 w-14 rounded-lg border border-(--color-border) cursor-pointer bg-transparent"
             />
             <input
               type="text"
               value={value.accentColor}
               onChange={(e) => onChange({ accentColor: e.target.value })}
-              className={`${inputClass} max-w-[140px] font-mono text-xs`}
+              className={`${inputClass} max-w-35 font-mono text-xs`}
               pattern="^#[0-9A-Fa-f]{6}$"
               placeholder="#6366F1"
             />

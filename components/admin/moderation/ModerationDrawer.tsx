@@ -71,7 +71,7 @@ export default function ModerationDrawer({
 
   return (
     <div
-      className="w-full max-w-[480px] border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 overflow-hidden flex flex-col shadow-sm transition-all duration-200 ease-in-out"
+      className="w-full max-w-120 border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 overflow-hidden flex flex-col shadow-sm transition-all duration-200 ease-in-out"
       style={{ minHeight: '400px' }}
       dir="rtl"
     >
@@ -162,7 +162,7 @@ export default function ModerationDrawer({
               </div>
               {!isReadOnly && (
                 <div className="flex gap-2">
-                  <textarea className="flex-1 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm min-h-[80px] shadow-sm" placeholder="یادداشت داخلی..." value={noteText} onChange={(e) => onNoteTextChange(e.target.value)} />
+                  <textarea className="flex-1 rounded-2xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm min-h-20 shadow-sm" placeholder="یادداشت داخلی..." value={noteText} onChange={(e) => onNoteTextChange(e.target.value)} />
                   <button type="button" className="px-3 py-2 rounded-2xl border text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 flex items-center gap-1 self-end shadow-sm" disabled={!noteText.trim() || actionLoading === `note-${detail.id}`} onClick={() => onNoteSubmit(detail.id, noteText.trim())}>
                     {actionLoading === `note-${detail.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageSquarePlus className="w-4 h-4" />}
                     ذخیره

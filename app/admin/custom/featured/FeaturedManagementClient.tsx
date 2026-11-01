@@ -403,7 +403,7 @@ function FeaturedManagementInner({
   if (loading && !data) {
     return (
       <div className="flex justify-center py-12" dir="rtl">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -527,15 +527,15 @@ function FeaturedManagementInner({
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[var(--color-surface)] rounded-2xl shadow-xl max-w-md w-full p-6 border border-[var(--color-border)]">
+          <div className="bg-(--color-surface) rounded-2xl shadow-xl max-w-md w-full p-6 border border-(--color-border)">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-[var(--color-text)]">
+              <h3 className="text-base font-semibold text-(--color-text)">
                 ویرایش زمان‌بندی · {editingSlot.list.title}
               </h3>
               <button
                 type="button"
                 onClick={() => setEditingSlot(null)}
-                className="p-2 rounded-xl text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                className="p-2 rounded-xl text-wibe-secondary hover:bg-(--color-bg)"
                 aria-label="بستن"
               >
                 <X className="w-5 h-5" />
@@ -543,7 +543,7 @@ function FeaturedManagementInner({
             </div>
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
+                <label className="block text-sm font-medium text-(--color-text) mb-1">
                   تاریخ شروع (شمسی)
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -553,18 +553,18 @@ function FeaturedManagementInner({
                     calendar={persian}
                     locale={persian_fa}
                     calendarPosition="bottom-right"
-                    className="rounded-xl border border-[var(--color-border)] text-sm"
+                    className="rounded-xl border border-(--color-border) text-sm"
                   />
                   <input
                     type="time"
                     value={editStartTime}
                     onChange={(e) => setEditStartTime(e.target.value)}
-                    className="rounded-xl border border-[var(--color-border)] text-sm px-3 py-2"
+                    className="rounded-xl border border-(--color-border) text-sm px-3 py-2"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[var(--color-text)] mb-1">
+                <label className="block text-sm font-medium text-(--color-text) mb-1">
                   تاریخ پایان (اختیاری)
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -574,13 +574,13 @@ function FeaturedManagementInner({
                     calendar={persian}
                     locale={persian_fa}
                     calendarPosition="bottom-right"
-                    className="rounded-xl border border-[var(--color-border)] text-sm"
+                    className="rounded-xl border border-(--color-border) text-sm"
                   />
                   <input
                     type="time"
                     value={editEndTime}
                     onChange={(e) => setEditEndTime(e.target.value)}
-                    className="rounded-xl border border-[var(--color-border)] text-sm px-3 py-2"
+                    className="rounded-xl border border-(--color-border) text-sm px-3 py-2"
                   />
                 </div>
               </div>
@@ -589,14 +589,14 @@ function FeaturedManagementInner({
                 <button
                   type="button"
                   onClick={() => setEditingSlot(null)}
-                  className="px-4 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+                  className="px-4 py-2 rounded-xl border border-(--color-border) text-sm"
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm hover:opacity-90 disabled:opacity-50"
                 >
                   {editLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                   ذخیره تغییرات
@@ -619,7 +619,7 @@ export default function FeaturedManagementClient({
     <Suspense
       fallback={
         <div className="flex justify-center py-12" dir="rtl">
-          <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       }
     >

@@ -24,7 +24,7 @@ export default function CategoryHeroImageField({
         previewVariant="horizontal"
         compact={compact}
       />
-      <p className="text-[10px] text-[var(--color-text-muted)] mt-1.5 leading-relaxed">
+      <p className="text-[10px] text-wibe-secondary mt-1.5 leading-relaxed">
         در ParsPack (پوشه hubs) ذخیره می‌شود — نسبت ۱۶:۹ · JPG/PNG/WebP تا ۱۰MB · تبدیل به WebP
         (حداکثر ۱۶۰۰×۹۰۰، ~۳۲۰KB)
       </p>

@@ -20,16 +20,16 @@ export default async function ListDebugPage({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6" dir="rtl">
-      <div className="flex items-center gap-3 text-sm text-[var(--color-text-muted)]">
-        <Link href="/admin/lists" className="hover:text-[var(--primary)]">
+      <div className="flex items-center gap-3 text-sm text-wibe-secondary">
+        <Link href="/admin/lists" className="hover:text-primary">
           لیست‌ها
         </Link>
         <span>/</span>
-        <Link href={`/admin/lists/${id}`} className="hover:text-[var(--primary)]">
+        <Link href={`/admin/lists/${id}`} className="hover:text-primary">
           workspace
         </Link>
         <span>/</span>
-        <span className="text-[var(--color-text)]">دیباگ ترند (Runtime)</span>
+        <span className="text-(--color-text)">دیباگ ترند (Runtime)</span>
       </div>
       <TrendingDebugRuntimeContent listId={id} />
     </div>

@@ -32,7 +32,7 @@ const eventTags: Record<
   },
   user_joined: {
     label: 'کاربر',
-    className: 'bg-gray-100 text-[var(--color-text)] dark:bg-gray-500/15 dark:text-[var(--color-text-subtle)]',
+    className: 'bg-gray-100 text-(--color-text) dark:bg-gray-500/15 dark:text-(--color-text-subtle)',
     icon: User,
   },
 };
@@ -50,20 +50,20 @@ export default function ActivityStream({ events }: ActivityStreamProps) {
   }, [events, filterType]);
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden">
-      <div className="px-4 sm:px-6 py-4 border-b border-[var(--color-border)] flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-[var(--color-text)] flex items-center gap-2">
-          <Clock className="w-4 h-4 text-[var(--color-text-muted)]" />
+    <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-(--shadow-card) overflow-hidden">
+      <div className="px-4 sm:px-6 py-4 border-b border-(--color-border) flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-base font-semibold text-(--color-text) flex items-center gap-2">
+          <Clock className="w-4 h-4 text-wibe-secondary" />
           جریان فعالیت
         </h2>
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-[var(--color-text-muted)]" />
+          <Filter className="w-4 h-4 text-wibe-secondary" />
           <select
             value={filterType}
             onChange={(e) =>
               setFilterType(e.target.value as ActivityEvent['type'] | 'all')
             }
-            className="text-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            className="text-sm rounded-lg border border-(--color-border) bg-(--color-bg) text-(--color-text) px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-(--primary)"
           >
             <option value="all">همه</option>
             {(Object.keys(eventTags) as ActivityEvent['type'][]).map((t) => (
@@ -74,9 +74,9 @@ export default function ActivityStream({ events }: ActivityStreamProps) {
           </select>
         </div>
       </div>
-      <ul className="divide-y divide-[var(--color-border-muted)] max-h-[320px] overflow-y-auto">
+      <ul className="divide-y divide-(--color-border-muted) max-h-80 overflow-y-auto">
         {filtered.length === 0 ? (
-          <li className="px-4 sm:px-6 py-8 text-center text-sm text-[var(--color-text-muted)]">
+          <li className="px-4 sm:px-6 py-8 text-center text-sm text-wibe-secondary">
             فعالیتی یافت نشد.
           </li>
         ) : (
@@ -86,7 +86,7 @@ export default function ActivityStream({ events }: ActivityStreamProps) {
             const ts = typeof event.timestamp === 'string' ? new Date(event.timestamp) : event.timestamp;
             return (
               <li key={event.id}>
-                <div className="flex items-center gap-3 px-4 sm:px-6 py-2.5 hover:bg-[var(--color-bg)] transition-colors group">
+                <div className="flex items-center gap-3 px-4 sm:px-6 py-2.5 hover:bg-(--color-bg) transition-colors group">
                   <span
                     className={`shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${tag.className}`}
                   >
@@ -94,16 +94,16 @@ export default function ActivityStream({ events }: ActivityStreamProps) {
                     {tag.label}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-[var(--color-text)] truncate">
+                    <p className="text-sm text-(--color-text) truncate">
                       {event.title}
                       {event.description && (
-                        <span className="text-[var(--color-text-muted)]">
+                        <span className="text-wibe-secondary">
                           {' — '}
                           {event.description}
                         </span>
                       )}
                     </p>
-                    <p className="text-[11px] text-[var(--color-text-subtle)]">
+                    <p className="text-[11px] text-(--color-text-subtle)">
                       {formatRelativeTime(ts)}
                       {event.actor && ` · ${event.actor}`}
                     </p>
@@ -111,7 +111,7 @@ export default function ActivityStream({ events }: ActivityStreamProps) {
                   {event.href && (
                     <Link
                       href={event.href}
-                      className="shrink-0 text-xs text-[var(--primary)] hover:underline opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+                      className="shrink-0 text-xs text-primary hover:underline opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
                     >
                       باز کردن
                     </Link>

@@ -80,10 +80,10 @@ export default function SmartSuggestionsPanel({ onPickList, defaultOpen = false 
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[var(--color-text)] truncate">
+                      <p className="text-sm font-medium text-(--color-text) truncate">
                         {item.title}
                       </p>
-                      <p className="text-[10px] text-[var(--color-text-muted)]">
+                      <p className="text-[10px] text-wibe-secondary">
                         امتیاز {item.suggestionScore.toFixed(1)}
                         {item.categoryName ? ` · ${item.categoryName}` : ''}
                       </p>

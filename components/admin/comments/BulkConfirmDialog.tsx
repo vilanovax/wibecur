@@ -25,9 +25,9 @@ export default function BulkConfirmDialog({
   const Icon = isApprove ? CheckCircle : XCircle;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60">
+    <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/60">
       <div
-        className="bg-[var(--color-surface)] rounded-2xl shadow-xl max-w-sm w-full p-5 border border-[var(--color-border)]"
+        className="bg-(--color-surface) rounded-2xl shadow-xl max-w-sm w-full p-5 border border-(--color-border)"
         role="dialog"
         dir="rtl"
       >
@@ -37,11 +37,11 @@ export default function BulkConfirmDialog({
           }`}
         >
           <Icon className="w-5 h-5" />
-          <h3 className="font-semibold text-[var(--color-text)]">
+          <h3 className="font-semibold text-(--color-text)">
             {isApprove ? 'تایید گروهی' : 'رد گروهی'}
           </h3>
         </div>
-        <p className="text-sm text-[var(--color-text-muted)] mb-4">
+        <p className="text-sm text-wibe-secondary mb-4">
           {isApprove
             ? `${count.toLocaleString('fa-IR')} کامنت تایید شود؟`
             : `${count.toLocaleString('fa-IR')} کامنت رد شود؟`}
@@ -51,7 +51,7 @@ export default function BulkConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="flex-1 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-medium hover:bg-[var(--color-bg)] disabled:opacity-50"
+            className="flex-1 py-2.5 rounded-xl border border-(--color-border) text-sm font-medium hover:bg-(--color-bg) disabled:opacity-50"
           >
             انصراف
           </button>

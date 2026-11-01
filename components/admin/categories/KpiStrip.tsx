@@ -11,14 +11,14 @@ interface KpiCardProps {
 
 function KpiCard({ title, value, hint }: KpiCardProps) {
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 min-w-0 shadow-sm">
+    <div className="rounded-xl border border-(--color-border) bg-(--color-surface) px-4 py-3 min-w-0 shadow-sm">
       <div className="flex items-center gap-1 min-w-0">
-        <p className="text-xs font-medium text-[var(--color-text-muted)] truncate">{title}</p>
+        <p className="text-xs font-medium text-wibe-secondary truncate">{title}</p>
         {hint && (
           <span className="relative group shrink-0">
             <button
               type="button"
-              className="p-0.5 rounded-full text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]"
+              className="p-0.5 rounded-full text-wibe-secondary hover:text-(--color-text) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)"
               aria-label={`راهنما: ${title}`}
             >
               <HelpCircle className="w-3.5 h-3.5" />
@@ -32,7 +32,7 @@ function KpiCard({ title, value, hint }: KpiCardProps) {
           </span>
         )}
       </div>
-      <p className="text-xl font-bold text-[var(--color-text)] tabular-nums truncate mt-0.5">
+      <p className="text-xl font-bold text-(--color-text) tabular-nums truncate mt-0.5">
         {typeof value === 'number' ? value.toLocaleString('fa-IR') : value}
       </p>
     </div>
@@ -63,7 +63,7 @@ export default function KpiStrip({
         <KpiCard title="میانگین تعامل" value={avgEngagementRate} />
       </div>
       {insightLine && (
-        <p className="text-sm text-[var(--color-text-muted)] px-1 leading-relaxed break-words min-w-0">{insightLine}</p>
+        <p className="text-sm text-wibe-secondary px-1 leading-relaxed wrap-break-word min-w-0">{insightLine}</p>
       )}
     </div>
   );

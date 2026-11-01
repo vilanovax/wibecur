@@ -25,7 +25,7 @@ export default function CategoryHeroServer({ category, metrics }: CategoryHeroSe
           categorySlug={category.slug}
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/45 to-black/15" />
 
         <div className="absolute inset-0 flex flex-col justify-end p-4 pb-5 text-start lg:p-6 lg:pb-6">
           <h1 className="wibe-h1 text-background lg:text-3xl">

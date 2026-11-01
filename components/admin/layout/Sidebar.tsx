@@ -121,11 +121,11 @@ function SidebarBrand({
       {showText && (
         <div className="min-w-0 text-right leading-tight">
           {!logoDisplayUrl && (
-            <h2 className="text-sm font-bold text-[var(--color-text)] dark:text-white truncate">
+            <h2 className="text-sm font-bold text-(--color-text) dark:text-white truncate">
               WibeCur
             </h2>
           )}
-          <p className="text-[10px] text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] truncate">
+          <p className="text-[10px] text-wibe-secondary dark:text-(--color-text-subtle) truncate">
             پنل مدیریت
           </p>
         </div>
@@ -141,8 +141,8 @@ function SidebarToggle({ className }: { className?: string }) {
       type="button"
       onClick={() => setCollapsed(!collapsed)}
       className={clsx(
-        'p-1.5 rounded-lg border border-[var(--color-border)] dark:border-gray-600',
-        'hover:bg-[var(--color-bg)] dark:hover:bg-gray-700 text-[var(--color-text-muted)]',
+        'p-1.5 rounded-lg border border-(--color-border) dark:border-gray-600',
+        'hover:bg-(--color-bg) dark:hover:bg-gray-700 text-wibe-secondary',
         'transition-colors shrink-0',
         className
       )}
@@ -179,7 +179,7 @@ function SidebarContent({
     <div className="flex flex-col h-full">
       <div
         className={clsx(
-          'flex-shrink-0 border-b border-[var(--color-border)] dark:border-gray-600',
+          'shrink-0 border-b border-(--color-border) dark:border-gray-600',
           expanded ? 'flex items-center gap-1.5 px-2 py-2' : 'flex flex-col items-center gap-1.5 px-1.5 py-2'
         )}
       >
@@ -189,7 +189,7 @@ function SidebarContent({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-[var(--color-bg)] dark:hover:bg-gray-700 text-[var(--color-text-muted)]"
+              className="p-2 rounded-xl hover:bg-(--color-bg) dark:hover:bg-gray-700 text-wibe-secondary"
               aria-label="بستن منو"
             >
               <X className="h-5 w-5" />
@@ -218,7 +218,7 @@ function SidebarContent({
         className="flex-1 overflow-y-auto overflow-x-hidden px-1.5 py-1.5 space-y-2 min-h-0 scrollbar-thin"
         aria-label="منوی اصلی"
       >
-        <Suspense fallback={<div className="px-2 py-6 text-xs text-center text-[var(--color-text-muted)] animate-pulse">…</div>}>
+        <Suspense fallback={<div className="px-2 py-6 text-xs text-center text-wibe-secondary animate-pulse">…</div>}>
           <SidebarNavSection title="اصلی" items={PRIMARY} collapsed={collapsed && !isMobileDrawer} badges={badges} />
           <SidebarNavSection title="هوش و داده" items={INTELLIGENCE} collapsed={collapsed && !isMobileDrawer} badges={badges} />
           <SidebarNavSection title="نظارت" items={MODERATION} collapsed={collapsed && !isMobileDrawer} badges={badges} />
@@ -238,11 +238,11 @@ export default function Sidebar() {
     <>
       <aside
         className={clsx(
-          'hidden lg:flex flex-col flex-shrink-0',
-          'border-s border-[var(--color-border)] dark:border-gray-600',
-          'bg-[var(--color-surface)] dark:bg-gray-800 min-h-screen',
+          'hidden lg:flex flex-col shrink-0',
+          'border-s border-(--color-border) dark:border-gray-600',
+          'bg-(--color-surface) dark:bg-gray-800 min-h-screen',
           'transition-[width] duration-300 ease-in-out shadow-sm',
-          collapsed ? 'w-14' : 'w-[13.25rem]'
+          collapsed ? 'w-14' : 'w-53'
         )}
         dir="rtl"
       >
@@ -263,8 +263,8 @@ export default function Sidebar() {
         />
         <aside
           className={clsx(
-            'absolute top-0 inset-s-0 h-full w-[13.25rem] max-w-[85vw] flex flex-col',
-            'bg-[var(--color-surface)] dark:bg-gray-800 border-s border-[var(--color-border)]',
+            'absolute top-0 inset-s-0 h-full w-53 max-w-[85vw] flex flex-col',
+            'bg-(--color-surface) dark:bg-gray-800 border-s border-(--color-border)',
             'shadow-2xl transition-transform duration-300 ease-out',
             mobileOpen ? 'translate-x-0' : 'translate-x-full'
           )}

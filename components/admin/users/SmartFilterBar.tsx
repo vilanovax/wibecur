@@ -58,21 +58,21 @@ export default function SmartFilterBar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="نام، ایمیل یا نام کاربری"
-          className="min-h-11 min-w-0 flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+          className="min-h-11 min-w-0 flex-1 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text) placeholder:text-(--color-text-subtle) focus:outline-none focus:ring-2 focus:ring-(--primary)"
         />
         <button
           type="submit"
-          className="min-h-11 rounded-xl bg-[var(--primary)] px-4 text-sm font-medium text-white hover:opacity-90"
+          className="min-h-11 rounded-xl bg-primary px-4 text-sm font-medium text-white hover:opacity-90"
         >
           جستجو
         </button>
         <label className="inline-flex min-h-11 items-center gap-2">
-          <span className="text-sm text-[var(--color-text-muted)]">مرتب‌سازی</span>
+          <span className="text-sm text-wibe-secondary">مرتب‌سازی</span>
           <select
             value={sort}
             onChange={(e) => onSortChange(e.target.value as UserSortKind)}
             aria-label="مرتب‌سازی"
-            className="min-h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            className="min-h-11 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text) focus:outline-none focus:ring-2 focus:ring-(--primary)"
           >
             {USER_SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -95,14 +95,14 @@ export default function SmartFilterBar({
               aria-pressed={selected}
               className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-medium ${
                 selected
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                  ? 'bg-primary text-white'
+                  : 'bg-(--color-bg) text-wibe-secondary hover:text-(--color-text)'
               }`}
             >
               {pill.label}
               <span
                 className={`tabular-nums text-xs ${
-                  selected ? 'text-white/80' : 'text-[var(--color-text-subtle)]'
+                  selected ? 'text-white/80' : 'text-(--color-text-subtle)'
                 }`}
               >
                 {faNumber(count)}
@@ -111,14 +111,14 @@ export default function SmartFilterBar({
           );
         })}
 
-        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm">
+        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm">
           <input
             type="checkbox"
             checked={hideBots}
             onChange={(e) => onHideBotsChange(e.target.checked)}
-            className="rounded border-[var(--color-border)] text-[var(--primary)] focus:ring-[var(--primary)]"
+            className="rounded border-(--color-border) text-primary focus:ring-(--primary)"
           />
-          <Bot className="h-4 w-4 text-[var(--color-text-muted)]" strokeWidth={1.5} />
+          <Bot className="h-4 w-4 text-wibe-secondary" strokeWidth={1.5} />
           <span>مخفی کردن بات‌ها</span>
         </label>
 
@@ -126,7 +126,7 @@ export default function SmartFilterBar({
           <button
             type="button"
             onClick={onClearFilters}
-            className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)]"
+            className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text)"
           >
             <X className="h-4 w-4" strokeWidth={1.5} />
             پاک کردن فیلترها

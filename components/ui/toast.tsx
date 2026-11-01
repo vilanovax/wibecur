@@ -41,14 +41,14 @@ export function ToastProvider({ children, max = 3, position = "bottom-start" }: 
     return id;
   }, [dismiss, max]);
 
-  const pos = { "bottom-start": "bottom-4 start-4", "bottom-end": "bottom-4 end-4", "top-start": "top-4 start-4", "top-end": "top-4 end-4" }[position];
+  const pos = { "bottom-start": "bottom-4 inset-s-4", "bottom-end": "bottom-4 inset-e-4", "top-start": "top-4 inset-s-4", "top-end": "top-4 inset-e-4" }[position];
   const fromTop = position.startsWith("top");
   const value = React.useMemo(() => ({ toast, dismiss, dismissAll }), [toast, dismiss, dismissAll]);
 
   return (
     <ToastCtx.Provider value={value}>
       {children}
-      <div aria-live="polite" className={cn("pointer-events-none fixed z-[60] flex w-[min(360px,calc(100vw-2rem))] flex-col gap-2", pos, fromTop ? "" : "flex-col-reverse")}>
+      <div aria-live="polite" className={cn("pointer-events-none fixed z-60 flex w-[min(360px,calc(100vw-2rem))] flex-col gap-2", pos, fromTop ? "" : "flex-col-reverse")}>
         {items.map((t) => <ToastCard key={t.id} toast={t} onClose={() => dismiss(t.id)} />)}
         {items.length > 1 && (
           <button type="button" onClick={dismissAll} className="pointer-events-auto self-end rounded-md px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground">

@@ -69,7 +69,7 @@ export default function LikesTab({ userId }: LikesTabProps) {
             className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-colors"
           >
             {like.image ? (
-              <div className="relative h-40 bg-gradient-to-br from-primary/10 to-blue-100">
+              <div className="relative h-40 bg-linear-to-br from-primary/10 to-blue-100">
                 <ImageWithFallback
                   src={like.image}
                   alt={like.title}
@@ -79,7 +79,7 @@ export default function LikesTab({ userId }: LikesTabProps) {
                 />
               </div>
             ) : (
-              <div className="relative h-40 bg-gradient-to-br from-primary/10 to-blue-100 flex items-center justify-center">
+              <div className="relative h-40 bg-linear-to-br from-primary/10 to-blue-100 flex items-center justify-center">
                 <span className="text-4xl">{like.category.icon}</span>
               </div>
             )}

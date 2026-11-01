@@ -44,7 +44,7 @@ export default function CommentsPaginationBar({
       className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6"
       dir="rtl"
     >
-      <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+      <div className="flex items-center gap-2 text-sm text-wibe-secondary">
         <label htmlFor="comments-page-size">تعداد در صفحه:</label>
         <select
           id="comments-page-size"
@@ -52,7 +52,7 @@ export default function CommentsPaginationBar({
           onChange={(e) =>
             setPageSize(Number(e.target.value) as CommentsPageSize)
           }
-          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-sm"
+          className="rounded-lg border border-(--color-border) bg-(--color-surface) px-2.5 py-1.5 text-sm"
         >
           {COMMENTS_PAGE_SIZE_OPTIONS.map((n) => (
             <option key={n} value={n}>

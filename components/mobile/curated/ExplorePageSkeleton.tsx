@@ -53,7 +53,7 @@ export function ExplorePageSkeleton() {
         <div className="grid grid-cols-2 gap-2">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="overflow-hidden bg-popover p-0">
-              <Skeleton className="aspect-[4/3] w-full rounded-none" />
+              <Skeleton className="aspect-4/3 w-full rounded-none" />
               <div className="p-2">
                 <Skeleton className="h-4 w-full" />
               </div>

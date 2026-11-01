@@ -17,9 +17,9 @@ export default function HomeFeedSeeAllCard({
   return (
     <Link
       href={href}
-      className="group block w-[10rem] shrink-0 snap-start lg:w-full lg:shrink lg:h-full"
+      className="group block w-40 shrink-0 snap-start lg:w-full lg:shrink lg:h-full"
     >
-      <div className="flex aspect-[5/4] h-full max-h-44 flex-col items-center justify-center rounded-surface border border-dashed border-brand/30 bg-brand/5 p-3 text-center transition-colors hover:border-brand/40 hover:bg-brand/10 sm:aspect-[4/3] lg:aspect-auto lg:min-h-36 lg:max-h-44 lg:flex-row lg:justify-center lg:gap-2 lg:px-4 lg:py-3">
+      <div className="flex aspect-5/4 h-full max-h-44 flex-col items-center justify-center rounded-surface border border-dashed border-brand/30 bg-brand/5 p-3 text-center transition-colors hover:border-brand/40 hover:bg-brand/10 sm:aspect-4/3 lg:aspect-auto lg:min-h-36 lg:max-h-44 lg:flex-row lg:justify-center lg:gap-2 lg:px-4 lg:py-3">
         <span className="mb-1.5 flex size-11 items-center justify-center rounded-full bg-brand/10 text-brand lg:mb-0">
           <LayoutGrid className="size-4" aria-hidden />
         </span>

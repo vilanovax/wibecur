@@ -11,10 +11,10 @@ type Props = {
 export default function CommentAiProviderRadio({ value, onChange }: Props) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-[var(--color-text)]">
+      <p className="text-sm font-medium text-(--color-text)">
         هوش مصنوعی تولید کامنت هوشمند
       </p>
-      <p className="text-xs text-[var(--color-text-muted)] -mt-1">
+      <p className="text-xs text-wibe-secondary -mt-1">
         برای کمپین‌های کامنت ساختگی و بازتولید پیش‌نویس‌ها
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -25,8 +25,8 @@ export default function CommentAiProviderRadio({ value, onChange }: Props) {
               key={option.value}
               className={`flex items-start gap-3 rounded-xl border px-3 py-3 cursor-pointer transition-colors ${
                 active
-                  ? 'border-[var(--primary)] bg-[var(--primary)]/5 ring-1 ring-[var(--primary)]/20'
-                  : 'border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                  ? 'border-(--primary) bg-primary/5 ring-1 ring-(--primary)/20'
+                  : 'border-(--color-border) hover:bg-(--color-bg)'
               }`}
             >
               <input
@@ -35,13 +35,13 @@ export default function CommentAiProviderRadio({ value, onChange }: Props) {
                 value={option.value}
                 checked={active}
                 onChange={() => onChange(option.value)}
-                className="mt-0.5 text-[var(--primary)]"
+                className="mt-0.5 text-primary"
               />
               <span className="min-w-0">
-                <span className="block text-sm font-medium text-[var(--color-text)]">
+                <span className="block text-sm font-medium text-(--color-text)">
                   {option.label}
                 </span>
-                <span className="block text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                <span className="block text-[11px] text-wibe-secondary mt-0.5">
                   {option.description}
                 </span>
               </span>

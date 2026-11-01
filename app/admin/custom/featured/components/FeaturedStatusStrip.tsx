@@ -32,7 +32,7 @@ export default function FeaturedStatusStrip({
 
     return (
       <article
-        className="rounded-2xl border border-emerald-200/80 dark:border-emerald-800/60 bg-gradient-to-l from-emerald-50/90 to-[var(--color-surface)] p-5 shadow-sm"
+        className="rounded-2xl border border-emerald-200/80 dark:border-emerald-800/60 bg-linear-to-l from-emerald-50/90 to-(--color-surface) p-5 shadow-sm"
         dir="rtl"
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -42,10 +42,10 @@ export default function FeaturedStatusStrip({
             </div>
             <div className="min-w-0">
               <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 mb-1">الان در هوم اپ</p>
-              <h2 className="text-lg font-bold leading-snug text-[var(--color-text)]">
+              <h2 className="text-lg font-bold leading-snug text-(--color-text)">
                 {current.list.title}
               </h2>
-              <div className="flex flex-wrap gap-2 mt-1 text-sm text-[var(--color-text-muted)]">
+              <div className="flex flex-wrap gap-2 mt-1 text-sm text-wibe-secondary">
                 {catName && (
                   <span className="px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 text-xs">
                     {catName}
@@ -59,7 +59,7 @@ export default function FeaturedStatusStrip({
                   <span className="text-emerald-600 dark:text-emerald-400 font-medium">· {remainingText}</span>
                 )}
               </div>
-              <p className="text-xs text-[var(--color-text-subtle)] mt-1">
+              <p className="text-xs text-(--color-text-subtle) mt-1">
                 {current.viewListCount.toLocaleString('fa-IR')} مشاهده ·{' '}
                 {current.quickSaveCount.toLocaleString('fa-IR')} ذخیره سریع
               </p>
@@ -70,7 +70,7 @@ export default function FeaturedStatusStrip({
               href={`/lists/${current.list.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 text-sm hover:bg-[var(--color-bg)]"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) px-3 text-sm hover:bg-(--color-bg)"
             >
               <ExternalLink className="w-4 h-4" />
               لیست
@@ -78,7 +78,7 @@ export default function FeaturedStatusStrip({
             <button
               type="button"
               onClick={onEdit}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 text-sm hover:bg-[var(--color-bg)]"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) px-3 text-sm hover:bg-(--color-bg)"
             >
               <Pencil className="w-4 h-4" />
               زمان
@@ -122,7 +122,7 @@ export default function FeaturedStatusStrip({
       <button
         type="button"
         onClick={onAddClick}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 shrink-0"
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 shrink-0"
       >
         <Plus className="w-4 h-4" />
         زمان‌بندی منتخب

@@ -26,7 +26,7 @@ function SimilarListCard({ rel }: { rel: SimilarList }) {
       className="block w-[calc(55vw)] max-w-56 shrink-0 lg:w-full lg:max-w-none"
     >
       <Card className="overflow-hidden bg-popover p-0 transition-transform active:scale-95">
-      <div className="relative aspect-[4/3] bg-muted lg:aspect-[16/10] lg:max-h-[7.25rem]">
+      <div className="relative aspect-4/3 bg-muted lg:aspect-16/10 lg:max-h-29">
         <ImageWithFallback
           src={rel.coverImage ?? ''}
           alt={title}
@@ -37,7 +37,7 @@ function SimilarListCard({ rel }: { rel: SimilarList }) {
           listSlug={rel.slug}
           listTitle={rel.title}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-2 text-start lg:p-2.5">
           <h3 className="line-clamp-2 wibe-small font-semibold text-background lg:hidden">{title}</h3>
         </div>

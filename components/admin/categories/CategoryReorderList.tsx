@@ -98,8 +98,8 @@ export default function CategoryReorderList({ categories }: CategoryReorderListP
               dragIndex === index ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/30'
             }`}
           >
-            <GripVertical className="w-5 h-5 text-[var(--color-text-subtle)] shrink-0" aria-hidden />
-            <span className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] tabular-nums shrink-0">
+            <GripVertical className="w-5 h-5 text-(--color-text-subtle) shrink-0" aria-hidden />
+            <span className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-wibe-secondary dark:text-(--color-text-subtle) tabular-nums shrink-0">
               {(index + 1).toLocaleString('fa-IR')}
             </span>
             <div
@@ -111,8 +111,8 @@ export default function CategoryReorderList({ categories }: CategoryReorderListP
               {cat.icon || '📁'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-medium text-[var(--color-text)] dark:text-white truncate">{cat.name}</p>
-              <p className="text-xs text-[var(--color-text-muted)] font-mono truncate" dir="ltr">
+              <p className="font-medium text-(--color-text) dark:text-white truncate">{cat.name}</p>
+              <p className="text-xs text-wibe-secondary font-mono truncate" dir="ltr">
                 {cat.slug}
               </p>
             </div>
@@ -120,7 +120,7 @@ export default function CategoryReorderList({ categories }: CategoryReorderListP
               className={`text-xs px-2 py-0.5 rounded-lg shrink-0 ${
                 cat.isActive
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-                  : 'bg-gray-100 text-[var(--color-text-muted)]'
+                  : 'bg-gray-100 text-wibe-secondary'
               }`}
             >
               {cat.isActive ? 'فعال' : 'غیرفعال'}

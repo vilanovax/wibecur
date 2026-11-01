@@ -60,13 +60,13 @@ export default function CommentDetailsDrawer({
         aria-hidden
       />
       <aside className="fixed top-0 left-0 z-50 w-full max-w-md h-full lg:hidden">
-        <div className="h-full flex flex-col bg-[var(--color-surface)] shadow-xl">
-          <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center justify-between shrink-0">
+        <div className="h-full flex flex-col bg-(--color-surface) shadow-xl">
+          <div className="px-4 py-3 border-b border-(--color-border) flex items-center justify-between shrink-0">
             <h2 className="text-lg font-semibold">{title}</h2>
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-[var(--color-bg)]"
+              className="p-2 rounded-xl hover:bg-(--color-bg)"
             >
               <X className="w-5 h-5" />
             </button>

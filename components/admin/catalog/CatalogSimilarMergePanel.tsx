@@ -90,7 +90,7 @@ export default function CatalogSimilarMergePanel({
 
   if (displayItems.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-[var(--color-text-muted)]">
+      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-wibe-secondary">
         {emptyMessage}
       </div>
     );
@@ -105,14 +105,14 @@ export default function CatalogSimilarMergePanel({
       )}
 
       {!fixedTargetId && displayItems.length >= 2 && (
-        <p className="text-xs text-[var(--color-text-muted)]">
+        <p className="text-xs text-wibe-secondary">
           مقصد را با رادیو انتخاب کنید و با چک‌باکس مشخص کنید کدام موارد ادغام شوند. موارد بدون تیک
           کنار گذاشته می‌شوند.
         </p>
       )}
 
       {fixedTargetId && (
-        <p className="text-xs text-[var(--color-text-muted)]">
+        <p className="text-xs text-wibe-secondary">
           فقط موارد تیک‌خورده در مقصد ادغام می‌شوند.
         </p>
       )}
@@ -163,18 +163,18 @@ export default function CatalogSimilarMergePanel({
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-[var(--color-text)]">{item.title}</p>
-                  <p className="mt-0.5 font-mono text-[10px] text-[var(--color-text-subtle)]" dir="ltr">
+                  <p className="truncate text-sm font-bold text-(--color-text)">{item.title}</p>
+                  <p className="mt-0.5 font-mono text-[10px] text-(--color-text-subtle)" dir="ltr">
                     {item.id}
                   </p>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)]">
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-wibe-secondary">
                       {catalogCategoryLabel(item.categorySlug)}
                     </span>
                     <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-800">
                       {similarCatalogMatchLabel(item.matchReason)}
                     </span>
-                    <span className="text-[10px] text-[var(--color-text-muted)]">
+                    <span className="text-[10px] text-wibe-secondary">
                       {item.listCount.toLocaleString('fa-IR')} لیست
                     </span>
                   </div>
@@ -183,7 +183,7 @@ export default function CatalogSimilarMergePanel({
               <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
                 <Link
                   href={`/admin/catalog/${item.id}/edit`}
-                  className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-[var(--color-text)] hover:bg-gray-50"
+                  className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-(--color-text) hover:bg-gray-50"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   ویرایش

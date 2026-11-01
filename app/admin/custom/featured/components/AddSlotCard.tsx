@@ -130,13 +130,13 @@ export default function AddSlotCard({
   return (
     <section
       ref={formRef}
-      className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm scroll-mt-24"
+      className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-5 shadow-sm scroll-mt-24"
       dir="rtl"
       id="add-featured-slot"
     >
       <div className="mb-5">
-        <h2 className="text-base font-semibold text-[var(--color-text)]">افزودن اسلات</h2>
-        <p className="text-xs text-[var(--color-text-muted)] mt-1">
+        <h2 className="text-base font-semibold text-(--color-text)">افزودن اسلات</h2>
+        <p className="text-xs text-wibe-secondary mt-1">
           لیست را انتخاب کنید، بازه را مشخص کنید — ساعت دقیق اختیاری است.
         </p>
       </div>
@@ -150,7 +150,7 @@ export default function AddSlotCard({
       <form onSubmit={onSubmit} className="space-y-5">
         {/* ۱. لیست */}
         <div className="space-y-3">
-          <span className="text-sm font-medium text-[var(--color-text)]">۱. انتخاب لیست</span>
+          <span className="text-sm font-medium text-(--color-text)">۱. انتخاب لیست</span>
           <div className="flex flex-wrap gap-2">
             <select
               value={formCategorySlug}
@@ -164,7 +164,7 @@ export default function AddSlotCard({
                   if (!ok) onListChange('');
                 }
               }}
-              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm px-3 py-2 min-w-[140px]"
+              className="rounded-xl border border-(--color-border) bg-(--color-surface) text-sm px-3 py-2 min-w-35"
               disabled={lists.length === 0}
             >
               <option value="">همه دسته‌ها</option>
@@ -174,21 +174,21 @@ export default function AddSlotCard({
                 </option>
               ))}
             </select>
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+            <div className="relative flex-1 min-w-50">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-wibe-secondary" />
               <input
                 type="search"
                 value={listSearch}
                 onChange={(e) => setListSearch(e.target.value)}
                 placeholder="جستجو عنوان لیست..."
-                className="w-full pr-9 pl-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+                className="w-full pr-9 pl-3 py-2 rounded-xl border border-(--color-border) text-sm"
               />
             </div>
           </div>
           <select
             value={formListId}
             onChange={(e) => onListChange(e.target.value)}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm px-3 py-2.5"
+            className="w-full rounded-xl border border-(--color-border) bg-(--color-surface) text-sm px-3 py-2.5"
             required
             disabled={lists.length === 0 || filteredLists.length === 0}
           >
@@ -204,15 +204,15 @@ export default function AddSlotCard({
             ))}
           </select>
           {selectedList && (
-            <p className="text-xs text-[var(--color-text-muted)]">
-              انتخاب‌شده: <strong className="text-[var(--color-text)]">{selectedList.title}</strong>
+            <p className="text-xs text-wibe-secondary">
+              انتخاب‌شده: <strong className="text-(--color-text)">{selectedList.title}</strong>
             </p>
           )}
         </div>
 
         {/* ۲. بازه */}
         <div className="space-y-3">
-          <span className="text-sm font-medium text-[var(--color-text)]">۲. بازه نمایش</span>
+          <span className="text-sm font-medium text-(--color-text)">۲. بازه نمایش</span>
           <div className="flex flex-wrap gap-2">
             {(
               [
@@ -228,8 +228,8 @@ export default function AddSlotCard({
                 onClick={() => applyPreset(id)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
                   activePreset === id
-                    ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                    : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+                    ? 'bg-primary text-white border-(--primary)'
+                    : 'border-(--color-border) text-wibe-secondary hover:bg-(--color-bg)'
                 }`}
               >
                 {label}
@@ -238,7 +238,7 @@ export default function AddSlotCard({
           </div>
 
           {formStartDate && (
-            <p className="text-xs text-[var(--color-text-muted)] bg-[var(--color-bg)] rounded-lg px-3 py-2">
+            <p className="text-xs text-wibe-secondary bg-(--color-bg) rounded-lg px-3 py-2">
               شروع: {formStartDate.format?.('DD MMMM YYYY') ?? '—'}
               {formEndDate
                 ? ` · پایان: ${formEndDate.format?.('DD MMMM YYYY') ?? '—'}`
@@ -249,16 +249,16 @@ export default function AddSlotCard({
           <button
             type="button"
             onClick={() => setShowAdvanced((v) => !v)}
-            className="inline-flex items-center gap-1 text-xs text-[var(--primary)] hover:underline"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
           >
             {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             {showAdvanced ? 'بستن تنظیم تاریخ و ساعت' : 'تنظیم دستی تاریخ و ساعت'}
           </button>
 
           {showAdvanced && (
-            <div className="grid gap-4 sm:grid-cols-2 p-4 rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg)]">
+            <div className="grid gap-4 sm:grid-cols-2 p-4 rounded-xl border border-(--color-border-muted) bg-(--color-bg)">
               <div>
-                <label className="text-xs text-[var(--color-text-muted)]">شروع</label>
+                <label className="text-xs text-wibe-secondary">شروع</label>
                 <div className="flex gap-2 mt-1 flex-wrap">
                   <DatePicker
                     value={formStartDate}
@@ -269,19 +269,19 @@ export default function AddSlotCard({
                     calendar={persian}
                     locale={persian_fa}
                     calendarPosition="bottom-right"
-                    inputClass="rounded-xl border border-[var(--color-border)] text-sm px-3 py-2 w-full text-right bg-[var(--color-surface)]"
+                    inputClass="rounded-xl border border-(--color-border) text-sm px-3 py-2 w-full text-right bg-(--color-surface)"
                     placeholder="تاریخ"
                   />
                   <input
                     type="time"
                     value={formStartTime}
                     onChange={(e) => onStartTimeChange(e.target.value)}
-                    className="rounded-xl border border-[var(--color-border)] text-sm px-3 py-2 bg-[var(--color-surface)]"
+                    className="rounded-xl border border-(--color-border) text-sm px-3 py-2 bg-(--color-surface)"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs text-[var(--color-text-muted)]">پایان (اختیاری)</label>
+                <label className="text-xs text-wibe-secondary">پایان (اختیاری)</label>
                 <div className="flex gap-2 mt-1 flex-wrap">
                   <DatePicker
                     value={formEndDate}
@@ -292,14 +292,14 @@ export default function AddSlotCard({
                     calendar={persian}
                     locale={persian_fa}
                     calendarPosition="bottom-right"
-                    inputClass="rounded-xl border border-[var(--color-border)] text-sm px-3 py-2 w-full text-right bg-[var(--color-surface)]"
+                    inputClass="rounded-xl border border-(--color-border) text-sm px-3 py-2 w-full text-right bg-(--color-surface)"
                     placeholder="تاریخ"
                   />
                   <input
                     type="time"
                     value={formEndTime}
                     onChange={(e) => onEndTimeChange(e.target.value)}
-                    className="rounded-xl border border-[var(--color-border)] text-sm px-3 py-2 bg-[var(--color-surface)]"
+                    className="rounded-xl border border-(--color-border) text-sm px-3 py-2 bg-(--color-surface)"
                   />
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default function AddSlotCard({
         <button
           type="submit"
           disabled={!canSubmit}
-          className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[var(--primary)] text-white font-medium disabled:opacity-50"
+          className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-white font-medium disabled:opacity-50"
         >
           {submitLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
           ثبت اسلات

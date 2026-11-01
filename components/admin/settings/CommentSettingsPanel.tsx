@@ -15,7 +15,7 @@ type Props = {
 };
 
 const inputClass =
-  'w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] focus:ring-2 focus:ring-[var(--primary)]/30 tabular-nums';
+  'w-full px-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg) focus:ring-2 focus:ring-(--primary)/30 tabular-nums';
 
 export default function CommentSettingsPanel({
   value,
@@ -26,12 +26,12 @@ export default function CommentSettingsPanel({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-        <p className="text-[var(--color-text-muted)]">
+        <p className="text-wibe-secondary">
           این تنظیمات روی آیتم‌های جدید و رفتار سراسری کامنت اثر می‌گذارد.
         </p>
         <Link
           href="/admin/comments/bad-words"
-          className="inline-flex items-center gap-1 text-[var(--primary)] font-medium hover:underline"
+          className="inline-flex items-center gap-1 text-primary font-medium hover:underline"
         >
           کلمات ممنوع
           <ExternalLink className="w-3 h-3" />
@@ -59,7 +59,7 @@ export default function CommentSettingsPanel({
       <SettingsSectionCard
         title="تنظیمات کامنت"
         description="محدودیت طول، تعداد و فاصله زمانی"
-        icon={<MessageSquare className="w-5 h-5 text-[var(--primary)]" />}
+        icon={<MessageSquare className="w-5 h-5 text-primary" />}
         footer={
           <SettingsSaveButton
             onClick={onSave}
@@ -75,19 +75,19 @@ export default function CommentSettingsPanel({
             onChange={(e) =>
               onChange({ defaultCommentsEnabled: e.target.checked })
             }
-            className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--primary)]"
+            className="w-4 h-4 rounded border-(--color-border) text-primary"
           />
-          <span className="text-sm font-medium text-[var(--color-text)]">
+          <span className="text-sm font-medium text-(--color-text)">
             فعال بودن کامنت‌ها به‌صورت پیش‌فرض
           </span>
         </label>
-        <p className="text-[11px] text-[var(--color-text-subtle)] -mt-2 mr-7">
+        <p className="text-[11px] text-(--color-text-subtle) -mt-2 mr-7">
           برای آیتم‌های جدید اعمال می‌شود
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+            <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
               حداکثر کاراکتر کامنت
             </label>
             <input
@@ -106,7 +106,7 @@ export default function CommentSettingsPanel({
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+            <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
               حداکثر کامنت هر آیتم
             </label>
             <input
@@ -125,7 +125,7 @@ export default function CommentSettingsPanel({
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+            <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
               فاصله بین کامنت‌ها (دقیقه)
             </label>
             <input
@@ -139,12 +139,12 @@ export default function CommentSettingsPanel({
               }
               className={inputClass}
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+            <p className="text-[11px] text-(--color-text-subtle) mt-1">
               در یک آیتم
             </p>
           </div>
           <div>
-            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+            <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
               فاصله سراسری (دقیقه)
             </label>
             <input
@@ -161,7 +161,7 @@ export default function CommentSettingsPanel({
               className={inputClass}
               placeholder="غیرفعال"
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+            <p className="text-[11px] text-(--color-text-subtle) mt-1">
               بین همه آیتم‌ها — خالی = خاموش
             </p>
           </div>
@@ -180,13 +180,13 @@ export default function CommentSettingsPanel({
           />
         }
       >
-        <p className="text-xs text-[var(--color-text-muted)] -mt-1 mb-1">
+        <p className="text-xs text-wibe-secondary -mt-1 mb-1">
           امتیاز منفی تجمعی کاربر از جدول تخلفات خوانده می‌شود. با عبور از هر آستانه،
           وضعیت کامنت‌گذاری به‌صورت خودکار تغییر می‌کند.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+            <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
               آستانه اخطار
             </label>
             <input
@@ -200,12 +200,12 @@ export default function CommentSettingsPanel({
               }
               className={inputClass}
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+            <p className="text-[11px] text-(--color-text-subtle) mt-1">
               نمایش badge اخطار در پنل
             </p>
           </div>
           <div>
-            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+            <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
               آستانه محدودیت
             </label>
             <input
@@ -219,12 +219,12 @@ export default function CommentSettingsPanel({
               }
               className={inputClass}
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+            <p className="text-[11px] text-(--color-text-subtle) mt-1">
               مسدود موقت ثبت کامنت
             </p>
           </div>
           <div>
-            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+            <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
               آستانه مسدودسازی
             </label>
             <input
@@ -238,12 +238,12 @@ export default function CommentSettingsPanel({
               }
               className={inputClass}
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+            <p className="text-[11px] text-(--color-text-subtle) mt-1">
               مسدود دائم کامنت‌گذاری
             </p>
           </div>
           <div>
-            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+            <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
               مدت محدودیت (روز)
             </label>
             <input
@@ -257,12 +257,12 @@ export default function CommentSettingsPanel({
               }
               className={inputClass}
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+            <p className="text-[11px] text-(--color-text-subtle) mt-1">
               هنگام عبور از آستانه محدودیت
             </p>
           </div>
         </div>
-        <p className="text-[11px] text-[var(--color-text-subtle)]">
+        <p className="text-[11px] text-(--color-text-subtle)">
           ترتیب: اخطار ({value.penaltyWarnThreshold}) &lt; محدودیت (
           {value.penaltyRestrictThreshold}) &lt; مسدود ({value.penaltyBanThreshold})
         </p>

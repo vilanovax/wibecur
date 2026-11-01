@@ -38,7 +38,7 @@ export default function ExploreCategoriesServer({ categories }: ExploreCategorie
               href={`/categories/${slug}`}
               className="group block"
             >
-              <Card className="relative aspect-[4/5] overflow-hidden bg-popover p-0 shadow-sm transition-transform active:scale-[0.98] lg:aspect-[5/4] lg:hover:border-primary/25">
+              <Card className="relative aspect-4/5 overflow-hidden bg-popover p-0 shadow-sm transition-transform active:scale-[0.98] lg:aspect-5/4 lg:hover:border-primary/25">
               {cover ? (
                 <Image
                   src={cover.src}
@@ -54,7 +54,7 @@ export default function ExploreCategoriesServer({ categories }: ExploreCategorie
                 </div>
               )}
               <div
-                className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent"
+                className="absolute inset-0 bg-linear-to-t from-black/75 via-black/25 to-transparent"
                 aria-hidden
               />
               <div className="absolute inset-x-0 bottom-0 p-2 text-center lg:p-2.5">

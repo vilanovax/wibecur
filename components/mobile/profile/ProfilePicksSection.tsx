@@ -34,7 +34,7 @@ const PROFILE_PICKS_HELP_TEXT =
 function PickCard({ pick }: { pick: ProfilePickItemDto }) {
   const href = pick.itemId ? `/items/${pick.itemId}` : '#';
   const inner = (
-    <div className="group relative aspect-[2/3] w-24 shrink-0 overflow-hidden rounded-xl bg-muted ring-1 ring-foreground/10">
+    <div className="group relative aspect-2/3 w-24 shrink-0 overflow-hidden rounded-xl bg-muted ring-1 ring-foreground/10">
       {pick.imageUrl ? (
         <ImageWithFallback
           src={pick.imageUrl}
@@ -48,13 +48,13 @@ function PickCard({ pick }: { pick: ProfilePickItemDto }) {
           ✨
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-1.5 pb-1.5 pt-8">
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/30 to-transparent px-1.5 pb-1.5 pt-8">
         <p className="line-clamp-2 text-start wibe-caption font-semibold leading-snug text-background">
           {pick.title}
         </p>
       </div>
       {pick.note && (
-        <span className="absolute start-1.5 top-1.5 rounded-full bg-foreground/50 px-1.5 py-0.5 text-xs text-background backdrop-blur-sm">
+        <span className="absolute inset-s-1.5 top-1.5 rounded-full bg-foreground/50 px-1.5 py-0.5 text-xs text-background backdrop-blur-sm">
           💬
         </span>
       )}

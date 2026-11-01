@@ -109,7 +109,7 @@ export default function ListCardMoreMenu({
           <div
             ref={menuRef}
             role="menu"
-            className="fixed z-[1200] w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-lg"
+            className="fixed z-1200 w-48 rounded-xl border border-(--color-border) bg-(--color-surface) py-1 shadow-lg"
             style={{ top: menuPos.top, left: menuPos.left }}
             dir="rtl"
           >
@@ -118,7 +118,7 @@ export default function ListCardMoreMenu({
               target="_blank"
               rel="noopener noreferrer"
               role="menuitem"
-              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--color-bg)]"
+              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-(--color-bg)"
               onClick={() => setOpen(false)}
             >
               <Pencil className="h-4 w-4 shrink-0" />
@@ -127,7 +127,7 @@ export default function ListCardMoreMenu({
             <Link
               href={`/admin/lists/${row.id}/debug`}
               role="menuitem"
-              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--color-bg)]"
+              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-(--color-bg)"
               onClick={() => setOpen(false)}
             >
               <BarChart3 className="h-4 w-4 shrink-0" />
@@ -137,7 +137,7 @@ export default function ListCardMoreMenu({
               type="button"
               role="menuitem"
               disabled={featureLoading}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--color-bg)] disabled:opacity-50"
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-(--color-bg) disabled:opacity-50"
               onClick={() => {
                 setOpen(false);
                 onFeature();
@@ -150,7 +150,7 @@ export default function ListCardMoreMenu({
               type="button"
               role="menuitem"
               disabled={disableLoading}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-[var(--color-bg)] disabled:opacity-50"
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-(--color-bg) disabled:opacity-50"
               onClick={() => {
                 setOpen(false);
                 onDisable();
@@ -193,7 +193,7 @@ export default function ListCardMoreMenu({
           skipNextOutsideRef.current = true;
           setOpen((v) => !v);
         }}
-        className="relative z-20 inline-flex size-11 items-center justify-center rounded-xl border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+        className="relative z-20 inline-flex size-11 items-center justify-center rounded-xl border border-(--color-border) text-wibe-secondary hover:bg-(--color-bg)"
         aria-label="عملیات بیشتر"
         aria-expanded={open}
         aria-haspopup="menu"

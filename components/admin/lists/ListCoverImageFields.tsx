@@ -27,7 +27,7 @@ export default function ListCoverImageFields({
           previewVariant="cover"
           compact
         />
-        <p className="text-[10px] text-[var(--color-text-muted)] mt-1.5 leading-relaxed">
+        <p className="text-[10px] text-wibe-secondary mt-1.5 leading-relaxed">
           برای کارت لیست در فید و گرید — نسبت پیشنهادی ۴:۳ یا ۳:۴
         </p>
       </div>
@@ -40,7 +40,7 @@ export default function ListCoverImageFields({
           previewVariant="horizontal"
           compact
         />
-        <p className="text-[10px] text-[var(--color-text-muted)] mt-1.5 leading-relaxed">
+        <p className="text-[10px] text-wibe-secondary mt-1.5 leading-relaxed">
           برای بنر Featured و هدر جزئیات لیست — نسبت پیشنهادی ۲۱:۹ یا ۱۶:۹
         </p>
       </div>

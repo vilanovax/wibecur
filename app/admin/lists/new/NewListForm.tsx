@@ -44,7 +44,7 @@ type FormState = {
 };
 
 const sectionCard =
-  'rounded-xl border border-(--color-border-muted) bg-(--color-surface) shadow-[var(--shadow-card)] overflow-hidden';
+  'rounded-xl border border-(--color-border-muted) bg-(--color-surface) shadow-(--shadow-card) overflow-hidden';
 
 export default function NewListForm({ categories: categoryList }: NewListFormProps) {
   const router = useRouter();

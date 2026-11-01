@@ -90,10 +90,10 @@ export default function ListCard({
             listTitle={listTitle ?? title}
             sizes="(min-width: 1024px) 50vw, 100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
           {badge && (
             <span
-              className={`absolute end-2 top-2 rounded-full px-2 py-0.5 text-sm font-semibold ${badgeStyles[badge]}`}
+              className={`absolute inset-e-2 top-2 rounded-full px-2 py-0.5 text-sm font-semibold ${badgeStyles[badge]}`}
             >
               {badgeLabels[badge]}
             </span>

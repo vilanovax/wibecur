@@ -32,7 +32,7 @@ export default function TopSavedThisWeek({
             href={`/lists/${list.slug}`}
             className="rounded-2xl overflow-hidden bg-white border border-wibe shadow-sm active:scale-[0.98] transition-transform"
           >
-            <div className="relative aspect-[4/3] bg-wibe-surface">
+            <div className="relative aspect-4/3 bg-wibe-surface">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}

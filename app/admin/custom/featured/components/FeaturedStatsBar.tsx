@@ -110,8 +110,8 @@ export default function FeaturedStatsBar({
   return (
     <section className="space-y-3" dir="rtl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-[var(--color-text-muted)]">
-          <span className="font-medium text-[var(--color-text)]">عملکرد هفته</span>
+        <p className="text-sm text-wibe-secondary">
+          <span className="font-medium text-(--color-text)">عملکرد هفته</span>
           {weekLabel ? ` · ${weekLabel}` : ''}
           {pastCount > 0 ? ` · ${pastCount.toLocaleString('fa-IR')} اسلات در تاریخچه` : ''}
         </p>
@@ -119,7 +119,7 @@ export default function FeaturedStatsBar({
           <button
             type="button"
             onClick={() => shiftWeek(-1)}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-(--color-border) hover:bg-(--color-bg)"
             aria-label="هفته قبل"
           >
             <ChevronRight className="size-4" strokeWidth={1.5} />
@@ -129,20 +129,20 @@ export default function FeaturedStatsBar({
             onClick={() =>
               setWeekStart(getMonday(new Date()).toISOString().slice(0, 10))
             }
-            className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] px-3 text-sm font-medium hover:bg-[var(--color-bg)]"
+            className="inline-flex min-h-11 items-center rounded-xl border border-(--color-border) px-3 text-sm font-medium hover:bg-(--color-bg)"
           >
             این هفته
           </button>
           <button
             type="button"
             onClick={() => shiftWeek(1)}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-(--color-border) hover:bg-(--color-bg)"
             aria-label="هفته بعد"
           >
             <ChevronLeft className="size-4" strokeWidth={1.5} />
           </button>
           {loading && (
-            <Loader2 className="w-4 h-4 animate-spin text-[var(--primary)]" />
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
           )}
         </div>
       </div>
@@ -151,13 +151,13 @@ export default function FeaturedStatsBar({
         {facts.map(({ icon: Icon, label, value }) => (
           <div
             key={label}
-            className="min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+            className="min-w-0 rounded-xl border border-(--color-border) bg-(--color-surface) p-4"
           >
-            <div className="mb-2 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+            <div className="mb-2 flex items-center gap-2 text-sm text-wibe-secondary">
               <Icon className="size-4 shrink-0" strokeWidth={1.5} />
               <span className="truncate">{label}</span>
             </div>
-            <p className="truncate text-lg font-bold leading-snug text-[var(--color-text)]" title={String(value)}>
+            <p className="truncate text-lg font-bold leading-snug text-(--color-text)" title={String(value)}>
               {value}
             </p>
           </div>
@@ -165,25 +165,25 @@ export default function FeaturedStatsBar({
       </div>
       {hasSignal && report ? (
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+          <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm text-wibe-secondary">
               <BarChart3 className="size-4" strokeWidth={1.5} />
               نرخ کلیک
             </div>
-            <p className="text-lg font-bold text-[var(--color-text)]">{pct(report.avgCTR * 100, 2)}</p>
+            <p className="text-lg font-bold text-(--color-text)">{pct(report.avgCTR * 100, 2)}</p>
           </div>
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+          <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm text-wibe-secondary">
               <Save className="size-4" strokeWidth={1.5} />
               رشد ذخیره
             </div>
-            <p className="text-lg font-bold text-[var(--color-text)]">
+            <p className="text-lg font-bold text-(--color-text)">
               {report.avgSaveLift != null ? pct(report.avgSaveLift) : 'هنوز نیست'}
             </p>
           </div>
         </div>
       ) : !loading ? (
-        <p className="text-sm leading-relaxed text-[var(--color-text-muted)]">
+        <p className="text-sm leading-relaxed text-wibe-secondary">
           برای این هفته هنوز نرخ کلیک یا رشد ذخیره‌ای ثبت نشده.
         </p>
       ) : null}

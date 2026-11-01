@@ -300,14 +300,14 @@ export default function UserListDetailClient({
                 fallbackClassName="absolute inset-0 h-full w-full"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/40 via-black/10 to-transparent" />
             </div>
 
             {isOwner && (
               <button
                 type="button"
                 onClick={() => setShowSettings(true)}
-                className="absolute end-3 top-3 flex size-11 items-center justify-center rounded-full bg-foreground/40 text-background backdrop-blur-sm transition-colors hover:bg-foreground/55"
+                className="absolute inset-e-3 top-3 flex size-11 items-center justify-center rounded-full bg-foreground/40 text-background backdrop-blur-sm transition-colors hover:bg-foreground/55"
                 aria-label="تنظیمات لیست"
               >
                 <Settings className="h-5 w-5" />
@@ -472,19 +472,19 @@ export default function UserListDetailClient({
                             }
                           }}
                           disabled={isDeleting}
-                          className="absolute end-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-destructive text-white disabled:opacity-50"
+                          className="absolute inset-e-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-destructive text-white disabled:opacity-50"
                           aria-label="حذف آیتم"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
 
-                      <span className="absolute start-2 top-2 z-10 inline-flex size-11 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                      <span className="absolute inset-s-2 top-2 z-10 inline-flex size-11 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                         {(index + 1).toLocaleString('fa-IR')}
                       </span>
 
                       <Link href={`/items/${item.id}`} className="block">
-                        <div className="relative aspect-[4/3] w-full bg-muted">
+                        <div className="relative aspect-4/3 w-full bg-muted">
                           {img ? (
                             <ImageWithFallback
                               src={img}
@@ -497,7 +497,7 @@ export default function UserListDetailClient({
                               📌
                             </div>
                           )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+                          <div className="absolute inset-0 bg-linear-to-t from-black/55 via-black/10 to-transparent" />
                           <div className="absolute inset-x-0 bottom-0 p-2 text-start text-background">
                             <h3 className="line-clamp-2 wibe-small font-semibold leading-snug drop-shadow-sm">
                               {item.title}
@@ -541,7 +541,7 @@ export default function UserListDetailClient({
                             }
                           }}
                           disabled={isDeleting}
-                          className="absolute end-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-destructive text-white disabled:opacity-50"
+                          className="absolute inset-e-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-destructive text-white disabled:opacity-50"
                           aria-label="حذف آیتم"
                         >
                           <Trash2 className="h-4 w-4" />

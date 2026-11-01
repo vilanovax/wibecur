@@ -64,19 +64,19 @@ export default function CommentDetailPanel({
   if (!comment) {
     return (
       <div
-        className={`rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)]/50 flex flex-col items-center justify-center min-h-[280px] lg:min-h-[calc(100vh-280px)] p-6 text-center ${className}`}
+        className={`rounded-2xl border border-dashed border-(--color-border) bg-(--color-bg)/50 flex flex-col items-center justify-center min-h-70 lg:min-h-[calc(100vh-280px)] p-6 text-center ${className}`}
         dir="rtl"
       >
-        <MessageSquare className="w-8 h-8 text-[var(--color-text-muted)] mb-3 opacity-60" />
-        <p className="text-sm text-[var(--color-text-muted)]">{emptyLabel}</p>
-        <p className="mt-3 flex items-center gap-1.5 text-xs text-[var(--color-text-subtle)]">
+        <MessageSquare className="w-8 h-8 text-wibe-secondary mb-3 opacity-60" />
+        <p className="text-sm text-wibe-secondary">{emptyLabel}</p>
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-(--color-text-subtle)">
           <Keyboard className="w-3 h-3" aria-hidden />
           <span>
-            <kbd className="px-1 rounded border border-[var(--color-border)] bg-[var(--color-surface)]">
+            <kbd className="px-1 rounded border border-(--color-border) bg-(--color-surface)">
               J
             </kbd>
             /
-            <kbd className="px-1 rounded border border-[var(--color-border)] bg-[var(--color-surface)]">
+            <kbd className="px-1 rounded border border-(--color-border) bg-(--color-surface)">
               K
             </kbd>{' '}
             برای جابه‌جایی
@@ -102,15 +102,15 @@ export default function CommentDetailPanel({
 
   return (
     <div
-      className={`rounded-xl border bg-[var(--color-surface)] flex flex-col min-h-[240px] lg:sticky lg:top-3 lg:max-h-[calc(100vh-5rem)] ${
+      className={`rounded-xl border bg-(--color-surface) flex flex-col min-h-60 lg:sticky lg:top-3 lg:max-h-[calc(100vh-5rem)] ${
         comment.isSeeded
           ? 'border-violet-200 bg-violet-50/30'
-          : 'border-[var(--color-border)]'
+          : 'border-(--color-border)'
       } ${className}`}
       dir="rtl"
     >
-      <div className="px-3 py-2.5 border-b border-[var(--color-border)] flex items-center justify-between gap-2 shrink-0">
-        <h2 className="text-sm font-semibold text-[var(--color-text)]">جزئیات</h2>
+      <div className="px-3 py-2.5 border-b border-(--color-border) flex items-center justify-between gap-2 shrink-0">
+        <h2 className="text-sm font-semibold text-(--color-text)">جزئیات</h2>
         <div className="flex flex-wrap items-center gap-1.5">
           {comment.isSeeded && (
             <span className="inline-flex rounded-full bg-violet-100 px-2 py-0.5 text-xs font-semibold text-violet-700">
@@ -158,7 +158,7 @@ export default function CommentDetailPanel({
           </div>
         )}
 
-        <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap bg-[var(--color-bg)] rounded-xl p-3 leading-relaxed">
+        <p className="text-sm text-(--color-text) whitespace-pre-wrap bg-(--color-bg) rounded-xl p-3 leading-relaxed">
           {displayContent}
         </p>
 
@@ -182,18 +182,18 @@ export default function CommentDetailPanel({
                 </>
               )}
             </div>
-            <p className="text-xs text-[var(--color-text-muted)] truncate">
+            <p className="text-xs text-wibe-secondary truncate">
               {comment.users.email}
             </p>
           </div>
         </div>
 
-        <div className="text-xs text-[var(--color-text-muted)] space-y-1">
+        <div className="text-xs text-wibe-secondary space-y-1">
           <p>
             آیتم:{' '}
             <Link
               href={`/admin/items?id=${comment.items.id}`}
-              className="text-[var(--primary)] hover:underline font-medium"
+              className="text-primary hover:underline font-medium"
             >
               {comment.items.title}
             </Link>
@@ -202,19 +202,19 @@ export default function CommentDetailPanel({
         </div>
 
         {reports && reports.length > 0 && (
-          <div className="pt-2 border-t border-[var(--color-border)]">
-            <h3 className="text-xs font-semibold text-[var(--color-text)] mb-2 flex items-center gap-1">
+          <div className="pt-2 border-t border-(--color-border)">
+            <h3 className="text-xs font-semibold text-(--color-text) mb-2 flex items-center gap-1">
               <Flag className="w-3.5 h-3.5 text-rose-500" />
               دلایل ریپورت ({reportCount ?? reports.length})
             </h3>
-            <ul className="space-y-2 max-h-[200px] overflow-y-auto">
+            <ul className="space-y-2 max-h-50 overflow-y-auto">
               {reports.map((r) => (
                 <li
                   key={r.id}
-                  className="text-xs rounded-lg bg-[var(--color-bg)] px-3 py-2 border border-[var(--color-border-muted)]"
+                  className="text-xs rounded-lg bg-(--color-bg) px-3 py-2 border border-(--color-border-muted)"
                 >
-                  <p className="text-[var(--color-text)]">{r.reason || 'بدون دلیل'}</p>
-                  <p className="text-[var(--color-text-muted)] mt-0.5">
+                  <p className="text-(--color-text)">{r.reason || 'بدون دلیل'}</p>
+                  <p className="text-wibe-secondary mt-0.5">
                     {r.users.name || r.users.email} · {formatRelativeTime(r.createdAt)}
                     {r.resolved && (
                       <span className="mr-1 text-emerald-600">· حل‌شده</span>
@@ -228,14 +228,14 @@ export default function CommentDetailPanel({
       </div>
 
       {!comment.deletedAt && (
-        <div className="p-2.5 border-t border-[var(--color-border)] flex flex-col gap-1.5 shrink-0 bg-[var(--color-surface)]">
+        <div className="p-2.5 border-t border-(--color-border) flex flex-col gap-1.5 shrink-0 bg-(--color-surface)">
           <div className="flex flex-wrap gap-1.5">
             {onDiscardReports && (
               <button
                 type="button"
                 onClick={() => onDiscardReports(comment.id)}
                 disabled={isActionBusy || !hasOpenReports}
-                className="flex-1 min-w-[96px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-border-muted)] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+                className="flex-1 min-w-24 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-(--color-border) bg-(--color-bg) text-sm font-medium text-(--color-text) hover:bg-(--color-border-muted) disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/35"
                 title="ریپورت اشتباه بود — بدون تغییر کامنت یا امتیاز منفی"
               >
                 <FlagOff className="w-4 h-4" />
@@ -247,7 +247,7 @@ export default function CommentDetailPanel({
                 type="button"
                 onClick={() => onApprove(comment.id)}
                 disabled={isActionBusy}
-                className="flex-1 min-w-[96px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+                className="flex-1 min-w-24 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
               >
                 <CheckCircle className="w-4 h-4" />
                 تایید
@@ -258,7 +258,7 @@ export default function CommentDetailPanel({
                 type="button"
                 onClick={() => onReject(comment.id)}
                 disabled={isActionBusy}
-                className={`flex-1 min-w-[96px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40 ${
+                className={`flex-1 min-w-24 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40 ${
                   canApprove
                     ? 'bg-rose-600 text-white hover:bg-rose-700'
                     : 'border border-rose-200 text-rose-700 hover:bg-rose-50'
@@ -272,7 +272,7 @@ export default function CommentDetailPanel({
               <button
                 type="button"
                 onClick={() => onEdit(comment)}
-                className="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm hover:bg-[var(--color-bg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+                className="px-3 py-2 rounded-xl border border-(--color-border) text-sm hover:bg-(--color-bg) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/35"
               >
                 ویرایش
               </button>
@@ -291,7 +291,7 @@ export default function CommentDetailPanel({
             <button
               type="button"
               onClick={() => onOpenFullDetail(comment)}
-              className="w-full flex items-center justify-center gap-2 py-1.5 rounded-lg border border-[var(--color-border)] text-xs text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+              className="w-full flex items-center justify-center gap-2 py-1.5 rounded-lg border border-(--color-border) text-xs text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/35"
             >
               <FileText className="w-3.5 h-3.5" />
               ویرایش / حذف کامل

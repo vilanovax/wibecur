@@ -15,7 +15,7 @@ const cells: Array<{
   accent: string;
   manageHref?: string;
 }> = [
-  { key: 'totalLists', filter: 'all', label: 'کل', icon: List, accent: 'text-[var(--primary)]' },
+  { key: 'totalLists', filter: 'all', label: 'کل', icon: List, accent: 'text-primary' },
   { key: 'risingLists', filter: 'rising', label: 'رشد', icon: TrendingUp, accent: 'text-emerald-600' },
   { key: 'lowEngagementLists', filter: 'low_engagement', label: 'کم‌تعامل', icon: AlertCircle, accent: 'text-amber-600' },
   { key: 'flaggedLists', filter: 'suspicious', label: 'ریسک', icon: ShieldAlert, accent: 'text-red-600' },
@@ -47,23 +47,23 @@ export default function ListPulseSummary({
               key={key}
               type={onFilterClick ? 'button' : undefined}
               onClick={onFilterClick ? () => onFilterClick(filter === 'all' ? 'all' : filter) : undefined}
-              className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl border min-w-[7rem] transition-all ${
+              className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl border min-w-28 transition-all ${
                 isActive
-                  ? 'border-[var(--primary)] bg-[var(--primary)]/8 shadow-sm ring-1 ring-[var(--primary)]/25'
-                  : 'border-[var(--color-border-muted)] bg-[var(--color-bg)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface)]'
+                  ? 'border-(--primary) bg-primary/8 shadow-sm ring-1 ring-(--primary)/25'
+                  : 'border-(--color-border-muted) bg-(--color-bg) hover:border-(--color-border) hover:bg-(--color-surface)'
               } ${onFilterClick ? 'cursor-pointer' : ''}`}
             >
-              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[var(--primary)]' : accent}`} />
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-primary' : accent}`} />
               <div className="text-right min-w-0">
-                <p className="text-[10px] font-medium text-[var(--color-text-muted)] leading-none">{label}</p>
-                <p className="text-base font-bold tabular-nums text-[var(--color-text)] leading-tight mt-0.5">
+                <p className="text-[10px] font-medium text-wibe-secondary leading-none">{label}</p>
+                <p className="text-base font-bold tabular-nums text-(--color-text) leading-tight mt-0.5">
                   {count.toLocaleString('fa-IR')}
                 </p>
               </div>
               {manageHref && count > 0 && (
                 <Link
                   href={manageHref}
-                  className="absolute -bottom-2 left-1 text-[9px] text-[var(--primary)] opacity-0 group-hover:opacity-100 hover:underline bg-[var(--color-surface)] px-1 rounded transition-opacity"
+                  className="absolute -bottom-2 left-1 text-[9px] text-primary opacity-0 group-hover:opacity-100 hover:underline bg-(--color-surface) px-1 rounded transition-opacity"
                   onClick={(e) => e.stopPropagation()}
                 >
                   اسلات
@@ -74,7 +74,7 @@ export default function ListPulseSummary({
         })}
       </div>
       {pulse.insightLine && (
-        <p className="text-xs text-[var(--color-text-muted)] px-0.5 truncate" title={pulse.insightLine}>
+        <p className="text-xs text-wibe-secondary px-0.5 truncate" title={pulse.insightLine}>
           {pulse.insightLine}
         </p>
       )}

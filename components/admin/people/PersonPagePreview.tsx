@@ -24,7 +24,7 @@ export default function PersonPagePreview({ data }: { data: PersonPageData }) {
         {/* پروفایل */}
         <section className="rounded-2xl border border-gray-200/80 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900 sm:p-5">
           <div className="flex items-start gap-4">
-            <div className="h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-violet-100 to-violet-50 ring-1 ring-violet-100 dark:from-violet-950/40 dark:to-violet-900/20 dark:ring-violet-900/40">
+            <div className="h-18 w-18 shrink-0 overflow-hidden rounded-2xl bg-linear-to-br from-violet-100 to-violet-50 ring-1 ring-violet-100 dark:from-violet-950/40 dark:to-violet-900/20 dark:ring-violet-900/40">
               {data.imageUrl ? (
                 <ImageWithFallback
                   src={data.imageUrl}
@@ -53,15 +53,15 @@ export default function PersonPagePreview({ data }: { data: PersonPageData }) {
                   </span>
                 )}
                 {data.bioIsStub && (
-                  <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-[var(--color-text-muted)] dark:bg-gray-800 dark:text-[var(--color-text-subtle)]">
+                  <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-wibe-secondary dark:bg-gray-800 dark:text-(--color-text-subtle)">
                     bio پیش‌فرض
                   </span>
                 )}
               </div>
-              <h1 className="mt-1.5 text-xl font-bold leading-tight text-[var(--color-text)] dark:text-white sm:text-2xl">
+              <h1 className="mt-1.5 text-xl font-bold leading-tight text-(--color-text) dark:text-white sm:text-2xl">
                 {data.displayName}
               </h1>
-              <p className="mt-1 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
+              <p className="mt-1 text-xs text-wibe-secondary dark:text-(--color-text-subtle)">
                 {data.items.length.toLocaleString('fa-IR')} آیتم در وایب
               </p>
               {data.externalUrl && (
@@ -81,7 +81,7 @@ export default function PersonPagePreview({ data }: { data: PersonPageData }) {
           {data.bio && (
             <p
               className={`mt-4 border-t border-gray-100 pt-4 text-right text-sm leading-[1.85] whitespace-pre-line dark:border-gray-800 ${
-                data.bioIsStub ? 'text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]' : 'text-[var(--color-text)] dark:text-gray-200'
+                data.bioIsStub ? 'text-wibe-secondary dark:text-(--color-text-subtle)' : 'text-(--color-text) dark:text-gray-200'
               }`}
             >
               {data.bio}
@@ -92,9 +92,9 @@ export default function PersonPagePreview({ data }: { data: PersonPageData }) {
         {/* آیتم‌ها */}
         <section className="mt-5">
           <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-[var(--color-text)] dark:text-white">آیتم‌ها در وایب</h2>
+            <h2 className="text-sm font-semibold text-(--color-text) dark:text-white">آیتم‌ها در وایب</h2>
             {hiddenCount > 0 && (
-              <span className="text-[11px] text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
+              <span className="text-[11px] text-wibe-secondary dark:text-(--color-text-subtle)">
                 +{hiddenCount.toLocaleString('fa-IR')} آیتم دیگر
               </span>
             )}
@@ -102,7 +102,7 @@ export default function PersonPagePreview({ data }: { data: PersonPageData }) {
 
           {visibleItems.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center dark:border-gray-700 dark:bg-gray-900">
-              <p className="text-sm text-[var(--color-text-muted)]">آیتمی برای این نام پیدا نشد</p>
+              <p className="text-sm text-wibe-secondary">آیتمی برای این نام پیدا نشد</p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 sm:gap-3 lg:grid-cols-5">
@@ -115,7 +115,7 @@ export default function PersonPagePreview({ data }: { data: PersonPageData }) {
                     target="_blank"
                     className="group overflow-hidden rounded-lg border border-gray-200/80 bg-white shadow-sm transition hover:border-violet-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-900 dark:hover:border-violet-800"
                   >
-                    <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+                    <div className="relative aspect-2/3 w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
                       <LazyItemCoverImage
                         itemId={item.id}
                         title={item.title}
@@ -127,7 +127,7 @@ export default function PersonPagePreview({ data }: { data: PersonPageData }) {
                         coverLayout="default"
                       />
                       <div
-                        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"
+                        className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/75 via-transparent to-transparent"
                         aria-hidden
                       />
                       <div className="absolute inset-x-0 bottom-0 p-2">

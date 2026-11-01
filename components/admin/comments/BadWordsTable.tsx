@@ -32,17 +32,17 @@ export default function BadWordsTable({
   onDelete,
 }: Props) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-      <table className="w-full min-w-[520px]" dir="rtl">
-        <thead className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
+    <div className="overflow-x-auto rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-sm">
+      <table className="w-full min-w-130" dir="rtl">
+        <thead className="bg-(--color-bg) border-b border-(--color-border)">
           <tr>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary">
               کلمه
             </th>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)] w-28">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary w-28">
               فیلتر شده
             </th>
-            <th className="px-3 py-2.5 text-left text-xs font-semibold text-[var(--color-text-muted)] w-28">
+            <th className="px-3 py-2.5 text-left text-xs font-semibold text-wibe-secondary w-28">
               عملیات
             </th>
           </tr>
@@ -54,10 +54,10 @@ export default function BadWordsTable({
             return (
               <tr
                 key={word.id}
-                className={`border-b border-[var(--color-border-muted)] transition-colors ${
+                className={`border-b border-(--color-border-muted) transition-colors ${
                   hasHits
                     ? 'border-r-4 border-r-amber-500 bg-amber-50/40 dark:bg-amber-900/20'
-                    : 'hover:bg-[var(--color-bg)]'
+                    : 'hover:bg-(--color-bg)'
                 }`}
               >
                 <td className="px-3 py-2.5">
@@ -66,11 +66,11 @@ export default function BadWordsTable({
                       type="text"
                       value={editedWord}
                       onChange={(e) => onEditedWordChange(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-sm rounded-lg border border-[var(--color-border)] focus:ring-2 focus:ring-[var(--primary)]/30"
+                      className="w-full px-2.5 py-1.5 text-sm rounded-lg border border-(--color-border) focus:ring-2 focus:ring-(--primary)/30"
                       autoFocus
                     />
                   ) : (
-                    <span className="text-sm font-medium text-[var(--color-text)]">
+                    <span className="text-sm font-medium text-(--color-text)">
                       {word.word}
                     </span>
                   )}
@@ -80,7 +80,7 @@ export default function BadWordsTable({
                     className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium tabular-nums ${
                       hasHits
                         ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300'
-                        : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
+                        : 'bg-(--color-bg) text-wibe-secondary'
                     }`}
                   >
                     {word.filteredCount.toLocaleString('fa-IR')}
@@ -101,7 +101,7 @@ export default function BadWordsTable({
                         <button
                           type="button"
                           onClick={onCancelEdit}
-                          className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                          className="p-1.5 rounded-lg text-wibe-secondary hover:bg-(--color-bg)"
                           title="انصراف"
                         >
                           <XCircle className="w-4 h-4" />
@@ -112,7 +112,7 @@ export default function BadWordsTable({
                         <button
                           type="button"
                           onClick={() => onEdit(word)}
-                          className="p-1.5 rounded-lg text-[var(--primary)] hover:bg-[var(--primary)]/10"
+                          className="p-1.5 rounded-lg text-primary hover:bg-primary/10"
                           title="ویرایش"
                         >
                           <Edit2 className="w-4 h-4" />

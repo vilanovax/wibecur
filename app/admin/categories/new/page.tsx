@@ -195,15 +195,15 @@ export default function NewCategoryPage() {
   };
 
   const sectionCard =
-    'rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden';
+    'rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-sm overflow-hidden';
 
   return (
     <div className="max-w-5xl" dir="rtl">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-[var(--color-text)]">دسته‌بندی جدید</h1>
+        <h1 className="text-2xl font-bold text-(--color-text)">دسته‌بندی جدید</h1>
         <Link
           href="/admin/categories"
-          className="inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-sm"
+          className="inline-flex items-center gap-2 text-wibe-secondary hover:text-(--color-text) text-sm"
         >
           <ChevronRight className="w-4 h-4" />
           بازگشت
@@ -235,8 +235,8 @@ export default function NewCategoryPage() {
 
           {step === 1 && (
             <section className={sectionCard}>
-              <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-                <h2 className="font-semibold text-[var(--color-text)]">هویت دسته</h2>
+              <div className="px-5 py-4 border-b border-(--color-border) bg-(--color-bg)">
+                <h2 className="font-semibold text-(--color-text)">هویت دسته</h2>
               </div>
               <div className="p-5">
                 <CategoryFormIdentity
@@ -264,8 +264,8 @@ export default function NewCategoryPage() {
 
           {step === 2 && (
             <section className={sectionCard}>
-              <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-                <h2 className="font-semibold text-[var(--color-text)]">ظاهر صفحه دسته در اپ</h2>
+              <div className="px-5 py-4 border-b border-(--color-border) bg-(--color-bg)">
+                <h2 className="font-semibold text-(--color-text)">ظاهر صفحه دسته در اپ</h2>
               </div>
               <div className="p-5">
                 <CategoryPageAppearanceFields
@@ -280,7 +280,7 @@ export default function NewCategoryPage() {
                 {!formData.accentColor && (
                   <button
                     type="button"
-                    className="mt-3 text-sm text-[var(--primary)] hover:underline"
+                    className="mt-3 text-sm text-primary hover:underline"
                     onClick={() => setFormData((p) => ({ ...p, accentColor: p.color }))}
                   >
                     کپی رنگ اصلی به رنگ تاکید
@@ -292,9 +292,9 @@ export default function NewCategoryPage() {
 
           {step === 3 && (
             <section className={sectionCard}>
-              <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-                <h2 className="font-semibold text-[var(--color-text)]">بررسی و انتشار</h2>
-                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+              <div className="px-5 py-4 border-b border-(--color-border) bg-(--color-bg)">
+                <h2 className="font-semibold text-(--color-text)">بررسی و انتشار</h2>
+                <p className="text-xs text-wibe-secondary mt-0.5">
                   پیش‌فرض: پیش‌نویس — بعد از تکمیل hero می‌توانید فعال کنید
                 </p>
               </div>
@@ -306,7 +306,7 @@ export default function NewCategoryPage() {
                 />
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-[var(--color-text)]">نوع ذخیره</p>
+                  <p className="text-sm font-medium text-(--color-text)">نوع ذخیره</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button
                       type="button"
@@ -314,11 +314,11 @@ export default function NewCategoryPage() {
                       className={`rounded-xl border p-4 text-right transition-colors ${
                         !formData.isActive
                           ? 'border-amber-400 bg-amber-50/80 dark:bg-amber-900/20 ring-1 ring-amber-400/50'
-                          : 'border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                          : 'border-(--color-border) hover:bg-(--color-bg)'
                       }`}
                     >
-                      <p className="text-sm font-semibold text-[var(--color-text)]">پیش‌نویس</p>
-                      <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                      <p className="text-sm font-semibold text-(--color-text)">پیش‌نویس</p>
+                      <p className="text-xs text-wibe-secondary mt-1">
                         غیرفعال — فقط در پنل ادمین دیده می‌شود
                       </p>
                     </button>
@@ -328,11 +328,11 @@ export default function NewCategoryPage() {
                       className={`rounded-xl border p-4 text-right transition-colors ${
                         formData.isActive
                           ? 'border-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/20 ring-1 ring-emerald-400/50'
-                          : 'border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                          : 'border-(--color-border) hover:bg-(--color-bg)'
                       }`}
                     >
-                      <p className="text-sm font-semibold text-[var(--color-text)]">انتشار در اپ</p>
-                      <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                      <p className="text-sm font-semibold text-(--color-text)">انتشار در اپ</p>
+                      <p className="text-xs text-wibe-secondary mt-1">
                         فعال — بلافاصله برای کاربران نمایش داده می‌شود
                       </p>
                     </button>
@@ -341,14 +341,14 @@ export default function NewCategoryPage() {
 
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <label htmlFor="order" className="block text-sm font-medium text-[var(--color-text)]">
+                    <label htmlFor="order" className="block text-sm font-medium text-(--color-text)">
                       ترتیب نمایش
                     </label>
                     {suggestedOrder !== null && (
                       <button
                         type="button"
                         onClick={handleResetOrderAuto}
-                        className="inline-flex items-center gap-1 text-xs text-[var(--primary)] hover:underline"
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
                       >
                         <RefreshCw className="w-3 h-3" />
                         {orderAuto ? 'ویرایش دستی' : `بازگشت به ${suggestedOrder.toLocaleString('fa-IR')} (خودکار)`}
@@ -363,19 +363,19 @@ export default function NewCategoryPage() {
                     onChange={handleChange}
                     min={0}
                     readOnly={orderAuto}
-                    className={`w-full max-w-[120px] px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] focus:ring-2 focus:ring-[var(--primary)] ${
-                      orderAuto ? 'bg-[var(--color-bg)] cursor-default' : ''
+                    className={`w-full max-w-30 px-3 py-2 rounded-xl border border-(--color-border) bg-(--color-surface) focus:ring-2 focus:ring-(--primary) ${
+                      orderAuto ? 'bg-(--color-bg) cursor-default' : ''
                     }`}
                   />
-                  <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                  <p className="text-xs text-wibe-secondary mt-1">
                     {orderAuto && suggestedOrder !== null
                       ? `پیشنهاد خودکار: ${suggestedOrder.toLocaleString('fa-IR')} (آخر لیست)`
                       : 'عدد کوچکتر = نمایش زودتر'}
                   </p>
                 </div>
 
-                <details className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/50">
-                  <summary className="px-4 py-3 text-sm font-medium text-[var(--color-text)] cursor-pointer">
+                <details className="rounded-xl border border-(--color-border) bg-(--color-bg)/50">
+                  <summary className="px-4 py-3 text-sm font-medium text-(--color-text) cursor-pointer">
                     وزن الگوریتمی (پیشرفته)
                   </summary>
                   <div className="px-4 pb-4">
@@ -390,12 +390,12 @@ export default function NewCategoryPage() {
             </section>
           )}
 
-          <div className="flex gap-3 sticky bottom-4 bg-[var(--color-surface)]/95 backdrop-blur p-3 rounded-xl border border-[var(--color-border)] shadow-lg z-10">
+          <div className="flex gap-3 sticky bottom-4 bg-(--color-surface)/95 backdrop-blur p-3 rounded-xl border border-(--color-border) shadow-lg z-10">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={goPrev}
-                className="inline-flex items-center gap-1 px-4 py-3 rounded-xl border border-[var(--color-border)] text-[var(--color-text)] font-medium hover:bg-[var(--color-bg)]"
+                className="inline-flex items-center gap-1 px-4 py-3 rounded-xl border border-(--color-border) text-(--color-text) font-medium hover:bg-(--color-bg)"
               >
                 <ChevronRight className="w-4 h-4" />
                 قبلی
@@ -403,7 +403,7 @@ export default function NewCategoryPage() {
             ) : (
               <Link
                 href="/admin/categories"
-                className="px-4 py-3 rounded-xl border border-[var(--color-border)] text-[var(--color-text)] font-medium hover:bg-[var(--color-bg)]"
+                className="px-4 py-3 rounded-xl border border-(--color-border) text-(--color-text) font-medium hover:bg-(--color-bg)"
               >
                 انصراف
               </Link>
@@ -416,7 +416,7 @@ export default function NewCategoryPage() {
                 type="button"
                 onClick={goNext}
                 disabled={step === 1 && !step1Valid}
-                className="inline-flex items-center gap-1 px-6 py-3 rounded-xl bg-[var(--primary)] text-white font-medium hover:opacity-90 disabled:opacity-50"
+                className="inline-flex items-center gap-1 px-6 py-3 rounded-xl bg-primary text-white font-medium hover:opacity-90 disabled:opacity-50"
               >
                 بعدی
                 <ChevronLeft className="w-4 h-4" />
@@ -426,7 +426,7 @@ export default function NewCategoryPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading || !canSubmit}
-                className="px-6 py-3 rounded-xl bg-[var(--primary)] text-white font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 rounded-xl bg-primary text-white font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading
                   ? 'در حال ذخیره...'

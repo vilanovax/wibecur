@@ -243,7 +243,7 @@ export default function PulseDashboardClient({
               {trendingLists.length === 0 ? (
                 <p className="text-admin-text-tertiary text-xs">داده‌ای نیست</p>
               ) : (
-                <ul className="space-y-0.5 max-h-[280px] overflow-y-auto">
+                <ul className="space-y-0.5 max-h-70 overflow-y-auto">
                   {trendingLists.map((t) => (
                     <li key={t.listId}>
                       <Link
@@ -272,7 +272,7 @@ export default function PulseDashboardClient({
               {categories.length === 0 ? (
                 <p className="text-admin-text-tertiary text-xs">داده‌ای نیست</p>
               ) : (
-                <div className="space-y-2 max-h-[280px] overflow-y-auto">
+                <div className="space-y-2 max-h-70 overflow-y-auto">
                   {categories.slice(0, 8).map((cat) => (
                     <div key={cat.id}>
                       <div className="flex justify-between text-xs mb-0.5">

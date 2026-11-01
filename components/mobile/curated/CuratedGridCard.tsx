@@ -25,7 +25,7 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
       href={`/lists/${list.slug}`}
       className="group block overflow-hidden rounded-lg border border-wibe bg-wibe-card shadow-sm transition-[colors,transform] active:scale-[0.99] lg:rounded-xl lg:hover:border-primary/20 lg:hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-wibe-surface lg:aspect-[16/10] lg:max-h-[200px]">
+      <div className="relative aspect-4/3 w-full overflow-hidden bg-wibe-surface lg:aspect-16/10 lg:max-h-50">
         <ListCoverImage
           coverImage={list.coverUrl}
           title={list.title}
@@ -42,7 +42,7 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
             {BADGE_LABELS[topBadge] ?? topBadge}
           </span>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/75 via-transparent to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3">
           <h3 className="mb-1 line-clamp-2 wibe-small font-semibold text-white lg:text-base lg:font-bold">
             {list.title}

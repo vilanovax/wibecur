@@ -35,10 +35,10 @@ export default function WeeklyViralSection({
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex-shrink-0 w-[72vw] max-w-[300px] snap-start"
+            className="shrink-0 w-[72vw] max-w-75 snap-start"
           >
             <div className="rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 shadow-xl active:scale-[0.98] transition-transform">
-              <div className="relative aspect-[4/3] bg-gray-800">
+              <div className="relative aspect-4/3 bg-gray-800">
                 {list.coverImage ? (
                   <ImageWithFallback
                     src={list.coverImage}
@@ -55,7 +55,7 @@ export default function WeeklyViralSection({
                     🎬
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
                 {(list.badge === 'viral' || list.badge === 'hot' || i < 2) && (
                   <span
                     className={`absolute top-2 right-2 text-white text-xs px-2.5 py-1 rounded-lg font-bold ${

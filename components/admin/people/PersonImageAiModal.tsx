@@ -299,15 +299,15 @@ export default function PersonImageAiModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-2 sm:items-center sm:p-4">
-      <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl">
-        <header className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] px-4 py-3 sm:px-5">
+      <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-2xl">
+        <header className="flex items-start justify-between gap-3 border-b border-(--color-border) px-4 py-3 sm:px-5">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
               <ImageIcon className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="font-bold text-[var(--color-text)]">تصاویر اشخاص — AI و import</h2>
-              <p className="text-xs text-[var(--color-text-muted)]">
+              <h2 className="font-bold text-(--color-text)">تصاویر اشخاص — AI و import</h2>
+              <p className="text-xs text-wibe-secondary">
                 لیست → پرامپت AI → JSON → آپلود به ParsPack
               </p>
             </div>
@@ -316,14 +316,14 @@ export default function PersonImageAiModal({
             type="button"
             onClick={handleClose}
             disabled={importing}
-            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] disabled:opacity-40"
+            className="rounded-lg p-1.5 text-wibe-secondary hover:bg-(--color-bg) disabled:opacity-40"
             aria-label="بستن"
           >
             <X className="h-5 w-5" />
           </button>
         </header>
 
-        <div className="flex flex-wrap items-center gap-2 border-b border-[var(--color-border)] px-4 py-2 sm:px-5">
+        <div className="flex flex-wrap items-center gap-2 border-b border-(--color-border) px-4 py-2 sm:px-5">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -333,7 +333,7 @@ export default function PersonImageAiModal({
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                 tab === id
                   ? 'bg-violet-600 text-white'
-                  : 'border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+                  : 'border border-(--color-border) text-wibe-secondary hover:bg-(--color-bg)'
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -349,7 +349,7 @@ export default function PersonImageAiModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 py-16 text-sm text-[var(--color-text-muted)]">
+            <div className="flex items-center justify-center gap-2 py-16 text-sm text-wibe-secondary">
               <Loader2 className="h-5 w-5 animate-spin" />
               در حال بارگذاری لیست…
             </div>
@@ -359,8 +359,8 @@ export default function PersonImageAiModal({
             </div>
           ) : tab === 'names' ? (
             <div className="space-y-3">
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/60 px-3 py-2.5 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                <strong className="text-[var(--color-text)]">مرحله ۱:</strong> لیست را کپی کنید و به
+              <div className="rounded-xl border border-(--color-border) bg-(--color-bg)/60 px-3 py-2.5 text-xs leading-relaxed text-wibe-secondary">
+                <strong className="text-(--color-text)">مرحله ۱:</strong> لیست را کپی کنید و به
                 AI بدهید. خروجی JSON را در تب «ورود JSON» بچسبانید.
               </div>
 
@@ -379,7 +379,7 @@ export default function PersonImageAiModal({
                     className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                       nameListFilter === id
                         ? 'bg-violet-600 text-white'
-                        : 'border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+                        : 'border border-(--color-border) text-wibe-secondary hover:bg-(--color-bg)'
                     }`}
                   >
                     {label}
@@ -387,14 +387,14 @@ export default function PersonImageAiModal({
                       className={`rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${
                         nameListFilter === id
                           ? 'bg-white/20 text-white'
-                          : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
+                          : 'bg-(--color-bg) text-wibe-secondary'
                       }`}
                     >
                       {count.toLocaleString('fa-IR')}
                     </span>
                   </button>
                 ))}
-                <span className="text-[11px] text-[var(--color-text-muted)]">
+                <span className="text-[11px] text-wibe-secondary">
                   استوریج: {imageCounts.storage.toLocaleString('fa-IR')} · خارجی:{' '}
                   {imageCounts.external.toLocaleString('fa-IR')}
                 </span>
@@ -405,7 +405,7 @@ export default function PersonImageAiModal({
                 value={nameList}
                 rows={16}
                 dir="rtl"
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm leading-relaxed"
+                className="w-full rounded-xl border border-(--color-border) bg-(--color-bg) px-3 py-2.5 text-sm leading-relaxed"
               />
               <button
                 type="button"
@@ -419,8 +419,8 @@ export default function PersonImageAiModal({
             </div>
           ) : tab === 'prompt' ? (
             <div className="space-y-3">
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/60 px-3 py-2.5 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                <strong className="text-[var(--color-text)]">مرحله ۲:</strong> پرامپت کامل با role،
+              <div className="rounded-xl border border-(--color-border) bg-(--color-bg)/60 px-3 py-2.5 text-xs leading-relaxed text-wibe-secondary">
+                <strong className="text-(--color-text)">مرحله ۲:</strong> پرامپت کامل با role،
                 slug و schema — مستقیم در ChatGPT/Claude/Gemini.
               </div>
               <textarea
@@ -428,7 +428,7 @@ export default function PersonImageAiModal({
                 value={prompt}
                 rows={16}
                 dir="ltr"
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 font-mono text-xs leading-relaxed"
+                className="w-full rounded-xl border border-(--color-border) bg-(--color-bg) px-3 py-2.5 font-mono text-xs leading-relaxed"
               />
               <button
                 type="button"
@@ -441,20 +441,20 @@ export default function PersonImageAiModal({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/60 px-3 py-2.5 text-xs leading-relaxed text-[var(--color-text-muted)]">
-                <strong className="text-[var(--color-text)]">مرحله ۳:</strong> JSON خروجی AI را
+              <div className="rounded-xl border border-(--color-border) bg-(--color-bg)/60 px-3 py-2.5 text-xs leading-relaxed text-wibe-secondary">
+                <strong className="text-(--color-text)">مرحله ۳:</strong> JSON خروجی AI را
                 بچسبانید. هر تصویر دانلود و روی ParsPack ذخیره می‌شود.
               </div>
 
-              <div className="grid min-h-[320px] gap-4 lg:grid-cols-2">
+              <div className="grid min-h-80 gap-4 lg:grid-cols-2">
                 <div className="flex min-h-0 flex-col order-2 lg:order-1">
                   <div className="mb-2 flex items-center justify-between gap-2">
-                    <label className="text-xs font-semibold text-[var(--color-text-muted)]">JSON</label>
+                    <label className="text-xs font-semibold text-wibe-secondary">JSON</label>
                     <button
                       type="button"
                       onClick={() => setJson(JSON.stringify(PERSON_IMAGE_JSON_EXAMPLE, null, 2))}
                       disabled={importing}
-                      className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-2 py-1 text-[11px] font-medium hover:bg-[var(--color-bg)] disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded-lg border border-(--color-border) px-2 py-1 text-[11px] font-medium hover:bg-(--color-bg) disabled:opacity-50"
                     >
                       <ClipboardPaste className="h-3 w-3" />
                       نمونه
@@ -467,7 +467,7 @@ export default function PersonImageAiModal({
                     spellCheck={false}
                     disabled={importing}
                     placeholder={JSON.stringify(PERSON_IMAGE_JSON_EXAMPLE, null, 2)}
-                    className="min-h-[260px] flex-1 resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 font-mono text-xs leading-relaxed focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 disabled:opacity-60"
+                    className="min-h-65 flex-1 resize-none rounded-xl border border-(--color-border) bg-(--color-bg) px-3 py-2.5 font-mono text-xs leading-relaxed focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 disabled:opacity-60"
                   />
                   {parseState.status === 'valid' ? (
                     <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
@@ -480,17 +480,17 @@ export default function PersonImageAiModal({
                       {parseState.error}
                     </span>
                   ) : (
-                    <p className="mt-2 text-[11px] text-[var(--color-text-muted)]">
+                    <p className="mt-2 text-[11px] text-wibe-secondary">
                       ساختار:{' '}
-                      <code dir="ltr" className="rounded bg-[var(--color-bg)] px-1">
+                      <code dir="ltr" className="rounded bg-(--color-bg) px-1">
                         {'{ "people": [{ role, slug, displayName, imageUrl }] }'}
                       </code>
                     </p>
                   )}
                 </div>
 
-                <div className="flex min-h-0 flex-col rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/40 p-3 order-1 lg:order-2">
-                  <p className="mb-3 text-xs font-semibold text-[var(--color-text-muted)]">پیش‌نمایش</p>
+                <div className="flex min-h-0 flex-col rounded-xl border border-(--color-border) bg-(--color-bg)/40 p-3 order-1 lg:order-2">
+                  <p className="mb-3 text-xs font-semibold text-wibe-secondary">پیش‌نمایش</p>
                   {parseState.status === 'valid' && selectedPerson ? (
                     <>
                       {parseState.people.length > 1 && (
@@ -507,7 +507,7 @@ export default function PersonImageAiModal({
                                 className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                                   selectedIndex === index
                                     ? 'bg-violet-600 text-white'
-                                    : 'border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)]'
+                                    : 'border border-(--color-border) bg-(--color-surface) text-wibe-secondary'
                                 }`}
                               >
                                 {status === 'running' && (
@@ -526,7 +526,7 @@ export default function PersonImageAiModal({
                         </div>
                       )}
                       <div className="flex flex-col items-center gap-3 py-2">
-                        <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-[var(--color-surface)] shadow-md">
+                        <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-(--color-surface) shadow-md">
                           <ImageWithFallback
                             src={selectedPerson.imageUrl}
                             alt={selectedPerson.displayName}
@@ -540,10 +540,10 @@ export default function PersonImageAiModal({
                           )}
                         </div>
                         <div className="text-center">
-                          <p className="font-semibold text-[var(--color-text)]">
+                          <p className="font-semibold text-(--color-text)">
                             {selectedPerson.displayName}
                           </p>
-                          <p className="text-xs text-[var(--color-text-muted)]" dir="ltr">
+                          <p className="text-xs text-wibe-secondary" dir="ltr">
                             {selectedPerson.role} / {selectedPerson.slug}
                           </p>
                         </div>
@@ -562,7 +562,7 @@ export default function PersonImageAiModal({
                                 className={`relative aspect-square overflow-hidden rounded-xl border-2 transition-all ${
                                   selectedIndex === index
                                     ? 'border-violet-500 ring-2 ring-violet-500/20'
-                                    : 'border-transparent hover:border-[var(--color-border)]'
+                                    : 'border-transparent hover:border-(--color-border)'
                                 }`}
                               >
                                 <ImageWithFallback
@@ -594,11 +594,11 @@ export default function PersonImageAiModal({
                     </>
                   ) : (
                     <div className="flex flex-1 flex-col items-center justify-center px-4 py-8 text-center">
-                      <FileJson className="mb-3 h-10 w-10 text-[var(--color-text-muted)] opacity-40" />
-                      <p className="text-sm font-medium text-[var(--color-text)]">
+                      <FileJson className="mb-3 h-10 w-10 text-wibe-secondary opacity-40" />
+                      <p className="text-sm font-medium text-(--color-text)">
                         JSON معتبر را بچسبانید
                       </p>
-                      <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      <p className="mt-1 text-xs text-wibe-secondary">
                         پس از import، تصاویر دانلود و روی ParsPack ذخیره می‌شوند.
                       </p>
                     </div>
@@ -633,27 +633,27 @@ export default function PersonImageAiModal({
         </div>
 
         {importProgress && importing && (
-          <div className="border-t border-[var(--color-border)] bg-[var(--color-bg)]/80 px-4 py-3 sm:px-5">
+          <div className="border-t border-(--color-border) bg-(--color-bg)/80 px-4 py-3 sm:px-5">
             <div className="mb-2 flex items-center justify-between gap-2 text-xs">
-              <span className="font-medium text-[var(--color-text)]">
+              <span className="font-medium text-(--color-text)">
                 آپلود به ParsPack — {importProgress.done.toLocaleString('fa-IR')} /{' '}
                 {importProgress.total.toLocaleString('fa-IR')}
               </span>
-              <span className="tabular-nums text-[var(--color-text-muted)]">{progressPercent}%</span>
+              <span className="tabular-nums text-wibe-secondary">{progressPercent}%</span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-[var(--color-border)]">
+            <div className="h-2.5 overflow-hidden rounded-full bg-(--color-border)">
               <div
-                className="h-full rounded-full bg-gradient-to-l from-violet-600 to-violet-400 transition-all duration-300"
+                className="h-full rounded-full bg-linear-to-l from-violet-600 to-violet-400 transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
             {importProgress.currentName && (
-              <p className="mt-2 truncate text-xs text-[var(--color-text-muted)]">
+              <p className="mt-2 truncate text-xs text-wibe-secondary">
                 {importProgress.phase === 'tmdb' ? 'جستجو در TMDB و آپلود: ' : 'در حال پردازش: '}
                 {importProgress.currentName}
               </p>
             )}
-            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--color-text-muted)]">
+            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-wibe-secondary">
               <span className="text-emerald-700 dark:text-emerald-300">
                 ✓ {importProgress.uploaded.toLocaleString('fa-IR')} موفق
               </span>
@@ -666,12 +666,12 @@ export default function PersonImageAiModal({
           </div>
         )}
 
-        <footer className="flex flex-col-reverse gap-2 border-t border-[var(--color-border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <footer className="flex flex-col-reverse gap-2 border-t border-(--color-border) px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <button
             type="button"
             onClick={handleClose}
             disabled={importing}
-            className="rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm font-medium hover:bg-[var(--color-bg)] disabled:opacity-50"
+            className="rounded-xl border border-(--color-border) px-4 py-2.5 text-sm font-medium hover:bg-(--color-bg) disabled:opacity-50"
           >
             {importSummary ? 'بستن' : 'انصراف'}
           </button>

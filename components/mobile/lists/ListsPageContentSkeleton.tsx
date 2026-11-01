@@ -40,7 +40,7 @@ export default function ListsPageContentSkeleton() {
                 key={i}
                 className={`overflow-hidden bg-popover p-0 ${i > 4 ? 'max-lg:hidden' : ''}`}
               >
-                <Skeleton className="aspect-[5/4] w-full rounded-none lg:aspect-video" />
+                <Skeleton className="aspect-5/4 w-full rounded-none lg:aspect-video" />
               </Card>
             ))}
           </div>

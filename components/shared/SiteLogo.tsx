@@ -17,11 +17,11 @@ type SiteLogoProps = {
 };
 
 const VARIANT_CLASS: Record<NonNullable<SiteLogoProps['variant']>, string> = {
-  header: 'h-8 max-w-[120px]',
-  nav: 'h-9 max-w-[140px]',
-  admin: 'h-8 max-w-[128px]',
+  header: 'h-8 max-w-30',
+  nav: 'h-9 max-w-35',
+  admin: 'h-8 max-w-32',
   adminCompact: 'h-8 w-8',
-  auth: 'h-12 max-w-[180px]',
+  auth: 'h-12 max-w-45',
 };
 
 export default function SiteLogo({

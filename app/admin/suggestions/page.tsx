@@ -19,7 +19,7 @@ export default async function SuggestionsPage({
 
   return (
     <div className="space-y-5">
-      <header className="rounded-2xl border border-violet-100 dark:border-violet-800/40 bg-gradient-to-l from-violet-600 to-indigo-600 px-5 py-5 text-white shadow-sm md:px-6">
+      <header className="rounded-2xl border border-violet-100 dark:border-violet-800/40 bg-linear-to-l from-violet-600 to-indigo-600 px-5 py-5 text-white shadow-sm md:px-6">
         <h1 className="text-xl font-bold md:text-2xl">پیشنهادها</h1>
         <p className="mt-1 text-sm text-white/75">
           بررسی پیشنهاد لیست، فرم آیتم، و پیشنهاد سریع کاربران

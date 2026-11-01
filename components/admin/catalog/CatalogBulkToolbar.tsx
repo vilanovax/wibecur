@@ -215,7 +215,7 @@ export default function CatalogBulkToolbar({
                         type="button"
                         onClick={() => openAction(action)}
                         className={`flex w-full items-center gap-2 px-3 py-2.5 text-sm text-right hover:bg-gray-50 ${
-                          item.variant === 'danger' ? 'text-red-700' : 'text-[var(--color-text)]'
+                          item.variant === 'danger' ? 'text-red-700' : 'text-(--color-text)'
                         }`}
                       >
                         {ACTION_ICONS[action]}
@@ -247,13 +247,13 @@ export default function CatalogBulkToolbar({
             role="dialog"
             aria-modal="true"
           >
-            <h2 className="text-lg font-semibold text-[var(--color-text)] mb-2">{meta.label}</h2>
-            <p className="text-sm text-[var(--color-text-muted)] mb-2">{meta.description}</p>
-            <p className="text-sm font-semibold text-[var(--color-text)] mb-4 truncate">{previewTitle}</p>
+            <h2 className="text-lg font-semibold text-(--color-text) mb-2">{meta.label}</h2>
+            <p className="text-sm text-wibe-secondary mb-2">{meta.description}</p>
+            <p className="text-sm font-semibold text-(--color-text) mb-4 truncate">{previewTitle}</p>
 
             {pending.needsSourceList && (
               <label className="block mb-3">
-                <span className="text-xs font-medium text-[var(--color-text-muted)] mb-1 block">لیست مبدأ</span>
+                <span className="text-xs font-medium text-wibe-secondary mb-1 block">لیست مبدأ</span>
                 <select
                   value={sourceListId}
                   onChange={(e) => setSourceListId(e.target.value)}
@@ -272,7 +272,7 @@ export default function CatalogBulkToolbar({
 
             {pending.needsTargetList && (
               <label className="block mb-3">
-                <span className="text-xs font-medium text-[var(--color-text-muted)] mb-1 block">لیست مقصد</span>
+                <span className="text-xs font-medium text-wibe-secondary mb-1 block">لیست مقصد</span>
                 <select
                   value={targetListId}
                   onChange={(e) => setTargetListId(e.target.value)}
@@ -291,7 +291,7 @@ export default function CatalogBulkToolbar({
               </label>
             )}
 
-            <p className="text-xs text-[var(--color-text-muted)] mb-5">
+            <p className="text-xs text-wibe-secondary mb-5">
               {count.toLocaleString('fa-IR')} آیتم انتخاب شده
             </p>
 
@@ -300,7 +300,7 @@ export default function CatalogBulkToolbar({
                 type="button"
                 onClick={() => setConfirmOpen(false)}
                 disabled={loading}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 text-[var(--color-text)] text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl border border-gray-200 text-(--color-text) text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
               >
                 انصراف
               </button>

@@ -15,36 +15,36 @@ export default function FeaturedHistoryAccordion({ past, formatDate }: Props) {
   if (past.length === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden" dir="rtl">
+    <section className="rounded-2xl border border-(--color-border) bg-(--color-surface) overflow-hidden" dir="rtl">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-start hover:bg-[var(--color-bg)]"
+        className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-start hover:bg-(--color-bg)"
       >
-        <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text)]">
-          <History className="w-4 h-4 text-[var(--color-text-muted)]" />
+        <span className="inline-flex items-center gap-2 text-sm font-medium text-(--color-text)">
+          <History className="w-4 h-4 text-wibe-secondary" />
           تاریخچه ({past.length.toLocaleString('fa-IR')})
         </span>
         <ChevronDown
-          className={`w-5 h-5 text-[var(--color-text-muted)] transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 text-wibe-secondary transition-transform ${open ? 'rotate-180' : ''}`}
         />
       </button>
       {open && (
-        <div className="border-t border-[var(--color-border)] overflow-x-auto">
+        <div className="border-t border-(--color-border) overflow-x-auto">
           <table className="w-full text-sm text-right">
-            <thead className="bg-[var(--color-bg)]">
+            <thead className="bg-(--color-bg)">
               <tr>
-                <th className="p-3 font-medium text-[var(--color-text-muted)]">لیست</th>
-                <th className="p-3 font-medium text-[var(--color-text-muted)]">بازه</th>
-                <th className="p-3 font-medium text-[var(--color-text-muted)]">مشاهده</th>
-                <th className="p-3 font-medium text-[var(--color-text-muted)]">ذخیره</th>
+                <th className="p-3 font-medium text-wibe-secondary">لیست</th>
+                <th className="p-3 font-medium text-wibe-secondary">بازه</th>
+                <th className="p-3 font-medium text-wibe-secondary">مشاهده</th>
+                <th className="p-3 font-medium text-wibe-secondary">ذخیره</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--color-border-muted)]">
+            <tbody className="divide-y divide-(--color-border-muted)">
               {past.map((s) => (
                 <tr key={s.id}>
-                  <td className="p-3 text-[var(--color-text)]">{s.list.title}</td>
-                  <td className="p-3 text-[var(--color-text-muted)]">
+                  <td className="p-3 text-(--color-text)">{s.list.title}</td>
+                  <td className="p-3 text-wibe-secondary">
                     {formatDate(s.startAt)} – {s.endAt ? formatDate(s.endAt) : '—'}
                   </td>
                   <td className="p-3 tabular-nums">{s.viewListCount.toLocaleString('fa-IR')}</td>

@@ -50,26 +50,26 @@ export default function MoveToTrashModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border-muted)] shadow-xl p-6"
+        className="w-full max-w-md rounded-2xl bg-(--color-surface) border border-(--color-border-muted) shadow-xl p-6"
         dir="rtl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="move-to-trash-title" className="text-lg font-semibold text-[var(--color-text)] mb-4">
+        <h2 id="move-to-trash-title" className="text-lg font-semibold text-(--color-text) mb-4">
           انتقال به زباله‌دان
         </h2>
-        <p className="text-sm text-[var(--color-text-muted)] mb-2">
-          این لیست <strong className="text-[var(--color-text)]">{row.saveCount.toLocaleString('fa-IR')}</strong> ذخیره دارد.
+        <p className="text-sm text-wibe-secondary mb-2">
+          این لیست <strong className="text-(--color-text)">{row.saveCount.toLocaleString('fa-IR')}</strong> ذخیره دارد.
         </p>
-        <p className="text-sm text-[var(--color-text-muted)] mb-4">
-          رتبه فعلی: <strong className="text-[var(--color-text)]">#{row.rank}</strong>
+        <p className="text-sm text-wibe-secondary mb-4">
+          رتبه فعلی: <strong className="text-(--color-text)">#{row.rank}</strong>
         </p>
-        <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
+        <label className="block text-sm font-medium text-(--color-text) mb-2">
           دلیل (اختیاری)
         </label>
         <select
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm text-[var(--color-text)] mb-6"
+          className="w-full rounded-xl border border-(--color-border) bg-(--color-bg) px-3 py-2 text-sm text-(--color-text) mb-6"
         >
           <option value="">—</option>
           {REASON_OPTIONS.map((o) => (
@@ -82,7 +82,7 @@ export default function MoveToTrashModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm font-medium bg-[var(--color-bg)] text-[var(--color-text)] hover:bg-[var(--color-border)]"
+            className="px-4 py-2 rounded-xl text-sm font-medium bg-(--color-bg) text-(--color-text) hover:bg-(--color-border)"
           >
             انصراف
           </button>

@@ -25,8 +25,8 @@ export default function CategoryFilterBar({ value, onChange }: CategoryFilterBar
           onClick={() => onChange(p.value)}
           className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
             value === p.value
-              ? 'bg-[var(--primary)] text-white shadow-sm'
-              : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:bg-[var(--color-border)] hover:text-[var(--color-text)]'
+              ? 'bg-primary text-white shadow-sm'
+              : 'bg-(--color-bg) text-wibe-secondary hover:bg-(--color-border) hover:text-(--color-text)'
           }`}
         >
           {p.label}

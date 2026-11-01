@@ -84,35 +84,35 @@ export default function FeaturedWeeklyDetails({
 
   return (
     <section
-      className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden shadow-sm"
+      className="rounded-2xl border border-(--color-border) bg-(--color-surface) overflow-hidden shadow-sm"
       dir="rtl"
     >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 hover:bg-[var(--color-bg)]/80 transition-colors"
+        className="w-full flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 hover:bg-(--color-bg)/80 transition-colors"
       >
-        <span className="text-sm font-semibold text-[var(--color-text)]">
+        <span className="text-sm font-semibold text-(--color-text)">
           جزئیات عملکرد هفتگی و دسته‌ها
         </span>
         {open ? (
-          <ChevronUp className="w-5 h-5 text-[var(--color-text-muted)]" />
+          <ChevronUp className="w-5 h-5 text-wibe-secondary" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-[var(--color-text-muted)]" />
+          <ChevronDown className="w-5 h-5 text-wibe-secondary" />
         )}
       </button>
 
       {open && (
-        <div className="border-t border-[var(--color-border)] px-4 sm:px-5 pb-5 space-y-5">
+        <div className="border-t border-(--color-border) px-4 sm:px-5 pb-5 space-y-5">
           {loading && !report && (
             <div className="flex justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-[var(--primary)]" />
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           )}
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400 py-4">
               {error}
-              <button type="button" onClick={load} className="block mt-2 text-[var(--primary)]">
+              <button type="button" onClick={load} className="block mt-2 text-primary">
                 تلاش مجدد
               </button>
             </p>
@@ -131,16 +131,16 @@ export default function FeaturedWeeklyDetails({
                 </div>
               )}
 
-              <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-                  <h3 className="text-sm font-semibold text-[var(--color-text)]">
+              <div className="rounded-xl border border-(--color-border) overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 border-b border-(--color-border) bg-(--color-bg)">
+                  <h3 className="text-sm font-semibold text-(--color-text)">
                     عملکرد اسلات‌ها
                   </h3>
                   {report.totalSlots === 0 && onAddSlot && (
                     <button
                       type="button"
                       onClick={onAddSlot}
-                      className="inline-flex items-center gap-1 text-xs text-[var(--primary)] font-medium"
+                      className="inline-flex items-center gap-1 text-xs text-primary font-medium"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       زمان‌بندی اسلات
@@ -148,27 +148,27 @@ export default function FeaturedWeeklyDetails({
                   )}
                 </div>
                 {report.slots.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-[var(--color-text-muted)]">
+                  <div className="p-8 text-center text-sm text-wibe-secondary">
                     <Calendar className="w-8 h-8 mx-auto mb-2 opacity-40" />
                     در این هفته اسلاتی ثبت نشده.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right min-w-[520px]">
+                    <table className="w-full text-sm text-right min-w-130">
                       <thead>
-                        <tr className="border-b border-[var(--color-border)]">
-                          <th className="p-2.5 font-medium text-[var(--color-text-muted)]">لیست</th>
-                          <th className="p-2.5 font-medium text-[var(--color-text-muted)]">دسته</th>
-                          <th className="p-2.5 font-medium text-[var(--color-text-muted)]">CTR</th>
-                          <th className="p-2.5 font-medium text-[var(--color-text-muted)]">Save Lift</th>
-                          <th className="p-2.5 font-medium text-[var(--color-text-muted)]">تأثیر</th>
+                        <tr className="border-b border-(--color-border)">
+                          <th className="p-2.5 font-medium text-wibe-secondary">لیست</th>
+                          <th className="p-2.5 font-medium text-wibe-secondary">دسته</th>
+                          <th className="p-2.5 font-medium text-wibe-secondary">CTR</th>
+                          <th className="p-2.5 font-medium text-wibe-secondary">Save Lift</th>
+                          <th className="p-2.5 font-medium text-wibe-secondary">تأثیر</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[var(--color-border-muted)]">
+                      <tbody className="divide-y divide-(--color-border-muted)">
                         {report.slots.map((row) => (
-                          <tr key={row.slotId} className="hover:bg-[var(--color-bg)]">
+                          <tr key={row.slotId} className="hover:bg-(--color-bg)">
                             <td className="p-2.5 font-medium">{row.listTitle}</td>
-                            <td className="p-2.5 text-[var(--color-text-muted)]">
+                            <td className="p-2.5 text-wibe-secondary">
                               {row.categoryName ?? '—'}
                             </td>
                             <td className="p-2.5 tabular-nums">
@@ -193,22 +193,22 @@ export default function FeaturedWeeklyDetails({
               </div>
 
               {insights && insights.categories.length > 0 && (
-                <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-                  <h3 className="text-sm font-semibold px-3 py-2.5 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+                <div className="rounded-xl border border-(--color-border) overflow-hidden">
+                  <h3 className="text-sm font-semibold px-3 py-2.5 border-b border-(--color-border) bg-(--color-bg)">
                     عملکرد دسته‌ها (۳۰ روز)
                   </h3>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right min-w-[480px]">
+                    <table className="w-full text-sm text-right min-w-120">
                       <thead>
-                        <tr className="border-b border-[var(--color-border)]">
-                          <th className="p-2.5 font-medium text-[var(--color-text-muted)]">رتبه</th>
-                          <th className="p-2.5 font-medium text-[var(--color-text-muted)]">دسته</th>
-                          <th className="p-2.5 font-medium text-[var(--color-text-muted)]">منتخب</th>
-                          <th className="p-2.5 font-medium text-[var(--color-text-muted)]">CTR</th>
-                          <th className="p-2.5 font-medium text-[var(--color-text-muted)]">Save Lift</th>
+                        <tr className="border-b border-(--color-border)">
+                          <th className="p-2.5 font-medium text-wibe-secondary">رتبه</th>
+                          <th className="p-2.5 font-medium text-wibe-secondary">دسته</th>
+                          <th className="p-2.5 font-medium text-wibe-secondary">منتخب</th>
+                          <th className="p-2.5 font-medium text-wibe-secondary">CTR</th>
+                          <th className="p-2.5 font-medium text-wibe-secondary">Save Lift</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[var(--color-border-muted)]">
+                      <tbody className="divide-y divide-(--color-border-muted)">
                         {insights.categories.map((c) => (
                           <tr key={c.categoryId}>
                             <td className="p-2.5">{c.rank.toLocaleString('fa-IR')}</td>

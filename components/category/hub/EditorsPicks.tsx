@@ -38,7 +38,7 @@ export default function EditorsPicks({
             href={`/lists/${list.slug}`}
             className="flex gap-3 p-3 rounded-xl bg-white/90 border border-amber-200/60 shadow-sm active:scale-[0.99] transition-transform"
           >
-            <div className="w-16 h-16 rounded-xl bg-wibe-surface flex-shrink-0 overflow-hidden">
+            <div className="w-16 h-16 rounded-xl bg-wibe-surface shrink-0 overflow-hidden">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}

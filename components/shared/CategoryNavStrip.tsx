@@ -37,7 +37,7 @@ export default function CategoryNavStrip({
 
   return (
     <div
-      className={`sticky top-14 z-[25] border-b border-border bg-background/95 backdrop-blur-sm ${className}`}
+      className={`sticky top-14 z-25 border-b border-border bg-background/95 backdrop-blur-sm ${className}`}
     >
       {inner}
     </div>

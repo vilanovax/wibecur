@@ -8,7 +8,7 @@ export default function SponsoredSlotCard() {
       href="/sponsored/1"
       className="block overflow-hidden rounded-xl border border-primary/20 bg-wibe-card shadow-sm transition-transform active:scale-[0.99]"
     >
-      <div className="flex aspect-[4/3] w-full items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+      <div className="flex aspect-4/3 w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5">
         <span className="text-3xl">✨</span>
       </div>
       <div className="p-2.5">

@@ -22,7 +22,7 @@ export default function CategoryHero({
   const heroContent = (
     <div
       className={`relative overflow-hidden rounded-lg ${
-        isCinematic ? 'aspect-video min-h-[180px]' : 'aspect-[16/9] min-h-[140px]'
+        isCinematic ? 'aspect-video min-h-45' : 'aspect-16/9 min-h-35'
       }`}
     >
       <ImageWithFallback
@@ -39,8 +39,8 @@ export default function CategoryHero({
       <div
         className={`absolute inset-0 ${
           isCinematic
-            ? 'bg-gradient-to-t from-black/90 via-black/50 to-black/30'
-            : 'bg-gradient-to-t from-black/70 via-black/40 to-transparent'
+            ? 'bg-linear-to-t from-black/90 via-black/50 to-black/30'
+            : 'bg-linear-to-t from-black/70 via-black/40 to-transparent'
         }`}
       />
 

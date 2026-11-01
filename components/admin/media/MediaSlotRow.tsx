@@ -163,7 +163,7 @@ export default function MediaSlotRow({
       />
     ) : (
       <div
-        className={`flex items-center justify-center text-[var(--color-text-muted)] ${grid ? 'size-full' : 'size-16'}`}
+        className={`flex items-center justify-center text-wibe-secondary ${grid ? 'size-full' : 'size-16'}`}
       >
         <ImageOff className="size-5" strokeWidth={1.5} aria-hidden />
       </div>
@@ -171,8 +171,8 @@ export default function MediaSlotRow({
 
   const meta = (
     <>
-      <p className="truncate text-sm font-semibold text-[var(--color-text)]">{slot.title}</p>
-      <p className="truncate text-xs text-[var(--color-text-muted)]">
+      <p className="truncate text-sm font-semibold text-(--color-text)">{slot.title}</p>
+      <p className="truncate text-xs text-wibe-secondary">
         {MEDIA_KIND_LABELS[slot.kind]}
         {slot.active ? '' : ' · غیرفعال'}
         {slot.detail ? (
@@ -182,16 +182,16 @@ export default function MediaSlotRow({
           </>
         ) : null}
       </p>
-      <p className="text-xs text-[var(--color-text-muted)]">{factLabel}</p>
+      <p className="text-xs text-wibe-secondary">{factLabel}</p>
       {slot.imageUrl ? (
-        <p dir="ltr" title={slot.imageUrl} className="truncate text-start text-xs text-[var(--color-text-muted)]">
+        <p dir="ltr" title={slot.imageUrl} className="truncate text-start text-xs text-wibe-secondary">
           {slot.imageUrl}
         </p>
       ) : null}
       {slot.issues.length > 0 ? (
         <p className="text-xs text-red-700">{slot.issues.map((issue) => MEDIA_ISSUE_LABELS[issue]).join(' · ')}</p>
       ) : null}
-      {message ? <p className="text-xs text-[var(--color-text)]">{message}</p> : null}
+      {message ? <p className="text-xs text-(--color-text)">{message}</p> : null}
       {error ? <p className="text-xs text-red-700">{error}</p> : null}
     </>
   );
@@ -200,7 +200,7 @@ export default function MediaSlotRow({
     <div className={grid ? 'mt-auto flex flex-col gap-2 pt-2' : 'mt-2 flex flex-wrap items-center gap-2'}>
       <label
         htmlFor={inputId}
-        className={`inline-flex min-h-11 cursor-pointer items-center rounded-xl bg-[var(--primary)] px-3 text-sm font-semibold text-white ${
+        className={`inline-flex min-h-11 cursor-pointer items-center rounded-xl bg-primary px-3 text-sm font-semibold text-white ${
           grid ? 'justify-center' : ''
         }`}
       >
@@ -225,8 +225,8 @@ export default function MediaSlotRow({
               type="button"
               onClick={() => void clearSlot()}
               disabled={busy || !slot.imageUrl}
-              className={`inline-flex min-h-11 items-center rounded-xl px-3 text-sm text-[var(--color-text-muted)] disabled:opacity-40 ${
-                grid ? 'justify-center border border-[var(--color-border)]' : ''
+              className={`inline-flex min-h-11 items-center rounded-xl px-3 text-sm text-wibe-secondary disabled:opacity-40 ${
+                grid ? 'justify-center border border-(--color-border)' : ''
               }`}
             >
               حذف از اینجا
@@ -235,8 +235,8 @@ export default function MediaSlotRow({
           {slot.editHref ? (
             <Link
               href={slot.editHref}
-              className={`inline-flex min-h-11 items-center rounded-xl px-3 text-sm text-[var(--color-text)] ${
-                grid ? 'justify-center border border-[var(--color-border)]' : ''
+              className={`inline-flex min-h-11 items-center rounded-xl px-3 text-sm text-(--color-text) ${
+                grid ? 'justify-center border border-(--color-border)' : ''
               }`}
             >
               ویرایش رکورد
@@ -254,15 +254,15 @@ export default function MediaSlotRow({
         checked={selected}
         onChange={(event) => onSelectedChange(event.target.checked)}
         aria-label={`انتخاب ${slot.title}`}
-        className="size-4 accent-[var(--primary)]"
+        className="size-4 accent-(--primary)"
       />
     </label>
   ) : null;
 
   if (grid) {
     return (
-      <article className="flex flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="aspect-square bg-[var(--color-bg)]">{preview}</div>
+      <article className="flex flex-col overflow-hidden rounded-xl border border-(--color-border) bg-(--color-surface)">
+        <div className="aspect-square bg-(--color-bg)">{preview}</div>
         <div className="flex min-h-0 flex-1 flex-col gap-1 p-3">
           {picker}
           {meta}
@@ -273,9 +273,9 @@ export default function MediaSlotRow({
   }
 
   return (
-    <article className="flex gap-3 bg-[var(--color-surface)] p-3">
+    <article className="flex gap-3 bg-(--color-surface) p-3">
       {picker}
-      <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-[var(--color-bg)]">{preview}</div>
+      <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-(--color-bg)">{preview}</div>
       <div className="min-w-0 flex-1">
         {meta}
         {actions}

@@ -310,14 +310,14 @@ export default function ReportsPageClient({ data, navStats }: ReportsPageClientP
       )}
 
       {reports.length === 0 ? (
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-12 text-center">
-          <Flag className="w-12 h-12 mx-auto text-[var(--color-text-muted)] opacity-40 mb-3" />
-          <p className="text-[var(--color-text-muted)]">ریپورتی یافت نشد</p>
+        <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-12 text-center">
+          <Flag className="w-12 h-12 mx-auto text-wibe-secondary opacity-40 mb-3" />
+          <p className="text-wibe-secondary">ریپورتی یافت نشد</p>
           {data.resolved !== 'all' && (
             <button
               type="button"
               onClick={() => applyResolvedFilter('all')}
-              className="mt-3 text-sm font-medium text-[var(--primary)] hover:underline"
+              className="mt-3 text-sm font-medium text-primary hover:underline"
             >
               نمایش همه
             </button>

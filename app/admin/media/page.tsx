@@ -120,15 +120,15 @@ export default async function MediaLibraryPage({
     <div className="space-y-4 pb-20" dir="rtl">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold text-[var(--color-text)]">کتابخانه تصاویر</h1>
-          <p className="text-sm text-[var(--color-text-muted)]">
+          <h1 className="text-xl font-bold text-(--color-text)">کتابخانه تصاویر</h1>
+          <p className="text-sm text-wibe-secondary">
             جایگزینی تصویر هر بخش. بنر ثابت سایت حذف نمی‌شود.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <a
             href={exportHref(filter, q, state, heaviest, missing)}
-            className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)]"
+            className="inline-flex min-h-11 items-center rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm font-semibold text-(--color-text)"
             title={
               heaviest
                 ? `${faNumber(HEAVIEST_IMAGE_LIMIT)} تصویر با بیشترین حجم`
@@ -150,16 +150,16 @@ export default async function MediaLibraryPage({
         {state !== 'all' ? <input type="hidden" name="state" value={state} /> : null}
         {heaviest ? <input type="hidden" name="rank" value="bytes" /> : null}
         {issue ? <input type="hidden" name="issue" value={issue} /> : null}
-        <div className="flex min-h-11 min-w-0 flex-1 overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+        <div className="flex min-h-11 min-w-0 flex-1 overflow-hidden rounded-xl border border-(--color-border) bg-(--color-surface)">
           <input
             name="q"
             defaultValue={q}
             placeholder="جستجو در نام…"
-            className="min-h-11 min-w-0 flex-1 bg-transparent px-3 text-sm text-[var(--color-text)] outline-none"
+            className="min-h-11 min-w-0 flex-1 bg-transparent px-3 text-sm text-(--color-text) outline-none"
           />
           <button
             type="submit"
-            className="inline-flex min-h-11 items-center bg-[var(--primary)] px-4 text-sm font-semibold text-white"
+            className="inline-flex min-h-11 items-center bg-primary px-4 text-sm font-semibold text-white"
           >
             جستجو
           </button>
@@ -176,12 +176,12 @@ export default async function MediaLibraryPage({
               href={pageHref(item, q, missing, 1, view, state, heaviest, issue)}
               className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-sm ${
                 active
-                  ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
-                  : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]'
+                  ? 'border-(--primary) bg-primary text-white'
+                  : 'border-(--color-border) bg-(--color-surface) text-(--color-text)'
               }`}
             >
               {label}
-              <span className={active ? 'opacity-80' : 'text-[var(--color-text-muted)]'}>
+              <span className={active ? 'opacity-80' : 'text-wibe-secondary'}>
                 {faNumber(data.counts[item])}
               </span>
             </Link>
@@ -189,7 +189,7 @@ export default async function MediaLibraryPage({
         })}
         <div className="ms-auto flex flex-wrap items-center gap-2">
           <div
-            className="inline-flex overflow-hidden rounded-xl border border-[var(--color-border)]"
+            className="inline-flex overflow-hidden rounded-xl border border-(--color-border)"
             role="group"
             aria-label="وضعیت"
           >
@@ -206,7 +206,7 @@ export default async function MediaLibraryPage({
                   href={pageHref(filter, q, missing, 1, view, selected ? 'all' : mode, heaviest, issue)}
                   aria-pressed={selected}
                   className={`inline-flex min-h-11 items-center px-3 text-sm font-semibold ${
-                    selected ? 'bg-[var(--primary)] text-white' : 'bg-[var(--color-surface)] text-[var(--color-text)]'
+                    selected ? 'bg-primary text-white' : 'bg-(--color-surface) text-(--color-text)'
                   }`}
                 >
                   {label}
@@ -215,7 +215,7 @@ export default async function MediaLibraryPage({
             })}
           </div>
           <div
-            className="inline-flex overflow-hidden rounded-xl border border-[var(--color-border)]"
+            className="inline-flex overflow-hidden rounded-xl border border-(--color-border)"
             role="group"
             aria-label="نحوه نمایش"
           >
@@ -233,8 +233,8 @@ export default async function MediaLibraryPage({
                   aria-current={active ? 'page' : undefined}
                   className={`inline-flex min-h-11 items-center gap-1.5 px-3 text-sm font-semibold ${
                     active
-                      ? 'bg-[var(--primary)] text-white'
-                      : 'bg-[var(--color-surface)] text-[var(--color-text)]'
+                      ? 'bg-primary text-white'
+                      : 'bg-(--color-surface) text-(--color-text)'
                   }`}
                 >
                   <Icon className="size-4" strokeWidth={2} aria-hidden />
@@ -247,8 +247,8 @@ export default async function MediaLibraryPage({
             href={pageHref(filter, q, !missing, 1, view, state, false, null)}
             className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${
             missing
-              ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
-              : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]'
+              ? 'border-(--primary) bg-primary text-white'
+              : 'border-(--color-border) bg-(--color-surface) text-(--color-text)'
           }`}
         >
             فقط بدون تصویر
@@ -258,8 +258,8 @@ export default async function MediaLibraryPage({
             aria-pressed={heaviest}
             className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${
               heaviest
-                ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
-                : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]'
+                ? 'border-(--primary) bg-primary text-white'
+                : 'border-(--color-border) bg-(--color-surface) text-(--color-text)'
             }`}
           >
             بزرگ‌ترین حجم
@@ -277,8 +277,8 @@ export default async function MediaLibraryPage({
               aria-pressed={selected}
               className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${
                 selected
-                  ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
-                  : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]'
+                  ? 'border-(--primary) bg-primary text-white'
+                  : 'border-(--color-border) bg-(--color-surface) text-(--color-text)'
               }`}
             >
               {MEDIA_ISSUE_LABELS[item]}
@@ -288,13 +288,13 @@ export default async function MediaLibraryPage({
       </div>
 
       {heaviest && heavy && !heavy.complete && slots.length > 0 ? (
-        <p className="text-sm text-[var(--color-text-muted)]">
+        <p className="text-sm text-wibe-secondary">
           خواندن همهٔ فایل‌ها تمام نشد. این فهرست از همان بخشی است که خوانده شد.
         </p>
       ) : null}
 
       {slots.length === 0 ? (
-        <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-text-muted)]">
+        <p className="rounded-xl border border-(--color-border) bg-(--color-surface) p-6 text-sm text-wibe-secondary">
           {heaviest
             ? 'حجم این تصویرها از فضای سایت خوانده نشد.'
             : issue
@@ -305,7 +305,7 @@ export default async function MediaLibraryPage({
         <MediaSlotList slots={slots} layout={view} />
       )}
 
-      <div className="flex items-center justify-between gap-3 text-sm text-[var(--color-text-muted)]">
+      <div className="flex items-center justify-between gap-3 text-sm text-wibe-secondary">
         <p>
           {heaviest
             ? `${faNumber(slots.length)} تصویر با بیشترین حجم`
@@ -317,7 +317,7 @@ export default async function MediaLibraryPage({
           {!heaviest && !issue && data.page > 1 ? (
             <Link
               href={pageHref(filter, q, missing, data.page - 1, view, state, false, null)}
-              className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3"
+              className="inline-flex min-h-11 items-center rounded-xl border border-(--color-border) bg-(--color-surface) px-3"
             >
               قبلی
             </Link>
@@ -325,7 +325,7 @@ export default async function MediaLibraryPage({
           {issue && issues?.nextScan != null ? (
             <Link
               href={pageHref(filter, q, false, 1, view, state, false, issue, issues.nextScan)}
-              className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3"
+              className="inline-flex min-h-11 items-center rounded-xl border border-(--color-border) bg-(--color-surface) px-3"
             >
               بعدی
             </Link>
@@ -333,7 +333,7 @@ export default async function MediaLibraryPage({
           {!heaviest && !issue && data.page < pageCount ? (
             <Link
               href={pageHref(filter, q, missing, data.page + 1, view, state, false, null)}
-              className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3"
+              className="inline-flex min-h-11 items-center rounded-xl border border-(--color-border) bg-(--color-surface) px-3"
             >
               بعدی
             </Link>

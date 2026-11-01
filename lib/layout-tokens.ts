@@ -2,7 +2,7 @@
 export const MOBILE_SHELL_MAX_WIDTH = 428;
 
 /** @deprecated فقط برای overlayهای قدیمی؛ شِل صفحه موبایل تمام‌عرض است */
-export const MOBILE_SHELL_MAX_WIDTH_CLASS = 'max-w-[428px]';
+export const MOBILE_SHELL_MAX_WIDTH_CLASS = 'max-w-107';
 
 /** شِل موبایل — تمام عرض viewport (بدون ستون خاکستری کناری) */
 export const MOBILE_VIEW_SHELL_CLASS = 'w-full max-w-none';
@@ -16,7 +16,7 @@ export const DESKTOP_TOP_NAV_HEIGHT = '3.5rem';
 /** عرض ثابت شِل دسکتاپ (پیکسل) — نمایش متمرکز و خوانا */
 export const DESKTOP_PAGE_MAX_WIDTH_PX = 1200;
 
-export const DESKTOP_PAGE_MAX_WIDTH_CLASS = 'lg:max-w-[1200px]';
+export const DESKTOP_PAGE_MAX_WIDTH_CLASS = 'lg:max-w-300';
 
 /**
  * فریم واحد سایت (موبایل تمام‌عرض | دسکتاپ ۱۲۰۰px وسط‌چین)

@@ -33,7 +33,7 @@ export default function HomeListCreatorChip({
         size={size}
         className="ring-1 ring-white/30"
       />
-      <span className="truncate max-w-[5.5rem] lg:max-w-[7rem]">{label}</span>
+      <span className="truncate max-w-22 lg:max-w-28">{label}</span>
     </>
   );
 

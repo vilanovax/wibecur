@@ -37,7 +37,7 @@ export default function CommentsHubPriorityQueue({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-center text-sm text-[var(--color-text-muted)]">
+      <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-6 text-center text-sm text-wibe-secondary">
         صف اولویت خالی است — همه موارد بررسی شده‌اند.
       </div>
     );
@@ -46,19 +46,19 @@ export default function CommentsHubPriorityQueue({
   return (
     <section className="space-y-3" dir="rtl">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-[var(--color-text)] flex items-center gap-2">
-          <ListTodo className="w-4 h-4 text-[var(--primary)]" />
+        <h2 className="text-sm font-semibold text-(--color-text) flex items-center gap-2">
+          <ListTodo className="w-4 h-4 text-primary" />
           صف اولویت
         </h2>
         <Link
           href="/admin/comments/all?filter=pending"
-          className="text-xs font-medium text-[var(--primary)] hover:underline inline-flex items-center gap-1"
+          className="text-xs font-medium text-primary hover:underline inline-flex items-center gap-1"
         >
           همه صف کار
           <ArrowLeft className="w-3 h-3" />
         </Link>
       </div>
-      <ul className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] divide-y divide-[var(--color-border-muted)] overflow-hidden">
+      <ul className="rounded-2xl border border-(--color-border) bg-(--color-surface) divide-y divide-(--color-border-muted) overflow-hidden">
         {items.map((item) => {
           const meta = typeMeta[item.type];
           const Icon = meta.icon;
@@ -66,7 +66,7 @@ export default function CommentsHubPriorityQueue({
             <li key={item.id}>
               <Link
                 href={item.href}
-                className="flex items-start gap-3 px-4 py-3 hover:bg-[var(--color-bg)] transition-colors"
+                className="flex items-start gap-3 px-4 py-3 hover:bg-(--color-bg) transition-colors"
               >
                 <span
                   className={`shrink-0 p-2 rounded-xl ${meta.color}`}
@@ -75,17 +75,17 @@ export default function CommentsHubPriorityQueue({
                   <Icon className="w-4 h-4" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-[var(--color-text-muted)]">
+                  <p className="text-xs font-medium text-wibe-secondary">
                     {meta.label}
                   </p>
-                  <p className="text-sm font-medium text-[var(--color-text)] line-clamp-1 mt-0.5">
+                  <p className="text-sm font-medium text-(--color-text) line-clamp-1 mt-0.5">
                     {item.title}
                   </p>
-                  <p className="text-xs text-[var(--color-text-muted)] line-clamp-1 mt-0.5">
+                  <p className="text-xs text-wibe-secondary line-clamp-1 mt-0.5">
                     {item.subtitle}
                   </p>
                 </div>
-                <span className="text-xs text-[var(--color-text-subtle)] whitespace-nowrap shrink-0">
+                <span className="text-xs text-(--color-text-subtle) whitespace-nowrap shrink-0">
                   {formatRelativeTime(item.createdAt)}
                 </span>
               </Link>

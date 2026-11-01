@@ -62,11 +62,11 @@ export default function MediaSlotList({
           type="button"
           onClick={() => void normalize()}
           disabled={busy || selected.length === 0}
-          className="inline-flex min-h-11 items-center rounded-xl bg-[var(--primary)] px-4 text-sm font-semibold text-white disabled:opacity-40"
+          className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-white disabled:opacity-40"
         >
           {busy ? 'در حال تبدیل' : `تبدیل ${faNumber(selected.length)} تصویر به WebP`}
         </button>
-        {message ? <p className="text-sm text-[var(--color-text)]">{message}</p> : null}
+        {message ? <p className="text-sm text-(--color-text)">{message}</p> : null}
         {error ? <p className="text-sm text-red-700">{error}</p> : null}
       </div>
       {layout === 'grid' ? (
@@ -82,7 +82,7 @@ export default function MediaSlotList({
           ))}
         </div>
       ) : (
-        <div className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)]">
+        <div className="divide-y divide-(--color-border) overflow-hidden rounded-xl border border-(--color-border)">
           {slots.map((slot) => (
             <MediaSlotRow
               key={slot.key}

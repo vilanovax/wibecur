@@ -84,7 +84,7 @@ function AvatarWithGlow({
   const avatarSize = size === 'sm' ? 44 : size === 'lg' ? 64 : 48;
 
   return (
-    <div className="relative flex-shrink-0">
+    <div className="relative shrink-0">
       {showGlow && (
         <div className={`absolute -inset-1 rounded-full blur-md opacity-50 ${levelConfig.glowClass}`} aria-hidden />
       )}

@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react';
 
 export default function CuratedHero() {
   return (
-    <div className="relative mx-4 mt-4 overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary/[0.08] via-wibe-card to-amber-50/50 p-5 shadow-vibe-sm">
+    <div className="relative mx-4 mt-4 overflow-hidden rounded-2xl border border-primary/15 bg-linear-to-br from-primary/[0.08] via-wibe-card to-amber-50/50 p-5 shadow-vibe-sm">
       <div
         className="pointer-events-none absolute -left-8 top-0 h-28 w-28 rounded-full bg-amber-300/20 blur-3xl"
         aria-hidden

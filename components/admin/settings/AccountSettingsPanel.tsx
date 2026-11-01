@@ -23,7 +23,7 @@ function PasswordField({
   const [visible, setVisible] = useState(false);
   return (
     <div>
-      <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+      <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
         {label}
       </label>
       <div className="relative">
@@ -31,19 +31,19 @@ function PasswordField({
           type={visible ? 'text' : 'password'}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-10 pr-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] focus:ring-2 focus:ring-[var(--primary)]/30"
+          className="w-full pl-10 pr-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg) focus:ring-2 focus:ring-(--primary)/30"
           placeholder={placeholder}
           autoComplete="off"
         />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
-          className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-[var(--color-border-muted)]"
+          className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-(--color-border-muted)"
         >
           {visible ? (
-            <EyeOff className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <EyeOff className="w-4 h-4 text-wibe-secondary" />
           ) : (
-            <Eye className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <Eye className="w-4 h-4 text-wibe-secondary" />
           )}
         </button>
       </div>
@@ -121,7 +121,7 @@ export default function AccountSettingsPanel() {
       <SettingsSectionCard
         title="پروفایل ادمین"
         description="اطلاعات حساب فعلی در پنل"
-        icon={<User className="w-5 h-5 text-[var(--primary)]" />}
+        icon={<User className="w-5 h-5 text-primary" />}
       >
         <div className="flex items-center gap-3">
           <UserAvatar
@@ -131,12 +131,12 @@ export default function AccountSettingsPanel() {
             size={48}
           />
           <div className="min-w-0">
-            <p className="font-semibold text-[var(--color-text)]">{name}</p>
-            <p className="text-sm text-[var(--color-text-muted)] truncate">
+            <p className="font-semibold text-(--color-text)">{name}</p>
+            <p className="text-sm text-wibe-secondary truncate">
               {email}
             </p>
             {user?.role && (
-              <p className="text-xs text-[var(--color-text-subtle)] mt-0.5">
+              <p className="text-xs text-(--color-text-subtle) mt-0.5">
                 نقش: {user.role}
               </p>
             )}
@@ -144,7 +144,7 @@ export default function AccountSettingsPanel() {
         </div>
         <Link
           href="/admin/users"
-          className="inline-flex items-center gap-1.5 text-sm text-[var(--primary)] font-medium hover:underline"
+          className="inline-flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
         >
           مدیریت کاربران
           <ExternalLink className="w-3.5 h-3.5" />
@@ -167,11 +167,11 @@ export default function AccountSettingsPanel() {
         }
       >
         {hasPassword === null ? (
-          <p className="text-sm text-[var(--color-text-muted)] animate-pulse">
+          <p className="text-sm text-wibe-secondary animate-pulse">
             در حال بررسی…
           </p>
         ) : hasPassword === false ? (
-          <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
+          <p className="text-sm text-wibe-secondary leading-relaxed">
             برای این حساب رمز در سیستم ثبت نشده است. با مدیر اصلی تماس بگیرید یا از
             صفحه ورود برای تنظیم اولیه استفاده کنید.
           </p>
@@ -193,7 +193,7 @@ export default function AccountSettingsPanel() {
               value={confirmPassword}
               onChange={setConfirmPassword}
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)]">
+            <p className="text-[11px] text-(--color-text-subtle)">
               پس از تغییر، با رمز جدید وارد شوید.
             </p>
           </div>

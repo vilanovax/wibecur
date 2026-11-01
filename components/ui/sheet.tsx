@@ -92,8 +92,8 @@ export function Sheet({
         className={cn(
           "absolute flex flex-col bg-popover text-popover-foreground shadow-2xl will-change-transform",
           "transition-[transform,opacity]",
-          side === "start" && "inset-y-0 start-0 w-full max-w-sm border-e border-border",
-          side === "end" && "inset-y-0 end-0 w-full max-w-sm border-s border-border",
+          side === "start" && "inset-y-0 inset-s-0 w-full max-w-sm border-e border-border",
+          side === "end" && "inset-y-0 inset-e-0 w-full max-w-sm border-s border-border",
           side === "bottom" && "inset-x-0 bottom-0 max-h-[85vh] rounded-t-2xl border-t border-border",
           shown ? "translate-x-0 translate-y-0 opacity-100" : panelHidden(side),
           className,

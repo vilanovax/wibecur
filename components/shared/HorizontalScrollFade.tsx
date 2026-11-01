@@ -47,14 +47,14 @@ export default function HorizontalScrollFade({
       </div>
       {fadeEnd ? (
         <div
-          className={`wibe-edge-fade-end pointer-events-none absolute inset-y-0 end-0 z-[1] ${endClassName} ${fadeClassName}`}
+          className={`wibe-edge-fade-end pointer-events-none absolute inset-y-0 inset-e-0 z-1 ${endClassName} ${fadeClassName}`}
           style={edge}
           aria-hidden
         />
       ) : null}
       {fadeStart ? (
         <div
-          className={`wibe-edge-fade-start pointer-events-none absolute inset-y-0 start-0 z-[1] w-10 ${fadeClassName}`}
+          className={`wibe-edge-fade-start pointer-events-none absolute inset-y-0 inset-s-0 z-1 w-10 ${fadeClassName}`}
           style={edge}
           aria-hidden
         />

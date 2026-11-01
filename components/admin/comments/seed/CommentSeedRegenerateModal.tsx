@@ -75,10 +75,10 @@ export default function CommentSeedRegenerateModal({
   if (!draft) return null;
 
   const inputClass =
-    'mt-1 w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm';
+    'mt-1 w-full rounded-xl border border-(--color-border) bg-white px-3 py-2 text-sm';
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center p-0 sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-80 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <button
         type="button"
         className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
@@ -86,23 +86,23 @@ export default function CommentSeedRegenerateModal({
         onClick={onClose}
       />
       <div
-        className="relative w-full max-w-md rounded-t-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl sm:rounded-2xl"
+        className="relative w-full max-w-md rounded-t-2xl border border-(--color-border) bg-(--color-surface) shadow-xl sm:rounded-2xl"
         dir="rtl"
       >
-        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
-          <h3 className="text-base font-semibold text-[var(--color-text)]">بازتولید کامنت</h3>
+        <div className="flex items-center justify-between border-b border-(--color-border) px-4 py-3">
+          <h3 className="text-base font-semibold text-(--color-text)">بازتولید کامنت</h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+            className="rounded-lg p-1.5 text-wibe-secondary hover:bg-(--color-bg)"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="space-y-4 px-4 py-4">
-          <div className="rounded-xl bg-[var(--color-bg)] px-3 py-2 text-sm">
-            <span className="text-[var(--color-text-muted)]">آیتم: </span>
+          <div className="rounded-xl bg-(--color-bg) px-3 py-2 text-sm">
+            <span className="text-wibe-secondary">آیتم: </span>
             <span className="font-medium">{draft.items.title}</span>
           </div>
 
@@ -163,7 +163,7 @@ export default function CommentSeedRegenerateModal({
                 setReschedule(e.target.checked);
                 if (e.target.checked) setUseCustomDate(false);
               }}
-              className="rounded border-[var(--color-border)]"
+              className="rounded border-(--color-border)"
             />
             تاریخ انتشار جدید (تصادفی در بازه کمپین)
           </label>
@@ -176,7 +176,7 @@ export default function CommentSeedRegenerateModal({
                 setUseCustomDate(e.target.checked);
                 if (e.target.checked) setReschedule(false);
               }}
-              className="rounded border-[var(--color-border)]"
+              className="rounded border-(--color-border)"
             />
             تعیین دستی تاریخ انتشار
           </label>
@@ -192,12 +192,12 @@ export default function CommentSeedRegenerateModal({
           )}
         </div>
 
-        <div className="flex gap-2 border-t border-[var(--color-border)] px-4 py-3">
+        <div className="flex gap-2 border-t border-(--color-border) px-4 py-3">
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="flex-1 rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm font-medium hover:bg-[var(--color-bg)] disabled:opacity-50"
+            className="flex-1 rounded-xl border border-(--color-border) px-4 py-2.5 text-sm font-medium hover:bg-(--color-bg) disabled:opacity-50"
           >
             انصراف
           </button>

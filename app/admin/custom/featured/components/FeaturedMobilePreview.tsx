@@ -40,14 +40,14 @@ export default function FeaturedMobilePreview({ list, mode, label }: Props) {
 
   return (
     <div className="sticky top-4" dir="rtl">
-      <div className="flex items-center gap-2 mb-3 text-xs font-medium text-[var(--color-text-muted)]">
+      <div className="flex items-center gap-2 mb-3 text-xs font-medium text-wibe-secondary">
         <Smartphone className="w-4 h-4" />
         {modeLabel}
       </div>
-      <div className="mx-auto max-w-[280px] rounded-[2rem] border-[6px] border-gray-800 bg-gray-900 p-2 shadow-xl">
+      <div className="mx-auto max-w-70 rounded-[2rem] border-[6px] border-gray-800 bg-gray-900 p-2 shadow-xl">
         <div className="rounded-[1.4rem] overflow-hidden bg-white dark:bg-gray-800">
           {!list ? (
-            <div className="h-52 flex items-center justify-center bg-[var(--color-bg)] text-sm text-[var(--color-text-muted)] p-4 text-center">
+            <div className="h-52 flex items-center justify-center bg-(--color-bg) text-sm text-wibe-secondary p-4 text-center">
               لیستی برای پیش‌نمایش انتخاب نشده
             </div>
           ) : (
@@ -60,7 +60,7 @@ export default function FeaturedMobilePreview({ list, mode, label }: Props) {
                   fallbackIcon="🎬"
                   fallbackClassName="w-full h-full"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-transparent" />
                 <div className="absolute top-2 right-2">
                   <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
                     {badgeLabels[list.badge ?? 'featured'] ?? '⭐ ویژه'}
@@ -80,10 +80,10 @@ export default function FeaturedMobilePreview({ list, mode, label }: Props) {
                 </div>
               </div>
               <div className="p-2 flex gap-1.5 bg-white dark:bg-gray-800">
-                <div className="flex-1 py-2 rounded-lg bg-[var(--primary)] text-white text-[10px] font-medium text-center">
+                <div className="flex-1 py-2 rounded-lg bg-primary text-white text-[10px] font-medium text-center">
                   ذخیره کن ⭐
                 </div>
-                <div className="flex-1 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] text-[10px] font-medium text-center">
+                <div className="flex-1 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-wibe-secondary dark:text-(--color-text-subtle) text-[10px] font-medium text-center">
                   مشاهده لیست
                 </div>
               </div>

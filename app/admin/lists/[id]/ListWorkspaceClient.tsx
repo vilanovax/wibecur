@@ -31,13 +31,13 @@ function StatPill({
   value: string | number;
 }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] px-3 py-2">
-      <Icon className="w-4 h-4 text-[var(--primary)] shrink-0" />
+    <div className="inline-flex items-center gap-2 rounded-xl border border-(--color-border-muted) bg-(--color-surface) px-3 py-2">
+      <Icon className="w-4 h-4 text-primary shrink-0" />
       <div className="text-right leading-tight">
-        <p className="text-sm font-bold tabular-nums text-[var(--color-text)]">
+        <p className="text-sm font-bold tabular-nums text-(--color-text)">
           {typeof value === 'number' ? value.toLocaleString('fa-IR') : value}
         </p>
-        <p className="text-[10px] text-[var(--color-text-muted)]">{label}</p>
+        <p className="text-[10px] text-wibe-secondary">{label}</p>
       </div>
     </div>
   );
@@ -55,16 +55,16 @@ export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) 
     <div className="max-w-6xl mx-auto space-y-5 pb-10" dir="rtl">
       <Link
         href="/admin/lists"
-        className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] hover:text-[var(--primary)]"
+        className="inline-flex items-center gap-1.5 text-sm text-wibe-secondary hover:text-primary"
       >
         <ArrowRight className="w-4 h-4" />
         بازگشت به لیست‌ها
       </Link>
 
       {/* هدر لیست */}
-      <header className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] overflow-hidden shadow-[var(--shadow-card)]">
+      <header className="rounded-2xl border border-(--color-border-muted) bg-(--color-surface) overflow-hidden shadow-(--shadow-card)">
         <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5">
-          <div className="relative h-24 w-20 sm:h-28 sm:w-24 shrink-0 overflow-hidden rounded-xl border border-[var(--color-border-muted)] bg-gray-100">
+          <div className="relative h-24 w-20 sm:h-28 sm:w-24 shrink-0 overflow-hidden rounded-xl border border-(--color-border-muted) bg-gray-100">
             <ImageWithFallback
               src={list.coverImage || list.horizontalImage || ''}
               alt=""
@@ -80,7 +80,7 @@ export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
               {category && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-bg)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-text-muted)]">
+                <span className="inline-flex items-center gap-1 rounded-full bg-(--color-bg) px-2.5 py-0.5 text-xs font-medium text-wibe-secondary">
                   {category.icon} {category.name}
                 </span>
               )}
@@ -96,16 +96,16 @@ export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) 
                 </span>
               )}
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text)]">{list.title}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-(--color-text)">{list.title}</h1>
             {list.description && (
-              <p className="mt-1 text-sm text-[var(--color-text-muted)] line-clamp-2">{list.description}</p>
+              <p className="mt-1 text-sm text-wibe-secondary line-clamp-2">{list.description}</p>
             )}
           </div>
 
           <div className="flex flex-wrap sm:flex-col gap-2 shrink-0 sm:items-end">
             <Link
               href={`/admin/lists/${list.id}/edit`}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border-muted)] px-3 py-2 text-sm font-medium hover:bg-[var(--color-bg)]"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-(--color-border-muted) px-3 py-2 text-sm font-medium hover:bg-(--color-bg)"
             >
               <Settings className="w-4 h-4" />
               ویرایش لیست
@@ -113,7 +113,7 @@ export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) 
             <Link
               href={publicUrl}
               target="_blank"
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border-muted)] px-3 py-2 text-sm font-medium hover:bg-[var(--color-bg)]"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-(--color-border-muted) px-3 py-2 text-sm font-medium hover:bg-(--color-bg)"
             >
               <ExternalLink className="w-4 h-4" />
               نمایش عمومی
@@ -128,7 +128,7 @@ export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) 
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 px-4 sm:px-5 pb-4 border-t border-[var(--color-border-muted)] pt-3 bg-[var(--color-bg)]/30">
+        <div className="flex flex-wrap gap-2 px-4 sm:px-5 pb-4 border-t border-(--color-border-muted) pt-3 bg-(--color-bg)/30">
           <StatPill icon={Package} label="آیتم" value={list.itemCount} />
           <StatPill icon={Bookmark} label="ذخیره" value={list.saveCount} />
           <StatPill icon={Eye} label="بازدید" value={list.viewCount} />
@@ -138,7 +138,7 @@ export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) 
           {intelligence && (
             <Link
               href={`/admin/lists/${list.id}/debug`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-[var(--color-border-muted)] px-3 py-2 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--primary)] hover:border-[var(--primary)]/30"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-(--color-border-muted) px-3 py-2 text-xs font-medium text-wibe-secondary hover:text-primary hover:border-(--primary)/30"
             >
               <BarChart3 className="w-3.5 h-3.5" />
               جزئیات الگوریتم
@@ -158,9 +158,9 @@ export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) 
         onItemsUpdated={() => router.refresh()}
       />
 
-      <p className="text-center text-xs text-[var(--color-text-muted)]">
+      <p className="text-center text-xs text-wibe-secondary">
         ویرایش کاور، slug و تنظیمات از{' '}
-        <Link href={`/admin/lists/${list.id}/edit`} className="text-[var(--primary)] font-medium hover:underline">
+        <Link href={`/admin/lists/${list.id}/edit`} className="text-primary font-medium hover:underline">
           صفحه ویرایش لیست
         </Link>
       </p>

@@ -229,7 +229,7 @@ export default function AdminHeader() {
   }, []);
 
   return (
-    <header className="h-16 flex-shrink-0 flex items-center px-4 sm:px-6 lg:px-8 border-b border-admin-border dark:border-gray-600 bg-admin-card dark:bg-gray-800 shadow-admin" dir="rtl">
+    <header className="h-16 shrink-0 flex items-center px-4 sm:px-6 lg:px-8 border-b border-admin-border dark:border-gray-600 bg-admin-card dark:bg-gray-800 shadow-admin" dir="rtl">
       {/* Right: Sidebar toggle + Breadcrumb */}
       <div className="flex items-center gap-3 min-w-0">
         {/* Mobile: hamburger opens drawer */}
@@ -253,7 +253,7 @@ export default function AdminHeader() {
         <div className="flex items-center gap-2 min-w-0">
         {breadcrumbs.map((b, i) => {
           const isLast = i === breadcrumbs.length - 1;
-          const className = `text-sm truncate max-w-[120px] ${
+          const className = `text-sm truncate max-w-30 ${
             isLast
               ? 'font-semibold text-admin-text-primary dark:text-white'
               : 'text-admin-text-secondary dark:text-gray-400 hover:text-admin-text-primary dark:hover:text-white'
@@ -294,7 +294,7 @@ export default function AdminHeader() {
         >
           <Trash2 className="h-5 w-5" />
           {trashCount > 0 && (
-            <span className="absolute top-1 left-1 min-w-[18px] h-[18px] px-1 rounded-full bg-gray-500 text-[10px] text-white flex items-center justify-center">
+            <span className="absolute top-1 left-1 min-w-4.5 h-4.5 px-1 rounded-full bg-gray-500 text-[10px] text-white flex items-center justify-center">
               {trashCount > 99 ? '99+' : trashCount}
             </span>
           )}
@@ -310,13 +310,13 @@ export default function AdminHeader() {
           >
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-1 left-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-[10px] text-white flex items-center justify-center">
+              <span className="absolute top-1 left-1 min-w-4.5 h-4.5 px-1 rounded-full bg-red-500 text-[10px] text-white flex items-center justify-center">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </button>
           {showNotifications && (
-            <div className="absolute left-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-admin-lg border border-admin-border dark:border-gray-600 p-4 z-50 max-h-[400px] flex flex-col">
+            <div className="absolute left-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-admin-lg border border-admin-border dark:border-gray-600 p-4 z-50 max-h-100 flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-admin-text-primary dark:text-white">نوتیفیکیشن‌ها</h3>
                 {unreadCount > 0 && (
@@ -385,7 +385,7 @@ export default function AdminHeader() {
             <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center text-white text-sm font-semibold">
               {(session?.user?.name || session?.user?.email || 'ا').charAt(0)}
             </div>
-            <span className="text-sm font-medium text-admin-text-primary dark:text-white max-w-[100px] truncate hidden sm:block">
+            <span className="text-sm font-medium text-admin-text-primary dark:text-white max-w-25 truncate hidden sm:block">
               {session?.user?.name || session?.user?.email || 'ادمین'}
             </span>
             <User className="h-4 w-4 text-admin-text-tertiary dark:text-gray-400" />

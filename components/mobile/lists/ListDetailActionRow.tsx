@@ -72,7 +72,7 @@ export default function ListDetailActionRow({
             labelSaved="ذخیره شد ✓"
             analytics={bookmarkAnalytics}
             onToggle={onBookmarkToggle}
-            className="lg:!h-11 lg:!min-w-[10.5rem] lg:!w-auto lg:!px-5 lg:!py-2.5"
+            className="lg:!h-11 lg:!min-w-42 lg:!w-auto lg:!px-5 lg:!py-2.5"
           />
         </div>
       )}
@@ -80,7 +80,7 @@ export default function ListDetailActionRow({
         type="button"
         onClick={onShare}
         className={`flex shrink-0 items-center justify-center gap-2 rounded-xl border border-wibe bg-wibe-card font-semibold text-foreground shadow-sm transition-colors hover:border-primary/30 active:scale-[0.99] ${
-          isOwner ? 'w-full py-3 wibe-small lg:min-w-[10rem] lg:w-auto' : 'h-12 w-12 lg:h-11'
+          isOwner ? 'w-full py-3 wibe-small lg:min-w-40 lg:w-auto' : 'h-12 w-12 lg:h-11'
         }`}
         aria-label="اشتراک‌گذاری"
         title="اشتراک‌گذاری"

@@ -84,19 +84,19 @@ export default function ListSmartFilterBar({
     <div className={`${compact ? 'space-y-2' : 'space-y-3'}`} dir="rtl">
       <div className={`flex ${compact ? 'flex-row items-center' : 'flex-col sm:flex-row'} gap-2`}>
         <div className="relative flex-1 min-w-0">
-          <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+          <Search className="pointer-events-none absolute inset-e-3 top-1/2 size-4 -translate-y-1/2 text-wibe-secondary" />
           <input
             type="search"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="جستجو در عنوان، دسته یا نویسنده…"
-            className="min-h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] pe-10 ps-10 text-sm focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/30"
+            className="min-h-11 w-full rounded-xl border border-(--color-border) bg-(--color-surface) pe-10 ps-10 text-sm focus:border-(--primary) focus:ring-2 focus:ring-(--primary)/30"
           />
           {search && (
             <button
               type="button"
               onClick={() => onSearchChange('')}
-              className="absolute start-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+              className="absolute inset-s-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded text-wibe-secondary hover:text-(--color-text)"
               aria-label="پاک کردن جستجو"
             >
               <X className="w-3.5 h-3.5" />
@@ -108,7 +108,7 @@ export default function ListSmartFilterBar({
           <select
             value={categoryId}
             onChange={(e) => onCategoryChange(e.target.value)}
-            className="min-h-11 max-w-xs truncate rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm"
+            className="min-h-11 max-w-xs truncate rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm"
             title="دسته‌بندی"
           >
             <option value="all">همه دسته‌ها</option>
@@ -123,7 +123,7 @@ export default function ListSmartFilterBar({
           <select
             value={sortBy}
             onChange={(e) => onSortChange(e.target.value)}
-            className="min-h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm"
+            className="min-h-11 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm"
             title="مرتب‌سازی"
             aria-label="مرتب‌سازی"
           >
@@ -139,15 +139,15 @@ export default function ListSmartFilterBar({
             <option value="date_asc">قدیمی‌ترین</option>
           </select>
 
-          <div className="flex rounded-xl border border-[var(--color-border)] overflow-hidden">
+          <div className="flex rounded-xl border border-(--color-border) overflow-hidden">
             <button
               type="button"
               onClick={() => onViewModeChange('covers')}
               title="نمایش کاور ۱ و ۲"
               className={`inline-flex min-h-11 items-center gap-1 px-3 text-xs font-medium ${
                 viewMode === 'covers'
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+                  ? 'bg-primary text-white'
+                  : 'bg-(--color-surface) text-wibe-secondary hover:bg-(--color-bg)'
               }`}
             >
               <Images className="w-4 h-4 shrink-0" />
@@ -157,7 +157,7 @@ export default function ListSmartFilterBar({
               type="button"
               onClick={() => onViewModeChange('grid')}
               title="گرید"
-              className={`inline-flex size-11 items-center justify-center ${viewMode === 'grid' ? 'bg-[var(--primary)] text-white' : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'}`}
+              className={`inline-flex size-11 items-center justify-center ${viewMode === 'grid' ? 'bg-primary text-white' : 'bg-(--color-surface) text-wibe-secondary hover:bg-(--color-bg)'}`}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
@@ -165,7 +165,7 @@ export default function ListSmartFilterBar({
               type="button"
               onClick={() => onViewModeChange('table')}
               title="جدول"
-              className={`inline-flex size-11 items-center justify-center ${viewMode === 'table' ? 'bg-[var(--primary)] text-white' : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'}`}
+              className={`inline-flex size-11 items-center justify-center ${viewMode === 'table' ? 'bg-primary text-white' : 'bg-(--color-surface) text-wibe-secondary hover:bg-(--color-bg)'}`}
             >
               <Table2 className="w-4 h-4" />
             </button>
@@ -189,8 +189,8 @@ export default function ListSmartFilterBar({
               onClick={() => setShowSecondary((s) => !s)}
               className={`inline-flex min-h-11 items-center gap-1 rounded-xl border px-3 text-sm ${
                 showSecondary || isSecondaryActive
-                  ? 'border-[var(--primary)]/40 bg-[var(--primary)]/5 text-[var(--primary)]'
-                  : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+                  ? 'border-(--primary)/40 bg-primary/5 text-primary'
+                  : 'border-(--color-border) text-wibe-secondary hover:bg-(--color-bg)'
               }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -199,12 +199,12 @@ export default function ListSmartFilterBar({
           )}
 
           {value !== 'all' && (
-            <span className="text-xs px-2 py-1 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] font-medium whitespace-nowrap">
+            <span className="text-xs px-2 py-1 rounded-lg bg-primary/10 text-primary font-medium whitespace-nowrap">
               {FILTER_LABELS[value]}
             </span>
           )}
 
-          <span className="whitespace-nowrap text-xs tabular-nums text-[var(--color-text-muted)] ms-auto">
+          <span className="whitespace-nowrap text-xs tabular-nums text-wibe-secondary ms-auto">
             {resultCount.toLocaleString('fa-IR')} نتیجه
           </span>
         </div>
@@ -220,8 +220,8 @@ export default function ListSmartFilterBar({
                 onClick={() => onChange(value === p.value ? 'all' : p.value)}
                 className={`inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-medium transition-colors ${
                   value === p.value
-                    ? 'bg-[var(--primary)] text-white'
-                    : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:bg-[var(--color-border-muted)] border border-[var(--color-border-muted)]'
+                    ? 'bg-primary text-white'
+                    : 'bg-(--color-bg) text-wibe-secondary hover:bg-(--color-border-muted) border border-(--color-border-muted)'
                 }`}
               >
                 {p.label}
@@ -233,7 +233,7 @@ export default function ListSmartFilterBar({
             <button
               type="button"
               onClick={onClearFilters}
-              className="ms-auto inline-flex min-h-11 items-center gap-1 text-xs text-[var(--primary)] hover:underline"
+              className="ms-auto inline-flex min-h-11 items-center gap-1 text-xs text-primary hover:underline"
             >
               <X className="w-3 h-3" />
               پاک کردن

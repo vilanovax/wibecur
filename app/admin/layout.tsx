@@ -13,7 +13,7 @@ export const metadata: Metadata = {
  * Layout ادمین 2.0: Sidebar + MainArea (Header + Content)
  * - Sidebar: ~212px / w-14 collapsed, localStorage, mobile overlay drawer
  * - Header: h-16، toggle + breadcrumb | search | profile+notifications+role
- * - Content: max-w-[1400px], gap-6
+ * - Content: max-w-350, gap-6
  * - access-denied: layout ساده بدون سایدبار
  */
 export default function AdminLayout({

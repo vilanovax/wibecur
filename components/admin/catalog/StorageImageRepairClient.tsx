@@ -123,7 +123,7 @@ function ImagePathBlock({
     tone === 'success'
       ? 'border-emerald-200 bg-emerald-50/60 text-emerald-900'
       : tone === 'muted'
-        ? 'border-gray-200 bg-white text-[var(--color-text-muted)]'
+        ? 'border-gray-200 bg-white text-wibe-secondary'
         : 'border-orange-200 bg-orange-50/50 text-orange-950';
 
   return (
@@ -449,16 +449,16 @@ export default function StorageImageRepairClient({
         <div className="min-w-0">
           <Link
             href="/admin/lists?view=catalog"
-            className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+            className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-wibe-secondary hover:text-(--color-text)"
           >
             <ArrowRight className="size-4" />
             بازگشت به مرکز محتوا
           </Link>
-          <h1 className="mt-1 flex items-center gap-2 text-xl font-bold text-[var(--color-text)]">
+          <h1 className="mt-1 flex items-center gap-2 text-xl font-bold text-(--color-text)">
             <ImageIcon className="size-5 text-orange-700" />
             لینک تصاویر
           </h1>
-          <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-muted)]">
+          <p className="mt-1 text-sm leading-relaxed text-wibe-secondary">
             لینک خارجی را ببینید، کپی کنید، یا روی ParsPack ذخیره کنید.
           </p>
         </div>
@@ -471,15 +471,15 @@ export default function StorageImageRepairClient({
         </div>
       )}
 
-      <section className="space-y-3 rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4">
+      <section className="space-y-3 rounded-2xl border border-(--color-border-muted) bg-(--color-surface) p-4">
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setStatus('all')}
             className={`inline-flex min-h-11 items-center rounded-full px-3 text-xs font-semibold ring-1 ${
               status === 'all'
-                ? 'bg-[var(--color-text)] text-white ring-[var(--color-text)]'
-                : 'bg-[var(--color-bg)] text-[var(--color-text)] ring-[var(--color-border-muted)]'
+                ? 'bg-(--color-text) text-white ring-(--color-text)'
+                : 'bg-(--color-bg) text-(--color-text) ring-(--color-border-muted)'
             }`}
           >
             {items.length.toLocaleString('fa-IR')} در صف
@@ -510,20 +510,20 @@ export default function StorageImageRepairClient({
 
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+            <Search className="pointer-events-none absolute inset-e-3 top-1/2 size-4 -translate-y-1/2 text-wibe-secondary" />
             <input
               type="search"
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
               placeholder="جستجو در عنوان یا لینک تصویر…"
-              className="min-h-11 w-full rounded-xl border border-[var(--color-border-muted)] bg-white pe-10 ps-3 text-sm"
+              className="min-h-11 w-full rounded-xl border border-(--color-border-muted) bg-white pe-10 ps-3 text-sm"
             />
           </div>
           <select
             value={categorySlug}
             onChange={(e) => setCategorySlug(e.target.value)}
             aria-label="دسته"
-            className="min-h-11 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 text-sm lg:w-52"
+            className="min-h-11 rounded-xl border border-(--color-border-muted) bg-white px-3 text-sm lg:w-52"
           >
             <option value="all">همه دسته‌ها</option>
             {categories.map((cat) => (
@@ -547,7 +547,7 @@ export default function StorageImageRepairClient({
       </section>
 
       {loading && (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--color-border-muted)] py-16 text-sm text-[var(--color-text-muted)]">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-(--color-border-muted) py-16 text-sm text-wibe-secondary">
           <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
           در حال بارگذاری…
         </div>
@@ -573,13 +573,13 @@ export default function StorageImageRepairClient({
       )}
 
       {!loading && !error && items.length > 0 && filteredItems.length === 0 && (
-        <p className="rounded-xl border border-dashed border-[var(--color-border)] py-10 text-center text-sm text-[var(--color-text-muted)]">
+        <p className="rounded-xl border border-dashed border-(--color-border) py-10 text-center text-sm text-wibe-secondary">
           با این فیلتر لینکی پیدا نشد.
         </p>
       )}
 
       {pageRows.length > 0 && (
-      <ul className="overflow-hidden rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)]">
+      <ul className="overflow-hidden rounded-2xl border border-(--color-border-muted) bg-(--color-surface)">
         {pageRows.map((item) => {
           const isExpanded = expandedId === item.id;
           const searchState = searchMap[item.id];
@@ -602,16 +602,16 @@ export default function StorageImageRepairClient({
           return (
             <li
               key={item.id}
-              className={`border-b border-[var(--color-border-muted)] p-3 last:border-b-0 ${
+              className={`border-b border-(--color-border-muted) p-3 last:border-b-0 ${
                 isExpanded ? 'bg-orange-50/40' : ''
               }`}
             >
               <div className="flex items-start gap-3">
-                <div className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-[var(--color-border-muted)] bg-[var(--color-bg)] aspect-square">
+                <div className="relative size-14 shrink-0 overflow-hidden rounded-lg border border-(--color-border-muted) bg-(--color-bg) aspect-square">
                   {previewSrc ? (
                     <Image src={previewSrc} alt="" fill className="object-cover" unoptimized />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[var(--color-text-muted)]">
+                    <div className="flex h-full w-full items-center justify-center text-wibe-secondary">
                       <ImageOff className="size-5" />
                     </div>
                   )}
@@ -619,8 +619,8 @@ export default function StorageImageRepairClient({
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-sm font-semibold text-[var(--color-text)]">{item.title}</h2>
-                    <span className="text-xs text-[var(--color-text-muted)]">{item.categoryLabel}</span>
+                    <h2 className="text-sm font-semibold text-(--color-text)">{item.title}</h2>
+                    <span className="text-xs text-wibe-secondary">{item.categoryLabel}</span>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                         isExternal ? 'bg-amber-100 text-amber-800' : 'bg-sky-100 text-sky-800'
@@ -640,29 +640,29 @@ export default function StorageImageRepairClient({
                           rel="noopener noreferrer"
                           dir="ltr"
                           title={item.imageUrl}
-                          className="min-w-0 flex-1 truncate text-xs text-[var(--color-text)] hover:underline"
+                          className="min-w-0 flex-1 truncate text-xs text-(--color-text) hover:underline"
                         >
                           {item.imageUrl}
                         </a>
                       ) : (
-                        <p dir="ltr" title={item.imageUrl} className="min-w-0 flex-1 truncate text-xs text-[var(--color-text)]">
+                        <p dir="ltr" title={item.imageUrl} className="min-w-0 flex-1 truncate text-xs text-(--color-text)">
                           {item.imageUrl}
                         </p>
                       )}
                       <button
                         type="button"
                         onClick={() => void copyImageLink(item.id, item.imageUrl)}
-                        className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-xl border border-[var(--color-border-muted)] px-3 text-xs font-semibold"
+                        className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-xl border border-(--color-border-muted) px-3 text-xs font-semibold"
                       >
                         <Copy className="size-4" />
                         {copiedId === item.id ? 'کپی شد' : 'کپی لینک'}
                       </button>
                     </div>
                   ) : (
-                    <p className="mt-2 text-xs text-[var(--color-text-muted)]">لینکی ثبت نشده</p>
+                    <p className="mt-2 text-xs text-wibe-secondary">لینکی ثبت نشده</p>
                   )}
 
-                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  <p className="mt-1 text-xs text-wibe-secondary">
                     {item.host !== '—' ? item.host : 'بدون میزبان'}
                     {' · '}
                     {item.listCount.toLocaleString('fa-IR')} جایگذاری
@@ -700,7 +700,7 @@ export default function StorageImageRepairClient({
                     </button>
                     <Link
                       href={`/admin/catalog/${item.id}/edit`}
-                      className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-[var(--color-border-muted)] px-3 text-sm font-semibold"
+                      className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-(--color-border-muted) px-3 text-sm font-semibold"
                     >
                       <Pencil className="size-4" />
                       ویرایش
@@ -710,7 +710,7 @@ export default function StorageImageRepairClient({
               </div>
 
               {isExpanded && (
-                <div className="border-t border-[var(--color-border-muted)] bg-[var(--color-bg)]/40 px-3 py-4 sm:px-4">
+                <div className="border-t border-(--color-border-muted) bg-(--color-bg)/40 px-3 py-4 sm:px-4">
                   <div className="grid gap-3 lg:grid-cols-2">
                     <ImagePathBlock label="آدرس فعلی" url={item.imageUrl} tone="muted" />
                     {candidate && (
@@ -722,7 +722,7 @@ export default function StorageImageRepairClient({
                   </div>
 
                   {isExternal && (
-                    <p className="mt-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
+                    <p className="mt-3 text-xs leading-relaxed text-wibe-secondary">
                       تصویر فعلی خارج از ParsPack است — «انتقال» همان URL را ذخیره می‌کند، یا با
                       جستجوی Google تصویر جدید انتخاب کنید.
                     </p>
@@ -816,7 +816,7 @@ export default function StorageImageRepairClient({
                               },
                             }))
                           }
-                          className="min-h-11 min-w-48 flex-1 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 text-sm focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200/60"
+                          className="min-h-11 min-w-48 flex-1 rounded-xl border border-(--color-border-muted) bg-white px-3 text-sm focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200/60"
                           placeholder="عبارت جستجو…"
                         />
                         <button
@@ -853,7 +853,7 @@ export default function StorageImageRepairClient({
 
                       {searchState?.results && searchState.results.length > 0 && (
                         <div className="mt-4">
-                          <p className="mb-2 text-xs font-semibold text-[var(--color-text-muted)]">
+                          <p className="mb-2 text-xs font-semibold text-wibe-secondary">
                             {searchState.results.length.toLocaleString('fa-IR')} نتیجه — یکی را انتخاب کنید
                           </p>
                           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
@@ -869,7 +869,7 @@ export default function StorageImageRepairClient({
                                       [item.id]: result,
                                     }))
                                   }
-                                  className={`group relative aspect-[4/3] overflow-hidden rounded-xl border bg-white transition-all ${
+                                  className={`group relative aspect-4/3 overflow-hidden rounded-xl border bg-white transition-all ${
                                     selected
                                       ? 'border-orange-500 ring-2 ring-orange-300'
                                       : 'border-gray-200 hover:border-orange-300 hover:shadow-sm'
@@ -890,7 +890,7 @@ export default function StorageImageRepairClient({
                                     </span>
                                   )}
                                   {(result.width > 0 || result.height > 0) && (
-                                    <span className="absolute bottom-1 end-1 rounded bg-black/60 px-1 py-0.5 text-xs font-mono text-white" dir="ltr">
+                                    <span className="absolute bottom-1 inset-e-1 rounded bg-black/60 px-1 py-0.5 text-xs font-mono text-white" dir="ltr">
                                       {result.width}×{result.height}
                                     </span>
                                   )}
@@ -922,18 +922,18 @@ export default function StorageImageRepairClient({
             type="button"
             disabled={safePage <= 1}
             onClick={() => setPage(safePage - 1)}
-            className="inline-flex min-h-11 items-center rounded-lg border border-[var(--color-border-muted)] bg-white px-3 text-sm disabled:opacity-40"
+            className="inline-flex min-h-11 items-center rounded-lg border border-(--color-border-muted) bg-white px-3 text-sm disabled:opacity-40"
           >
             صفحه قبل
           </button>
-          <span className="text-sm text-[var(--color-text-muted)]">
+          <span className="text-sm text-wibe-secondary">
             صفحه {safePage.toLocaleString('fa-IR')} از {pageCount.toLocaleString('fa-IR')}
           </span>
           <button
             type="button"
             disabled={safePage >= pageCount}
             onClick={() => setPage(safePage + 1)}
-            className="inline-flex min-h-11 items-center rounded-lg border border-[var(--color-border-muted)] bg-white px-3 text-sm disabled:opacity-40"
+            className="inline-flex min-h-11 items-center rounded-lg border border-(--color-border-muted) bg-white px-3 text-sm disabled:opacity-40"
           >
             صفحه بعد
           </button>

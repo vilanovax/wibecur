@@ -14,7 +14,7 @@ export default function CategoryIntelligenceGrid({ categories }: CategoryIntelli
       {categories.map((cat) => (
         <div
           key={cat.id}
-          className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
+          className="rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-(--shadow-card) overflow-hidden transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
         >
           <div
             className="h-1 w-full"
@@ -22,7 +22,7 @@ export default function CategoryIntelligenceGrid({ categories }: CategoryIntelli
           />
           <div className="p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-[var(--color-text)]">{cat.name}</h3>
+              <h3 className="font-semibold text-(--color-text)">{cat.name}</h3>
               <span
                 className={`inline-flex items-center gap-0.5 text-xs font-medium ${
                   cat.saveGrowthPercent >= 0 ? 'text-emerald-600' : 'text-red-600'
@@ -33,7 +33,7 @@ export default function CategoryIntelligenceGrid({ categories }: CategoryIntelli
                 {cat.saveGrowthPercent.toLocaleString('fa-IR')}٪
               </span>
             </div>
-            <div className="flex items-center gap-4 text-xs text-[var(--color-text-muted)] mb-3">
+            <div className="flex items-center gap-4 text-xs text-wibe-secondary mb-3">
               <span className="flex items-center gap-1">
                 <List className="w-3.5 h-3.5" />
                 {cat.newListsCount.toLocaleString('fa-IR')} لیست جدید
@@ -43,7 +43,7 @@ export default function CategoryIntelligenceGrid({ categories }: CategoryIntelli
                 تعامل {cat.engagementRatio.toFixed(1)}٪
               </span>
             </div>
-            <div className="h-1.5 rounded-full bg-[var(--color-bg)] overflow-hidden">
+            <div className="h-1.5 rounded-full bg-(--color-bg) overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
@@ -55,7 +55,7 @@ export default function CategoryIntelligenceGrid({ categories }: CategoryIntelli
             {cat.topRisingList && (
               <Link
                 href={`/admin/lists/${cat.topRisingList.id}/edit`}
-                className="mt-3 block text-xs text-[var(--primary)] hover:underline truncate"
+                className="mt-3 block text-xs text-primary hover:underline truncate"
               >
                 ↑ {cat.topRisingList.title} (+{cat.topRisingList.growthPercent}٪)
               </Link>

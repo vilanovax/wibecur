@@ -20,7 +20,7 @@ export default function FilmCategoryHero({
 }: FilmCategoryHeroProps) {
   return (
     <section className="relative -mx-4 mt-4 mb-8 overflow-hidden">
-      <div className="relative aspect-[21/9] min-h-[220px] max-h-[45vh]">
+      <div className="relative aspect-21/9 min-h-55 max-h-[45vh]">
         <ImageWithFallback
           src={
             category.heroImage
@@ -33,8 +33,8 @@ export default function FilmCategoryHero({
           placeholderSize="cover"
         sizes="100vw"
       />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black via-black/60 to-black/30" />
+        <div className="absolute inset-0 bg-linear-to-r from-black/40 via-transparent to-transparent" />
 
         <div className="absolute inset-0 flex flex-col justify-end p-5 pb-6">
           <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow-2xl tracking-tight">

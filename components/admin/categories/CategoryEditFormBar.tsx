@@ -19,20 +19,20 @@ export default function CategoryEditFormBar({
 }: CategoryEditFormBarProps) {
   return (
     <div
-      className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 bg-[var(--color-surface)]/95 backdrop-blur p-3 rounded-xl border border-[var(--color-border)] shadow-lg"
+      className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 bg-(--color-surface)/95 backdrop-blur p-3 rounded-xl border border-(--color-border) shadow-lg"
       dir="rtl"
     >
       <button
         type="submit"
         form="category-edit-form"
         disabled={loading || !canSave}
-        className="px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
       </button>
       <Link
         href="/admin/categories"
-        className="px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+        className="px-4 py-2.5 rounded-xl border border-(--color-border) text-sm font-medium text-(--color-text) hover:bg-(--color-bg)"
       >
         انصراف
       </Link>
@@ -40,7 +40,7 @@ export default function CategoryEditFormBar({
         href={`/categories/${categorySlug}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+        className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-(--color-border) text-sm font-medium text-(--color-text) hover:bg-(--color-bg)"
       >
         <ExternalLink className="w-4 h-4" />
         مشاهده در اپ

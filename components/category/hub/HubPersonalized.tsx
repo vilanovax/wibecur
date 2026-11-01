@@ -94,9 +94,9 @@ export default function HubPersonalized({
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex-shrink-0 w-28 rounded-2xl overflow-hidden bg-white border border-wibe shadow-sm active:scale-[0.97] transition-transform"
+            className="shrink-0 w-28 rounded-2xl overflow-hidden bg-white border border-wibe shadow-sm active:scale-[0.97] transition-transform"
           >
-            <div className="relative aspect-[3/4] bg-wibe-surface">
+            <div className="relative aspect-3/4 bg-wibe-surface">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}

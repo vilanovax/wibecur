@@ -70,10 +70,10 @@ function formatSaveCell(saves24h: number, saveCount: number): {
 function CategoryChip({ name }: { name: string }) {
   const style =
     CATEGORY_STYLES[name] ??
-    'bg-[var(--color-bg)] text-[var(--color-text-muted)] border-[var(--color-border)]';
+    'bg-(--color-bg) text-wibe-secondary border-(--color-border)';
   return (
     <span
-      className={`inline-flex max-w-[140px] truncate rounded-md border px-2 py-0.5 text-xs font-medium ${style}`}
+      className={`inline-flex max-w-35 truncate rounded-md border px-2 py-0.5 text-xs font-medium ${style}`}
       title={name}
     >
       {name}
@@ -99,7 +99,7 @@ function TrendStatusBadge({ trend }: { trend: TrendingRadarRowType['trend'] }) {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-gray-500/10 text-[var(--color-text-muted)] border border-gray-200/80 px-2 py-0.5 text-xs font-medium">
+    <span className="inline-flex items-center gap-1 rounded-full bg-gray-500/10 text-wibe-secondary border border-gray-200/80 px-2 py-0.5 text-xs font-medium">
       <Minus className="w-3.5 h-3.5" />
       ثابت
     </span>
@@ -111,14 +111,14 @@ function ScoreBar({ score }: { score: number }) {
   const color =
     clamped >= 60 ? 'bg-emerald-500' : clamped >= 30 ? 'bg-amber-500' : 'bg-slate-300';
   return (
-    <div className="flex items-center gap-2 min-w-[100px]">
-      <div className="flex-1 h-1.5 rounded-full bg-[var(--color-bg)] overflow-hidden">
+    <div className="flex items-center gap-2 min-w-25">
+      <div className="flex-1 h-1.5 rounded-full bg-(--color-bg) overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${color}`}
           style={{ width: `${clamped}%` }}
         />
       </div>
-      <span className="tabular-nums text-sm font-semibold text-[var(--color-text)] w-8 text-left">
+      <span className="tabular-nums text-sm font-semibold text-(--color-text) w-8 text-left">
         {clamped.toLocaleString('fa-IR')}
       </span>
     </div>
@@ -238,7 +238,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
       <button
         type="button"
         onClick={() => toggleSort(keyName)}
-        className={`flex items-center gap-1 w-full font-semibold text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors ${
+        className={`flex items-center gap-1 w-full font-semibold text-xs text-wibe-secondary hover:text-(--color-text) transition-colors ${
           align === 'center' ? 'justify-center' : 'justify-end'
         }`}
       >
@@ -257,17 +257,17 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
   );
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden">
-      <div className="px-4 sm:px-5 py-4 border-b border-[var(--color-border)] space-y-3">
+    <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-(--shadow-card) overflow-hidden">
+      <div className="px-4 sm:px-5 py-4 border-b border-(--color-border) space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-[var(--primary)]" />
-              <h2 className="text-lg font-semibold text-[var(--color-text)]">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-(--color-text)">
                 رادار ترند
               </h2>
             </div>
-            <p className="text-xs text-[var(--color-text-muted)] mt-1">
+            <p className="text-xs text-wibe-secondary mt-1">
               لیست‌های پربازدید بر اساس بازدید، ذخیره ۲۴ ساعت، رشد ۷ روز و امتیاز ترکیبی
             </p>
           </div>
@@ -283,18 +283,18 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-subtle)]" />
+          <div className="relative flex-1 min-w-50">
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--color-text-subtle)" />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="جستجو در نام لیست یا دسته..."
-              className="w-full pr-9 pl-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
+              className="w-full pr-9 pl-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg) focus:outline-none focus:ring-2 focus:ring-(--primary)/30"
             />
           </div>
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border)] overflow-x-auto">
-            <Filter className="w-4 h-4 text-[var(--color-text-subtle)] shrink-0 mx-1 hidden sm:block" />
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-(--color-bg) border border-(--color-border) overflow-x-auto">
+            <Filter className="w-4 h-4 text-(--color-text-subtle) shrink-0 mx-1 hidden sm:block" />
             {TREND_FILTERS.map((f) => (
               <button
                 key={f.key}
@@ -302,8 +302,8 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                 onClick={() => setTrendFilter(f.key)}
                 className={`px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                   trendFilter === f.key
-                    ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
-                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                    ? 'bg-(--color-surface) text-(--color-text) shadow-sm'
+                    : 'text-wibe-secondary hover:text-(--color-text)'
                 }`}
               >
                 {f.label}
@@ -314,51 +314,51 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[800px] text-sm">
-          <thead className="bg-[var(--color-bg)]/80 sticky top-0 z-10 border-b border-[var(--color-border)]">
+        <table className="w-full min-w-200 text-sm">
+          <thead className="bg-(--color-bg)/80 sticky top-0 z-10 border-b border-(--color-border)">
             <tr>
-              <Th label="لیست" keyName="listName" className="pr-4 min-w-[180px]" />
-              <Th label="دسته" keyName="category" className="w-[130px]" />
+              <Th label="لیست" keyName="listName" className="pr-4 min-w-45" />
+              <Th label="دسته" keyName="category" className="w-32.5" />
               <Th
                 label="بازدید"
                 keyName="viewCount"
                 align="center"
-                className="w-[80px]"
+                className="w-20"
               />
               <Th
                 label="ذخیره"
                 keyName="saves24h"
                 align="center"
-                className="w-[96px]"
+                className="w-24"
               />
               <Th
                 label="رشد ۷ روز"
                 keyName="growth7dPercent"
                 align="center"
-                className="w-[96px]"
+                className="w-24"
               />
               <Th
                 label="امتیاز"
                 keyName="trendingScore"
-                className="w-[140px]"
+                className="w-35"
               />
-              <th scope="col" className="px-3 py-2.5 text-center text-xs font-semibold text-[var(--color-text-muted)] w-[88px]">
+              <th scope="col" className="px-3 py-2.5 text-center text-xs font-semibold text-wibe-secondary w-22">
                 وضعیت
               </th>
-              <th scope="col" className="pl-4 pr-3 py-2.5 text-center text-xs font-semibold text-[var(--color-text-muted)] w-[108px]">
+              <th scope="col" className="pl-4 pr-3 py-2.5 text-center text-xs font-semibold text-wibe-secondary w-27">
                 عملیات
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--color-border-muted)]">
+          <tbody className="divide-y divide-(--color-border-muted)">
             {paginated.map((row, idx) => (
               <tr
                 key={row.id}
-                className={`transition-colors hover:bg-[var(--color-bg)]/80 ${
+                className={`transition-colors hover:bg-(--color-bg)/80 ${
                   row.trend === 'up'
                     ? 'bg-emerald-500/[0.04]'
                     : idx % 2 === 1
-                      ? 'bg-[var(--color-bg)]/30'
+                      ? 'bg-(--color-bg)/30'
                       : ''
                 }`}
               >
@@ -366,7 +366,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                   <div className="min-w-0">
                     <Link
                       href={`/admin/lists/${row.id}/edit`}
-                      className="font-medium text-[var(--color-text)] hover:text-[var(--primary)] line-clamp-1"
+                      className="font-medium text-(--color-text) hover:text-primary line-clamp-1"
                       title={`${row.listName}${row.listSlug ? `\n/${row.listSlug}` : ''}`}
                     >
                       {row.listName}
@@ -380,8 +380,8 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                   <span
                     className={`tabular-nums font-medium ${
                       row.viewCount > 0
-                        ? 'text-[var(--color-text)]'
-                        : 'text-[var(--color-text-subtle)]'
+                        ? 'text-(--color-text)'
+                        : 'text-(--color-text-subtle)'
                     }`}
                   >
                     {formatCount(row.viewCount)}
@@ -394,8 +394,8 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                       <span
                         className={`inline-flex flex-col items-center tabular-nums font-medium ${
                           save.muted
-                            ? 'text-[var(--color-text-subtle)]'
-                            : 'text-[var(--color-text)]'
+                            ? 'text-(--color-text-subtle)'
+                            : 'text-(--color-text)'
                         }`}
                         title={
                           save.hint === 'کل'
@@ -407,7 +407,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                       >
                         <span>{save.text}</span>
                         {save.hint ? (
-                          <span className="text-[10px] font-normal text-[var(--color-text-subtle)]">
+                          <span className="text-[10px] font-normal text-(--color-text-subtle)">
                             {save.hint}
                           </span>
                         ) : null}
@@ -422,7 +422,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                         ? 'text-emerald-600'
                         : row.growth7dPercent < -2
                           ? 'text-red-600'
-                          : 'text-[var(--color-text-muted)]'
+                          : 'text-wibe-secondary'
                     }`}
                   >
                     {row.growth7dPercent > 2 ? '+' : ''}
@@ -442,20 +442,20 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                           onClick={() =>
                             setPopoverId(popoverId === row.id ? null : row.id)
                           }
-                          className="p-1 rounded-md hover:bg-[var(--color-bg)] text-[var(--color-text-subtle)]"
+                          className="p-1 rounded-md hover:bg-(--color-bg) text-(--color-text-subtle)"
                           aria-label="جزئیات امتیاز"
                         >
                           <Info className="w-3.5 h-3.5" />
                         </button>
                         {popoverId === row.id && (
-                          <div className="absolute z-30 mt-1 min-w-[168px] rounded-xl bg-gray-900 text-white text-xs p-3 shadow-xl left-4 top-full">
+                          <div className="absolute z-30 mt-1 min-w-42 rounded-xl bg-gray-900 text-white text-xs p-3 shadow-xl left-4 top-full">
                             <p className="font-medium mb-2 text-gray-200">ترکیب امتیاز</p>
                             {row.scoreBreakdown.map((b, i) => (
                               <div
                                 key={i}
                                 className="flex justify-between gap-4 py-0.5"
                               >
-                                <span className="text-[var(--color-text-subtle)]">{b.label}</span>
+                                <span className="text-(--color-text-subtle)">{b.label}</span>
                                 <span className="tabular-nums">
                                   {b.value.toLocaleString('fa-IR')}
                                 </span>
@@ -475,7 +475,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                     <Link
                       href={`/lists/${row.listSlug}`}
                       target="_blank"
-                      className="p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--primary)] transition-colors"
+                      className="p-2 rounded-lg text-wibe-secondary hover:bg-(--color-bg) hover:text-primary transition-colors"
                       title="مشاهده در سایت"
                       aria-label="مشاهده در سایت"
                     >
@@ -483,7 +483,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                     </Link>
                     <Link
                       href={`/admin/lists/${row.id}/edit`}
-                      className="p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--primary)] transition-colors"
+                      className="p-2 rounded-lg text-wibe-secondary hover:bg-(--color-bg) hover:text-primary transition-colors"
                       title="ویرایش"
                       aria-label="ویرایش لیست"
                     >
@@ -491,7 +491,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                     </Link>
                     <Link
                       href={`/admin/lists/${row.id}/debug`}
-                      className="p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-amber-500/10 hover:text-amber-700 transition-colors"
+                      className="p-2 rounded-lg text-wibe-secondary hover:bg-amber-500/10 hover:text-amber-700 transition-colors"
                       title="دیباگ ترند"
                       aria-label="دیباگ ترند"
                     >
@@ -507,7 +507,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
 
       {totalFiltered === 0 ? (
         <div className="py-14 text-center px-4">
-          <p className="text-sm text-[var(--color-text-muted)]">
+          <p className="text-sm text-wibe-secondary">
             {rows.length === 0
               ? 'لیستی برای نمایش وجود ندارد.'
               : 'با این فیلتر یا جستجو نتیجه‌ای نیست.'}
@@ -519,15 +519,15 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
                 setSearch('');
                 setTrendFilter('all');
               }}
-              className="mt-3 text-sm text-[var(--primary)] hover:underline"
+              className="mt-3 text-sm text-primary hover:underline"
             >
               پاک کردن فیلترها
             </button>
           )}
         </div>
       ) : (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-5 py-3 border-t border-[var(--color-border)] bg-[var(--color-bg)]/40">
-          <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-5 py-3 border-t border-(--color-border) bg-(--color-bg)/40">
+          <div className="flex items-center gap-2 text-sm text-wibe-secondary">
             <label htmlFor="trending-page-size" className="shrink-0">
               تعداد در صفحه:
             </label>
@@ -535,7 +535,7 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
               id="trending-page-size"
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value) as PageSize)}
-              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1.5 text-sm text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30"
+              className="rounded-lg border border-(--color-border) bg-(--color-surface) px-2.5 py-1.5 text-sm text-(--color-text) focus:outline-none focus:ring-2 focus:ring-(--primary)/30"
             >
               {PAGE_SIZE_OPTIONS.map((n) => (
                 <option key={n} value={n}>
@@ -554,18 +554,18 @@ export default function TrendingRadar({ rows }: TrendingRadarProps) {
               type="button"
               disabled={currentPage <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--color-bg)] transition-colors"
+              className="rounded-lg border border-(--color-border) bg-(--color-surface) px-3 py-1.5 text-sm font-medium text-(--color-text) disabled:opacity-40 disabled:cursor-not-allowed hover:bg-(--color-bg) transition-colors"
             >
               قبلی
             </button>
-            <span className="text-sm text-[var(--color-text-muted)] tabular-nums min-w-[88px] text-center">
+            <span className="text-sm text-wibe-secondary tabular-nums min-w-22 text-center">
               صفحه {currentPage.toLocaleString('fa-IR')} از {totalPages.toLocaleString('fa-IR')}
             </span>
             <button
               type="button"
               disabled={currentPage >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-sm font-medium text-[var(--color-text)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--color-bg)] transition-colors"
+              className="rounded-lg border border-(--color-border) bg-(--color-surface) px-3 py-1.5 text-sm font-medium text-(--color-text) disabled:opacity-40 disabled:cursor-not-allowed hover:bg-(--color-bg) transition-colors"
             >
               بعدی
             </button>

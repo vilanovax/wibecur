@@ -26,7 +26,7 @@ interface ListIntelligenceCardProps {
 
 function CoverThumb({ row }: { row: ListIntelligenceRow }) {
   return (
-    <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden border border-[var(--color-border-muted)]">
+    <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden border border-(--color-border-muted)">
       {row.coverImage ? (
         <ImageWithFallback
           src={row.coverImage}
@@ -107,19 +107,19 @@ export default function ListIntelligenceCard({
 
   return (
     <article
-      className={`group rounded-xl bg-[var(--color-surface)] border overflow-hidden transition-all hover:shadow-md ${
+      className={`group rounded-xl bg-(--color-surface) border overflow-hidden transition-all hover:shadow-md ${
         row.isFeatured && !isTrashView
           ? 'border-amber-400/60 ring-1 ring-amber-300/30'
-          : 'border-[var(--color-border-muted)] hover:border-[var(--color-border)]'
+          : 'border-(--color-border-muted) hover:border-(--color-border)'
       } ${!row.isActive && !isTrashView ? 'opacity-70' : ''}`}
     >
-      <Link href={itemsHref} className="block p-3 hover:bg-[var(--color-bg)]/50 transition-colors">
+      <Link href={itemsHref} className="block p-3 hover:bg-(--color-bg)/50 transition-colors">
         <div className="flex gap-3">
           <CoverThumb row={row} />
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 min-w-0">
-              <h3 className="font-semibold text-sm text-[var(--color-text)] truncate flex-1" title={row.title}>
+              <h3 className="font-semibold text-sm text-(--color-text) truncate flex-1" title={row.title}>
                 {row.title}
               </h3>
               {row.isFeatured && !isTrashView && (
@@ -133,8 +133,8 @@ export default function ListIntelligenceCard({
               )}
             </div>
 
-            <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5 truncate">
-              <span className="font-medium text-[var(--color-text)] tabular-nums">
+            <p className="text-[10px] text-wibe-secondary mt-0.5 truncate">
+              <span className="font-medium text-(--color-text) tabular-nums">
                 {row.itemCount.toLocaleString('fa-IR')} آیتم
               </span>
               <span className="mx-1 opacity-30">·</span>
@@ -172,11 +172,11 @@ export default function ListIntelligenceCard({
         </div>
       </Link>
 
-      <div className="flex items-center gap-1.5 px-3 py-2 border-t border-[var(--color-border-muted)] bg-[var(--color-bg)]/40">
+      <div className="flex items-center gap-1.5 px-3 py-2 border-t border-(--color-border-muted) bg-(--color-bg)/40">
         {isTrashView ? (
           <>
             {row.deletedAt && (
-              <span className="text-[10px] text-[var(--color-text-muted)] flex-1 truncate">
+              <span className="text-[10px] text-wibe-secondary flex-1 truncate">
                 {new Date(row.deletedAt).toLocaleDateString('fa-IR')}
               </span>
             )}
@@ -204,7 +204,7 @@ export default function ListIntelligenceCard({
               href={editHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-white hover:opacity-90"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-primary text-white hover:opacity-90"
             >
               <Pencil className="w-3 h-3" />
               ویرایش
@@ -213,7 +213,7 @@ export default function ListIntelligenceCard({
               href={`/lists/${row.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border border-(--color-border) text-wibe-secondary hover:bg-(--color-surface)"
               title="نمایش در سایت"
             >
               <ExternalLink className="w-3 h-3" />
@@ -255,10 +255,10 @@ function Stat({
 }) {
   return (
     <div className="min-w-0">
-      <p className="text-[9px] text-[var(--color-text-muted)] leading-none">{label}</p>
+      <p className="text-[9px] text-wibe-secondary leading-none">{label}</p>
       <p
         className={`text-xs font-bold tabular-nums leading-tight mt-0.5 ${
-          danger ? 'text-red-600' : primary ? 'text-[var(--primary)]' : highlight ? 'text-emerald-600' : 'text-[var(--color-text)]'
+          danger ? 'text-red-600' : primary ? 'text-primary' : highlight ? 'text-emerald-600' : 'text-(--color-text)'
         }`}
       >
         {value}
@@ -269,7 +269,7 @@ function Stat({
                 ? 'text-emerald-600'
                 : subTone === 'negative'
                   ? 'text-red-600'
-                  : 'text-[var(--color-text-muted)]'
+                  : 'text-wibe-secondary'
             }`}
           >
             ({sub})

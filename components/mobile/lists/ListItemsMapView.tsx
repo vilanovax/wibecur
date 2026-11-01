@@ -65,7 +65,7 @@ export default function ListItemsMapView({
 
   return (
     <Card className="overflow-hidden bg-popover p-0 lg:grid lg:grid-cols-4 lg:items-stretch">
-      <div className="relative aspect-[4/3] min-h-56 bg-muted lg:col-span-3 lg:aspect-auto lg:min-h-80">
+      <div className="relative aspect-4/3 min-h-56 bg-muted lg:col-span-3 lg:aspect-auto lg:min-h-80">
         {embedUrl ? (
           <iframe
             title={`نقشه — ${selectedEntry?.item.title ?? ''}`}

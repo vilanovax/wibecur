@@ -51,12 +51,12 @@ export default function FeaturedSchedulerTab({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_300px]" dir="rtl">
       <div className="space-y-5 min-w-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--color-text-muted)]">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-wibe-secondary">
           <span className="inline-flex items-center gap-2">
             <CalendarDays className="w-4 h-4" />
             {totalScheduled.toLocaleString('fa-IR')} اسلات برنامه‌ریزی‌شده
             {upcoming.length > 0 && (
-              <span className="text-[var(--color-text-subtle)]">
+              <span className="text-(--color-text-subtle)">
                 · {upcoming.length.toLocaleString('fa-IR')} در صف
               </span>
             )}
@@ -80,7 +80,7 @@ export default function FeaturedSchedulerTab({
         <button
           type="button"
           onClick={onAddSlot}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-[var(--color-bg)] transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-(--color-border) text-wibe-secondary hover:border-(--primary) hover:text-primary hover:bg-(--color-bg) transition-colors"
         >
           <Plus className="w-5 h-5" />
           <span className="font-medium">افزودن اسلات زمان‌بندی‌شده</span>
@@ -88,7 +88,7 @@ export default function FeaturedSchedulerTab({
 
         {upcoming.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold text-[var(--color-text)]">
+            <h2 className="text-sm font-semibold text-(--color-text)">
               برنامهٔ بعدی ({upcoming.length.toLocaleString('fa-IR')})
             </h2>
             <UpcomingSlotsGrid

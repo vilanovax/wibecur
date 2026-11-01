@@ -14,7 +14,7 @@ import AdminReadOnlyBanner from '@/components/admin/AdminReadOnlyBanner';
 function AccessDeniedShell({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="admin-panel min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir"
+      className="admin-panel min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir"
       dir="rtl"
     >
       <div className="max-w-lg mx-auto px-4 py-12">{children}</div>
@@ -26,7 +26,7 @@ function AdminPanelShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div
-        className="admin-panel min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir"
+        className="admin-panel min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir"
         dir="rtl"
       >
         {/* بدون min-width ثابت — محتوا واکنش‌گرا reflow می‌شود و کل صفحه اسکرول افقی نمی‌خورد.
@@ -36,7 +36,7 @@ function AdminPanelShell({ children }: { children: React.ReactNode }) {
           <div className="flex-1 min-w-0 flex flex-col">
             <AdminHeader />
             <main className="flex-1 min-w-0 transition-all duration-300 bg-transparent">
-              <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
+              <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
                 <AdminReadOnlyBanner />
                 <AdminPermissionGuard>{children}</AdminPermissionGuard>
               </div>

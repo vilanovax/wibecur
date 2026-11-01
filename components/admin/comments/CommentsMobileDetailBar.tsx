@@ -24,7 +24,7 @@ export default function CommentsMobileDetailBar({
       <button
         type="button"
         onClick={onOpen}
-        className="pointer-events-auto w-full max-w-md mx-auto flex items-center justify-center gap-2 py-3 rounded-2xl bg-[var(--primary)] text-white text-sm font-medium shadow-lg"
+        className="pointer-events-auto w-full max-w-md mx-auto flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary text-white text-sm font-medium shadow-lg"
       >
         <PanelRightOpen className="w-4 h-4" />
         {label}

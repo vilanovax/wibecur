@@ -65,5 +65,5 @@ export function impactLabelFa(label: string): string {
 export function impactClass(label: string): string {
   if (label === 'High Impact') return 'bg-emerald-100 text-emerald-800';
   if (label === 'Moderate') return 'bg-amber-100 text-amber-800';
-  return 'bg-[var(--color-bg)] text-[var(--color-text-muted)]';
+  return 'bg-(--color-bg) text-wibe-secondary';
 }

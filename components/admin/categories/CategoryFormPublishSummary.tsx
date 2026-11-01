@@ -27,9 +27,9 @@ interface CategoryFormPublishSummaryProps {
 
 function SummaryRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-2 border-b border-[var(--color-border)] last:border-0">
-      <span className="text-sm text-[var(--color-text-muted)] shrink-0">{label}</span>
-      <span className="text-sm text-[var(--color-text)] text-left min-w-0">{children}</span>
+    <div className="flex items-start justify-between gap-4 py-2 border-b border-(--color-border) last:border-0">
+      <span className="text-sm text-wibe-secondary shrink-0">{label}</span>
+      <span className="text-sm text-(--color-text) text-left min-w-0">{children}</span>
     </div>
   );
 }
@@ -57,10 +57,10 @@ export default function CategoryFormPublishSummary({
 
   return (
     <div className="space-y-4" dir="rtl">
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/40 overflow-hidden">
-        <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center gap-2">
+      <div className="rounded-xl border border-(--color-border) bg-(--color-bg)/40 overflow-hidden">
+        <div className="px-4 py-3 border-b border-(--color-border) flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-          <p className="text-sm font-semibold text-[var(--color-text)]">خلاصه قبل از {values.isActive ? 'انتشار' : 'ذخیره'}</p>
+          <p className="text-sm font-semibold text-(--color-text)">خلاصه قبل از {values.isActive ? 'انتشار' : 'ذخیره'}</p>
         </div>
         <div className="px-4 py-1">
           <SummaryRow label="نام">
@@ -77,15 +77,15 @@ export default function CategoryFormPublishSummary({
           <SummaryRow label="رنگ">
             <span className="inline-flex items-center gap-2" dir="ltr">
               <span
-                className="w-4 h-4 rounded border border-[var(--color-border)]"
+                className="w-4 h-4 rounded border border-(--color-border)"
                 style={{ backgroundColor: values.color }}
               />
               {values.color}
               {values.accentColor && values.accentColor !== values.color && (
                 <>
-                  <span className="text-[var(--color-text-muted)]">· accent</span>
+                  <span className="text-wibe-secondary">· accent</span>
                   <span
-                    className="w-4 h-4 rounded border border-[var(--color-border)]"
+                    className="w-4 h-4 rounded border border-(--color-border)"
                     style={{ backgroundColor: accent }}
                   />
                   {values.accentColor}
@@ -105,7 +105,7 @@ export default function CategoryFormPublishSummary({
             <span>
               {values.order.toLocaleString('fa-IR')}
               {orderAuto && suggestedOrder != null && (
-                <span className="text-[var(--color-text-muted)] text-xs mr-1">(خودکار)</span>
+                <span className="text-wibe-secondary text-xs mr-1">(خودکار)</span>
               )}
             </span>
           </SummaryRow>
@@ -143,8 +143,8 @@ export default function CategoryFormPublishSummary({
       )}
 
       {values.description?.trim() && (
-        <p className="text-xs text-[var(--color-text-muted)] line-clamp-2">
-          <span className="font-medium text-[var(--color-text)]">توضیحات: </span>
+        <p className="text-xs text-wibe-secondary line-clamp-2">
+          <span className="font-medium text-(--color-text)">توضیحات: </span>
           {values.description}
         </p>
       )}

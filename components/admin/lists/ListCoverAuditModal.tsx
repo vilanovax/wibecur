@@ -130,7 +130,7 @@ function CoverPanel({
   return (
     <div className="min-w-0">
       <div className="flex items-center justify-between gap-2 mb-2">
-        <p className="text-xs font-semibold text-[var(--color-text)]">{label}</p>
+        <p className="text-xs font-semibold text-(--color-text)">{label}</p>
         {audit ? (
           <span
             className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium border ${URGENCY_CHIP[audit.urgency]}`}
@@ -146,13 +146,13 @@ function CoverPanel({
         onClick={() => selectable && onToggleSelect()}
         className={`group relative w-full text-right rounded-xl transition-all ${
           selectable ? 'cursor-pointer' : 'cursor-default'
-        } ${selected ? 'ring-2 ring-violet-500 ring-offset-2 ring-offset-[var(--color-surface)]' : ''}`}
+        } ${selected ? 'ring-2 ring-violet-500 ring-offset-2 ring-offset-(--color-surface)' : ''}`}
       >
         <div
-          className={`relative w-full overflow-hidden rounded-xl border bg-[var(--color-bg)] ${aspectClass} ${
+          className={`relative w-full overflow-hidden rounded-xl border bg-(--color-bg) ${aspectClass} ${
             audit && isUrgentAudit(audit)
               ? 'border-amber-300/80'
-              : 'border-[var(--color-border-muted)]'
+              : 'border-(--color-border-muted)'
           } ${selectable ? 'group-hover:border-violet-300' : ''}`}
         >
           {src ? (
@@ -167,9 +167,9 @@ function CoverPanel({
               fallbackClassName="w-full h-full"
             />
           ) : (
-            <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 p-4 text-center bg-gradient-to-br from-[var(--color-bg)] to-[var(--color-surface)]">
-              <ImageOff className="w-8 h-8 text-[var(--color-text-muted)]/50" />
-              <span className="text-xs text-[var(--color-text-muted)]">{emptyHint}</span>
+            <div className="flex h-full min-h-35 flex-col items-center justify-center gap-2 p-4 text-center bg-linear-to-br from-(--color-bg) to-(--color-surface)">
+              <ImageOff className="w-8 h-8 text-wibe-secondary/50" />
+              <span className="text-xs text-wibe-secondary">{emptyHint}</span>
             </div>
           )}
 
@@ -204,12 +204,12 @@ function CoverPanel({
 
       {audit ? (
         <div className="mt-2.5 space-y-2">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums text-[var(--color-text-muted)]">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums text-wibe-secondary">
             {audit.width != null && audit.height != null ? (
               <span>
                 {audit.width}×{audit.height}
                 <span className="mx-1 opacity-40">/</span>
-                <span className="text-[var(--color-text)]/70">
+                <span className="text-(--color-text)/70">
                   {audit.maxWidth}×{audit.maxHeight}
                 </span>
               </span>
@@ -218,7 +218,7 @@ function CoverPanel({
               <span>
                 {formatCoverBytes(audit.bytes)}
                 <span className="mx-1 opacity-40">/</span>
-                <span className="text-[var(--color-text)]/70">{formatCoverBytes(audit.maxBytes)}</span>
+                <span className="text-(--color-text)/70">{formatCoverBytes(audit.maxBytes)}</span>
               </span>
             ) : null}
             {!audit.onStorage && audit.url ? (
@@ -228,7 +228,7 @@ function CoverPanel({
 
           {audit.bytes != null ? (
             <div className="space-y-1">
-              <div className="h-1.5 rounded-full bg-[var(--color-border-muted)] overflow-hidden">
+              <div className="h-1.5 rounded-full bg-(--color-border-muted) overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${bytesBarTone(ratio)}`}
                   style={{ width: `${Math.min(100, ratio * 100)}%` }}
@@ -244,14 +244,14 @@ function CoverPanel({
 
           {audit.issues.length > 0 ? (
             <div>
-              <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed">
+              <p className="text-[11px] text-wibe-secondary leading-relaxed">
                 {audit.issues[0]}
               </p>
               {audit.issues.length > 1 ? (
                 <button
                   type="button"
                   onClick={() => setExpanded((v) => !v)}
-                  className="mt-1 inline-flex items-center gap-0.5 text-[10px] text-[var(--primary)] hover:underline"
+                  className="mt-1 inline-flex items-center gap-0.5 text-[10px] text-primary hover:underline"
                 >
                   {expanded ? (
                     <>
@@ -267,7 +267,7 @@ function CoverPanel({
                 </button>
               ) : null}
               {expanded ? (
-                <ul className="mt-1 text-[10px] text-[var(--color-text-muted)] space-y-0.5 list-disc list-inside">
+                <ul className="mt-1 text-[10px] text-wibe-secondary space-y-0.5 list-disc list-inside">
                   {audit.issues.slice(1).map((issue) => (
                     <li key={issue}>{issue}</li>
                   ))}
@@ -287,12 +287,12 @@ function AuditSkeleton() {
       {[1, 2].map((i) => (
         <div
           key={i}
-          className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] overflow-hidden"
+          className="rounded-2xl border border-(--color-border-muted) bg-(--color-surface) overflow-hidden"
         >
-          <div className="h-14 bg-[var(--color-bg)]/60 border-b border-[var(--color-border-muted)]" />
+          <div className="h-14 bg-(--color-bg)/60 border-b border-(--color-border-muted)" />
           <div className="p-4 grid grid-cols-2 gap-4">
-            <div className="aspect-[3/4] rounded-xl bg-[var(--color-bg)]" />
-            <div className="aspect-[16/9] rounded-xl bg-[var(--color-bg)]" />
+            <div className="aspect-3/4 rounded-xl bg-(--color-bg)" />
+            <div className="aspect-16/9 rounded-xl bg-(--color-bg)" />
           </div>
         </div>
       ))}
@@ -503,11 +503,11 @@ export default function ListCoverAuditModal({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
         <div
-          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-text-muted)] max-w-md w-full"
+          className="rounded-xl border border-(--color-border) bg-(--color-surface) p-6 text-sm text-wibe-secondary max-w-md w-full"
           onClick={(e) => e.stopPropagation()}
         >
           لیستی برای ممیزی نیست.
-          <button type="button" onClick={onClose} className="mt-4 text-[var(--primary)] text-xs font-medium">
+          <button type="button" onClick={onClose} className="mt-4 text-primary text-xs font-medium">
             بستن
           </button>
         </div>
@@ -525,21 +525,21 @@ export default function ListCoverAuditModal({
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/50" onClick={onClose}>
       <div
-        className="relative flex flex-col w-full max-w-6xl max-h-[92vh] mx-auto mt-auto sm:mt-8 mb-0 sm:mb-4 rounded-t-2xl sm:rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-bg)] shadow-2xl overflow-hidden"
+        className="relative flex flex-col w-full max-w-6xl max-h-[92vh] mx-auto mt-auto sm:mt-8 mb-0 sm:mb-4 rounded-t-2xl sm:rounded-2xl border border-(--color-border-muted) bg-(--color-bg) shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-surface)] shrink-0">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-(--color-border-muted) bg-(--color-surface) shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <Sparkles className="w-4 h-4 text-violet-600 shrink-0" />
-            <h2 className="text-sm font-bold text-[var(--color-text)] truncate">ممیزی تصاویر استوریج</h2>
-            <span className="text-[11px] text-[var(--color-text-muted)] tabular-nums shrink-0">
+            <h2 className="text-sm font-bold text-(--color-text) truncate">ممیزی تصاویر استوریج</h2>
+            <span className="text-[11px] text-wibe-secondary tabular-nums shrink-0">
               ({rows.length.toLocaleString('fa-IR')} لیست)
             </span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-[var(--color-bg)] text-[var(--color-text-muted)]"
+            className="p-2 rounded-lg hover:bg-(--color-bg) text-wibe-secondary"
             aria-label="بستن"
           >
             <X className="w-4 h-4" />
@@ -549,8 +549,8 @@ export default function ListCoverAuditModal({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
     <div className="space-y-4">
       {/* Dashboard header */}
-      <section className="rounded-2xl border border-[var(--color-border-muted)] bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-bg)]/30 overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-[var(--color-border-muted)]/80">
+      <section className="rounded-2xl border border-(--color-border-muted) bg-linear-to-br from-(--color-surface) to-(--color-bg)/30 overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-(--color-border-muted)/80">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
@@ -558,8 +558,8 @@ export default function ListCoverAuditModal({
                   <Sparkles className="w-4.5 h-4.5" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-[var(--color-text)]">ممیزی تصاویر استوریج</h2>
-                  <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                  <h2 className="text-sm font-bold text-(--color-text)">ممیزی تصاویر استوریج</h2>
+                  <p className="text-[11px] text-wibe-secondary mt-0.5">
                     بررسی حجم، ابعاد و بهینه‌سازی کاورهای لیست در ParsPack
                   </p>
                 </div>
@@ -569,7 +569,7 @@ export default function ListCoverAuditModal({
               type="button"
               onClick={() => void loadAudit()}
               disabled={loadingAudit || optimizing}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-bg)] disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border border-(--color-border) bg-(--color-surface) hover:bg-(--color-bg) disabled:opacity-50 transition-colors"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loadingAudit ? 'animate-spin' : ''}`} />
               بروزرسانی
@@ -587,15 +587,15 @@ export default function ListCoverAuditModal({
           ) : loadingAudit ? (
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2 animate-pulse">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-16 rounded-xl bg-[var(--color-bg)]" />
+                <div key={i} className="h-16 rounded-xl bg-(--color-bg)" />
               ))}
             </div>
           ) : null}
 
           {healthScore != null ? (
-            <div className="mt-4 rounded-xl bg-[var(--color-bg)]/60 border border-[var(--color-border-muted)] p-3">
+            <div className="mt-4 rounded-xl bg-(--color-bg)/60 border border-(--color-border-muted) p-3">
               <div className="flex items-center justify-between gap-2 mb-2">
-                <span className="text-xs font-medium text-[var(--color-text)]">سلامت کلی تصاویر</span>
+                <span className="text-xs font-medium text-(--color-text)">سلامت کلی تصاویر</span>
                 <span
                   className={`text-xs font-bold tabular-nums ${
                     healthScore >= 80 ? 'text-emerald-700' : healthScore >= 50 ? 'text-amber-700' : 'text-red-700'
@@ -604,7 +604,7 @@ export default function ListCoverAuditModal({
                   {healthScore.toLocaleString('fa-IR')}٪
                 </span>
               </div>
-              <div className="h-2 rounded-full bg-[var(--color-border-muted)] overflow-hidden">
+              <div className="h-2 rounded-full bg-(--color-border-muted) overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
                     healthScore >= 80 ? 'bg-emerald-500' : healthScore >= 50 ? 'bg-amber-400' : 'bg-red-500'
@@ -617,7 +617,7 @@ export default function ListCoverAuditModal({
         </div>
 
         {/* Toolbar */}
-        <div className="px-4 sm:px-5 py-3 space-y-3 bg-[var(--color-surface)]/50">
+        <div className="px-4 sm:px-5 py-3 space-y-3 bg-(--color-surface)/50">
           <div className="flex flex-wrap items-center gap-2">
             {filterPills.map((pill) => (
               <button
@@ -627,14 +627,14 @@ export default function ListCoverAuditModal({
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                   filter === pill.id
                     ? 'bg-violet-600 text-white border-violet-600'
-                    : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] border-[var(--color-border)] hover:border-violet-300'
+                    : 'bg-(--color-surface) text-wibe-secondary border-(--color-border) hover:border-violet-300'
                 }`}
               >
                 {pill.label}
                 {pill.count != null ? (
                   <span
                     className={`tabular-nums px-1.5 py-px rounded-full text-[10px] ${
-                      filter === pill.id ? 'bg-white/20' : 'bg-[var(--color-bg)]'
+                      filter === pill.id ? 'bg-white/20' : 'bg-(--color-bg)'
                     }`}
                   >
                     {pill.count.toLocaleString('fa-IR')}
@@ -646,7 +646,7 @@ export default function ListCoverAuditModal({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as CoverSort)}
-              className="mr-auto px-2.5 py-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-xs"
+              className="mr-auto px-2.5 py-1.5 rounded-lg border border-(--color-border) bg-(--color-surface) text-xs"
             >
               <option value="urgency">اولویت رسیدگی</option>
               <option value="bytes_desc">بیشترین حجم</option>
@@ -660,31 +660,31 @@ export default function ListCoverAuditModal({
             <button
               type="button"
               onClick={selectAllUrgent}
-              className="text-[var(--primary)] hover:underline font-medium"
+              className="text-primary hover:underline font-medium"
             >
               انتخاب همه فوری
             </button>
-            <span className="text-[var(--color-border)]">·</span>
+            <span className="text-(--color-border)">·</span>
             <button
               type="button"
               onClick={selectAllOptimizable}
-              className="text-[var(--primary)] hover:underline font-medium"
+              className="text-primary hover:underline font-medium"
             >
               انتخاب همه قابل بهینه‌سازی
             </button>
             {filter !== 'all' ? (
               <>
-                <span className="text-[var(--color-border)]">·</span>
-                <span className="text-[var(--color-text-muted)]">
+                <span className="text-(--color-border)">·</span>
+                <span className="text-wibe-secondary">
                   {sortedRows.length.toLocaleString('fa-IR')} لیست نمایش داده می‌شود
                 </span>
               </>
             ) : null}
           </div>
 
-          <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed">
+          <p className="text-[11px] text-wibe-secondary leading-relaxed">
             روی تصاویر «قابل بهینه‌سازی» کلیک کنید → دکمه{' '}
-            <strong className="text-[var(--color-text)]">اعمال در استوریج</strong> → تأیید. فایل
+            <strong className="text-(--color-text)">اعمال در استوریج</strong> → تأیید. فایل
             فشرده در ParsPack جایگزین می‌شود و URL لیست در دیتابیس به‌روز می‌شود.
           </p>
 
@@ -778,7 +778,7 @@ export default function ListCoverAuditModal({
       {loadingAudit && audits.length === 0 ? (
         <AuditSkeleton />
       ) : sortedRows.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[var(--color-border)] py-10 text-center text-sm text-[var(--color-text-muted)]">
+        <div className="rounded-xl border border-dashed border-(--color-border) py-10 text-center text-sm text-wibe-secondary">
           با فیلتر فعلی لیستی یافت نشد.
         </div>
       ) : (
@@ -793,22 +793,22 @@ export default function ListCoverAuditModal({
             return (
               <article
                 key={row.id}
-                className={`rounded-2xl border-r-4 bg-[var(--color-surface)] overflow-hidden shadow-[var(--shadow-card)] ${URGENCY_BORDER[rowUrgency]} ${
+                className={`rounded-2xl border-r-4 bg-(--color-surface) overflow-hidden shadow-(--shadow-card) ${URGENCY_BORDER[rowUrgency]} ${
                   row.isFeatured
                     ? 'border border-amber-400/60 ring-1 ring-amber-300/30'
-                    : 'border border-[var(--color-border-muted)] border-r-4'
+                    : 'border border-(--color-border-muted) border-r-4'
                 } ${!row.isActive ? 'opacity-75' : ''}`}
               >
-                <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/30">
+                <div className="px-4 py-3 border-b border-(--color-border-muted) bg-(--color-bg)/30">
                   <div className="flex items-start gap-2 min-w-0">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 min-w-0">
-                        <h3 className="font-semibold text-sm text-[var(--color-text)] truncate" title={row.title}>
+                        <h3 className="font-semibold text-sm text-(--color-text) truncate" title={row.title}>
                           {row.title}
                         </h3>
                         {row.isFeatured ? <Star className="w-4 h-4 shrink-0 text-amber-500 fill-amber-500" /> : null}
                       </div>
-                      <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
+                      <p className="text-[11px] text-wibe-secondary mt-0.5">
                         {row.categoryIcon} {row.categoryName}
                         <span className="mx-1.5 opacity-30">·</span>
                         {row.itemCount.toLocaleString('fa-IR')} آیتم
@@ -826,7 +826,7 @@ export default function ListCoverAuditModal({
                   <CoverPanel
                     audit={verticalAudit}
                     row={row}
-                    aspectClass="aspect-[3/4] max-h-72"
+                    aspectClass="aspect-3/4 max-h-72"
                     emptyHint="کاور عمودی تنظیم نشده"
                     selected={selected.has(slotKey(row.id, 'coverImage'))}
                     onToggleSelect={() => toggleSelect(row.id, 'coverImage')}
@@ -835,7 +835,7 @@ export default function ListCoverAuditModal({
                   <CoverPanel
                     audit={horizontalAudit}
                     row={row}
-                    aspectClass="aspect-[16/9] max-h-44 sm:max-h-none"
+                    aspectClass="aspect-16/9 max-h-44 sm:max-h-none"
                     emptyHint="بنر افقی تنظیم نشده"
                     selected={selected.has(slotKey(row.id, 'horizontalImage'))}
                     onToggleSelect={() => toggleSelect(row.id, 'horizontalImage')}
@@ -848,7 +848,7 @@ export default function ListCoverAuditModal({
                     href={editHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-[var(--primary)] text-white hover:opacity-90"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-primary text-white hover:opacity-90"
                   >
                     <Pencil className="w-3.5 h-3.5" />
                     ویرایش
@@ -857,7 +857,7 @@ export default function ListCoverAuditModal({
                     href={siteHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border border-(--color-border) hover:bg-(--color-bg)"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     سایت
@@ -952,7 +952,7 @@ function StatCard({
         ? 'border-red-200 bg-red-50/80'
         : tone === 'action'
           ? 'border-violet-200 bg-violet-50/80'
-          : 'border-[var(--color-border-muted)] bg-[var(--color-bg)]/40';
+          : 'border-(--color-border-muted) bg-(--color-bg)/40';
 
   const iconCls =
     tone === 'urgent'
@@ -961,15 +961,15 @@ function StatCard({
         ? 'text-red-600'
         : tone === 'action'
           ? 'text-violet-600'
-          : 'text-[var(--color-text-muted)]';
+          : 'text-wibe-secondary';
 
   return (
     <div className={`rounded-xl border p-3 ${toneCls}`}>
       <div className="flex items-center gap-2">
         <Icon className={`w-4 h-4 shrink-0 ${iconCls}`} />
-        <span className="text-lg font-bold tabular-nums text-[var(--color-text)] leading-none">{display}</span>
+        <span className="text-lg font-bold tabular-nums text-(--color-text) leading-none">{display}</span>
       </div>
-      <p className="text-[10px] text-[var(--color-text-muted)] mt-1.5">{label}</p>
+      <p className="text-[10px] text-wibe-secondary mt-1.5">{label}</p>
     </div>
   );
 }

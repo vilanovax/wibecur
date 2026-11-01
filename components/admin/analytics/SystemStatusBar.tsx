@@ -114,9 +114,9 @@ export default function SystemStatusBar({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-slate-800 dark:text-gray-100">وضعیت کلی سیستم</h2>
-          <p className="text-sm text-slate-600 dark:text-[var(--color-text-subtle)] mt-1">{summary}</p>
+          <p className="text-sm text-slate-600 dark:text-(--color-text-subtle) mt-1">{summary}</p>
         </div>
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <span
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border ${config.bg} ${config.text} ${config.border}`}
           >

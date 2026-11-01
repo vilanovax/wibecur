@@ -161,11 +161,11 @@ export default function HeaderActions({
     notifications.openNotifications();
   };
 
-  const avatarInnerClass = `flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-full ${
+  const avatarInnerClass = `flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full ${
     isDark ? 'bg-foreground ring-1 ring-foreground' : 'bg-muted'
   }`;
 
-  const avatarButtonClass = `relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 ${
+  const avatarButtonClass = `relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 ${
     isDark ? 'hover:bg-foreground/80' : 'hover:bg-muted'
   }`;
 
@@ -181,7 +181,7 @@ export default function HeaderActions({
             ref={menuRef}
             role="menu"
             data-theme="paper"
-            className="fixed z-[200] w-48 rounded-surface border border-border bg-popover py-1 shadow-surface"
+            className="fixed z-200 w-48 rounded-surface border border-border bg-popover py-1 shadow-surface"
             style={{ top: menuPos.top, left: menuPos.left }}
             dir="rtl"
           >
@@ -246,7 +246,7 @@ export default function HeaderActions({
   const showProfileControl = isGuest || !isProfilePage || Boolean(session?.user);
 
   return (
-    <div className="flex flex-shrink-0 items-center gap-2">
+    <div className="flex shrink-0 items-center gap-2">
       {showProfileControl &&
         (session?.user ? (
           <>
@@ -267,7 +267,7 @@ export default function HeaderActions({
                   isGuest={isGuest}
                 />
               </span>
-              <ChevronDown className="absolute -bottom-0.5 -start-0.5 z-10 size-4 rounded-full bg-popover text-muted-foreground ring-1 ring-border" />
+              <ChevronDown className="absolute -bottom-0.5 -inset-s-0.5 z-10 size-4 rounded-full bg-popover text-muted-foreground ring-1 ring-border" />
               {!hideNotifications && (
                 <NotificationUnreadBadge count={notifications.unreadCount} />
               )}

@@ -44,7 +44,7 @@ export default function DiscoverByCity({
             <Link
               key={city}
               href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(city)}`}
-              className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-wibe-surface active:scale-[0.98] transition-transform shadow-sm"
+              className="relative rounded-2xl overflow-hidden aspect-4/3 bg-wibe-surface active:scale-[0.98] transition-transform shadow-sm"
             >
               <ImageWithFallback
                 src={img}
@@ -52,7 +52,7 @@ export default function DiscoverByCity({
                 className="w-full h-full object-cover"
                 placeholderSize="cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
                 <p className="font-bold text-white text-base">{city}</p>
                 <p className="text-xs text-white/90">

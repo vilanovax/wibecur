@@ -42,7 +42,7 @@ function getSeverity(growthPercent: number | undefined): Severity {
 
 const SEVERITY_TEXT: Record<Severity, string> = {
   positive: 'text-green-700 dark:text-green-400',
-  neutral: 'text-admin-text-tertiary dark:text-[var(--color-text-muted)]',
+  neutral: 'text-admin-text-tertiary dark:text-wibe-secondary',
   negative: 'text-red-700 dark:text-red-400',
 };
 
@@ -86,7 +86,7 @@ function KpiCard({
   const severity = getSeverity(growthPercent);
   const body = (
     <>
-      <p className="text-xs font-medium text-admin-text-tertiary dark:text-[var(--color-text-muted)] mb-1">{label}</p>
+      <p className="text-xs font-medium text-admin-text-tertiary dark:text-wibe-secondary mb-1">{label}</p>
       <p className="text-2xl font-bold text-admin-text-primary dark:text-white tabular-nums">{value}</p>
       {growthPercent != null && (
         <p className={`text-xs mt-1.5 font-medium ${SEVERITY_TEXT[severity]}`}>
@@ -302,7 +302,7 @@ export default function GrowthKPIDashboard() {
       <section className="rounded-xl border border-admin-border dark:border-gray-600 bg-white dark:bg-gray-800 p-4 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-14 flex-shrink-0 items-baseline justify-center whitespace-nowrap rounded-xl bg-admin-muted px-3 text-2xl font-bold tabular-nums text-admin-text-primary dark:bg-gray-700 dark:text-white">
+            <div className="flex h-14 shrink-0 items-baseline justify-center whitespace-nowrap rounded-xl bg-admin-muted px-3 text-2xl font-bold tabular-nums text-admin-text-primary dark:bg-gray-700 dark:text-white">
               {faDecimal(pulseOutOf10)}
               <span className="ms-1 text-sm font-normal text-admin-text-tertiary">از ۱۰</span>
             </div>
@@ -431,7 +431,7 @@ export default function GrowthKPIDashboard() {
                       cat.status === 'fast'
                         ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
                         : cat.status === 'stable'
-                          ? 'bg-gray-100 text-[var(--color-text)] dark:bg-gray-700 dark:text-gray-200'
+                          ? 'bg-gray-100 text-(--color-text) dark:bg-gray-700 dark:text-gray-200'
                           : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
                     }`}
                   >
@@ -449,7 +449,7 @@ export default function GrowthKPIDashboard() {
                   </span>
                 </div>
                 <p className="font-medium text-admin-text-primary dark:text-white truncate">{cat.name}</p>
-                <p className="text-xs text-admin-text-tertiary dark:text-[var(--color-text-subtle)] mt-1">
+                <p className="text-xs text-admin-text-tertiary dark:text-(--color-text-subtle) mt-1">
                   +{faPct(cat.growth)} رشد · {faNumber(cat.savesThisWeek ?? 0)} ذخیره این هفته
                 </p>
               </div>

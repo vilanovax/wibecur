@@ -116,7 +116,7 @@ export default function AchievementBottomSheet({
     <div
       ref={backdropRef}
       data-theme="paper"
-      className="fixed inset-0 z-[60] flex items-end justify-center"
+      className="fixed inset-0 z-60 flex items-end justify-center"
       onClick={handleBackdropClick}
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md animate-in fade-in duration-200" />
@@ -128,12 +128,12 @@ export default function AchievementBottomSheet({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag Handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+        <div className="flex justify-center pt-3 pb-1 shrink-0">
           <div className="w-8 h-1 bg-wibe-surface rounded-full" />
         </div>
 
         {/* 1️⃣ Header Section */}
-        <div className="flex items-start justify-between gap-3 px-5 pt-2 pb-4 flex-shrink-0">
+        <div className="flex items-start justify-between gap-3 px-5 pt-2 pb-4 shrink-0">
           <div className="flex-1 min-w-0">
             <h2 className="wibe-h2 font-bold text-foreground leading-tight">
               {achievement.title} {achievement.icon}
@@ -143,7 +143,7 @@ export default function AchievementBottomSheet({
           <button
             type="button"
             onClick={onClose}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-wibe-surface active:bg-wibe-surface transition-colors flex-shrink-0"
+            className="min-w-11 min-h-11 flex items-center justify-center rounded-full hover:bg-wibe-surface active:bg-wibe-surface transition-colors shrink-0"
             aria-label="بستن"
           >
             <X className="w-5 h-5 text-wibe-secondary" />
@@ -154,10 +154,10 @@ export default function AchievementBottomSheet({
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 space-y-6">
           {/* 2️⃣ Hero Badge Section */}
           <div
-            className={`flex flex-col items-center py-8 rounded-2xl bg-gradient-to-b ${glowClass}`}
+            className={`flex flex-col items-center py-8 rounded-2xl bg-linear-to-b ${glowClass}`}
           >
             <div
-              className="w-[88px] h-[88px] rounded-full flex items-center justify-center bg-white/80 shadow-lg animate-in zoom-in-95 duration-300"
+              className="w-22 h-22 rounded-full flex items-center justify-center bg-white/80 shadow-lg animate-in zoom-in-95 duration-300"
               style={{ animationFillMode: 'both' }}
             >
               <span
@@ -167,7 +167,7 @@ export default function AchievementBottomSheet({
               </span>
             </div>
             <p className="font-bold text-foreground mt-4 text-base">باز شد!</p>
-            <p className="text-sm text-wibe-secondary mt-0.5 text-center max-w-[280px]">
+            <p className="text-sm text-wibe-secondary mt-0.5 text-center max-w-70">
               {achievement.description}
             </p>
           </div>

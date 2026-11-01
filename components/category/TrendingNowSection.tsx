@@ -29,10 +29,10 @@ export default function TrendingNowSection({
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex-shrink-0 w-[75vw] max-w-[280px] snap-start"
+            className="shrink-0 w-[75vw] max-w-70 snap-start"
           >
             <div className="rounded-2xl overflow-hidden bg-white border border-wibe shadow-sm active:scale-[0.98] transition-transform">
-              <div className="relative aspect-[4/3] bg-wibe-surface">
+              <div className="relative aspect-4/3 bg-wibe-surface">
                 {list.coverImage ? (
                   <ImageWithFallback
                     src={list.coverImage}
@@ -66,12 +66,12 @@ export default function TrendingNowSection({
                     <ImageWithFallback
                       src={list.creator.image}
                       alt={list.creator.name || ''}
-                      className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                      className="w-6 h-6 rounded-full object-cover shrink-0"
                   width={24}
                   height={24}
                 />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-wibe-surface flex items-center justify-center text-xs flex-shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-wibe-surface flex items-center justify-center text-xs shrink-0">
                       {(list.creator?.name || '?')[0]}
                     </div>
                   )}

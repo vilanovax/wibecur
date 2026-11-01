@@ -37,16 +37,16 @@ export default function CategoryFormStepper({
                 disabled={!clickable}
                 onClick={() => clickable && onStepClick?.(item.step)}
                 className={`flex items-center gap-2 min-w-0 w-full text-right rounded-lg px-2 py-1.5 transition-colors ${
-                  clickable ? 'hover:bg-[var(--color-bg)] cursor-pointer' : 'cursor-default'
+                  clickable ? 'hover:bg-(--color-bg) cursor-pointer' : 'cursor-default'
                 }`}
               >
                 <span
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold border-2 transition-colors ${
                     active
-                      ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
+                      ? 'border-(--primary) bg-primary text-white'
                       : done
                         ? 'border-emerald-500 bg-emerald-500 text-white'
-                        : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)]'
+                        : 'border-(--color-border) bg-(--color-surface) text-wibe-secondary'
                   }`}
                 >
                   {done && !active ? <Check className="w-4 h-4" /> : item.step}
@@ -54,20 +54,20 @@ export default function CategoryFormStepper({
                 <span className="min-w-0 hidden sm:block">
                   <span
                     className={`block text-sm font-medium truncate ${
-                      active ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'
+                      active ? 'text-(--color-text)' : 'text-wibe-secondary'
                     }`}
                   >
                     {item.title}
                   </span>
-                  <span className="block text-[10px] text-[var(--color-text-muted)] truncate">
+                  <span className="block text-[10px] text-wibe-secondary truncate">
                     {item.subtitle}
                   </span>
                 </span>
               </button>
               {index < STEPS.length - 1 && (
                 <div
-                  className={`hidden sm:block h-0.5 flex-1 mx-2 min-w-[1rem] rounded ${
-                    item.step < current ? 'bg-emerald-400' : 'bg-[var(--color-border)]'
+                  className={`hidden sm:block h-0.5 flex-1 mx-2 min-w-4 rounded ${
+                    item.step < current ? 'bg-emerald-400' : 'bg-(--color-border)'
                   }`}
                   aria-hidden
                 />
@@ -76,7 +76,7 @@ export default function CategoryFormStepper({
           );
         })}
       </ol>
-      <p className="sm:hidden text-center text-xs text-[var(--color-text-muted)] mt-2">
+      <p className="sm:hidden text-center text-xs text-wibe-secondary mt-2">
         مرحله {current.toLocaleString('fa-IR')} از ۳ — {STEPS[current - 1]?.title}
       </p>
     </nav>

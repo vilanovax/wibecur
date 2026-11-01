@@ -545,15 +545,15 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
       >
         <div className="flex-1 min-w-0 w-full">
           {localComments.length === 0 ? (
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-10 text-center">
-              <p className="text-[var(--color-text)] font-medium mb-2">
+            <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-10 text-center">
+              <p className="text-(--color-text) font-medium mb-2">
                 {filter === 'pending' ||
                 filter === 'flagged' ||
                 filter === 'reported'
                   ? 'صف خالی است'
                   : 'کامنتی یافت نشد'}
               </p>
-              <p className="text-sm text-[var(--color-text-muted)]">
+              <p className="text-sm text-wibe-secondary">
                 {filter === 'pending'
                   ? 'همه کامنت‌های در انتظار رسیدگی شده‌اند.'
                   : 'فیلترها یا عبارت جستجو را تغییر دهید.'}
@@ -562,7 +562,7 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
                 <button
                   type="button"
                   onClick={clearAllFilters}
-                  className="mt-4 text-sm font-medium text-[var(--primary)] hover:underline"
+                  className="mt-4 text-sm font-medium text-primary hover:underline"
                 >
                   بازگشت به صف در انتظار
                 </button>
@@ -587,7 +587,7 @@ export default function CommentsPageClient({ data, navStats }: CommentsPageClien
           )}
         </div>
 
-        <div className="hidden lg:block w-[300px] xl:w-[320px] shrink-0">
+        <div className="hidden lg:block w-75 xl:w-80 shrink-0">
           <CommentDetailPanel
             comment={panelComment}
             onApprove={handleApprove}

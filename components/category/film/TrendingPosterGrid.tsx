@@ -23,7 +23,7 @@ function TrendingPosterCard({ list }: { list: CategoryListCard }) {
       className="group block shrink-0 snap-start active:scale-[0.99] transition-transform lg:shrink lg:hover:-translate-y-0.5"
     >
       <div className="relative overflow-hidden rounded-xl border border-wibe bg-wibe-card shadow-card lg:rounded-2xl lg:shadow-sm lg:transition-shadow lg:group-hover:shadow-lg">
-        <div className="relative aspect-[2/3] bg-gray-800 lg:aspect-[3/4]">
+        <div className="relative aspect-2/3 bg-gray-800 lg:aspect-3/4">
           {list.coverImage ? (
             <ImageWithFallback
               src={list.coverImage}
@@ -37,7 +37,7 @@ function TrendingPosterCard({ list }: { list: CategoryListCard }) {
               🎬
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent lg:from-black/80" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/10 to-transparent lg:from-black/80" />
           {(list.badge === 'viral' || list.badge === 'hot') && (
             <span className="absolute right-2 top-2 rounded-pill bg-warning px-2 py-0.5 wibe-caption font-semibold text-white">
               ترند
@@ -98,7 +98,7 @@ export default function TrendingPosterGrid({
         className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 scrollbar-hide snap-x snap-mandatory lg:hidden"
       >
         {visible.map((list) => (
-          <div key={list.id} className="w-[42vw] max-w-[168px] min-w-[132px]">
+          <div key={list.id} className="w-[42vw] max-w-42 min-w-33">
             <TrendingPosterCard list={list} />
           </div>
         ))}

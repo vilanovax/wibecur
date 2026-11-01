@@ -58,7 +58,7 @@ function TestBtn({
       type="button"
       onClick={onClick}
       disabled={testing === id || disabled || !current.trim()}
-      className="px-3 py-2 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)] disabled:opacity-50 shrink-0"
+      className="px-3 py-2 rounded-xl border border-(--color-border) text-sm text-(--color-text) hover:bg-(--color-bg) disabled:opacity-50 shrink-0"
     >
       {testing === id ? (
         <Loader2 className="w-4 h-4 animate-spin" />
@@ -101,7 +101,7 @@ export default function IntegrationsSettingsPanel({
       <SettingsSectionCard
         title="کلیدهای API"
         description="هوش مصنوعی، متادیتای فیلم و جستجوی تصویر"
-        icon={<Key className="w-5 h-5 text-[var(--primary)]" />}
+        icon={<Key className="w-5 h-5 text-primary" />}
       >
         <SecretInput
           label="OpenAI"
@@ -177,7 +177,7 @@ export default function IntegrationsSettingsPanel({
             />
           }
         />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1 border-t border-[var(--color-border-muted)]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1 border-t border-(--color-border-muted)">
           <SecretInput
             label="Google Custom Search API"
             value={form.googleApiKey || ''}
@@ -187,7 +187,7 @@ export default function IntegrationsSettingsPanel({
           />
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <label className="text-sm font-medium text-[var(--color-text)]">
+              <label className="text-sm font-medium text-(--color-text)">
                 Google Search Engine ID
               </label>
               {(form.googleSearchEngineId.trim() ||
@@ -203,10 +203,10 @@ export default function IntegrationsSettingsPanel({
               onChange={(e) =>
                 onFormChange({ googleSearchEngineId: e.target.value })
               }
-              className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] focus:ring-2 focus:ring-[var(--primary)]/30"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg) focus:ring-2 focus:ring-(--primary)/30"
               placeholder="Search Engine ID"
             />
-            <p className="text-[11px] text-[var(--color-text-subtle)] mt-1">
+            <p className="text-[11px] text-(--color-text-subtle) mt-1">
               از programmablesearchengine.google.com
             </p>
           </div>
@@ -225,30 +225,30 @@ export default function IntegrationsSettingsPanel({
       <SettingsSectionCard
         title="ParsPack Object Storage"
         description="آپلود تصاویر روی Object Storage پارس‌پک"
-        icon={<Database className="w-5 h-5 text-[var(--primary)]" />}
+        icon={<Database className="w-5 h-5 text-primary" />}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+            <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
               نام Bucket
             </label>
             <input
               type="text"
               value={form.liaraBucketName || ''}
               onChange={(e) => onFormChange({ liaraBucketName: e.target.value })}
-              className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg)"
               placeholder="c466145"
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+            <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
               Endpoint
             </label>
             <input
               type="text"
               value={form.liaraEndpoint || ''}
               onChange={(e) => onFormChange({ liaraEndpoint: e.target.value })}
-              className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg)"
               placeholder="https://c466145.parspack.net"
             />
           </div>
@@ -277,7 +277,7 @@ export default function IntegrationsSettingsPanel({
       </SettingsSectionCard>
 
       <div className="flex justify-end sticky bottom-4 z-10">
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur px-3 py-2 shadow-lg">
+        <div className="rounded-2xl border border-(--color-border) bg-(--color-surface)/95 backdrop-blur px-3 py-2 shadow-lg">
           <SettingsSaveButton
             onClick={onSave}
             loading={saving}

@@ -103,16 +103,16 @@ export default function ListSuggestionsTable({
     return (
       <div className="py-12 text-center">
         <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700/50">
-          <ListIcon className="h-7 w-7 text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)]" />
+          <ListIcon className="h-7 w-7 text-(--color-text-subtle) dark:text-wibe-secondary" />
         </div>
-        <h3 className="font-semibold text-[var(--color-text)] dark:text-white">
+        <h3 className="font-semibold text-(--color-text) dark:text-white">
           {isPendingFilter
             ? 'پیشنهاد لیستی در انتظار نیست'
             : isAllFilter
               ? 'هنوز پیشنهاد لیستی ثبت نشده'
               : 'پیشنهادی یافت نشد'}
         </h3>
-        <p className="mt-1 text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
+        <p className="mt-1 text-sm text-wibe-secondary dark:text-(--color-text-subtle)">
           {itemPendingCount > 0
             ? `${itemPendingCount.toLocaleString('fa-IR')} پیشنهاد آیتم (فرم و منو) در انتظار بررسی است`
             : 'فیلتر دیگری امتحان کنید یا تب آیتم را ببینید'}
@@ -132,8 +132,8 @@ export default function ListSuggestionsTable({
 
   return (
     <>
-      <p className="mb-3 text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
-        <span className="font-semibold text-[var(--color-text)] dark:text-gray-100">{total.toLocaleString('fa-IR')}</span> پیشنهاد
+      <p className="mb-3 text-sm text-wibe-secondary dark:text-(--color-text-subtle)">
+        <span className="font-semibold text-(--color-text) dark:text-gray-100">{total.toLocaleString('fa-IR')}</span> پیشنهاد
         لیست
       </p>
 

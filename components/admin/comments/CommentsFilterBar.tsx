@@ -109,7 +109,7 @@ export default function CommentsFilterBar({
 
   return (
     <div
-      className="mb-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2.5 space-y-2"
+      className="mb-3 rounded-xl border border-(--color-border) bg-(--color-surface) p-2.5 space-y-2"
       dir="rtl"
     >
       <div className="flex items-center gap-2">
@@ -129,10 +129,10 @@ export default function CommentsFilterBar({
                 role="tab"
                 aria-selected={active}
                 onClick={() => onFilterChange(id)}
-                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/40 ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/40 ${
                   active
-                    ? 'bg-[var(--primary)] text-white'
-                    : 'bg-[var(--color-bg)] text-[var(--color-text)] hover:bg-[var(--color-border-muted)]'
+                    ? 'bg-primary text-white'
+                    : 'bg-(--color-bg) text-(--color-text) hover:bg-(--color-border-muted)'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5 opacity-90" />
@@ -144,7 +144,7 @@ export default function CommentsFilterBar({
                         ? 'bg-white/25 text-white'
                         : urgent
                           ? 'bg-rose-500 text-white'
-                          : 'bg-[var(--color-border-muted)] text-[var(--color-text-muted)]'
+                          : 'bg-(--color-border-muted) text-wibe-secondary'
                     }`}
                   >
                     {count.toLocaleString('fa-IR')}
@@ -155,13 +155,13 @@ export default function CommentsFilterBar({
           })}
         </div>
 
-        <span className="hidden sm:inline text-xs text-[var(--color-text-muted)] tabular-nums shrink-0">
+        <span className="hidden sm:inline text-xs text-wibe-secondary tabular-nums shrink-0">
           {totalCount.toLocaleString('fa-IR')}
         </span>
         <select
           value={currentSort}
           onChange={(e) => onSortChange(e.target.value as CommentSortKind)}
-          className="hidden md:block py-1.5 px-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-xs shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+          className="hidden md:block py-1.5 px-2 rounded-lg border border-(--color-border) bg-(--color-bg) text-xs shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/35"
           aria-label="مرتب‌سازی"
           title="مرتب‌سازی · میانبر: J/K ردیف، A تایید، R رد"
         >
@@ -174,7 +174,7 @@ export default function CommentsFilterBar({
         <button
           type="button"
           onClick={onRefresh}
-          className="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+          className="p-1.5 rounded-lg border border-(--color-border) text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text) shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/35"
           aria-label="بروزرسانی"
           title="بروزرسانی · J/K ردیف · A تایید · R رد"
         >
@@ -191,13 +191,13 @@ export default function CommentsFilterBar({
           }}
         >
           <div className="relative">
-            <Search className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+            <Search className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-wibe-secondary" />
             <input
               type="search"
               value={searchInput}
               onChange={handleSearchChange}
               placeholder="جستجو در متن کامنت…"
-              className="w-full pr-9 pl-3 py-1.5 text-sm rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/30"
+              className="w-full pr-9 pl-3 py-1.5 text-sm rounded-lg border border-(--color-border) bg-(--color-bg) text-(--color-text) placeholder:text-wibe-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/30"
             />
           </div>
         </form>
@@ -205,7 +205,7 @@ export default function CommentsFilterBar({
         <select
           value={currentSort}
           onChange={(e) => onSortChange(e.target.value as CommentSortKind)}
-          className="md:hidden py-1.5 px-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] text-xs shrink-0"
+          className="md:hidden py-1.5 px-2 rounded-lg border border-(--color-border) bg-(--color-bg) text-xs shrink-0"
           aria-label="مرتب‌سازی"
         >
           {COMMENT_SORT_OPTIONS.map((o) => (
@@ -219,16 +219,16 @@ export default function CommentsFilterBar({
           type="button"
           onClick={() => setScopeOpen((v) => !v)}
           aria-expanded={scopeOpen}
-          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35 ${
+          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs font-medium shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/35 ${
             scopeActive || scopeOpen
-              ? 'border-[var(--primary)]/40 bg-[var(--primary)]/8 text-[var(--primary)]'
-              : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+              ? 'border-(--primary)/40 bg-primary/8 text-primary'
+              : 'border-(--color-border) text-wibe-secondary hover:bg-(--color-bg)'
           }`}
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">محدوده</span>
           {scopeActive && (
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]" aria-hidden />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary" aria-hidden />
           )}
           <ChevronDown
             className={`w-3.5 h-3.5 transition-transform ${scopeOpen ? 'rotate-180' : ''}`}

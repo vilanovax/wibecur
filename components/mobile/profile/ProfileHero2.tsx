@@ -122,7 +122,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
       {/* Hero: gradient only top 260px, then white — indigo tokens from DESIGN.md */}
       <div className="relative -mx-4">
         <div
-          className="h-[260px] w-full rounded-b-2xl"
+          className="h-65 w-full rounded-b-2xl"
           style={{
             background:
               'linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 50%, var(--primary-dark) 100%)',
@@ -132,7 +132,7 @@ export default function ProfileHero2({ user, onUpdate }: ProfileHero2Props) {
           {/* Avatar: 96px, simple ring */}
           <div className="flex flex-col items-center">
             <div className="relative group">
-              <div className="w-[96px] h-[96px] rounded-full border-2 border-white/90 overflow-hidden bg-white shadow-sm">
+              <div className="w-24 h-24 rounded-full border-2 border-white/90 overflow-hidden bg-white shadow-sm">
                 {showVibeAvatar && vibeAvatar ? (
                   <VibeAvatarDisplay avatar={vibeAvatar} size={96} className="h-full w-full" />
                 ) : showUploadedAvatar ? (

@@ -401,14 +401,14 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
     <div className="space-y-4">
       {!embedded && (
         <div>
-          <h2 className="text-lg font-bold text-[var(--color-text)]">نکته‌های آیتم</h2>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+          <h2 className="text-lg font-bold text-(--color-text)">نکته‌های آیتم</h2>
+          <p className="mt-1 text-sm text-wibe-secondary">
             برای هر آیتم یک نکتهٔ کوتاه. ویرایش را بزنید و بعد ذخیره کنید.
           </p>
         </div>
       )}
 
-      <div className="space-y-3 rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4">
+      <div className="space-y-3 rounded-2xl border border-(--color-border-muted) bg-(--color-surface) p-4">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-200">
             {faCount(pendingCount)} نیاز به بررسی
@@ -427,18 +427,18 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
           <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
             {faCount(reviewedInScope)} بررسی‌شده
           </span>
-          <span className="text-xs text-[var(--color-text-muted)]">{scopeLabel}</span>
+          <span className="text-xs text-wibe-secondary">{scopeLabel}</span>
         </div>
 
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+            <Search className="pointer-events-none absolute inset-e-3 top-1/2 size-4 -translate-y-1/2 text-wibe-secondary" />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="جستجو در عنوان، لیست یا نکته…"
-              className="min-h-11 w-full rounded-xl border border-[var(--color-border-muted)] bg-white pe-10 ps-3 text-sm"
+              className="min-h-11 w-full rounded-xl border border-(--color-border-muted) bg-white pe-10 ps-3 text-sm"
             />
           </div>
           <select
@@ -450,7 +450,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
               applyScope(next, '');
             }}
             aria-label="دسته"
-            className="min-h-11 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 text-sm lg:w-44"
+            className="min-h-11 rounded-xl border border-(--color-border-muted) bg-white px-3 text-sm lg:w-44"
           >
             {data.categories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -467,7 +467,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
               applyScope(categoryId, next);
             }}
             aria-label="لیست"
-            className="min-h-11 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 text-sm lg:w-56"
+            className="min-h-11 rounded-xl border border-(--color-border-muted) bg-white px-3 text-sm lg:w-56"
           >
             <option value="">همهٔ لیست‌های دسته</option>
             {listsInCategory.map((list) => (
@@ -480,7 +480,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
             value={sort}
             onChange={(e) => setSort(e.target.value as TipSort)}
             aria-label="مرتب‌سازی"
-            className="min-h-11 rounded-xl border border-[var(--color-border-muted)] bg-white px-3 text-sm lg:w-44"
+            className="min-h-11 rounded-xl border border-(--color-border-muted) bg-white px-3 text-sm lg:w-44"
           >
             <option value="list">ترتیب لیست</option>
             <option value="title">عنوان</option>
@@ -497,7 +497,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
             className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm font-medium ${
               showReviewed
                 ? 'border-emerald-300 bg-emerald-50 text-emerald-900'
-                : 'border-[var(--color-border-muted)] hover:bg-[var(--color-bg)]'
+                : 'border-(--color-border-muted) hover:bg-(--color-bg)'
             }`}
           >
             {showReviewed ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
@@ -509,11 +509,11 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
               <button
                 type="button"
                 onClick={toggleSelectAll}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--color-border-muted)] px-3 text-sm font-medium hover:bg-[var(--color-bg)]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border-muted) px-3 text-sm font-medium hover:bg-(--color-bg)"
               >
                 {allFilteredSelected ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
                 {allFilteredSelected ? 'لغو انتخاب' : 'انتخاب همه'}
-                <span className="text-[var(--color-text-muted)]">({faCount(filteredItems.length)})</span>
+                <span className="text-wibe-secondary">({faCount(filteredItems.length)})</span>
               </button>
               {selectedIds.size > 0 && (
                 <button
@@ -557,9 +557,9 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
         </div>
       </div>
 
-      <ul className="overflow-hidden rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)]">
+      <ul className="overflow-hidden rounded-2xl border border-(--color-border-muted) bg-(--color-surface)">
         {pageRows.length === 0 ? (
-          <li className="px-4 py-10 text-center text-sm text-[var(--color-text-muted)]">
+          <li className="px-4 py-10 text-center text-sm text-wibe-secondary">
             {showReviewed
               ? 'آیتم بررسی‌شده‌ای نیست'
               : pendingCount === 0
@@ -576,7 +576,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
             return (
               <li
                 key={item.id}
-                className={`border-b border-[var(--color-border-muted)] p-3 last:border-b-0 ${
+                className={`border-b border-(--color-border-muted) p-3 last:border-b-0 ${
                   isReviewed ? 'bg-emerald-50/40' : ''
                 }`}
               >
@@ -594,12 +594,12 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
                     <div className="flex flex-wrap items-center gap-2">
                       <Link
                         href={`/admin/items/${item.id}/edit`}
-                        className="text-sm font-semibold text-[var(--color-text)] hover:text-[var(--primary)]"
+                        className="text-sm font-semibold text-(--color-text) hover:text-primary"
                       >
                         {item.title}
                       </Link>
                       {!listId && (
-                        <span className="text-xs text-[var(--color-text-muted)]">{item.listTitle}</span>
+                        <span className="text-xs text-wibe-secondary">{item.listTitle}</span>
                       )}
                     </div>
 
@@ -611,12 +611,12 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
                           rows={4}
                           autoFocus
                           placeholder="نکتهٔ کوتاه برای نمایش در اپ…"
-                          className="min-h-24 w-full resize-y rounded-xl border border-[var(--color-border-muted)] px-3 py-2 text-sm leading-relaxed focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+                          className="min-h-24 w-full resize-y rounded-xl border border-(--color-border-muted) px-3 py-2 text-sm leading-relaxed focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
                         />
                         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                           <span
                             className={`text-xs ${
-                              tooLong ? 'font-semibold text-red-600' : 'text-[var(--color-text-muted)]'
+                              tooLong ? 'font-semibold text-red-600' : 'text-wibe-secondary'
                             }`}
                           >
                             {faCount(editValue.trim().length)} از {faCount(TIP_MAX)} نویسه
@@ -625,7 +625,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
                             <button
                               type="button"
                               onClick={closeEditor}
-                              className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-[var(--color-border-muted)] px-3 text-sm font-medium"
+                              className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-(--color-border-muted) px-3 text-sm font-medium"
                             >
                               <X className="size-4" />
                               لغو
@@ -649,7 +649,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
                     ) : (
                       <p
                         className={`mt-2 line-clamp-2 text-sm leading-relaxed ${
-                          preview ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'
+                          preview ? 'text-(--color-text)' : 'text-wibe-secondary'
                         }`}
                       >
                         {preview || 'نکته‌ای نوشته نشده'}
@@ -683,7 +683,7 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
                             setReviewedIds(unmarkItemTipReviewed(item));
                             setToast({ message: 'به صف بررسی برگشت', type: 'success' });
                           }}
-                          className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-[var(--color-border-muted)] px-3 text-sm font-medium"
+                          className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-(--color-border-muted) px-3 text-sm font-medium"
                         >
                           <RotateCcw className="size-4" />
                           بازگردانی
@@ -704,19 +704,19 @@ export default function ItemTipsClient({ data, embedded = false }: Props) {
             type="button"
             disabled={safePage <= 1}
             onClick={() => setPage(safePage - 1)}
-            className="inline-flex size-11 items-center justify-center rounded-lg border border-[var(--color-border-muted)] bg-white disabled:opacity-40"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-(--color-border-muted) bg-white disabled:opacity-40"
             aria-label="صفحه قبل"
           >
             <ChevronRight className="size-5" />
           </button>
-          <span className="text-sm text-[var(--color-text-muted)]">
+          <span className="text-sm text-wibe-secondary">
             صفحه {faCount(safePage)} از {faCount(pageCount)}
           </span>
           <button
             type="button"
             disabled={safePage >= pageCount}
             onClick={() => setPage(safePage + 1)}
-            className="inline-flex size-11 items-center justify-center rounded-lg border border-[var(--color-border-muted)] bg-white disabled:opacity-40"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-(--color-border-muted) bg-white disabled:opacity-40"
             aria-label="صفحه بعد"
           >
             <ChevronLeft className="size-5" />

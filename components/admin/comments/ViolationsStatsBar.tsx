@@ -18,7 +18,7 @@ export default function ViolationsStatsBar({
       label: 'کاربر خاطی',
       value: totalOffenders,
       icon: Users,
-      accent: 'text-[var(--primary)]',
+      accent: 'text-primary',
     },
     {
       label: 'مجموع تخلف',
@@ -39,13 +39,13 @@ export default function ViolationsStatsBar({
       {items.map(({ label, value, icon: Icon, accent }) => (
         <div
           key={label}
-          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 sm:px-4 sm:py-3"
+          className="rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2.5 sm:px-4 sm:py-3"
         >
-          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[var(--color-text-muted)] mb-1">
+          <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-wibe-secondary mb-1">
             <Icon className={`w-3.5 h-3.5 ${accent}`} />
             {label}
           </div>
-          <p className="text-lg sm:text-xl font-bold tabular-nums text-[var(--color-text)]">
+          <p className="text-lg sm:text-xl font-bold tabular-nums text-(--color-text)">
             {value.toLocaleString('fa-IR')}
           </p>
         </div>

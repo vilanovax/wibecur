@@ -527,7 +527,7 @@ export default function CommentSeedPageClient() {
   }
 
   const inputClass =
-    'mt-1.5 w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
+    'mt-1.5 w-full rounded-xl border border-(--color-border) bg-white px-3 py-2.5 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20';
 
   return (
     <div dir="rtl">
@@ -579,7 +579,7 @@ export default function CommentSeedPageClient() {
         </div>
       )}
 
-      <div className="mb-5 flex gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-1">
+      <div className="mb-5 flex gap-1 rounded-xl border border-(--color-border) bg-(--color-bg) p-1">
         {(
           [
             { id: 'campaign' as const, label: 'کمپین‌ها', icon: Sparkles },
@@ -592,8 +592,8 @@ export default function CommentSeedPageClient() {
             onClick={() => setMainTab(id)}
             className={`inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
               mainTab === id
-                ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                ? 'bg-(--color-surface) text-(--color-text) shadow-sm'
+                : 'text-wibe-secondary hover:text-(--color-text)'
             }`}
           >
             <Icon className="h-4 w-4" />
@@ -629,7 +629,7 @@ export default function CommentSeedPageClient() {
             />
           )}
 
-          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-6">
+          <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-4 sm:p-6">
             <CommentSeedStepper
               current={step}
               completedThrough={completedThrough}
@@ -641,9 +641,9 @@ export default function CommentSeedPageClient() {
             {/* Step 1: Target */}
             {step === 1 && (
               <div className="space-y-5">
-                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/50 px-4 py-3">
-                  <h3 className="text-base font-semibold text-[var(--color-text)]">انتخاب هدف</h3>
-                  <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
+                <div className="rounded-xl border border-(--color-border) bg-(--color-bg)/50 px-4 py-3">
+                  <h3 className="text-base font-semibold text-(--color-text)">انتخاب هدف</h3>
+                  <p className="mt-0.5 text-sm text-wibe-secondary">
                     مشخص کنید کامنت‌ها روی کدام آیتم‌ها تولید شوند
                   </p>
                 </div>
@@ -671,7 +671,7 @@ export default function CommentSeedPageClient() {
                           className={`flex-1 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                             targetType === t
                               ? 'bg-primary text-white shadow-sm'
-                              : 'border border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                              : 'border border-(--color-border) hover:bg-(--color-bg)'
                           }`}
                         >
                           {t === 'item' ? 'آیتم' : t === 'list' ? 'لیست' : 'دسته'}
@@ -683,7 +683,7 @@ export default function CommentSeedPageClient() {
 
                 <div>
                   <span className="text-sm font-medium">انتخاب هدف</span>
-                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  <p className="mt-1 text-xs text-wibe-secondary">
                     {TARGET_DESCRIPTIONS[targetType]}
                   </p>
                   <div className="mt-2">
@@ -702,11 +702,11 @@ export default function CommentSeedPageClient() {
                       <span className="font-bold tabular-nums text-primary">
                         {targetPreview.toLocaleString('fa-IR')}
                       </span>
-                      <span className="text-[var(--color-text-muted)]"> آیتم هدف از </span>
+                      <span className="text-wibe-secondary"> آیتم هدف از </span>
                       <span className="font-medium tabular-nums">
                         {targetIds.length.toLocaleString('fa-IR')}
                       </span>
-                      <span className="text-[var(--color-text-muted)]"> مورد انتخاب‌شده</span>
+                      <span className="text-wibe-secondary"> مورد انتخاب‌شده</span>
                     </p>
                   </div>
                 )}
@@ -716,9 +716,9 @@ export default function CommentSeedPageClient() {
             {/* Step 2: Config */}
             {step === 2 && (
               <div className="space-y-5">
-                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/50 px-4 py-3">
-                  <h3 className="text-base font-semibold text-[var(--color-text)]">تنظیمات تولید</h3>
-                  <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
+                <div className="rounded-xl border border-(--color-border) bg-(--color-bg)/50 px-4 py-3">
+                  <h3 className="text-base font-semibold text-(--color-text)">تنظیمات تولید</h3>
+                  <p className="mt-0.5 text-sm text-wibe-secondary">
                     تعداد، طول متن، بازه تاریخ و ترکیب لحن
                   </p>
                 </div>
@@ -743,7 +743,7 @@ export default function CommentSeedPageClient() {
                       placeholder="خالی = توزیع خودکار"
                       className={inputClass}
                     />
-                    <span className="mt-1 block text-xs text-[var(--color-text-muted)]">
+                    <span className="mt-1 block text-xs text-wibe-secondary">
                       حداکثر کامنت روی هر آیتم
                     </span>
                   </label>
@@ -781,7 +781,7 @@ export default function CommentSeedPageClient() {
                   />
                 </div>
 
-                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/30 p-4">
+                <div className="rounded-xl border border-(--color-border) bg-(--color-bg)/30 p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <span className="text-sm font-medium">ترکیب لحن</span>
                     <div className="flex items-center gap-2">
@@ -833,7 +833,7 @@ export default function CommentSeedPageClient() {
                           }
                           className="mt-1 w-full accent-primary"
                         />
-                        <span className="text-xs text-[var(--color-text-muted)]">
+                        <span className="text-xs text-wibe-secondary">
                           {toneMix[key].toLocaleString('fa-IR')}%
                         </span>
                       </label>
@@ -847,24 +847,24 @@ export default function CommentSeedPageClient() {
             {step === 3 && (
               <div className="space-y-5">
                 <div>
-                  <h3 className="text-base font-semibold text-[var(--color-text)]">تولید پیش‌نویس‌ها</h3>
-                  <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                  <h3 className="text-base font-semibold text-(--color-text)">تولید پیش‌نویس‌ها</h3>
+                  <p className="mt-1 text-sm text-wibe-secondary">
                     AI بر اساس تنظیمات کمپین، کامنت‌ها را می‌سازد
                   </p>
                 </div>
 
                 {!selectedId ? (
-                  <div className="rounded-xl border border-dashed border-[var(--color-border)] px-6 py-10 text-center">
-                    <p className="text-sm text-[var(--color-text-muted)]">
+                  <div className="rounded-xl border border-dashed border-(--color-border) px-6 py-10 text-center">
+                    <p className="text-sm text-wibe-secondary">
                       ابتدا کمپین را در مرحله قبل ایجاد کنید
                     </p>
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-5">
+                  <div className="rounded-xl border border-(--color-border) bg-(--color-bg) p-5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
-                        <p className="font-semibold text-[var(--color-text)]">{title}</p>
-                        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                        <p className="font-semibold text-(--color-text)">{title}</p>
+                        <p className="mt-1 text-sm text-wibe-secondary">
                           {commentCount.toLocaleString('fa-IR')} کامنت ·{' '}
                           {targetPreview?.toLocaleString('fa-IR') ?? '؟'} آیتم هدف
                         </p>
@@ -900,10 +900,10 @@ export default function CommentSeedPageClient() {
               <div className="space-y-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-[var(--color-text)]">
+                    <h3 className="text-base font-semibold text-(--color-text)">
                       پیش‌نمایش و انتشار
                     </h3>
-                    <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                    <p className="mt-1 text-sm text-wibe-secondary">
                       {drafts.length.toLocaleString('fa-IR')} پیش‌نویس ·{' '}
                       {approvedCount.toLocaleString('fa-IR')} تایید شده
                     </p>
@@ -942,7 +942,7 @@ export default function CommentSeedPageClient() {
                       className={`rounded-full px-3 py-1 text-xs font-medium transition ${
                         draftFilter === id
                           ? 'bg-primary text-white'
-                          : 'border border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                          : 'border border-(--color-border) hover:bg-(--color-bg)'
                       }`}
                     >
                       {label}
@@ -951,12 +951,12 @@ export default function CommentSeedPageClient() {
                 </div>
 
                 <div className="relative">
-                  <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+                  <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary" />
                   <input
                     value={draftSearch}
                     onChange={(e) => setDraftSearch(e.target.value)}
                     placeholder="جستجو در متن، آیتم یا پرسونا…"
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-white py-2.5 pr-10 pl-3 text-sm"
+                    className="w-full rounded-xl border border-(--color-border) bg-white py-2.5 pr-10 pl-3 text-sm"
                   />
                 </div>
 
@@ -990,7 +990,7 @@ export default function CommentSeedPageClient() {
                     <button
                       type="button"
                       onClick={() => setSelectedDraftIds(new Set())}
-                      className="mr-auto text-xs text-[var(--color-text-muted)] hover:underline"
+                      className="mr-auto text-xs text-wibe-secondary hover:underline"
                     >
                       لغو انتخاب
                     </button>
@@ -1015,12 +1015,12 @@ export default function CommentSeedPageClient() {
 
             {/* Step navigation */}
             {step < 4 && (
-              <div className="mt-8 flex items-center justify-between border-t border-[var(--color-border)] pt-5">
+              <div className="mt-8 flex items-center justify-between border-t border-(--color-border) pt-5">
                 <button
                   type="button"
                   disabled={step === 1}
                   onClick={() => setStep((s) => (s > 1 ? ((s - 1) as CommentSeedStep) : s))}
-                  className="inline-flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:bg-[var(--color-bg)] disabled:opacity-40"
+                  className="inline-flex items-center gap-1 rounded-xl px-4 py-2 text-sm font-medium text-wibe-secondary transition hover:bg-(--color-bg) disabled:opacity-40"
                 >
                   <ChevronRight className="h-4 w-4" />
                   قبلی

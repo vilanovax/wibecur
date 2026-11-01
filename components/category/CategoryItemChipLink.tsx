@@ -25,13 +25,13 @@ export default function CategoryItemChipLink({
     <Link
       href={`/items/${item.id}`}
       className={`shrink-0 text-start transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 active:scale-[0.97] ${
-        isPoster ? 'w-[6.5rem]' : 'w-24'
+        isPoster ? 'w-26' : 'w-24'
       }`}
     >
       <div
         className={`relative overflow-hidden bg-wibe-card shadow-sm ring-1 ring-wibe/90 ${
           isPoster
-            ? 'aspect-[2/3] rounded-xl'
+            ? 'aspect-2/3 rounded-xl'
             : 'aspect-square rounded-xl'
         }`}
       >

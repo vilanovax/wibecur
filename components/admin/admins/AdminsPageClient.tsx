@@ -59,7 +59,7 @@ function StatChip({
   value: number;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 min-w-[140px]">
+    <div className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 min-w-35">
       <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-900/30">
         <Icon className="h-4 w-4 text-violet-600" />
       </div>

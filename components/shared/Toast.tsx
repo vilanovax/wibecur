@@ -73,7 +73,7 @@ export default function Toast({
     <div
       role="status"
       data-theme="paper"
-      className={`fixed inset-x-4 bottom-6 z-[100] mx-auto flex max-w-md items-center gap-3 rounded-xl p-4 shadow-overlay transition duration-300 ease-out motion-reduce:transition-none ${toastStyles[type]} ${
+      className={`fixed inset-x-4 bottom-6 z-100 mx-auto flex max-w-md items-center gap-3 rounded-xl p-4 shadow-overlay transition duration-300 ease-out motion-reduce:transition-none ${toastStyles[type]} ${
         entered ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-5 scale-95 opacity-0'
       } ${className}`}
     >

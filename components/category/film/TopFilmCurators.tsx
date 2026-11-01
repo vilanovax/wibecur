@@ -45,7 +45,7 @@ export default function TopFilmCurators({
         style={{ borderColor: `${accentColor}40` }}
       >
         <div className="flex flex-col sm:flex-row gap-5">
-          <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="flex items-center gap-4 shrink-0">
             <div className="relative">
               {topCurator.image ? (
                 <ImageWithFallback
@@ -91,18 +91,18 @@ export default function TopFilmCurators({
                   key={list.id}
                   href={`/lists/${list.slug}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="flex-shrink-0 w-20 rounded-xl overflow-hidden border border-gray-700 group"
+                  className="shrink-0 w-20 rounded-xl overflow-hidden border border-gray-700 group"
                 >
                   {list.coverImage ? (
                     <ImageWithFallback
                       src={list.coverImage}
                       alt={list.title}
-                      className="w-full aspect-[3/4] object-cover group-hover:scale-105 transition-transform"
+                      className="w-full aspect-3/4 object-cover group-hover:scale-105 transition-transform"
                       placeholderSize="square"
                     />
                   ) : (
                     <div
-                      className="w-full aspect-[3/4] flex items-center justify-center text-2xl"
+                      className="w-full aspect-3/4 flex items-center justify-center text-2xl"
                       style={{ backgroundColor: `${accentColor}30` }}
                     >
                       🎬
@@ -130,10 +130,10 @@ export default function TopFilmCurators({
                 <ImageWithFallback
                   src={c.image}
                   alt={c.name || ''}
-                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  className="w-8 h-8 rounded-full object-cover shrink-0"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs text-white flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs text-white shrink-0">
                   {(c.name || '?')[0]}
                 </div>
               )}

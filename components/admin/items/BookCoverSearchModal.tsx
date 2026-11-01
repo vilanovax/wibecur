@@ -115,7 +115,7 @@ export default function BookCoverSearchModal({
     <div
       data-image-search-modal="true"
       data-book-cover-search-modal="true"
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-70 p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
@@ -124,10 +124,10 @@ export default function BookCoverSearchModal({
         dir="rtl"
       >
         <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-[var(--color-text)] dark:text-white">
+          <h2 className="text-xl font-bold text-(--color-text) dark:text-white">
             جستجوی کاور در {label}
           </h2>
-          <button type="button" onClick={onClose} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
+          <button type="button" onClick={onClose} className="text-wibe-secondary hover:text-(--color-text)">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -161,7 +161,7 @@ export default function BookCoverSearchModal({
 
         <div className="flex-1 overflow-y-auto p-5">
           {isSearching ? (
-            <div className="flex flex-col items-center py-12 text-[var(--color-text-muted)]">
+            <div className="flex flex-col items-center py-12 text-wibe-secondary">
               <Loader2 className="w-10 h-10 animate-spin mb-3" />
               در حال جستجو در {label}...
             </div>
@@ -178,7 +178,7 @@ export default function BookCoverSearchModal({
                       : 'border-gray-200 hover:border-violet-300'
                   }`}
                 >
-                  <div className="relative aspect-[2/3] bg-gray-100">
+                  <div className="relative aspect-2/3 bg-gray-100">
                     <Image
                       src={item.coverUrl}
                       alt={item.title}
@@ -189,7 +189,7 @@ export default function BookCoverSearchModal({
                   </div>
                   <div className="p-2 bg-white dark:bg-gray-800">
                     <p className="text-xs font-semibold line-clamp-2">{item.title}</p>
-                    <div className="flex items-center gap-2 mt-1 text-[10px] text-[var(--color-text-muted)]">
+                    <div className="flex items-center gap-2 mt-1 text-[10px] text-wibe-secondary">
                       {item.author && <span className="line-clamp-1">{item.author}</span>}
                       {item.rating != null && (
                         <span className="flex items-center gap-0.5 shrink-0">
@@ -204,7 +204,7 @@ export default function BookCoverSearchModal({
             </div>
           ) : (
             !error && (
-              <div className="text-center py-12 text-[var(--color-text-muted)]">
+              <div className="text-center py-12 text-wibe-secondary">
                 <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p>عنوان کتاب را جستجو کنید</p>
               </div>
@@ -220,7 +220,7 @@ export default function BookCoverSearchModal({
               </div>
               <div className="min-w-0">
                 <p className="font-medium text-sm truncate">{selected.title}</p>
-                <p className="text-xs text-[var(--color-text-muted)]">منبع: {label}</p>
+                <p className="text-xs text-wibe-secondary">منبع: {label}</p>
               </div>
             </div>
             <div className="flex gap-2 shrink-0">

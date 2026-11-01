@@ -30,7 +30,7 @@ function TrendingCardServer({
       className="group block transition-transform active:scale-95 lg:hover:-translate-y-0.5"
     >
       <Card className="overflow-hidden bg-popover p-0 lg:transition-shadow lg:group-hover:shadow-md">
-        <div className="relative aspect-[4/3] bg-muted">
+        <div className="relative aspect-4/3 bg-muted">
           {cover ? (
             <Image
               src={cover.src}
@@ -45,14 +45,14 @@ function TrendingCardServer({
               📋
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/10 to-transparent" />
           {showTrendBadge ? (
-            <span className="absolute end-2 top-2 rounded-full bg-warning px-2 py-0.5 text-xs font-semibold text-foreground">
+            <span className="absolute inset-e-2 top-2 rounded-full bg-warning px-2 py-0.5 text-xs font-semibold text-foreground">
               ترند
             </span>
           ) : null}
           {list.cityTag ? (
-            <span className="absolute bottom-2 end-2 rounded-md bg-foreground/40 px-2 py-0.5 text-xs text-background backdrop-blur-sm">
+            <span className="absolute bottom-2 inset-e-2 rounded-md bg-foreground/40 px-2 py-0.5 text-xs text-background backdrop-blur-sm">
               {list.cityTag}
             </span>
           ) : null}

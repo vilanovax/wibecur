@@ -249,7 +249,7 @@ export default function AvatarUploadForm({
         </div>
 
         {/* Fixed Buttons at Bottom - OUTSIDE scrollable area */}
-        <div className="flex-shrink-0 border-t border-border bg-popover p-4">
+        <div className="shrink-0 border-t border-border bg-popover p-4">
           <div className="flex gap-3">
             <button
               type="button"

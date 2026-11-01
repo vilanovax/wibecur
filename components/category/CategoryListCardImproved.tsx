@@ -34,7 +34,7 @@ export default function CategoryListCardImproved({
           fallbackClassName="w-full h-full flex items-center justify-center text-2xl bg-wibe-surface"
         />
         {list.badge && (
-          <span className="absolute end-1 top-1 rounded-full bg-warning px-1.5 py-0.5 text-xs font-semibold text-foreground">
+          <span className="absolute inset-e-1 top-1 rounded-full bg-warning px-1.5 py-0.5 text-xs font-semibold text-foreground">
             {list.badge === 'viral' || list.badge === 'hot' ? 'ترند' : 'ویژه'}
           </span>
         )}

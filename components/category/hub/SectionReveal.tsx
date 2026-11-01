@@ -19,7 +19,7 @@ export default function SectionReveal({
   const { ref, inView } = useLazyInView<HTMLDivElement>({ rootMargin: '240px', once: true });
 
   if (defer && !inView) {
-    return <div ref={ref} className={`min-h-[6rem] ${className}`} aria-hidden />;
+    return <div ref={ref} className={`min-h-24 ${className}`} aria-hidden />;
   }
 
   return (

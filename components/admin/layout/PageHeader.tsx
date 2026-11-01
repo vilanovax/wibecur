@@ -16,7 +16,7 @@ export default function PageHeader({ title, subtitle, actions, className = '' }:
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-1 text-sm text-admin-text-secondary dark:text-[var(--color-text-subtle)]">
+            <p className="mt-1 text-sm text-admin-text-secondary dark:text-(--color-text-subtle)">
               {subtitle}
             </p>
           )}

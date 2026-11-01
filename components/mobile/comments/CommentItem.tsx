@@ -132,7 +132,7 @@ export default function CommentItem({
 
   return (
     <Card className="flex gap-3 bg-popover px-3 py-3.5">
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         {profileUrl ? (
           <Link href={profileUrl} className="block">
             <CommentAvatar
@@ -180,7 +180,7 @@ export default function CommentItem({
 
         <div className="relative">
           <p
-            className={`text-foreground text-sm leading-relaxed break-words whitespace-pre-wrap ${
+            className={`text-foreground text-sm leading-relaxed wrap-break-word whitespace-pre-wrap ${
               comment.isFiltered ? 'italic text-muted-foreground' : ''
             } ${!expanded && showReadMore ? 'line-clamp-3' : ''}`}
           >
@@ -188,7 +188,7 @@ export default function CommentItem({
           </p>
           {!expanded && showReadMore && (
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-popover to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-popover to-transparent"
               aria-hidden
             />
           )}

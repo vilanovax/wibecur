@@ -71,13 +71,13 @@ export default function CommentsHubKpiStrip({
         <Link
           key={href}
           href={href}
-          className={`rounded-xl border bg-gradient-to-br ${accent} p-3.5 transition-all hover:shadow-md hover:scale-[1.01]`}
+          className={`rounded-xl border bg-linear-to-br ${accent} p-3.5 transition-all hover:shadow-md hover:scale-[1.01]`}
         >
-          <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] mb-1">
+          <div className="flex items-center gap-1.5 text-xs text-wibe-secondary mb-1">
             <Icon className="w-3.5 h-3.5" />
             {label}
           </div>
-          <p className="text-2xl font-bold tabular-nums text-[var(--color-text)]">
+          <p className="text-2xl font-bold tabular-nums text-(--color-text)">
             {value.toLocaleString('fa-IR')}
           </p>
         </Link>

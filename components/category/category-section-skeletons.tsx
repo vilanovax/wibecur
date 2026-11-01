@@ -6,7 +6,7 @@ export function CategoryTrendingSectionSkeleton() {
       <Skeleton className="mb-3 h-6 w-48 lg:mb-4" />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <Skeleton key={i} className="aspect-[4/3] w-full rounded-xl" />
+          <Skeleton key={i} className="aspect-4/3 w-full rounded-xl" />
         ))}
       </div>
     </section>

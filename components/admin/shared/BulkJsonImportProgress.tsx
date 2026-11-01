@@ -19,12 +19,12 @@ export default function BulkJsonImportProgress({
     progress.total > 0 ? Math.min(100, Math.round((progress.processed / progress.total) * 100)) : 0;
 
   return (
-    <div className="space-y-2 border-b border-[var(--color-border)] bg-emerald-50/40 px-4 py-3 sm:px-5">
+    <div className="space-y-2 border-b border-(--color-border) bg-emerald-50/40 px-4 py-3 sm:px-5">
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-        <span className="font-semibold text-[var(--color-text)]">
+        <span className="font-semibold text-(--color-text)">
           {progress.phase === 'running' ? runningLabel : doneLabel}
         </span>
-        <span className="tabular-nums text-[var(--color-text-muted)]">
+        <span className="tabular-nums text-wibe-secondary">
           {progress.processed.toLocaleString('fa-IR')} / {progress.total.toLocaleString('fa-IR')}
           <span className="mx-1">·</span>
           {percent.toLocaleString('fa-IR')}٪
@@ -42,7 +42,7 @@ export default function BulkJsonImportProgress({
         <span className="font-medium text-emerald-800 tabular-nums">
           {progress.updated.toLocaleString('fa-IR')} به‌روز شد
         </span>
-        <span className="text-[var(--color-text-muted)] tabular-nums">
+        <span className="text-wibe-secondary tabular-nums">
           {progress.skipped.toLocaleString('fa-IR')} بدون تغییر
         </span>
         {progress.failed > 0 ? (
@@ -60,7 +60,7 @@ export default function BulkJsonImportProgress({
             </li>
           ))}
           {progress.errors.length > 8 ? (
-            <li className="text-[var(--color-text-muted)]">
+            <li className="text-wibe-secondary">
               +{(progress.errors.length - 8).toLocaleString('fa-IR')} خطای دیگر
             </li>
           ) : null}

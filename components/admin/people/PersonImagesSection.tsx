@@ -189,14 +189,14 @@ export default function PersonImagesSection({
       : 0;
 
   return (
-    <section className={bare ? 'space-y-3' : 'space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:p-4'}>
+    <section className={bare ? 'space-y-3' : 'space-y-3 rounded-2xl border border-(--color-border) bg-(--color-surface) p-3 sm:p-4'}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--color-text)]">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-(--color-text)">
             <ImageIcon className="h-4 w-4 text-violet-600" />
             تصاویر پروفایل
           </h2>
-          <p className="mt-1 text-xs text-[var(--color-text-muted)] leading-relaxed">
+          <p className="mt-1 text-xs text-wibe-secondary leading-relaxed">
             دریافت از TMDB (با IMDb/slug لاتین) و ذخیره روی ParsPack. برای نویسنده/مترجم URL را
             دستی یا در JSON import وارد کنید.
           </p>
@@ -204,7 +204,7 @@ export default function PersonImagesSection({
         <button
           type="button"
           onClick={() => void loadStats()}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-(--color-border) hover:bg-(--color-bg)"
           aria-label="بارگذاری آمار تصاویر"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -220,21 +220,21 @@ export default function PersonImagesSection({
       )}
 
       {progress && bulkLoading && (
-        <div className="space-y-2 rounded-xl bg-[var(--color-bg)] p-3">
+        <div className="space-y-2 rounded-xl bg-(--color-bg) p-3">
           <div className="flex items-center justify-between gap-2 text-xs">
-            <span className="font-medium text-[var(--color-text)]">
+            <span className="font-medium text-(--color-text)">
               {progress.done.toLocaleString('fa-IR')} / {progress.total.toLocaleString('fa-IR')}
             </span>
-            <span className="text-[var(--color-text-muted)]">{progressPercent}%</span>
+            <span className="text-wibe-secondary">{progressPercent}%</span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-[var(--color-border)]">
+          <div className="h-2 overflow-hidden rounded-full bg-(--color-border)">
             <div
               className="h-full rounded-full bg-violet-600 transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
           {progress.currentName && (
-            <p className="truncate text-xs text-[var(--color-text-muted)]">
+            <p className="truncate text-xs text-wibe-secondary">
               در حال پردازش: {progress.currentName}
             </p>
           )}
@@ -268,7 +268,7 @@ export default function PersonImagesSection({
           type="button"
           disabled={bulkLoading != null || loading}
           onClick={() => void runBulk('migrate_storage')}
-          className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-xs font-semibold hover:bg-[var(--color-surface)] disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-bg) px-3 py-2 text-xs font-semibold hover:bg-(--color-surface) disabled:opacity-60"
         >
           {bulkLoading === 'migrate' ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -280,7 +280,7 @@ export default function PersonImagesSection({
       </div>
 
       {message && (
-        <p className="rounded-lg bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text-muted)]">
+        <p className="rounded-lg bg-(--color-bg) px-3 py-2 text-xs text-wibe-secondary">
           {message}
         </p>
       )}
@@ -298,7 +298,7 @@ export default function PersonImagesSection({
         </details>
       ) : null}
 
-      <p className="text-[11px] text-[var(--color-text-muted)]">
+      <p className="text-[11px] text-wibe-secondary">
         کلید TMDB در{' '}
         <Link href="/admin/settings?tab=integrations" className="text-violet-600 underline">
           تنظیمات یکپارچه‌سازی

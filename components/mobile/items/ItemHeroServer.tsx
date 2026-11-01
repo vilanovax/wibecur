@@ -122,8 +122,8 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
         <div
           className={`relative shrink-0 overflow-hidden rounded-xl bg-muted shadow-sm ${
             isLocationPoster
-              ? 'h-[7.25rem] w-[6.5rem] sm:h-32 sm:w-[8.5rem] lg:h-auto lg:w-full lg:aspect-[4/3]'
-              : 'h-[10.5rem] w-[7rem] sm:h-[11.5rem] sm:w-[7.75rem] lg:h-auto lg:w-full lg:aspect-[2/3]'
+              ? 'h-29 w-26 sm:h-32 sm:w-34 lg:h-auto lg:w-full lg:aspect-4/3'
+              : 'h-42 w-28 sm:h-46 sm:w-31 lg:h-auto lg:w-full lg:aspect-2/3'
           }`}
         >
           {poster ? (
@@ -147,7 +147,7 @@ export default function ItemHeroServer({ item }: ItemHeroServerProps) {
             </div>
           )}
           {imdbRating && (
-            <span className="absolute bottom-2 end-2 z-10 inline-flex items-center gap-1 rounded-full bg-foreground/80 px-2 py-1 text-xs font-bold backdrop-blur-sm">
+            <span className="absolute bottom-2 inset-e-2 z-10 inline-flex items-center gap-1 rounded-full bg-foreground/80 px-2 py-1 text-xs font-bold backdrop-blur-sm">
               <Star className="h-3 w-3 shrink-0 fill-warning text-warning" aria-hidden />
               <span className="text-warning tabular-nums">{fa(imdbRating)}</span>
             </span>

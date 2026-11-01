@@ -42,7 +42,7 @@ export default function UserAvatar({
   if (!displaySrc || failed) {
     return (
       <div
-        className={`${roundedClass} ${sizeClass} bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] font-semibold shrink-0 ${className}`}
+        className={`${roundedClass} ${sizeClass} bg-primary/10 flex items-center justify-center text-primary font-semibold shrink-0 ${className}`}
       >
         {initial}
       </div>

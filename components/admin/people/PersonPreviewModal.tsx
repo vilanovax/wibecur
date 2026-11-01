@@ -23,14 +23,14 @@ export default function PersonPreviewModal({
       role="presentation"
     >
       <div
-        className="flex max-h-[96vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl sm:rounded-2xl"
+        className="flex max-h-[96vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-2xl border border-(--color-border) bg-(--color-surface) shadow-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="person-preview-title"
       >
         {/* هدر */}
-        <header className="shrink-0 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 sm:px-5">
+        <header className="shrink-0 border-b border-(--color-border) bg-(--color-surface) px-4 py-3 sm:px-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-medium text-violet-600 dark:text-violet-400">
@@ -38,15 +38,15 @@ export default function PersonPreviewModal({
               </p>
               <h2
                 id="person-preview-title"
-                className="truncate text-lg font-bold text-[var(--color-text)]"
+                className="truncate text-lg font-bold text-(--color-text)"
               >
                 {data.displayName}
               </h2>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-bg)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-text-muted)]">
+                <span className="inline-flex items-center gap-1 rounded-full bg-(--color-bg) px-2.5 py-0.5 text-[11px] font-medium text-wibe-secondary">
                   {roleLabel}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-bg)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-text-muted)]">
+                <span className="inline-flex items-center gap-1 rounded-full bg-(--color-bg) px-2.5 py-0.5 text-[11px] font-medium text-wibe-secondary">
                   <Film className="h-3 w-3" />
                   {data.items.length.toLocaleString('fa-IR')} آیتم
                 </span>
@@ -75,7 +75,7 @@ export default function PersonPreviewModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                className="rounded-xl p-2 text-wibe-secondary hover:bg-(--color-bg)"
                 aria-label="بستن"
               >
                 <X className="h-5 w-5" />
@@ -94,7 +94,7 @@ export default function PersonPreviewModal({
 
         {/* بدنه — شبیه‌ساز صفحه سایت */}
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-4xl border-x border-[var(--color-border)]/50 bg-[#f4f5f7] dark:bg-gray-950">
+          <div className="mx-auto max-w-4xl border-x border-(--color-border)/50 bg-[#f4f5f7] dark:bg-gray-950">
             <PersonPagePreview data={data} />
           </div>
         </div>

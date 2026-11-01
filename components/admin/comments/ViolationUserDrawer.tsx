@@ -104,22 +104,22 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
   return (
     <>
       <div
-        className="fixed inset-0 z-[120] bg-black/40 backdrop-blur-[1px]"
+        className="fixed inset-0 z-120 bg-black/40 backdrop-blur-[1px]"
         onClick={onClose}
         aria-hidden
       />
       <aside
-        className="fixed inset-y-0 left-0 z-[130] w-full max-w-md bg-[var(--color-surface)] border-r border-[var(--color-border)] shadow-2xl flex flex-col"
+        className="fixed inset-y-0 left-0 z-130 w-full max-w-md bg-(--color-surface) border-r border-(--color-border) shadow-2xl flex flex-col"
         dir="rtl"
         role="dialog"
         aria-label="جزئیات کاربر خاطی"
       >
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--color-border)] px-4 py-3">
-          <h2 className="text-base font-bold text-[var(--color-text)]">جزئیات کاربر</h2>
+        <div className="flex items-center justify-between gap-2 border-b border-(--color-border) px-4 py-3">
+          <h2 className="text-base font-bold text-(--color-text)">جزئیات کاربر</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 hover:bg-[var(--color-bg)]"
+            className="rounded-lg p-2 hover:bg-(--color-bg)"
             aria-label="بستن"
           >
             <X className="h-4 w-4" />
@@ -129,7 +129,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {loading && (
             <div className="flex justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[var(--primary)]" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           )}
 
@@ -149,10 +149,10 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                   size={48}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-[var(--color-text)]">
+                  <p className="font-semibold text-(--color-text)">
                     {detail.user.name || 'بدون نام'}
                   </p>
-                  <p className="text-xs text-[var(--color-text-muted)] truncate">
+                  <p className="text-xs text-wibe-secondary truncate">
                     {detail.user.email}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -160,7 +160,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                     <span className="rounded-lg bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 text-xs font-bold text-orange-800 dark:text-orange-300 tabular-nums">
                       امتیاز منفی: {detail.totalPenaltyScore.toLocaleString('fa-IR')}
                     </span>
-                    <span className="text-xs text-[var(--color-text-muted)]">
+                    <span className="text-xs text-wibe-secondary">
                       {detail.violationCount.toLocaleString('fa-IR')} تخلف
                     </span>
                   </div>
@@ -168,7 +168,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
               </div>
 
               {detail.user.commentBanReason && (
-                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text-muted)]">
+                <div className="rounded-xl border border-(--color-border) bg-(--color-bg) px-3 py-2 text-xs text-wibe-secondary">
                   {detail.user.commentBanReason}
                   {detail.user.commentRestrictedUntil && (
                     <p className="mt-1">
@@ -180,16 +180,16 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
               )}
 
               <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="rounded-xl border border-[var(--color-border)] p-2">
-                  <p className="text-[var(--color-text-muted)]">اخطار</p>
+                <div className="rounded-xl border border-(--color-border) p-2">
+                  <p className="text-wibe-secondary">اخطار</p>
                   <p className="font-bold tabular-nums">{detail.thresholds.warn}+</p>
                 </div>
-                <div className="rounded-xl border border-[var(--color-border)] p-2">
-                  <p className="text-[var(--color-text-muted)]">محدود</p>
+                <div className="rounded-xl border border-(--color-border) p-2">
+                  <p className="text-wibe-secondary">محدود</p>
                   <p className="font-bold tabular-nums">{detail.thresholds.restrict}+</p>
                 </div>
-                <div className="rounded-xl border border-[var(--color-border)] p-2">
-                  <p className="text-[var(--color-text-muted)]">مسدود</p>
+                <div className="rounded-xl border border-(--color-border) p-2">
+                  <p className="text-wibe-secondary">مسدود</p>
                   <p className="font-bold tabular-nums">{detail.thresholds.ban}+</p>
                 </div>
               </div>
@@ -243,7 +243,7 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
                   type="button"
                   disabled={actionLoading != null}
                   onClick={() => runAction('unrestrict')}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-medium hover:bg-[var(--color-bg)] disabled:opacity-50"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-(--color-border) px-3 py-2 text-sm font-medium hover:bg-(--color-bg) disabled:opacity-50"
                 >
                   {actionLoading === 'unrestrict' ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -256,30 +256,30 @@ export default function ViolationUserDrawer({ userId, onClose, onUpdated }: Prop
               </div>
 
               <section>
-                <h3 className="mb-2 text-sm font-semibold text-[var(--color-text)]">
+                <h3 className="mb-2 text-sm font-semibold text-(--color-text)">
                   تاریخچه امتیاز منفی
                 </h3>
                 {detail.penalties.length === 0 ? (
-                  <p className="text-xs text-[var(--color-text-muted)]">ثبت نشده</p>
+                  <p className="text-xs text-wibe-secondary">ثبت نشده</p>
                 ) : (
                   <ul className="space-y-2">
                     {detail.penalties.map((p) => (
                       <li
                         key={p.id}
-                        className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-bg)] px-3 py-2 text-xs"
+                        className="rounded-xl border border-(--color-border-muted) bg-(--color-bg) px-3 py-2 text-xs"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-bold text-rose-700 dark:text-rose-300 tabular-nums">
                             -{p.penaltyScore}
                           </span>
-                          <span className="text-[var(--color-text-muted)]">{p.action}</span>
+                          <span className="text-wibe-secondary">{p.action}</span>
                         </div>
                         {p.commentPreview && (
-                          <p className="mt-1 line-clamp-2 text-[var(--color-text)]">
+                          <p className="mt-1 line-clamp-2 text-(--color-text)">
                             {p.commentPreview}
                           </p>
                         )}
-                        <p className="mt-1 text-[var(--color-text-muted)]">
+                        <p className="mt-1 text-wibe-secondary">
                           {formatRelativeTime(p.createdAt)}
                         </p>
                       </li>

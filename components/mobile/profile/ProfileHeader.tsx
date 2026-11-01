@@ -37,7 +37,7 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
 
   return (
     <>
-      <div className="relative -mx-4 -mt-5 bg-gradient-to-br from-primary/10 via-primary/5 to-warning/10 pb-8">
+      <div className="relative -mx-4 -mt-5 bg-linear-to-br from-primary/10 via-primary/5 to-warning/10 pb-8">
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/20 opacity-20 blur-3xl" />
           <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-primary/15 opacity-20 blur-3xl" />
@@ -46,7 +46,7 @@ export default function ProfileHeader({ user, onUpdate }: ProfileHeaderProps) {
         <div className="relative z-10 px-4 pt-8">
           <div className="mb-6 flex justify-center">
             <div className="group relative">
-              <div className="absolute -inset-1 animate-pulse rounded-full bg-gradient-to-r from-primary via-primary to-warning blur-sm" />
+              <div className="absolute -inset-1 animate-pulse rounded-full bg-linear-to-r from-primary via-primary to-warning blur-sm" />
               <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-xl">
                 {user.image ? (
                   <Image

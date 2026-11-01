@@ -34,7 +34,7 @@ export default function PersianDateTimeField({
           locale={persian_fa}
           calendarPosition="bottom-right"
           disabled={disabled}
-          inputClass="w-full min-w-[10rem] flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm text-right disabled:opacity-60"
+          inputClass="w-full min-w-40 flex-1 rounded-xl border border-(--color-border) bg-white px-3 py-2.5 text-sm text-right disabled:opacity-60"
           placeholder="تاریخ شمسی"
         />
         <input
@@ -42,7 +42,7 @@ export default function PersianDateTimeField({
           value={time}
           disabled={disabled}
           onChange={(e) => onTimeChange(e.target.value)}
-          className="rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm disabled:opacity-60"
+          className="rounded-xl border border-(--color-border) bg-white px-3 py-2.5 text-sm disabled:opacity-60"
         />
       </div>
     </label>

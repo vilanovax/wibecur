@@ -36,7 +36,7 @@ export default function PremiumSpotlight({
         <span className="absolute top-2 left-2 z-10 wibe-caption font-medium text-white/90 bg-black/40 px-2 py-0.5 rounded-lg backdrop-blur-sm">
           Sponsored
         </span>
-        <div className="relative aspect-[3/2] bg-wibe-surface">
+        <div className="relative aspect-3/2 bg-wibe-surface">
           {list.coverImage ? (
             <ImageWithFallback
               src={list.coverImage}
@@ -52,7 +52,7 @@ export default function PremiumSpotlight({
               💎
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent" />
         </div>
         <div className="p-4 bg-white">
           <h3 className="font-bold text-foreground text-base">{list.title}</h3>

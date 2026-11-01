@@ -90,7 +90,7 @@ const linkBase =
 function activeStyles(active: boolean) {
   return active
     ? 'bg-violet-50 dark:bg-violet-900/25 text-violet-700 dark:text-violet-300 shadow-sm border-s-2 border-violet-600 dark:border-violet-500'
-    : 'text-[var(--color-text)] dark:text-[var(--color-text-subtle)] hover:bg-[var(--color-bg)] dark:hover:bg-gray-700/50 border-s-2 border-transparent';
+    : 'text-(--color-text) dark:text-(--color-text-subtle) hover:bg-(--color-bg) dark:hover:bg-gray-700/50 border-s-2 border-transparent';
 }
 
 export function NavItemLink({
@@ -124,7 +124,7 @@ export function NavItemLink({
           'flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors',
           isActive
             ? 'bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400'
-            : 'bg-[var(--color-bg)] dark:bg-gray-700/50 text-[var(--color-text-muted)] group-hover:text-[var(--color-text)]'
+            : 'bg-(--color-bg) dark:bg-gray-700/50 text-wibe-secondary group-hover:text-(--color-text)'
         )}
       >
         <Icon className={clsx('h-4 w-4', isActive && 'stroke-[2.25]')} />
@@ -189,13 +189,13 @@ export default function SidebarNavSection({
   return (
     <div className="space-y-0.5">
       {title && !collapsed && (
-        <p className="px-2 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-muted)] dark:text-[var(--color-text-muted)]">
+        <p className="px-2 pt-0.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-wibe-secondary dark:text-wibe-secondary">
           {title}
         </p>
       )}
       {title && collapsed && (
         <div className="flex justify-center py-0.5" aria-hidden>
-          <span className="w-5 h-px bg-[var(--color-border)] dark:bg-gray-600" />
+          <span className="w-5 h-px bg-(--color-border) dark:bg-gray-600" />
         </div>
       )}
       {visible.map((item) => {
@@ -245,7 +245,7 @@ export default function SidebarNavSection({
                           'flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
                           isParentActive
                             ? 'bg-violet-100 text-violet-600'
-                            : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
+                            : 'bg-(--color-bg) text-wibe-secondary'
                         )}
                       >
                         <Icon className="h-4 w-4" />
@@ -259,7 +259,7 @@ export default function SidebarNavSection({
                       onClick={() =>
                         setExpandedHref(isExpanded ? null : item.href)
                       }
-                      className="p-1.5 rounded-md hover:bg-[var(--color-bg)] dark:hover:bg-gray-600 text-[var(--color-text-muted)] shrink-0"
+                      className="p-1.5 rounded-md hover:bg-(--color-bg) dark:hover:bg-gray-600 text-wibe-secondary shrink-0"
                       aria-label={isExpanded ? 'بستن زیرمنو' : 'باز کردن زیرمنو'}
                     >
                       <ChevronDown
@@ -273,7 +273,7 @@ export default function SidebarNavSection({
                 )}
               </div>
               {!collapsed && isExpanded && (
-                <div className="me-2 mt-0.5 space-y-0.5 border-s border-[var(--color-border)] dark:border-gray-600 ps-1.5 pe-0.5">
+                <div className="me-2 mt-0.5 space-y-0.5 border-s border-(--color-border) dark:border-gray-600 ps-1.5 pe-0.5">
                   {allowedSubmenu.map((sub) => {
                     const SubIcon = sub.icon;
                     const subActive = matchHref(pathname, search, sub.href);
@@ -285,7 +285,7 @@ export default function SidebarNavSection({
                           'flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40',
                           subActive
                             ? 'bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-medium'
-                            : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] dark:hover:bg-gray-700/50'
+                            : 'text-wibe-secondary hover:bg-(--color-bg) dark:hover:bg-gray-700/50'
                         )}
                       >
                         <SubIcon className="h-3.5 w-3.5 shrink-0" />

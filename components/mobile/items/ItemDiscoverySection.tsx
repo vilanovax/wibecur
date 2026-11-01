@@ -31,7 +31,7 @@ function DiscoveryCarouselCard({
   fallbackIcon,
   rating,
   subtitle,
-  className = 'flex-shrink-0 w-[calc(38vw)] max-w-[148px] snap-start lg:w-full lg:max-w-none',
+  className = 'shrink-0 w-[calc(38vw)] max-w-37 snap-start lg:w-full lg:max-w-none',
   rank,
   eager = false,
 }: {
@@ -52,7 +52,7 @@ function DiscoveryCarouselCard({
   return (
     <Link href={href} className={`${className} block`}>
       <Card className="overflow-hidden bg-popover p-0 transition-transform active:scale-95">
-      <div className="relative aspect-[2/3] w-full bg-muted lg:aspect-[16/10] lg:max-h-[9rem]">
+      <div className="relative aspect-2/3 w-full bg-muted lg:aspect-16/10 lg:max-h-36">
         <LazyItemCoverImage
           itemId={itemId}
           title={title}
@@ -68,11 +68,11 @@ function DiscoveryCarouselCard({
           rootMargin="64px"
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent"
+          className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/80 via-black/15 to-transparent"
           aria-hidden
         />
         {rank != null && rank <= 3 && (
-          <span className="absolute end-2 top-2 rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-foreground">
+          <span className="absolute inset-e-2 top-2 rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-foreground">
             {rank.toLocaleString('fa-IR')}
           </span>
         )}
@@ -95,7 +95,7 @@ function DiscoveryCarouselCard({
 
 function CarouselSkeleton({
   count = 4,
-  className = 'min-w-[calc(38vw)] w-[calc(38vw)] max-w-[148px] aspect-[2/3] lg:w-full lg:min-w-0 lg:max-w-none lg:aspect-[16/10]',
+  className = 'min-w-[calc(38vw)] w-[calc(38vw)] max-w-37 aspect-2/3 lg:w-full lg:min-w-0 lg:max-w-none lg:aspect-16/10',
 }: {
   count?: number;
   className?: string;
@@ -270,7 +270,7 @@ export default function ItemDiscoverySection({
               categorySlug={categorySlug}
               rating={a.rating}
               subtitle={`${a.commonUsersCount.toLocaleString('fa-IR')} نفر همراه`}
-              className="flex-shrink-0 w-[calc(48vw)] max-w-[200px] snap-start lg:w-full lg:max-w-none"
+              className="shrink-0 w-[calc(48vw)] max-w-50 snap-start lg:w-full lg:max-w-none"
               eager={index < 2}
             />
           ))}
@@ -287,7 +287,7 @@ export default function ItemDiscoverySection({
               categorySlug={categorySlug}
               rating={t.rating}
               rank={index + 1}
-              className="flex-shrink-0 w-[108px] max-w-[108px] snap-start lg:w-full lg:max-w-none"
+              className="shrink-0 w-27 max-w-27 snap-start lg:w-full lg:max-w-none"
               eager={index < 2}
             />
           ))}

@@ -28,22 +28,22 @@ export default function RejectCommentDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60">
+    <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/60">
       <div
-        className="bg-[var(--color-surface)] rounded-2xl shadow-xl max-w-md w-full p-5 border border-[var(--color-border)]"
+        className="bg-(--color-surface) rounded-2xl shadow-xl max-w-md w-full p-5 border border-(--color-border)"
         role="dialog"
         aria-labelledby="reject-comment-title"
         dir="rtl"
       >
         <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 mb-2">
           <XCircle className="w-5 h-5" />
-          <h3 id="reject-comment-title" className="font-semibold text-[var(--color-text)]">
+          <h3 id="reject-comment-title" className="font-semibold text-(--color-text)">
             {title}
           </h3>
         </div>
-        <p className="text-sm text-[var(--color-text-muted)] mb-3">{message}</p>
+        <p className="text-sm text-wibe-secondary mb-3">{message}</p>
         {preview && (
-          <p className="text-sm text-[var(--color-text)] bg-[var(--color-bg)] rounded-xl p-3 border border-[var(--color-border)] line-clamp-3 mb-4">
+          <p className="text-sm text-(--color-text) bg-(--color-bg) rounded-xl p-3 border border-(--color-border) line-clamp-3 mb-4">
             {preview}
           </p>
         )}
@@ -52,7 +52,7 @@ export default function RejectCommentDialog({
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="flex-1 py-2.5 rounded-xl border border-[var(--color-border)] text-[var(--color-text)] text-sm font-medium hover:bg-[var(--color-bg)] disabled:opacity-50"
+            className="flex-1 py-2.5 rounded-xl border border-(--color-border) text-(--color-text) text-sm font-medium hover:bg-(--color-bg) disabled:opacity-50"
           >
             انصراف
           </button>

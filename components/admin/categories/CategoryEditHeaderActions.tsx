@@ -33,7 +33,7 @@ export default function CategoryEditHeaderActions({
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   const btnClass =
-    'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-bg)] disabled:opacity-50 transition-colors';
+    'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-(--color-border) text-(--color-text) hover:bg-(--color-bg) disabled:opacity-50 transition-colors';
 
   const handleBoost = async () => {
     if (!isActive) {

@@ -107,14 +107,14 @@ function PersianDayField({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">{label}</span>
+      <span className="mb-1 block text-xs font-medium text-wibe-secondary">{label}</span>
       <DatePicker
         value={ymdToPersian(value)}
         onChange={(d) => onChange(persianToYmd((d as DateObject) ?? null))}
         calendar={persian}
         locale={persian_fa}
         calendarPosition="bottom-right"
-        inputClass="w-full min-h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-start"
+        inputClass="w-full min-h-11 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm text-start"
         placeholder="تاریخ شمسی"
         format="YYYY/MM/DD"
       />
@@ -231,12 +231,12 @@ export default function AuditLogClient({
             <button
               type="button"
               onClick={() => setFiltersOpen((v) => !v)}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
             >
               <Filter className="h-4 w-4" strokeWidth={1.5} />
               فیلترها
               {activeFilterCount > 0 && (
-                <span className="rounded-full bg-[var(--primary)]/10 px-2 py-0.5 text-xs font-medium text-[var(--primary)]">
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                   {faNumber(activeFilterCount)}
                 </span>
               )}
@@ -245,14 +245,14 @@ export default function AuditLogClient({
                 strokeWidth={1.5}
               />
             </button>
-            <span className="text-sm text-[var(--color-text-muted)] tabular-nums">
+            <span className="text-sm text-wibe-secondary tabular-nums">
               {faNumber(total)} رویداد
             </span>
           </div>
-          <label className="inline-flex min-h-11 items-center gap-2 text-sm text-[var(--color-text-muted)]">
+          <label className="inline-flex min-h-11 items-center gap-2 text-sm text-wibe-secondary">
             در صفحه
             <select
-              className="min-h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)]"
+              className="min-h-11 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text)"
               value={pageSize}
               aria-label="تعداد در صفحه"
               onChange={(e) => {
@@ -267,18 +267,18 @@ export default function AuditLogClient({
         </div>
 
         {filtersOpen && (
-          <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
+          <div className="space-y-3 rounded-xl border border-(--color-border) bg-(--color-bg) p-4">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
               <label className="block">
-                <span className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">
+                <span className="mb-1 block text-xs font-medium text-wibe-secondary">
                   جستجوی عامل
                 </span>
                 <div className="relative">
-                  <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-subtle)]" strokeWidth={1.5} />
+                  <Search className="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--color-text-subtle)" strokeWidth={1.5} />
                   <input
                     type="search"
                     placeholder="نام، ایمیل یا شناسه"
-                    className="w-full min-h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] pe-3 ps-9 text-sm text-[var(--color-text)]"
+                    className="w-full min-h-11 rounded-xl border border-(--color-border) bg-(--color-surface) pe-3 ps-9 text-sm text-(--color-text)"
                     value={draft.actorQuery}
                     onChange={(e) => setDraft((f) => ({ ...f, actorQuery: e.target.value }))}
                     onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
@@ -287,11 +287,11 @@ export default function AuditLogClient({
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">
+                <span className="mb-1 block text-xs font-medium text-wibe-secondary">
                   نوع عملیات
                 </span>
                 <select
-                  className="w-full min-h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm"
+                  className="w-full min-h-11 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm"
                   value={draft.action}
                   onChange={(e) => setDraft((f) => ({ ...f, action: e.target.value }))}
                 >
@@ -305,11 +305,11 @@ export default function AuditLogClient({
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">
+                <span className="mb-1 block text-xs font-medium text-wibe-secondary">
                   موجودیت
                 </span>
                 <select
-                  className="w-full min-h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm"
+                  className="w-full min-h-11 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm"
                   value={draft.entityType}
                   onChange={(e) => setDraft((f) => ({ ...f, entityType: e.target.value }))}
                 >
@@ -357,8 +357,8 @@ export default function AuditLogClient({
                   onClick={() => setPreset(value)}
                   className={`min-h-9 rounded-xl px-3 text-xs font-medium ${
                     datePreset === value
-                      ? 'bg-[var(--primary)] text-white'
-                      : 'border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                      ? 'bg-primary text-white'
+                      : 'border border-(--color-border) bg-(--color-surface) text-wibe-secondary hover:text-(--color-text)'
                   }`}
                 >
                   {label}
@@ -370,7 +370,7 @@ export default function AuditLogClient({
               <button
                 type="button"
                 onClick={() => applyFilters()}
-                className="min-h-11 rounded-xl bg-[var(--primary)] px-4 text-sm font-medium text-white hover:opacity-90"
+                className="min-h-11 rounded-xl bg-primary px-4 text-sm font-medium text-white hover:opacity-90"
               >
                 اعمال فیلتر
               </button>
@@ -378,7 +378,7 @@ export default function AuditLogClient({
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="min-h-11 rounded-xl border border-[var(--color-border)] px-4 text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]"
+                  className="min-h-11 rounded-xl border border-(--color-border) px-4 text-sm text-wibe-secondary hover:bg-(--color-surface)"
                 >
                   پاک کردن
                 </button>
@@ -391,27 +391,27 @@ export default function AuditLogClient({
       <AdminCard padding="default" className="overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+            <thead className="sticky top-0 z-10 border-b border-(--color-border) bg-(--color-bg)">
               <tr>
-                <th className="px-4 py-2.5 text-start text-xs font-semibold text-[var(--color-text-muted)]">زمان</th>
-                <th className="px-4 py-2.5 text-start text-xs font-semibold text-[var(--color-text-muted)]">عملیات</th>
-                <th className="px-4 py-2.5 text-start text-xs font-semibold text-[var(--color-text-muted)]">موجودیت</th>
-                <th className="px-4 py-2.5 text-start text-xs font-semibold text-[var(--color-text-muted)]">عامل</th>
-                <th className="px-4 py-2.5 text-start text-xs font-semibold text-[var(--color-text-muted)]">تغییرات</th>
+                <th className="px-4 py-2.5 text-start text-xs font-semibold text-wibe-secondary">زمان</th>
+                <th className="px-4 py-2.5 text-start text-xs font-semibold text-wibe-secondary">عملیات</th>
+                <th className="px-4 py-2.5 text-start text-xs font-semibold text-wibe-secondary">موجودیت</th>
+                <th className="px-4 py-2.5 text-start text-xs font-semibold text-wibe-secondary">عامل</th>
+                <th className="px-4 py-2.5 text-start text-xs font-semibold text-wibe-secondary">تغییرات</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 6 }, (_, i) => (
-                  <tr key={i} className="border-b border-[var(--color-border)]">
+                  <tr key={i} className="border-b border-(--color-border)">
                     <td colSpan={5} className="px-4 py-3">
-                      <div className="h-8 animate-pulse rounded-lg bg-[var(--color-border-muted)]" />
+                      <div className="h-8 animate-pulse rounded-lg bg-(--color-border-muted)" />
                     </td>
                   </tr>
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-[var(--color-text-muted)]">
+                  <td colSpan={5} className="px-4 py-12 text-center text-wibe-secondary">
                     رویدادی با این فیلترها یافت نشد.
                   </td>
                 </tr>
@@ -429,8 +429,8 @@ export default function AuditLogClient({
         </div>
 
         {total > 0 && (
-          <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] px-4 py-3">
-            <span className="text-xs text-[var(--color-text-muted)] tabular-nums">
+          <div className="flex items-center justify-between gap-3 border-t border-(--color-border) px-4 py-3">
+            <span className="text-xs text-wibe-secondary tabular-nums">
               صفحه {faNumber(page)} از {faNumber(totalPages)}
             </span>
             <div className="flex items-center gap-1">
@@ -438,7 +438,7 @@ export default function AuditLogClient({
                 type="button"
                 disabled={page <= 1 || loading}
                 onClick={() => setPage((p) => p - 1)}
-                className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-[var(--color-border)] px-3 text-sm disabled:opacity-40"
+                className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-(--color-border) px-3 text-sm disabled:opacity-40"
               >
                 <ChevronRight className="h-4 w-4" strokeWidth={1.5} />
                 قبلی
@@ -447,7 +447,7 @@ export default function AuditLogClient({
                 type="button"
                 disabled={page >= totalPages || loading}
                 onClick={() => setPage((p) => p + 1)}
-                className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-[var(--color-border)] px-3 text-sm disabled:opacity-40"
+                className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-(--color-border) px-3 text-sm disabled:opacity-40"
               >
                 بعدی
                 <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
@@ -475,11 +475,11 @@ function AuditTableRow({
 
   return (
     <tr
-      className="cursor-pointer border-b border-[var(--color-border)] transition-colors hover:bg-[var(--color-bg)]"
+      className="cursor-pointer border-b border-(--color-border) transition-colors hover:bg-(--color-bg)"
       onClick={onSelect}
     >
       <td
-        className="whitespace-nowrap px-4 py-2.5 text-[var(--color-text-muted)]"
+        className="whitespace-nowrap px-4 py-2.5 text-wibe-secondary"
         title={formatPersianDateTime(row.createdAt)}
       >
         {formatRelativeTime(row.createdAt)}
@@ -490,18 +490,18 @@ function AuditTableRow({
         </Badge>
       </td>
       <td className="px-4 py-2.5">
-        <div className="font-medium text-[var(--color-text)]">
+        <div className="font-medium text-(--color-text)">
           {row.entityName ?? getEntityTypeLabel(row.entityType)}
         </div>
-        <div className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+        <div className="mt-0.5 text-xs text-wibe-secondary">
           {getEntityTypeLabel(row.entityType)}
         </div>
       </td>
-      <td className="px-4 py-2.5 text-[var(--color-text)]">
+      <td className="px-4 py-2.5 text-(--color-text)">
         <div>{actorName}</div>
-        <div className="text-xs text-[var(--color-text-muted)]">{getRoleLabel(row.actorRole)}</div>
+        <div className="text-xs text-wibe-secondary">{getRoleLabel(row.actorRole)}</div>
       </td>
-      <td className="max-w-44 truncate px-4 py-2.5 text-xs text-[var(--color-text-muted)]">
+      <td className="max-w-44 truncate px-4 py-2.5 text-xs text-wibe-secondary">
         {row.changeSummary || '—'}
       </td>
     </tr>
@@ -559,34 +559,34 @@ function AuditDetailModal({ id, onClose }: { id: string; onClose: () => void }) 
         role="dialog"
         aria-modal="true"
         aria-label="جزئیات رویداد"
-        className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl sm:max-w-2xl sm:rounded-2xl"
+        className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-(--color-border) bg-(--color-surface) shadow-xl sm:max-w-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] p-4">
+        <div className="flex items-start justify-between gap-3 border-b border-(--color-border) p-4">
           <div className="min-w-0">
             {row && (
               <>
                 <Badge variant={ACTION_BADGE[row.action] ?? 'neutral'}>
                   {getAuditActionLabel(row.action)}
                 </Badge>
-                <h2 className="mt-2 truncate text-lg font-semibold text-[var(--color-text)]">
+                <h2 className="mt-2 truncate text-lg font-semibold text-(--color-text)">
                   {row.entityName ?? getEntityTypeLabel(row.entityType)}
                 </h2>
-                <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                <p className="mt-1 text-sm text-wibe-secondary">
                   {getEntityTypeLabel(row.entityType)} · {actorName} ·{' '}
                   {formatPersianDateTime(row.createdAt)}
                 </p>
               </>
             )}
             {loading && (
-              <div className="h-16 w-48 animate-pulse rounded-xl bg-[var(--color-border-muted)]" />
+              <div className="h-16 w-48 animate-pulse rounded-xl bg-(--color-border-muted)" />
             )}
             {error && <p className="text-sm text-red-700">{error}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-lg p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+            className="shrink-0 rounded-lg p-2 text-wibe-secondary hover:bg-(--color-bg)"
             aria-label="بستن"
           >
             <X className="h-5 w-5" strokeWidth={1.5} />
@@ -596,26 +596,26 @@ function AuditDetailModal({ id, onClose }: { id: string; onClose: () => void }) 
         <div className="flex-1 space-y-4 overflow-y-auto p-4">
           {loading && (
             <div className="space-y-2">
-              <div className="h-10 animate-pulse rounded-lg bg-[var(--color-border-muted)]" />
-              <div className="h-10 animate-pulse rounded-lg bg-[var(--color-border-muted)]" />
-              <div className="h-10 animate-pulse rounded-lg bg-[var(--color-border-muted)]" />
+              <div className="h-10 animate-pulse rounded-lg bg-(--color-border-muted)" />
+              <div className="h-10 animate-pulse rounded-lg bg-(--color-border-muted)" />
+              <div className="h-10 animate-pulse rounded-lg bg-(--color-border-muted)" />
             </div>
           )}
 
           {!loading && row && mainRows.length > 0 && (
-            <div className="overflow-hidden rounded-xl border border-[var(--color-border)]">
+            <div className="overflow-hidden rounded-xl border border-(--color-border)">
               <table className="w-full text-sm">
-                <thead className="bg-[var(--color-bg)]">
+                <thead className="bg-(--color-bg)">
                   <tr>
-                    <th className="px-3 py-2 text-start font-medium text-[var(--color-text-muted)]">فیلد</th>
-                    <th className="px-3 py-2 text-start font-medium text-[var(--color-text-muted)]">قبل</th>
-                    <th className="px-3 py-2 text-start font-medium text-[var(--color-text-muted)]">بعد</th>
+                    <th className="px-3 py-2 text-start font-medium text-wibe-secondary">فیلد</th>
+                    <th className="px-3 py-2 text-start font-medium text-wibe-secondary">قبل</th>
+                    <th className="px-3 py-2 text-start font-medium text-wibe-secondary">بعد</th>
                   </tr>
                 </thead>
                 <tbody>
                   {mainRows.map((r) => (
-                    <tr key={r.key} className="border-t border-[var(--color-border)]">
-                      <td className="px-3 py-2.5 font-medium text-[var(--color-text)]">{r.label}</td>
+                    <tr key={r.key} className="border-t border-(--color-border)">
+                      <td className="px-3 py-2.5 font-medium text-(--color-text)">{r.label}</td>
                       <td className="px-3 py-2.5 text-red-700 line-through">{r.before}</td>
                       <td className="px-3 py-2.5 font-medium text-emerald-700">{r.after}</td>
                     </tr>
@@ -632,7 +632,7 @@ function AuditDetailModal({ id, onClose }: { id: string; onClose: () => void }) 
           )}
 
           {!loading && row && mainRows.length === 0 && technicalRows.length === 0 && (
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-6 text-center text-sm text-[var(--color-text-muted)]">
+            <div className="rounded-xl border border-(--color-border) bg-(--color-bg) px-4 py-6 text-center text-sm text-wibe-secondary">
               {row.before == null && row.after != null
                 ? 'رکورد جدید ایجاد شده'
                 : row.before != null && row.after == null
@@ -646,7 +646,7 @@ function AuditDetailModal({ id, onClose }: { id: string; onClose: () => void }) 
               <button
                 type="button"
                 onClick={() => setShowTechnical((v) => !v)}
-                className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                className="inline-flex items-center gap-1 text-xs text-wibe-secondary hover:text-(--color-text)"
               >
                 <ChevronDown
                   className={`h-3.5 w-3.5 transition-transform ${showTechnical ? 'rotate-180' : ''}`}
@@ -655,16 +655,16 @@ function AuditDetailModal({ id, onClose }: { id: string; onClose: () => void }) 
                 {showTechnical ? 'پنهان کردن' : 'نمایش'} فیلدهای فنی ({faNumber(technicalRows.length)})
               </button>
               {showTechnical && (
-                <div className="mt-2 overflow-hidden rounded-lg border border-[var(--color-border)]">
+                <div className="mt-2 overflow-hidden rounded-lg border border-(--color-border)">
                   <table className="w-full text-xs">
                     <tbody>
                       {technicalRows.map((r) => (
-                        <tr key={r.key} className="border-t border-[var(--color-border)] first:border-0">
-                          <td className="w-28 px-3 py-2 text-[var(--color-text-muted)]">{r.label}</td>
-                          <td className="px-3 py-2 text-[var(--color-text)]" dir="ltr">
+                        <tr key={r.key} className="border-t border-(--color-border) first:border-0">
+                          <td className="w-28 px-3 py-2 text-wibe-secondary">{r.label}</td>
+                          <td className="px-3 py-2 text-(--color-text)" dir="ltr">
                             {r.before}
                           </td>
-                          <td className="px-3 py-2 text-[var(--color-text)]" dir="ltr">
+                          <td className="px-3 py-2 text-(--color-text)" dir="ltr">
                             {r.after}
                           </td>
                         </tr>
@@ -681,7 +681,7 @@ function AuditDetailModal({ id, onClose }: { id: string; onClose: () => void }) 
               <button
                 type="button"
                 onClick={() => setShowRaw((v) => !v)}
-                className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                className="inline-flex items-center gap-1 text-xs text-wibe-secondary hover:text-(--color-text)"
               >
                 <ChevronDown
                   className={`h-3.5 w-3.5 transition-transform ${showRaw ? 'rotate-180' : ''}`}
@@ -700,7 +700,7 @@ function AuditDetailModal({ id, onClose }: { id: string; onClose: () => void }) 
         </div>
 
         {row && (
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--color-border)] px-4 py-3 text-xs text-[var(--color-text-muted)]">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-(--color-border) px-4 py-3 text-xs text-wibe-secondary">
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               {row.ipAddress && <span>IP: {row.ipAddress}</span>}
               {uaShort && <span title={row.userAgent ?? undefined}>مرورگر: {uaShort}</span>}
@@ -708,7 +708,7 @@ function AuditDetailModal({ id, onClose }: { id: string; onClose: () => void }) 
             <button
               type="button"
               onClick={copyId}
-              className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-[var(--color-border)] px-2.5 hover:bg-[var(--color-bg)]"
+              className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-(--color-border) px-2.5 hover:bg-(--color-bg)"
             >
               {copied ? (
                 <Check className="h-3.5 w-3.5 text-emerald-600" strokeWidth={2} />
@@ -728,10 +728,10 @@ function JsonBlock({ title, data }: { title: string; data: unknown }) {
   const text = data != null ? JSON.stringify(data, null, 2) : '—';
   return (
     <div>
-      <div className="mb-1 text-xs font-medium text-[var(--color-text-muted)]">{title}</div>
+      <div className="mb-1 text-xs font-medium text-wibe-secondary">{title}</div>
       <pre
         dir="ltr"
-        className="overflow-x-auto rounded-lg bg-[var(--color-bg)] p-3 text-xs leading-relaxed text-start font-mono"
+        className="overflow-x-auto rounded-lg bg-(--color-bg) p-3 text-xs leading-relaxed text-start font-mono"
       >
         {text}
       </pre>

@@ -88,9 +88,9 @@ const DEFAULT_FORM = {
 };
 
 const inputClass =
-  'w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30';
+  'w-full rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2.5 text-sm text-(--color-text) placeholder:text-wibe-secondary focus:outline-none focus:ring-2 focus:ring-(--primary)/30';
 
-const labelClass = 'block text-xs font-medium text-[var(--color-text-muted)] mb-1.5';
+const labelClass = 'block text-xs font-medium text-wibe-secondary mb-1.5';
 
 const datePickerInputClass = `${inputClass} !py-2 !px-2 flex-1 text-right`;
 
@@ -200,11 +200,11 @@ function FormSection({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+    <div className="rounded-xl border border-(--color-border) overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-4 py-2.5 bg-[var(--color-bg)] text-sm font-medium text-[var(--color-text)]"
+        className="flex w-full items-center justify-between px-4 py-2.5 bg-(--color-bg) text-sm font-medium text-(--color-text)"
       >
         {title}
         <ChevronDown className={`h-4 w-4 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -512,18 +512,18 @@ export default function SponsoredPlacementsClient() {
     <div className="space-y-6 pb-8" dir="rtl">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-[var(--color-text)]">
+          <h1 className="flex items-center gap-2 text-xl font-bold text-(--color-text)">
             <Megaphone className="h-5 w-5 text-amber-600" />
             تبلیغات اسپانسری
           </h1>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+          <p className="mt-1 text-sm text-wibe-secondary">
             متن تبلیغ با لینک — چند تبلیغ هم‌پوزیشن زیر هم نمایش داده می‌شوند
           </p>
         </div>
         <button
           type="button"
           onClick={openForm}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:opacity-90 transition-opacity"
         >
           <Plus className="h-4 w-4" />
           تبلیغ جدید
@@ -541,28 +541,28 @@ export default function SponsoredPlacementsClient() {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--primary)]" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : placements.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)] px-6 py-14 text-center">
-          <Megaphone className="mx-auto h-10 w-10 text-[var(--color-text-muted)] opacity-40" />
-          <p className="mt-3 font-medium text-[var(--color-text)]">هنوز تبلیغی ثبت نشده</p>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+        <div className="rounded-2xl border border-dashed border-(--color-border) bg-(--color-bg) px-6 py-14 text-center">
+          <Megaphone className="mx-auto h-10 w-10 text-wibe-secondary opacity-40" />
+          <p className="mt-3 font-medium text-(--color-text)">هنوز تبلیغی ثبت نشده</p>
+          <p className="mt-1 text-sm text-wibe-secondary">
             اولین تبلیغ متنی را برای دسته یا لیست ایجاد کنید
           </p>
           <button
             type="button"
             onClick={openForm}
-            className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-[var(--primary)] px-5 py-2.5 text-sm font-medium text-white"
+            className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white"
           >
             <Plus className="h-4 w-4" />
             ایجاد تبلیغ
           </button>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+        <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-sm">
           <div className="-mx-px overflow-x-auto rounded-2xl">
-            <table className="w-full min-w-[880px] table-fixed text-sm">
+            <table className="w-full min-w-220 table-fixed text-sm">
               <colgroup>
                 <col style={{ width: '28%' }} />
                 <col style={{ width: '14%' }} />
@@ -572,7 +572,7 @@ export default function SponsoredPlacementsClient() {
                 <col style={{ width: '12%' }} />
                 <col style={{ width: '48px' }} />
               </colgroup>
-              <thead className="bg-[var(--color-bg)] text-[var(--color-text-muted)]">
+              <thead className="bg-(--color-bg) text-wibe-secondary">
                 <tr>
                   <th className="px-4 py-3 text-right font-medium">تبلیغ</th>
                   <th className="px-4 py-3 text-right font-medium">محل نمایش</th>
@@ -581,7 +581,7 @@ export default function SponsoredPlacementsClient() {
                   <th className="px-4 py-3 text-right font-medium">وضعیت</th>
                   <th className="px-4 py-3 text-right font-medium">نمایش / کلیک</th>
                   <th
-                    className="sticky left-0 z-20 bg-[var(--color-bg)] px-2 py-3 shadow-[4px_0_8px_-6px_rgba(0,0,0,0.08)]"
+                    className="sticky left-0 z-20 bg-(--color-bg) px-2 py-3 shadow-[4px_0_8px_-6px_rgba(0,0,0,0.08)]"
                     aria-label="عملیات"
                   />
                 </tr>
@@ -590,11 +590,11 @@ export default function SponsoredPlacementsClient() {
                 {placements.map((p) => (
                   <tr
                     key={p.id}
-                    className="group border-t border-[var(--color-border)] hover:bg-[var(--color-bg)]/60 transition-colors"
+                    className="group border-t border-(--color-border) hover:bg-(--color-bg)/60 transition-colors"
                   >
                     <td className="px-4 py-3 align-top">
-                      <p className="font-medium text-[var(--color-text)] line-clamp-2">{p.headline}</p>
-                      <p className="mt-0.5 truncate text-xs text-[var(--color-text-muted)]" dir="ltr">
+                      <p className="font-medium text-(--color-text) line-clamp-2">{p.headline}</p>
+                      <p className="mt-0.5 truncate text-xs text-wibe-secondary" dir="ltr">
                         {p.destinationUrl}
                       </p>
                       {p.sponsorName ? (
@@ -602,18 +602,18 @@ export default function SponsoredPlacementsClient() {
                       ) : null}
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <p className="text-xs font-medium text-[var(--color-text)]">
+                      <p className="text-xs font-medium text-(--color-text)">
                         {surfaceLabel(p.surface)}
                       </p>
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <p className="text-xs leading-relaxed text-[var(--color-text)] line-clamp-3">
+                      <p className="text-xs leading-relaxed text-(--color-text) line-clamp-3">
                         {scopeLabel(p)}
                       </p>
                     </td>
                     <td className="hidden px-4 py-3 align-top md:table-cell">
-                      <p className="text-xs text-[var(--color-text)]">{formatPersianDay(p.startAt)}</p>
-                      <p className="text-[10px] text-[var(--color-text-muted)]">
+                      <p className="text-xs text-(--color-text)">{formatPersianDay(p.startAt)}</p>
+                      <p className="text-[10px] text-wibe-secondary">
                         {p.endAt ? `تا ${formatPersianDay(p.endAt)}` : 'بدون پایان'}
                       </p>
                     </td>
@@ -623,28 +623,28 @@ export default function SponsoredPlacementsClient() {
                           p.isLive
                             ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300'
                             : p.isExpired
-                              ? 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700/50 dark:text-[var(--color-text-subtle)]'
-                              : 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700/50 dark:text-[var(--color-text-subtle)]'
+                              ? 'bg-gray-100 text-wibe-secondary dark:bg-gray-700/50 dark:text-(--color-text-subtle)'
+                              : 'bg-gray-100 text-wibe-secondary dark:bg-gray-700/50 dark:text-(--color-text-subtle)'
                         }`}
                       >
                         {p.isLive ? 'فعال' : p.isExpired ? 'منقضی' : 'غیرفعال'}
                       </span>
                     </td>
                     <td className="px-4 py-3 align-top text-xs tabular-nums whitespace-nowrap">
-                      <span className="text-[var(--color-text)]">
+                      <span className="text-(--color-text)">
                         {p.impressions.toLocaleString('fa-IR')}
                       </span>
-                      <span className="text-[var(--color-text-muted)]"> / </span>
-                      <span className="text-[var(--color-text)]">
+                      <span className="text-wibe-secondary"> / </span>
+                      <span className="text-(--color-text)">
                         {p.clicks.toLocaleString('fa-IR')}
                       </span>
                       {p.impressions > 0 ? (
-                        <span className="mr-1 text-[var(--color-text-muted)]">
+                        <span className="mr-1 text-wibe-secondary">
                           ({((p.clicks / p.impressions) * 100).toFixed(1)}٪)
                         </span>
                       ) : null}
                     </td>
-                    <td className="sticky left-0 z-10 bg-[var(--color-surface)] px-2 py-3 shadow-[4px_0_8px_-6px_rgba(0,0,0,0.12)] group-hover:bg-[var(--color-bg)]">
+                    <td className="sticky left-0 z-10 bg-(--color-surface) px-2 py-3 shadow-[4px_0_8px_-6px_rgba(0,0,0,0.12)] group-hover:bg-(--color-bg)">
                       <SponsoredPlacementRowMenu
                         isActive={p.isActive}
                         toggling={togglingId === p.id}
@@ -668,20 +668,20 @@ export default function SponsoredPlacementsClient() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[var(--color-surface)] rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] overflow-hidden flex flex-col border border-[var(--color-border)]">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)] shrink-0">
+          <div className="bg-(--color-surface) rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-4xl max-h-[92vh] sm:max-h-[90vh] overflow-hidden flex flex-col border border-(--color-border)">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-(--color-border) shrink-0">
               <div>
-                <h2 className="text-lg font-bold text-[var(--color-text)]">
+                <h2 className="text-lg font-bold text-(--color-text)">
                   {editingId ? 'ویرایش تبلیغ' : 'تبلیغ جدید'}
                 </h2>
-                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                <p className="text-xs text-wibe-secondary mt-0.5">
                   {editingId ? 'تغییر محتوا، محدوده یا زمان‌بندی' : 'محتوا، محدوده نمایش و زمان‌بندی'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={closeForm}
-                className="p-2 rounded-xl hover:bg-[var(--color-bg)]"
+                className="p-2 rounded-xl hover:bg-(--color-bg)"
                 aria-label="بستن"
               >
                 <X className="w-5 h-5" />
@@ -697,7 +697,7 @@ export default function SponsoredPlacementsClient() {
                 <FormSection title="محل و محدوده نمایش">
                   <div>
                     <label className={labelClass}>محل نمایش در صفحه</label>
-                    <p className="mb-2 text-[11px] text-[var(--color-text-muted)] leading-relaxed">
+                    <p className="mb-2 text-[11px] text-wibe-secondary leading-relaxed">
                       هر صفحه می‌تواند چند تبلیغ فعال در هر محل داشته باشد — همهٔ تبلیغ‌های
                       هم‌پوزیشن زیر هم نمایش داده می‌شوند. اولویت بالاتر بالاتر قرار می‌گیرد.
                     </p>
@@ -721,17 +721,17 @@ export default function SponsoredPlacementsClient() {
                             }
                             className={`rounded-xl border p-3 text-right transition-colors ${
                               selected
-                                ? 'border-[var(--primary)] bg-[var(--primary)]/5 ring-1 ring-[var(--primary)]/30'
-                                : 'border-[var(--color-border)] hover:border-[var(--primary)]/30'
+                                ? 'border-(--primary) bg-primary/5 ring-1 ring-(--primary)/30'
+                                : 'border-(--color-border) hover:border-(--primary)/30'
                             }`}
                           >
-                            <p className="text-sm font-semibold text-[var(--color-text)]">
+                            <p className="text-sm font-semibold text-(--color-text)">
                               {meta.label}
                             </p>
-                            <p className="mt-1 text-[11px] text-[var(--color-text-muted)] leading-snug">
+                            <p className="mt-1 text-[11px] text-wibe-secondary leading-snug">
                               {meta.hint}
                             </p>
-                            <span className="mt-2 inline-block rounded-md bg-[var(--color-bg)] px-2 py-0.5 text-[10px] text-[var(--color-text-muted)]">
+                            <span className="mt-2 inline-block rounded-md bg-(--color-bg) px-2 py-0.5 text-[10px] text-wibe-secondary">
                               {meta.page === 'list' ? 'صفحه لیست' : 'صفحه دسته'}
                             </span>
                           </button>
@@ -822,7 +822,7 @@ export default function SponsoredPlacementsClient() {
                           <label className={labelClass}>
                             لیست‌های هدف ({form.listIds.length.toLocaleString('fa-IR')} انتخاب)
                           </label>
-                          <div className="max-h-36 overflow-y-auto rounded-xl border border-[var(--color-border)] p-2">
+                          <div className="max-h-36 overflow-y-auto rounded-xl border border-(--color-border) p-2">
                             <div className="flex flex-wrap gap-1.5">
                               {categoryLists.map((l) => {
                                 const selected = form.listIds.includes(l.id);
@@ -833,8 +833,8 @@ export default function SponsoredPlacementsClient() {
                                     onClick={() => toggleListSelection(l.id)}
                                     className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                                       selected
-                                        ? 'border-[var(--primary)] bg-[var(--primary)]/10 text-[var(--primary)]'
-                                        : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:border-[var(--primary)]/40'
+                                        ? 'border-(--primary) bg-primary/10 text-primary'
+                                        : 'border-(--color-border) text-wibe-secondary hover:border-(--primary)/40'
                                     }`}
                                   >
                                     {l.title}
@@ -899,12 +899,12 @@ export default function SponsoredPlacementsClient() {
                   </div>
                   <div>
                     <label className={labelClass}>لینک مقصد *</label>
-                    <div className="flex overflow-hidden rounded-xl border border-[var(--color-border)] focus-within:ring-2 focus-within:ring-[var(--primary)]/30">
-                      <span className="flex shrink-0 items-center bg-[var(--color-bg)] px-3 text-xs text-[var(--color-text-muted)] border-l border-[var(--color-border)]">
+                    <div className="flex overflow-hidden rounded-xl border border-(--color-border) focus-within:ring-2 focus-within:ring-(--primary)/30">
+                      <span className="flex shrink-0 items-center bg-(--color-bg) px-3 text-xs text-wibe-secondary border-l border-(--color-border)">
                         http://
                       </span>
                       <input
-                        className="min-w-0 flex-1 border-0 bg-[var(--color-surface)] px-3 py-2.5 text-sm text-[var(--color-text)] focus:outline-none"
+                        className="min-w-0 flex-1 border-0 bg-(--color-surface) px-3 py-2.5 text-sm text-(--color-text) focus:outline-none"
                         dir="ltr"
                         placeholder="www.example.com"
                         value={form.destinationUrl.replace(/^https?:\/\//i, '')}
@@ -922,7 +922,7 @@ export default function SponsoredPlacementsClient() {
                         }
                       />
                     </div>
-                    <p className="mt-1 text-[10px] text-[var(--color-text-muted)]">
+                    <p className="mt-1 text-[10px] text-wibe-secondary">
                       اگر http:// ننویسید، هنگام ذخیره خودکار اضافه می‌شود
                     </p>
                   </div>
@@ -934,9 +934,9 @@ export default function SponsoredPlacementsClient() {
                       type="checkbox"
                       checked={form.isActive}
                       onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
-                      className="rounded border-[var(--color-border)]"
+                      className="rounded border-(--color-border)"
                     />
-                    <span className="text-sm text-[var(--color-text)]">تبلیغ فعال باشد</span>
+                    <span className="text-sm text-(--color-text)">تبلیغ فعال باشد</span>
                   </label>
 
                   <div className="flex flex-wrap gap-2">
@@ -953,8 +953,8 @@ export default function SponsoredPlacementsClient() {
                         onClick={() => applyPreset(id)}
                         className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
                           activePreset === id
-                            ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                            : 'border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--primary)]/40'
+                            ? 'bg-primary text-white border-(--primary)'
+                            : 'border-(--color-border) text-(--color-text) hover:border-(--primary)/40'
                         }`}
                       >
                         {label}
@@ -963,7 +963,7 @@ export default function SponsoredPlacementsClient() {
                   </div>
 
                   {formStartDate ? (
-                    <p className="text-xs text-[var(--color-text-muted)] bg-[var(--color-bg)] rounded-xl px-3 py-2">
+                    <p className="text-xs text-wibe-secondary bg-(--color-bg) rounded-xl px-3 py-2">
                       شروع: {formStartDate.format?.('DD MMMM YYYY') ?? '—'}
                       {formEndDate
                         ? ` · پایان: ${formEndDate.format?.('DD MMMM YYYY') ?? '—'}`
@@ -971,7 +971,7 @@ export default function SponsoredPlacementsClient() {
                     </p>
                   ) : null}
 
-                  <div className="grid sm:grid-cols-2 gap-3 p-3 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border)]">
+                  <div className="grid sm:grid-cols-2 gap-3 p-3 rounded-xl bg-(--color-bg) border border-(--color-border)">
                     <div>
                       <label className={labelClass}>تاریخ شروع (شمسی)</label>
                       <div className="flex gap-2">
@@ -994,7 +994,7 @@ export default function SponsoredPlacementsClient() {
                           type="time"
                           value={formStartTime}
                           onChange={(e) => setFormStartTime(e.target.value)}
-                          className="rounded-xl border border-[var(--color-border)] text-sm px-2 w-[88px] bg-[var(--color-surface)]"
+                          className="rounded-xl border border-(--color-border) text-sm px-2 w-22 bg-(--color-surface)"
                         />
                       </div>
                     </div>
@@ -1020,7 +1020,7 @@ export default function SponsoredPlacementsClient() {
                           type="time"
                           value={formEndTime}
                           onChange={(e) => setFormEndTime(e.target.value)}
-                          className="rounded-xl border border-[var(--color-border)] text-sm px-2 w-[88px] bg-[var(--color-surface)]"
+                          className="rounded-xl border border-(--color-border) text-sm px-2 w-22 bg-(--color-surface)"
                         />
                       </div>
                     </div>
@@ -1034,8 +1034,8 @@ export default function SponsoredPlacementsClient() {
                 ) : null}
               </form>
 
-              <div className="hidden lg:flex lg:flex-col w-[300px] shrink-0 border-r border-[var(--color-border)] bg-[var(--color-bg)] p-4">
-                <p className="text-xs font-medium text-[var(--color-text-muted)] mb-3">پیش‌نمایش</p>
+              <div className="hidden lg:flex lg:flex-col w-75 shrink-0 border-r border-(--color-border) bg-(--color-bg) p-4">
+                <p className="text-xs font-medium text-wibe-secondary mb-3">پیش‌نمایش</p>
                 <div className="flex-1 flex items-start">
                   {previewPlacement ? (
                     <SponsoredTextBanner
@@ -1043,7 +1043,7 @@ export default function SponsoredPlacementsClient() {
                       variant={previewVariantForSurface(form.surface)}
                     />
                   ) : (
-                    <p className="text-sm text-[var(--color-text-muted)]">
+                    <p className="text-sm text-wibe-secondary">
                       عنوان تبلیغ را وارد کنید تا پیش‌نمایش نمایش داده شود
                     </p>
                   )}
@@ -1051,11 +1051,11 @@ export default function SponsoredPlacementsClient() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-[var(--color-border)] shrink-0 bg-[var(--color-surface)]">
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-(--color-border) shrink-0 bg-(--color-surface)">
               <button
                 type="button"
                 onClick={closeForm}
-                className="rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+                className="rounded-xl border border-(--color-border) px-4 py-2.5 text-sm font-medium text-(--color-text) hover:bg-(--color-bg)"
               >
                 انصراف
               </button>
@@ -1063,7 +1063,7 @@ export default function SponsoredPlacementsClient() {
                 type="submit"
                 form="sponsored-form"
                 disabled={submitting}
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
               >
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {submitting ? 'در حال ذخیره…' : editingId ? 'ذخیره تغییرات' : 'ذخیره تبلیغ'}
@@ -1079,12 +1079,12 @@ export default function SponsoredPlacementsClient() {
           role="dialog"
           aria-modal="true"
         >
-          <div className="bg-[var(--color-surface)] rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col border border-[var(--color-border)]">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
+          <div className="bg-(--color-surface) rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col border border-(--color-border)">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-(--color-border)">
               <div>
-                <h3 className="font-bold text-[var(--color-text)]">گزارش عملکرد</h3>
+                <h3 className="font-bold text-(--color-text)">گزارش عملکرد</h3>
                 {selectedPlacement ? (
-                  <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate max-w-[280px]">
+                  <p className="text-xs text-wibe-secondary mt-0.5 truncate max-w-70">
                     {selectedPlacement.headline}
                   </p>
                 ) : null}
@@ -1092,7 +1092,7 @@ export default function SponsoredPlacementsClient() {
               <button
                 type="button"
                 onClick={() => setPerfId(null)}
-                className="p-2 rounded-xl hover:bg-[var(--color-bg)]"
+                className="p-2 rounded-xl hover:bg-(--color-bg)"
                 aria-label="بستن"
               >
                 <X className="w-5 h-5" />
@@ -1101,35 +1101,35 @@ export default function SponsoredPlacementsClient() {
             <div className="p-5 overflow-y-auto">
               {perfLoading ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="h-7 w-7 animate-spin text-[var(--primary)]" />
+                  <Loader2 className="h-7 w-7 animate-spin text-primary" />
                 </div>
               ) : perf ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="rounded-xl bg-[var(--color-bg)] p-3 text-center">
-                      <p className="text-xs text-[var(--color-text-muted)]">نمایش</p>
+                    <div className="rounded-xl bg-(--color-bg) p-3 text-center">
+                      <p className="text-xs text-wibe-secondary">نمایش</p>
                       <p className="text-lg font-bold tabular-nums">
                         {perf.impressions.toLocaleString('fa-IR')}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-[var(--color-bg)] p-3 text-center">
-                      <p className="text-xs text-[var(--color-text-muted)]">کلیک</p>
+                    <div className="rounded-xl bg-(--color-bg) p-3 text-center">
+                      <p className="text-xs text-wibe-secondary">کلیک</p>
                       <p className="text-lg font-bold tabular-nums">
                         {perf.clicks.toLocaleString('fa-IR')}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-[var(--color-bg)] p-3 text-center">
-                      <p className="text-xs text-[var(--color-text-muted)]">CTR</p>
+                    <div className="rounded-xl bg-(--color-bg) p-3 text-center">
+                      <p className="text-xs text-wibe-secondary">CTR</p>
                       <p className="text-lg font-bold tabular-nums">
                         {(perf.ctr * 100).toFixed(1)}٪
                       </p>
                     </div>
                   </div>
                   {perf.daily.length > 0 ? (
-                    <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+                    <div className="overflow-x-auto rounded-xl border border-(--color-border)">
                       <table className="min-w-full text-xs">
-                        <thead className="bg-[var(--color-bg)]">
-                          <tr className="text-[var(--color-text-muted)]">
+                        <thead className="bg-(--color-bg)">
+                          <tr className="text-wibe-secondary">
                             <th className="px-3 py-2 text-right font-medium">تاریخ</th>
                             <th className="px-3 py-2 text-right font-medium">نمایش</th>
                             <th className="px-3 py-2 text-right font-medium">کلیک</th>
@@ -1137,7 +1137,7 @@ export default function SponsoredPlacementsClient() {
                         </thead>
                         <tbody>
                           {perf.daily.map((d) => (
-                            <tr key={d.date} className="border-t border-[var(--color-border)]">
+                            <tr key={d.date} className="border-t border-(--color-border)">
                               <td className="px-3 py-2">{formatPersianDay(d.date)}</td>
                               <td className="px-3 py-2 tabular-nums">
                                 {d.impressions.toLocaleString('fa-IR')}
@@ -1151,7 +1151,7 @@ export default function SponsoredPlacementsClient() {
                       </table>
                     </div>
                   ) : (
-                    <p className="text-sm text-center text-[var(--color-text-muted)] py-4">
+                    <p className="text-sm text-center text-wibe-secondary py-4">
                       هنوز رویدادی ثبت نشده
                     </p>
                   )}

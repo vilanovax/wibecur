@@ -14,14 +14,14 @@ export default function KpiCard({ item }: KpiCardProps) {
 
   return (
     <div
-      className="rounded-[16px] p-4 sm:p-5 bg-[var(--color-surface)] border border-[var(--color-border)] shadow-[var(--shadow-card)] transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
+      className="rounded-2xl p-4 sm:p-5 bg-(--color-surface) border border-(--color-border) shadow-(--shadow-card) transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
       style={{ padding: 'var(--wibe-space-lg) var(--wibe-space-xl)' }}
     >
-      <p className="text-[13px] text-[var(--color-text-muted)] font-medium mb-1">
+      <p className="text-[13px] text-wibe-secondary font-medium mb-1">
         {label}
       </p>
       <div className="flex items-end justify-between gap-2 flex-wrap">
-        <p className="text-[28px] sm:text-[32px] font-bold text-[var(--color-text)] tabular-nums">
+        <p className="text-[28px] sm:text-[32px] font-bold text-(--color-text) tabular-nums">
           {typeof value === 'number' ? value.toLocaleString('fa-IR') : value}
         </p>
         {/* فقط وقتی تغییری وجود دارد chip نشان بده — جلوگیری از pill خالی با فلش */}
@@ -32,7 +32,7 @@ export default function KpiCard({ item }: KpiCardProps) {
                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
                 : deltaDown
                   ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
-                  : 'bg-[var(--gray-100)] text-[var(--color-text-muted)]'
+                  : 'bg-(--gray-100) text-wibe-secondary'
             }`}
           >
             {deltaUp && <ArrowUp className="w-3 h-3" />}
@@ -50,7 +50,7 @@ export default function KpiCard({ item }: KpiCardProps) {
           {item.sparkline.map((v, i) => (
             <div
               key={i}
-              className="flex-1 min-w-0 rounded-t bg-[var(--primary)]/20"
+              className="flex-1 min-w-0 rounded-t bg-primary/20"
               style={{ height: `${Math.max(4, (v / Math.max(...item.sparkline!)) * 100)}%` }}
               title={String(v)}
             />

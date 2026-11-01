@@ -49,7 +49,7 @@ export default function PersonProfilePreviewCard({
       </div>
 
       <div className="flex items-start gap-3">
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-linear-to-br from-primary/10 to-primary/5 ring-1 ring-primary/10">
           {imageUrl ? (
             <ImageWithFallback
               src={imageUrl}
@@ -90,7 +90,7 @@ export default function PersonProfilePreviewCard({
         <p className="text-xs text-wibe-secondary">گرید آیتم‌های مرتبط در صفحه عمومی</p>
         <div className="mt-2 grid grid-cols-4 gap-1.5 opacity-40">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="aspect-[2/3] rounded-md bg-gray-200 dark:bg-gray-700" />
+            <div key={i} className="aspect-2/3 rounded-md bg-gray-200 dark:bg-gray-700" />
           ))}
         </div>
       </div>

@@ -51,7 +51,7 @@ export default async function ReportsPage({
     <>
       <Suspense
         fallback={
-          <div className="py-12 text-center text-sm text-[var(--color-text-muted)] animate-pulse">
+          <div className="py-12 text-center text-sm text-wibe-secondary animate-pulse">
             در حال بارگذاری ریپورت‌ها…
           </div>
         }

@@ -56,8 +56,8 @@ export default function ReportsPulseSummary({
             type="button"
             onClick={() => onFilterClick?.(key)}
             disabled={!clickable}
-            className={`rounded-2xl border bg-gradient-to-br ${bg} p-4 shadow-sm text-right transition-all ${
-              isActive ? 'ring-2 ring-[var(--primary)] ring-offset-2' : ''
+            className={`rounded-2xl border bg-linear-to-br ${bg} p-4 shadow-sm text-right transition-all ${
+              isActive ? 'ring-2 ring-(--primary) ring-offset-2' : ''
             } ${
               clickable
                 ? 'hover:shadow-md hover:scale-[1.01] cursor-pointer'
@@ -65,12 +65,12 @@ export default function ReportsPulseSummary({
             }`}
           >
             <div className="flex items-center gap-2 mb-2">
-              <Icon className="w-4 h-4 text-[var(--color-text)]" />
-              <span className="text-[13px] font-medium text-[var(--color-text-muted)]">
+              <Icon className="w-4 h-4 text-(--color-text)" />
+              <span className="text-[13px] font-medium text-wibe-secondary">
                 {label}
               </span>
             </div>
-            <p className="text-2xl font-bold tabular-nums text-[var(--color-text)]">
+            <p className="text-2xl font-bold tabular-nums text-(--color-text)">
               {data[countKey].toLocaleString('fa-IR')}
             </p>
           </button>

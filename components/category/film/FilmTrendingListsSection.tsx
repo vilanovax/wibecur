@@ -32,10 +32,10 @@ export default function FilmTrendingListsSection({
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex-shrink-0 w-[150px] snap-start"
+            className="shrink-0 w-37.5 snap-start"
           >
             <div className="rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 shadow-lg active:scale-[0.97] transition-transform">
-              <div className="relative aspect-[3/4] bg-gray-800">
+              <div className="relative aspect-3/4 bg-gray-800">
                 {list.coverImage ? (
                   <ImageWithFallback
                     src={list.coverImage}
@@ -51,7 +51,7 @@ export default function FilmTrendingListsSection({
                     🎬
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 to-transparent" />
                 {(list.badge === 'viral' || list.badge === 'hot' || i < 3) && (
                   <span
                     className={`absolute top-2 right-2 text-white wibe-caption px-2 py-0.5 rounded font-bold ${

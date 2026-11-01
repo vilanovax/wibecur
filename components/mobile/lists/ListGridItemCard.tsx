@@ -49,8 +49,8 @@ function ListGridItemCard({
         <div
           className={`relative overflow-hidden ${
             isPortraitCover
-              ? 'aspect-[2/3] lg:mx-auto lg:max-h-[13.5rem] lg:w-full lg:max-w-[10.5rem]'
-              : 'aspect-[4/3] lg:max-h-[10.5rem]'
+              ? 'aspect-2/3 lg:mx-auto lg:max-h-54 lg:w-full lg:max-w-42'
+              : 'aspect-4/3 lg:max-h-42'
           }`}
         >
           <LazyItemCoverImage
@@ -70,13 +70,13 @@ function ListGridItemCard({
             rootMargin="240px"
           />
           <span
-            className="absolute start-1.5 top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-foreground/80 px-1.5 text-xs font-bold text-background tabular-nums"
+            className="absolute inset-s-1.5 top-1.5 flex h-6 min-w-6 items-center justify-center rounded-full bg-foreground/80 px-1.5 text-xs font-bold text-background tabular-nums"
             aria-hidden
           >
             {(index + 1).toLocaleString('fa-IR')}
           </span>
           {!isMovieGrid && (
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2 pb-2 pt-10">
+            <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent px-2 pb-2 pt-10">
               <p className="line-clamp-2 text-start wibe-caption font-semibold leading-snug text-background lg:text-xs">
                 {item.title}
               </p>

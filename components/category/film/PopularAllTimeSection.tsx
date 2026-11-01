@@ -34,7 +34,7 @@ export default function PopularAllTimeSection({
             href={`/lists/${list.slug}`}
             className="rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 shadow-lg active:scale-[0.98] transition-transform"
           >
-            <div className="relative aspect-[4/3] bg-gray-800">
+            <div className="relative aspect-4/3 bg-gray-800">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}
@@ -50,7 +50,7 @@ export default function PopularAllTimeSection({
                   🎬
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
               <span className="absolute bottom-2 right-2 text-white/95 text-xs font-bold bg-black/50 px-2 py-0.5 rounded">
                 ⭐ {list.saveCount}
               </span>

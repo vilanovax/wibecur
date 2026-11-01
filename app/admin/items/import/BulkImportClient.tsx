@@ -447,7 +447,7 @@ export default function BulkImportClient({
         <>
           <Link
             href="/admin/lists"
-            className="inline-flex items-center gap-1.5 text-sm text-[var(--color-text-muted)] hover:text-violet-700 mb-4"
+            className="inline-flex items-center gap-1.5 text-sm text-wibe-secondary hover:text-violet-700 mb-4"
           >
             <ArrowRight className="w-4 h-4" />
             بازگشت به لیست‌ها
@@ -455,11 +455,11 @@ export default function BulkImportClient({
 
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-[var(--color-text)] flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-(--color-text) flex items-center gap-2">
                 <FileJson className="w-7 h-7 text-violet-600" />
                 import گروهی آیتم
               </h1>
-              <p className="text-sm text-[var(--color-text-muted)] mt-1">
+              <p className="text-sm text-wibe-secondary mt-1">
                 هر دسته JSON اختصاصی · یک موجودیت کاتالوگ · چند لیست
               </p>
             </div>
@@ -478,10 +478,10 @@ export default function BulkImportClient({
 
       {/* انتخاب مقصد */}
       <section className="rounded-2xl border border-gray-200 bg-white p-5 mb-5 space-y-4">
-        <h2 className="text-sm font-bold text-[var(--color-text)]">۱. مقصد import</h2>
+        <h2 className="text-sm font-bold text-(--color-text)">۱. مقصد import</h2>
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-[var(--color-text-muted)] mb-1.5">دسته</label>
+            <label className="block text-xs font-semibold text-wibe-secondary mb-1.5">دسته</label>
             <select
               value={categoryId}
               onChange={(e) => {
@@ -507,14 +507,14 @@ export default function BulkImportClient({
               )}
             </select>
             {selectedCategory && (
-              <p className="text-[10px] text-[var(--color-text-muted)] mt-1">
+              <p className="text-[10px] text-wibe-secondary mt-1">
                 فرمت: {getBulkImportFormatTitle(categorySlug, listContext)} ·{' '}
                 {getBulkImportJsonHint(categorySlug, listContext)}
               </p>
             )}
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[var(--color-text-muted)] mb-1.5">لیست</label>
+            <label className="block text-xs font-semibold text-wibe-secondary mb-1.5">لیست</label>
             <select
               value={listId}
               onChange={(e) => setListId(e.target.value)}
@@ -553,7 +553,7 @@ export default function BulkImportClient({
         )}
 
         <div className="rounded-xl border border-gray-100 bg-gray-50/80 p-4">
-          <p className="text-xs font-semibold text-[var(--color-text)] mb-3">دادهٔ آیتم‌های موجود در کاتالوگ</p>
+          <p className="text-xs font-semibold text-(--color-text) mb-3">دادهٔ آیتم‌های موجود در کاتالوگ</p>
           <div className="grid gap-2 sm:grid-cols-2">
             <label
               className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-colors ${
@@ -570,8 +570,8 @@ export default function BulkImportClient({
                 className="mt-1"
               />
               <span>
-                <span className="block text-sm font-medium text-[var(--color-text)]">حفظ دادهٔ موجود</span>
-                <span className="mt-0.5 block text-xs leading-relaxed text-[var(--color-text-muted)]">
+                <span className="block text-sm font-medium text-(--color-text)">حفظ دادهٔ موجود</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-wibe-secondary">
                   فقط جایگاه جدید اضافه می‌شود؛ توضیح، تصویر و متادیتای DB دست‌نخورده می‌ماند.
                 </span>
               </span>
@@ -591,8 +591,8 @@ export default function BulkImportClient({
                 className="mt-1"
               />
               <span>
-                <span className="block text-sm font-medium text-[var(--color-text)]">به‌روزرسانی با JSON</span>
-                <span className="mt-0.5 block text-xs leading-relaxed text-[var(--color-text-muted)]">
+                <span className="block text-sm font-medium text-(--color-text)">به‌روزرسانی با JSON</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-wibe-secondary">
                   اگر آیتم در کاتالوگ یا این لیست باشد، فیلدهای JSON جایگزین دادهٔ فعلی می‌شود.
                 </span>
               </span>
@@ -608,15 +608,15 @@ export default function BulkImportClient({
           onClick={() => setJsonCollapsed((c) => !c)}
           className="w-full flex items-center justify-between gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100 text-right"
         >
-          <h2 className="text-sm font-bold text-[var(--color-text)]">
+          <h2 className="text-sm font-bold text-(--color-text)">
             ۲. JSON از AI
             {selectedCategory && (
-              <span className="text-xs font-normal text-[var(--color-text-muted)] mr-2">
+              <span className="text-xs font-normal text-wibe-secondary mr-2">
                 ({getBulkImportFormatTitle(categorySlug, listContext)})
               </span>
             )}
           </h2>
-          <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1">
+          <span className="text-xs text-wibe-secondary flex items-center gap-1">
             {jsonCollapsed ? 'باز کردن' : 'جمع کردن'}
             {jsonCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </span>
@@ -624,7 +624,7 @@ export default function BulkImportClient({
         {!jsonCollapsed && (
         <div className="p-5 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[11px] text-[var(--color-text-muted)]">
+          <p className="text-[11px] text-wibe-secondary">
             {selectedList
               ? `JSON برای لیست «${selectedList.title}» · دسته ${selectedCategory?.name ?? '—'}`
               : selectedCategory
@@ -673,11 +673,11 @@ export default function BulkImportClient({
               : 'border-gray-200 bg-gray-50/80 hover:border-violet-300 hover:bg-violet-50/50'
           }`}
         >
-          <FileUp className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-violet-600' : 'text-[var(--color-text-subtle)]'}`} />
-          <p className="text-sm font-semibold text-[var(--color-text)]">
+          <FileUp className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-violet-600' : 'text-(--color-text-subtle)'}`} />
+          <p className="text-sm font-semibold text-(--color-text)">
             فایل JSON را اینجا رها کنید
           </p>
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">یا کلیک برای انتخاب فایل · حداکثر ۲MB</p>
+          <p className="text-xs text-wibe-secondary mt-1">یا کلیک برای انتخاب فایل · حداکثر ۲MB</p>
           {loadedFileName && (
             <p className="text-xs text-violet-700 mt-2 font-medium">✓ {loadedFileName}</p>
           )}
@@ -710,7 +710,7 @@ export default function BulkImportClient({
           )}
           {previewLoading ? 'در حال تطبیق با کاتالوگ…' : 'تجزیه و پیش‌نمایش'}
         </button>
-        <p className="text-[11px] text-[var(--color-text-muted)]">
+        <p className="text-[11px] text-wibe-secondary">
           اعتبارسنجی JSON، تصویر و متادیتا فوری است · تطبیق کاتالوگ پس از انتخاب لیست
         </p>
         </div>
@@ -765,7 +765,7 @@ export default function BulkImportClient({
             </div>
           )}
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-sm font-bold text-[var(--color-text)]">
+            <h2 className="text-sm font-bold text-(--color-text)">
               ۳. پیش‌نمایش ({displayRows.length.toLocaleString('fa-IR')} /{' '}
               {rows.length.toLocaleString('fa-IR')} · {selectedCount.toLocaleString('fa-IR')} انتخاب)
             </h2>
@@ -775,7 +775,7 @@ export default function BulkImportClient({
                   type="button"
                   disabled={previewLoading}
                   onClick={() => enrichWithPreview(rows.map(({ match: _m, ...r }) => r))}
-                  className="text-xs text-[var(--color-text-muted)] hover:text-violet-600 inline-flex items-center gap-1"
+                  className="text-xs text-wibe-secondary hover:text-violet-600 inline-flex items-center gap-1"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${previewLoading ? 'animate-spin' : ''}`} />
                   تطبیق مجدد
@@ -792,7 +792,7 @@ export default function BulkImportClient({
               <button
                 type="button"
                 onClick={() => toggleAll(false)}
-                className="text-xs font-semibold text-[var(--color-text-muted)] hover:underline inline-flex items-center gap-1"
+                className="text-xs font-semibold text-wibe-secondary hover:underline inline-flex items-center gap-1"
               >
                 <Square className="w-3.5 h-3.5" />
                 هیچ‌کدام
@@ -800,7 +800,7 @@ export default function BulkImportClient({
             </div>
           </div>
 
-          <ul className="divide-y divide-gray-100 max-h-[520px] overflow-y-auto">
+          <ul className="divide-y divide-gray-100 max-h-130 overflow-y-auto">
             {displayRows.map((row, idx) => {
               const open = expandedId === row.id;
               return (
@@ -819,7 +819,7 @@ export default function BulkImportClient({
                       {row.selected && row.valid ? (
                         <CheckSquare className="w-5 h-5 text-violet-600" />
                       ) : (
-                        <Square className="w-5 h-5 text-[var(--color-text-subtle)]" />
+                        <Square className="w-5 h-5 text-(--color-text-subtle)" />
                       )}
                     </button>
 
@@ -834,7 +834,7 @@ export default function BulkImportClient({
 
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-start gap-2">
-                        <span className="text-[10px] text-[var(--color-text-subtle)] tabular-nums pt-1">#{idx + 1}</span>
+                        <span className="text-[10px] text-(--color-text-subtle) tabular-nums pt-1">#{idx + 1}</span>
                         <input
                           value={row.title}
                           onChange={(e) => updateRow(row.id, { title: e.target.value })}
@@ -843,7 +843,7 @@ export default function BulkImportClient({
                         <button
                           type="button"
                           onClick={() => removeRow(row.id)}
-                          className="p-1 text-[var(--color-text-subtle)] hover:text-red-600 shrink-0"
+                          className="p-1 text-(--color-text-subtle) hover:text-red-600 shrink-0"
                           title="حذف از پیش‌نمایش"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -857,11 +857,11 @@ export default function BulkImportClient({
                           />
                         )}
                       </div>
-                      <p className="text-xs text-[var(--color-text-muted)] truncate mt-1">
+                      <p className="text-xs text-wibe-secondary truncate mt-1">
                         {formatBulkImportRowSubtitle(row, categorySlug)}
                       </p>
                       {row.match?.sampleListTitles?.[0] && row.match.kind !== 'new' && (
-                        <p className="text-[10px] text-[var(--color-text-subtle)] truncate flex items-center gap-1">
+                        <p className="text-[10px] text-(--color-text-subtle) truncate flex items-center gap-1">
                           <Link2 className="w-3 h-3 shrink-0" />
                           مثلاً: {row.match.sampleListTitles.join('، ')}
                         </p>
@@ -877,7 +877,7 @@ export default function BulkImportClient({
                     <button
                       type="button"
                       onClick={() => setExpandedId(open ? null : row.id)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-[var(--color-text-muted)] shrink-0"
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-wibe-secondary shrink-0"
                     >
                       {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
@@ -886,7 +886,7 @@ export default function BulkImportClient({
                   {open && (
                     <div className="px-4 pb-4 pr-14 space-y-3 border-t border-gray-50 pt-3">
                       <div>
-                        <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">توضیحات</label>
+                        <label className="text-[10px] font-semibold text-wibe-secondary">توضیحات</label>
                         <textarea
                           rows={2}
                           value={row.description}
@@ -896,7 +896,7 @@ export default function BulkImportClient({
                       </div>
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div>
-                          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">imageUrl</label>
+                          <label className="text-[10px] font-semibold text-wibe-secondary">imageUrl</label>
                           <input
                             dir="ltr"
                             value={row.imageUrl}
@@ -905,7 +905,7 @@ export default function BulkImportClient({
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">externalUrl</label>
+                          <label className="text-[10px] font-semibold text-wibe-secondary">externalUrl</label>
                           <input
                             dir="ltr"
                             value={row.externalUrl}

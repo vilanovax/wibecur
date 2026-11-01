@@ -12,7 +12,7 @@ export default function UserPulseSummary({ data }: { data: UserPulseSummaryType 
       : `در هفت روز گذشته ${faNumber(active)} نفر لیست ذخیره کرده‌اند.`;
 
   return (
-    <p className="mb-4 text-sm text-[var(--color-text-muted)]">
+    <p className="mb-4 text-sm text-wibe-secondary">
       {sentence}
       {delta != null && (
         <span>

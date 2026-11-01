@@ -29,9 +29,9 @@ const PURPOSE_HINT: Record<ListImageUploadPurpose, string> = {
 };
 
 const PREVIEW_CLASS: Record<'cover' | 'horizontal' | 'logo' | 'default', string> = {
-  cover: 'aspect-[4/3] max-h-44',
-  horizontal: 'aspect-[21/9] max-h-36',
-  logo: 'aspect-[4/1] max-h-28 bg-[var(--color-bg)]',
+  cover: 'aspect-4/3 max-h-44',
+  horizontal: 'aspect-21/9 max-h-36',
+  logo: 'aspect-4/1 max-h-28 bg-(--color-bg)',
   default: 'h-64',
 };
 
@@ -63,7 +63,7 @@ function CoverPreview({
   return (
     <div className="space-y-2">
       <div
-        className={`relative w-full rounded-xl overflow-hidden border border-[var(--color-border-muted)] bg-[var(--color-bg)] ${
+        className={`relative w-full rounded-xl overflow-hidden border border-(--color-border-muted) bg-(--color-bg) ${
           compact ? aspectClass : aspectClass
         }`}
       >
@@ -77,7 +77,7 @@ function CoverPreview({
             onError={() => setBroken(true)}
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-[var(--color-text-muted)] p-4 text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-wibe-secondary p-4 text-center">
             <ImageIcon className="w-8 h-8 opacity-40" />
             <p className="text-xs">تصویر بارگذاری نشد</p>
             <p className="text-[10px] font-mono truncate max-w-full opacity-60" dir="ltr">
@@ -99,11 +99,11 @@ function CoverPreview({
           type="button"
           onClick={onReplace}
           disabled={replaceLoading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-sm font-medium text-[var(--color-text)] transition-colors hover:bg-[var(--color-bg)] disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2 text-sm font-medium text-(--color-text) transition-colors hover:bg-(--color-bg) disabled:opacity-50"
         >
           {replaceLoading ? (
             <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--primary)] border-t-transparent" />
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-(--primary) border-t-transparent" />
               در حال آپلود…
             </>
           ) : (
@@ -244,8 +244,8 @@ export default function ImageUpload({
   const tabClass = (active: boolean) =>
     `px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
       active
-        ? 'bg-[var(--primary)]/10 text-[var(--primary)]'
-        : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+        ? 'bg-primary/10 text-primary'
+        : 'text-wibe-secondary hover:bg-(--color-bg)'
     }`;
 
   const dropHeight =
@@ -260,7 +260,7 @@ export default function ImageUpload({
   return (
     <div className="space-y-3" dir="rtl">
       {label ? (
-        <label className="block text-sm font-medium text-[var(--color-text)]">{label}</label>
+        <label className="block text-sm font-medium text-(--color-text)">{label}</label>
       ) : null}
 
       {uploadFeedback ? (
@@ -269,7 +269,7 @@ export default function ImageUpload({
         </p>
       ) : null}
 
-      <div className="inline-flex gap-1 p-1 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border-muted)]">
+      <div className="inline-flex gap-1 p-1 rounded-xl bg-(--color-bg) border border-(--color-border-muted)">
         <button type="button" onClick={() => setUploadMethod('upload')} className={tabClass(uploadMethod === 'upload')}>
           <Upload className="w-3 h-3 inline ml-1" />
           آپلود
@@ -300,22 +300,22 @@ export default function ImageUpload({
               onDrop={handleDrop}
               className={`flex flex-col items-center justify-center w-full ${dropHeight} border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
                 dragActive
-                  ? 'border-[var(--primary)] bg-[var(--primary)]/5'
-                  : 'border-[var(--color-border)] bg-[var(--color-bg)] hover:bg-[var(--color-surface)]'
+                  ? 'border-(--primary) bg-primary/5'
+                  : 'border-(--color-border) bg-(--color-bg) hover:bg-(--color-surface)'
               }`}
             >
               {uploading ? (
                 <>
-                  <div className="w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-2" />
-                  <p className="text-xs text-[var(--color-text-muted)]">در حال بهینه‌سازی و آپلود...</p>
+                  <div className="w-8 h-8 border-2 border-(--primary) border-t-transparent rounded-full animate-spin mb-2" />
+                  <p className="text-xs text-wibe-secondary">در حال بهینه‌سازی و آپلود...</p>
                 </>
               ) : (
                 <>
-                  <ImageIcon className="w-8 h-8 text-[var(--color-text-muted)] mb-2 opacity-60" />
-                  <p className="text-xs text-[var(--color-text)]">
+                  <ImageIcon className="w-8 h-8 text-wibe-secondary mb-2 opacity-60" />
+                  <p className="text-xs text-(--color-text)">
                     <span className="font-semibold">کلیک</span> یا کشیدن تصویر
                   </p>
-                  <p className="text-[10px] text-[var(--color-text-muted)] mt-1.5 px-4 text-center leading-relaxed">
+                  <p className="text-[10px] text-wibe-secondary mt-1.5 px-4 text-center leading-relaxed">
                     {uploadHint}
                   </p>
                 </>
@@ -348,18 +348,18 @@ export default function ImageUpload({
               }}
               placeholder="https://..."
               dir="ltr"
-              className="flex-1 px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] focus:ring-2 focus:ring-[var(--primary)]/30"
+              className="flex-1 px-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-surface) focus:ring-2 focus:ring-(--primary)/30"
             />
             <button
               type="button"
               onClick={() => void handleUrlSubmit()}
               disabled={uploading}
-              className="px-3 py-2 rounded-xl bg-[var(--primary)] text-white text-sm hover:opacity-90 disabled:opacity-50"
+              className="px-3 py-2 rounded-xl bg-primary text-white text-sm hover:opacity-90 disabled:opacity-50"
             >
               {uploading ? 'در حال پردازش…' : 'تایید'}
             </button>
           </div>
-          <p className="text-[10px] text-[var(--color-text-muted)] leading-relaxed">
+          <p className="text-[10px] text-wibe-secondary leading-relaxed">
             با تأیید، تصویر دانلود، برش و بهینه‌سازی و در ParsPack ذخیره می‌شود.
           </p>
           {value && (

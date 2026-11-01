@@ -6,7 +6,7 @@ import type { ListTrendingDebugData } from '@/lib/admin/trending-debug';
 
 const STATUS = {
   rising: { label: 'صعودی', Icon: TrendingUp, className: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-  stable: { label: 'ثابت', Icon: Minus, className: 'text-[var(--color-text-muted)] bg-[var(--color-bg)] border-[var(--color-border-muted)]' },
+  stable: { label: 'ثابت', Icon: Minus, className: 'text-wibe-secondary bg-(--color-bg) border-(--color-border-muted)' },
   declining: { label: 'نزولی', Icon: TrendingDown, className: 'text-red-600 bg-red-50 border-red-200' },
 };
 
@@ -43,13 +43,13 @@ export default function ListEditIntelligenceBar({
       label: 'امتیاز',
       value: score != null ? score.toLocaleString('fa-IR') : '—',
       icon: Zap,
-      valueClass: scoreNegative ? 'text-red-600' : 'text-[var(--primary)]',
+      valueClass: scoreNegative ? 'text-red-600' : 'text-primary',
     },
     {
       label: '۲۴س',
       value: `+${(raw?.saves24h ?? 0).toLocaleString('fa-IR')}`,
       icon: TrendingUp,
-      valueClass: (raw?.saves24h ?? 0) > 0 ? 'text-emerald-600' : 'text-[var(--color-text-muted)]',
+      valueClass: (raw?.saves24h ?? 0) > 0 ? 'text-emerald-600' : 'text-wibe-secondary',
     },
     {
       label: 'ذخیره',
@@ -74,31 +74,31 @@ export default function ListEditIntelligenceBar({
   ];
 
   return (
-    <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] overflow-hidden shadow-[var(--shadow-card)]" dir="rtl">
-      <div className="flex flex-wrap items-stretch divide-x divide-x-reverse divide-[var(--color-border-muted)]">
+    <div className="rounded-xl border border-(--color-border-muted) bg-(--color-surface) overflow-hidden shadow-(--shadow-card)" dir="rtl">
+      <div className="flex flex-wrap items-stretch divide-x divide-x-reverse divide-(--color-border-muted)">
         {cells.map(({ label, value, icon: Icon, valueClass }) => (
-          <div key={label} className="flex-1 min-w-[72px] px-3 py-2.5">
+          <div key={label} className="flex-1 min-w-18 px-3 py-2.5">
             <div className="flex items-center gap-1 mb-0.5">
-              <Icon className="w-3 h-3 text-[var(--color-text-muted)]" />
-              <span className="text-[10px] text-[var(--color-text-muted)]">{label}</span>
+              <Icon className="w-3 h-3 text-wibe-secondary" />
+              <span className="text-[10px] text-wibe-secondary">{label}</span>
             </div>
-            <p className={`text-sm font-bold tabular-nums ${valueClass ?? 'text-[var(--color-text)]'}`}>{value}</p>
+            <p className={`text-sm font-bold tabular-nums ${valueClass ?? 'text-(--color-text)'}`}>{value}</p>
           </div>
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-t border-[var(--color-border-muted)] bg-[var(--color-bg)]/40 text-xs">
-        <span className="text-[var(--color-text-muted)]">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-t border-(--color-border-muted) bg-(--color-bg)/40 text-xs">
+        <span className="text-wibe-secondary">
           مالک:{' '}
           {ownerLink ? (
-            <Link href={ownerLink} className="font-medium text-[var(--primary)] hover:underline">
+            <Link href={ownerLink} className="font-medium text-primary hover:underline">
               {ownerName}
             </Link>
           ) : (
-            <strong className="text-[var(--color-text)]">{ownerName}</strong>
+            <strong className="text-(--color-text)">{ownerName}</strong>
           )}
           <span className="mx-2 opacity-30">·</span>
-          میانگین ذخیره/آیتم: <strong className="text-[var(--color-text)]">{avgSavesPerItem}</strong>
+          میانگین ذخیره/آیتم: <strong className="text-(--color-text)">{avgSavesPerItem}</strong>
         </span>
         {statusConf && (
           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border font-medium ${statusConf.className}`}>

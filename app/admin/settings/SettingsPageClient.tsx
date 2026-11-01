@@ -12,7 +12,7 @@ import SettingsStatusStrip from '@/components/admin/settings/SettingsStatusStrip
 function PanelFallback() {
   return (
     <div
-      className="mt-4 h-48 animate-pulse rounded-2xl bg-[var(--color-border-muted)]"
+      className="mt-4 h-48 animate-pulse rounded-2xl bg-(--color-border-muted)"
       aria-hidden
     />
   );
@@ -482,10 +482,10 @@ export default function SettingsPageClient() {
   if (loading) {
     return (
       <div
-        className="flex items-center justify-center min-h-[320px]"
+        className="flex items-center justify-center min-h-80"
         dir="rtl"
       >
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }

@@ -26,7 +26,7 @@ export default function ListsFeaturedBanner({ list }: ListsFeaturedBannerProps) 
       <p className="wibe-caption text-wibe-secondary mb-2 px-0.5">⭐ منتخب</p>
       <Link
         href={`/lists/${list.slug}`}
-        className="block relative rounded-lg overflow-hidden h-[120px] border border-wibe shadow-sm active:scale-[0.99] transition-transform"
+        className="block relative rounded-lg overflow-hidden h-30 border border-wibe shadow-sm active:scale-[0.99] transition-transform"
       >
         <ListCoverImage
           coverImage={list.coverImage}
@@ -41,7 +41,7 @@ export default function ListsFeaturedBanner({ list }: ListsFeaturedBannerProps) 
           fallbackClassName="w-full h-full flex items-center justify-center text-4xl bg-wibe-surface"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/45 to-black/20" />
+        <div className="absolute inset-0 bg-linear-to-l from-black/80 via-black/45 to-black/20" />
         <div className="absolute inset-0 flex flex-col justify-end p-3">
           <h2 className="wibe-small font-bold text-white line-clamp-2">{list.title}</h2>
           {list.description && (

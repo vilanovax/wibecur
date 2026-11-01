@@ -68,7 +68,7 @@ function MoodCard({ mood, compact }: { mood: HomeMoodCollection; compact?: boole
   return (
     <Card
       className={`bg-popover shadow-sm ${
-        compact ? 'p-3' : 'w-[11.5rem] shrink-0 snap-start p-3 lg:w-full lg:p-4'
+        compact ? 'p-3' : 'w-46 shrink-0 snap-start p-3 lg:w-full lg:p-4'
       }`}
     >
       <div className="mb-2">

@@ -94,7 +94,7 @@ export default function ItemLikeButton({
         >
           <Heart className="size-5 text-muted-foreground" />
           {likeCount > 0 && (
-            <span className="absolute -top-1 end-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-bold text-brand-foreground">
+            <span className="absolute -top-1 inset-e-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-bold text-brand-foreground">
               {likeCount > 99 ? '۹۹+' : countLabel}
             </span>
           )}

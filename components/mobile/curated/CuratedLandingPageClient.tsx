@@ -245,7 +245,7 @@ export default function CuratedLandingPageClient({
               )
             ) : null}
 
-            <div ref={forYouRef} className="min-h-[1px]">
+            <div ref={forYouRef} className="min-h-0.25">
               {!forYouInView ? null : forYouPending ? (
                 <ExploreForYouSectionSkeleton />
               ) : sections.forYou.length > 0 ? (

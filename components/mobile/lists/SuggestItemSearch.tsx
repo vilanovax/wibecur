@@ -102,14 +102,14 @@ function StepProgress({ step, total }: { step: number; total: number }) {
 function ItemPoster({
   src,
   title,
-  className = 'w-11 h-[3.25rem]',
+  className = 'w-11 h-13',
 }: {
   src: string | null;
   title: string;
   className?: string;
 }) {
   return (
-    <div className={`flex-shrink-0 overflow-hidden rounded-surface bg-muted ${className}`}>
+    <div className={`shrink-0 overflow-hidden rounded-surface bg-muted ${className}`}>
       <ImageWithFallback
         src={src ?? ''}
         alt={title}
@@ -591,11 +591,11 @@ export default function SuggestItemSearch({
         placeholder={getSearchPlaceholder(categorySlug)}
         autoFocus
         aria-label="جستجوی آیتم برای پیشنهاد"
-        className="mb-3 flex-shrink-0"
+        className="mb-3 shrink-0"
       />
 
       {query.trim().length > 0 && query.trim().length < MIN_QUERY_LENGTH && (
-        <p className="wibe-caption text-muted-foreground mb-3 flex-shrink-0">حداقل ۲ حرف وارد کن</p>
+        <p className="wibe-caption text-muted-foreground mb-3 shrink-0">حداقل ۲ حرف وارد کن</p>
       )}
 
       <div className="flex-1 overflow-y-auto min-h-0 -mx-1 px-1">
@@ -680,7 +680,7 @@ export default function SuggestItemSearch({
                         <p className="wibe-caption text-muted-foreground mt-0.5">{item.categoryName}</p>
                       )}
                       <p className="mt-1 flex items-center gap-1 text-xs text-success">
-                        <Check className="w-3.5 h-3.5 flex-shrink-0" />
+                        <Check className="w-3.5 h-3.5 shrink-0" />
                         داخل لیست است
                       </p>
                     </div>
@@ -799,7 +799,7 @@ export default function SuggestItemSearch({
       </div>
 
       {query.trim().length === 0 && (
-        <div className="mt-2 flex-shrink-0 border-t border-border pt-3">
+        <div className="mt-2 shrink-0 border-t border-border pt-3">
           <Button
             type="button"
             variant="outline"
@@ -814,7 +814,7 @@ export default function SuggestItemSearch({
       )}
 
       {!loading && debouncedQuery.length >= MIN_QUERY_LENGTH && results.length > 0 && (
-        <div className="mt-2 flex-shrink-0 border-t border-border pt-3">
+        <div className="mt-2 shrink-0 border-t border-border pt-3">
           <Button
             type="button"
             variant="outline"

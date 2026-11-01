@@ -39,24 +39,24 @@ export default function CategoryListToolbar({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" dir="rtl">
       <div className="relative flex-1 max-w-md">
-        <Search className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-text-muted)]" strokeWidth={1.5} />
+        <Search className="pointer-events-none absolute inset-e-3 top-1/2 size-4 -translate-y-1/2 text-wibe-secondary" strokeWidth={1.5} />
         <input
           type="search"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="جستجو در نام یا شناسه…"
-          className="min-h-11 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] pe-10 ps-4 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]"
+          className="min-h-11 w-full rounded-xl border border-(--color-border) bg-(--color-surface) pe-10 ps-4 text-sm text-(--color-text) placeholder:text-wibe-secondary focus:border-(--primary) focus:ring-2 focus:ring-(--primary)"
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1.5">
-          <ArrowUpDown className="w-4 h-4 text-[var(--color-text-muted)] shrink-0" />
+          <ArrowUpDown className="w-4 h-4 text-wibe-secondary shrink-0" />
           <select
             value={sortKey}
             onChange={(e) => onSortChange(e.target.value as CategorySortKey)}
             disabled={viewMode === 'reorder'}
-            className="min-h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm text-[var(--color-text)] disabled:opacity-50"
+            className="min-h-11 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text) disabled:opacity-50"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -67,7 +67,7 @@ export default function CategoryListToolbar({
         </div>
 
         <div
-          className="inline-flex rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-0.5"
+          className="inline-flex rounded-xl border border-(--color-border) bg-(--color-bg) p-0.5"
           role="group"
           aria-label="نوع نمایش"
         >
@@ -85,8 +85,8 @@ export default function CategoryListToolbar({
               onClick={() => onViewModeChange(mode)}
               className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors ${
                 viewMode === mode
-                  ? 'bg-[var(--color-surface)] text-[var(--primary)] shadow-sm ring-1 ring-[var(--color-border)]'
-                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                  ? 'bg-(--color-surface) text-primary shadow-sm ring-1 ring-(--color-border)'
+                  : 'text-wibe-secondary hover:text-(--color-text)'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -95,7 +95,7 @@ export default function CategoryListToolbar({
           ))}
         </div>
 
-        <span className="text-xs text-[var(--color-text-muted)] tabular-nums px-1">
+        <span className="text-xs text-wibe-secondary tabular-nums px-1">
           {resultCount.toLocaleString('fa-IR')} از {totalCount.toLocaleString('fa-IR')}
         </span>
       </div>

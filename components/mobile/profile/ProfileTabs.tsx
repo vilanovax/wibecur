@@ -39,7 +39,7 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl whitespace-nowrap transition-colors ${
                   isActive
-                    ? 'bg-gradient-to-r from-indigo-600 to-primary text-white shadow-lg shadow-indigo-500/30'
+                    ? 'bg-linear-to-r from-indigo-600 to-primary text-white shadow-lg shadow-indigo-500/30'
                     : 'bg-wibe-surface text-wibe-secondary hover:bg-wibe-surface'
                 }`}
               >
@@ -52,7 +52,7 @@ export default function ProfileTabs({ userId }: ProfileTabsProps) {
       </div>
 
       {/* Tab Content */}
-      <div className="min-h-[400px]">
+      <div className="min-h-100">
         {activeTab === 'my-lists' && <MyListsTab userId={userId} />}
         {activeTab === 'bookmarks' && <BookmarksTab userId={userId} />}
         {activeTab === 'likes' && <LikesTab userId={userId} />}

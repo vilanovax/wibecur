@@ -91,7 +91,7 @@ function AvatarChip({
     >
       <VibeAvatarDisplay avatar={avatar} size={48} selected={selected} />
       {selected && (
-        <span className="absolute end-1 top-1 flex size-5 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm">
+        <span className="absolute inset-e-1 top-1 flex size-5 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm">
           <Check className="size-3" strokeWidth={3} />
         </span>
       )}

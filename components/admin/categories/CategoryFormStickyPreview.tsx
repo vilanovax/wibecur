@@ -41,12 +41,12 @@ export default function CategoryFormStickyPreview({
 
   return (
     <div
-      className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden"
+      className="rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-sm overflow-hidden"
       dir="rtl"
     >
-      <div className="px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-        <p className="text-sm font-semibold text-[var(--color-text)]">پیش‌نمایش</p>
-        <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+      <div className="px-4 py-3 border-b border-(--color-border) bg-(--color-bg)">
+        <p className="text-sm font-semibold text-(--color-text)">پیش‌نمایش</p>
+        <p className="text-[10px] text-wibe-secondary mt-0.5">
           {step === 1 && 'کارت دسته + کاور'}
           {step === 2 && 'کارت + صفحه دسته'}
           {step === 3 && 'خلاصه قبل از انتشار'}
@@ -56,7 +56,7 @@ export default function CategoryFormStickyPreview({
       <div className="p-4 space-y-4">
         {/* کارت دسته */}
         <div
-          className="rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3"
+          className="rounded-xl border border-(--color-border) p-4 flex items-center gap-3"
           style={{ backgroundColor: `${accent}12` }}
         >
           <div
@@ -66,14 +66,14 @@ export default function CategoryFormStickyPreview({
             {values.icon || '📁'}
           </div>
           <div className="min-w-0">
-            <p className="font-semibold text-[var(--color-text)] truncate">
+            <p className="font-semibold text-(--color-text) truncate">
               {values.name || 'نام دسته'}
             </p>
-            <p className="text-xs text-[var(--color-text-muted)] font-mono truncate" dir="ltr">
+            <p className="text-xs text-wibe-secondary font-mono truncate" dir="ltr">
               /{values.slug || 'slug'}
             </p>
             {values.description && (
-              <p className="text-xs text-[var(--color-text-muted)] mt-1 line-clamp-2">
+              <p className="text-xs text-wibe-secondary mt-1 line-clamp-2">
                 {values.description}
               </p>
             )}
@@ -82,8 +82,8 @@ export default function CategoryFormStickyPreview({
 
         {/* هیرو — مرحله ۱ (با کاور) و ۲+ */}
         {(step >= 1 && values.heroImage) || step >= 2 || values.layoutType ? (
-          <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-            <p className="text-[10px] font-medium text-[var(--color-text-muted)] px-3 py-1.5 bg-[var(--color-bg)]">
+          <div className="rounded-xl border border-(--color-border) overflow-hidden">
+            <p className="text-[10px] font-medium text-wibe-secondary px-3 py-1.5 bg-(--color-bg)">
               صفحه دسته
               {layoutLabel ? ` · ${layoutLabel}` : ''}
             </p>
@@ -107,9 +107,9 @@ export default function CategoryFormStickyPreview({
 
         {/* خلاصه انتشار — مرحله ۳ */}
         {step >= 3 && (
-          <ul className="text-xs space-y-1.5 text-[var(--color-text-muted)]">
+          <ul className="text-xs space-y-1.5 text-wibe-secondary">
             <li>
-              <span className="text-[var(--color-text)]">وضعیت: </span>
+              <span className="text-(--color-text)">وضعیت: </span>
               {values.isActive ? (
                 <span className="text-emerald-600 font-medium">فعال</span>
               ) : (
@@ -117,12 +117,12 @@ export default function CategoryFormStickyPreview({
               )}
             </li>
             <li>
-              <span className="text-[var(--color-text)]">ترتیب: </span>
+              <span className="text-(--color-text)">ترتیب: </span>
               {values.order.toLocaleString('fa-IR')}
             </li>
             {values.trendingWeight !== 1 && (
               <li>
-                <span className="text-[var(--color-text)]">وزن: </span>
+                <span className="text-(--color-text)">وزن: </span>
                 {values.trendingWeight.toLocaleString('fa-IR')}×
               </li>
             )}

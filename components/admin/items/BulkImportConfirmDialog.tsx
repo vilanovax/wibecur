@@ -30,52 +30,52 @@ export default function BulkImportConfirmDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-70 flex items-center justify-center bg-black/60 p-4">
       <div
-        className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xl"
+        className="w-full max-w-md rounded-2xl border border-(--color-border) bg-(--color-surface) p-5 shadow-xl"
         role="dialog"
         aria-labelledby="bulk-import-confirm-title"
         dir="rtl"
       >
         <div className="mb-3 flex items-center gap-2 text-amber-600">
           <AlertTriangle className="h-5 w-5 shrink-0" />
-          <h3 id="bulk-import-confirm-title" className="font-semibold text-[var(--color-text)]">
+          <h3 id="bulk-import-confirm-title" className="font-semibold text-(--color-text)">
             تأیید مقصد import
           </h3>
         </div>
 
-        <p className="mb-4 text-sm leading-relaxed text-[var(--color-text-muted)]">
+        <p className="mb-4 text-sm leading-relaxed text-wibe-secondary">
           {importCount.toLocaleString('fa-IR')} آیتم به لیست زیر اضافه می‌شود. قبل از شروع، مقصد
           را بررسی کنید:
         </p>
 
         <div className="mb-4 space-y-2 rounded-xl border border-violet-100 bg-violet-50/80 px-4 py-3 text-sm">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[var(--color-text-muted)]">دسته</span>
-            <span className="font-semibold text-[var(--color-text)]">
+            <span className="text-wibe-secondary">دسته</span>
+            <span className="font-semibold text-(--color-text)">
               {categoryIcon ? `${categoryIcon} ` : ''}
               {categoryName}
             </span>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[var(--color-text-muted)]">لیست</span>
+            <span className="text-wibe-secondary">لیست</span>
             <span className="font-bold text-violet-800">{listTitle}</span>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <span className="text-[var(--color-text-muted)]">آیتم‌های فعلی</span>
-            <span className="font-medium text-[var(--color-text)]">
+            <span className="text-wibe-secondary">آیتم‌های فعلی</span>
+            <span className="font-medium text-(--color-text)">
               {currentItemCount.toLocaleString('fa-IR')}
             </span>
           </div>
           <div className="flex items-center justify-between gap-3 border-t border-violet-100 pt-2">
-            <span className="text-[var(--color-text-muted)]">افزودن</span>
+            <span className="text-wibe-secondary">افزودن</span>
             <span className="font-bold text-violet-700">
               +{importCount.toLocaleString('fa-IR')} آیتم
             </span>
           </div>
           <div className="flex items-center justify-between gap-3 border-t border-violet-100 pt-2">
-            <span className="text-[var(--color-text-muted)]">دادهٔ موجود</span>
-            <span className="font-medium text-[var(--color-text)]">
+            <span className="text-wibe-secondary">دادهٔ موجود</span>
+            <span className="font-medium text-(--color-text)">
               {overwriteExistingData ? 'به‌روزرسانی با JSON' : 'حفظ دادهٔ DB'}
             </span>
           </div>
@@ -90,7 +90,7 @@ export default function BulkImportConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="flex-1 rounded-xl border border-[var(--color-border)] py-2.5 text-sm font-medium hover:bg-[var(--color-bg)] disabled:opacity-50"
+            className="flex-1 rounded-xl border border-(--color-border) py-2.5 text-sm font-medium hover:bg-(--color-bg) disabled:opacity-50"
           >
             انصراف
           </button>

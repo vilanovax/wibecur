@@ -10,7 +10,7 @@ import TrendingRadar from './TrendingRadar';
 import type { DashboardClientPayload } from '@/lib/admin/types';
 
 const sectionFallback = (
-  <div className="min-h-[200px] animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
+  <div className="min-h-50 animate-pulse rounded-2xl bg-(--color-border-muted)" />
 );
 
 const CategoryIntelligenceGrid = dynamic(
@@ -74,7 +74,7 @@ export default function DashboardContent({ data }: DashboardContentProps) {
     <div className="space-y-5">
       <Suspense
         fallback={
-          <div className="h-[72px] animate-pulse bg-[var(--color-border-muted)] rounded-2xl" />
+          <div className="h-18 animate-pulse bg-(--color-border-muted) rounded-2xl" />
         }
       >
         <AdminTopBar initialRange={periodSnapshot.range} />
@@ -94,7 +94,7 @@ export default function DashboardContent({ data }: DashboardContentProps) {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start">
         <section className="xl:col-span-2 space-y-3">
-          <h2 className="text-base font-semibold text-[var(--color-text)]">
+          <h2 className="text-base font-semibold text-(--color-text)">
             عملکرد دسته‌ها
           </h2>
           <CategoryIntelligenceGrid categories={categoryIntelligence} />

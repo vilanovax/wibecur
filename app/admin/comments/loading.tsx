@@ -21,7 +21,7 @@ export default function CommentsLoading() {
           {[1, 2, 3, 4, 5, 6, 7].map((i) => (
             <div
               key={i}
-              className="h-4 flex-1 min-w-[80px] bg-slate-200 rounded animate-pulse"
+              className="h-4 flex-1 min-w-20 bg-slate-200 rounded animate-pulse"
             />
           ))}
         </div>
@@ -32,7 +32,7 @@ export default function CommentsLoading() {
           >
             <div className="h-4 w-4 bg-slate-100 rounded animate-pulse" />
             <div className="h-10 w-32 bg-slate-100 rounded-lg animate-pulse" />
-            <div className="h-4 flex-1 max-w-[200px] bg-slate-100 rounded animate-pulse" />
+            <div className="h-4 flex-1 max-w-50 bg-slate-100 rounded animate-pulse" />
             <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
             <div className="h-4 w-20 bg-slate-100 rounded animate-pulse" />
             <div className="h-6 w-20 bg-slate-100 rounded-full animate-pulse" />

@@ -37,7 +37,7 @@ export default function ListEditHeaderActions({
   }, [menuOpen]);
 
   const btnClass =
-    'inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-bg)] disabled:opacity-50 transition-colors';
+    'inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border border-(--color-border) text-(--color-text) hover:bg-(--color-bg) disabled:opacity-50 transition-colors';
 
   const handleFeatureToggle = async () => {
     setFeatureLoading(true);
@@ -101,31 +101,31 @@ export default function ListEditHeaderActions({
             <MoreHorizontal className="w-4 h-4" />
           </button>
           {menuOpen && (
-            <div className="absolute left-0 top-full mt-1 z-30 min-w-[180px] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg py-1">
+            <div className="absolute left-0 top-full mt-1 z-30 min-w-45 rounded-xl border border-(--color-border) bg-(--color-surface) shadow-lg py-1">
               <Link
                 href={`/admin/lists/${listId}/debug`}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-bg)"
                 onClick={() => setMenuOpen(false)}
               >
-                <Bug className="w-4 h-4 text-[var(--color-text-muted)]" />
+                <Bug className="w-4 h-4 text-wibe-secondary" />
                 دیباگ ترند
               </Link>
               {categoryId && (
                 <Link
                   href={`/admin/analytics?category=${categoryId}`}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-bg)"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <BarChart3 className="w-4 h-4 text-[var(--color-text-muted)]" />
+                  <BarChart3 className="w-4 h-4 text-wibe-secondary" />
                   آنالیتیکس دسته
                 </Link>
               )}
               <Link
                 href="/admin/custom/featured"
-                className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-bg)"
                 onClick={() => setMenuOpen(false)}
               >
-                <Sparkles className="w-4 h-4 text-[var(--color-text-muted)]" />
+                <Sparkles className="w-4 h-4 text-wibe-secondary" />
                 اسلات Featured
               </Link>
             </div>

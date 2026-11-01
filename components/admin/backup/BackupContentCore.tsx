@@ -42,8 +42,8 @@ export default function BackupContentCore({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-[var(--color-text)] dark:text-white">هسته محتوا</h2>
-          <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5">
+          <h2 className="text-sm font-semibold text-(--color-text) dark:text-white">هسته محتوا</h2>
+          <p className="text-xs text-wibe-secondary dark:text-(--color-text-subtle) mt-0.5">
             داده‌های اصلی — دسته ← لیست ← آیتم
           </p>
         </div>
@@ -76,7 +76,7 @@ export default function BackupContentCore({
               className={clsx(
                 'relative flex flex-col items-start gap-2 rounded-2xl border p-4 text-right transition-all',
                 isOn
-                  ? 'border-violet-400 bg-gradient-to-br from-violet-50 to-white shadow-md shadow-violet-500/10 dark:from-violet-900/30 dark:to-gray-800/80 dark:border-violet-500'
+                  ? 'border-violet-400 bg-linear-to-br from-violet-50 to-white shadow-md shadow-violet-500/10 dark:from-violet-900/30 dark:to-gray-800/80 dark:border-violet-500'
                   : 'border-gray-200 bg-white hover:border-violet-200 dark:border-gray-600 dark:bg-gray-800/40'
               )}
             >
@@ -88,24 +88,24 @@ export default function BackupContentCore({
                   'flex h-10 w-10 items-center justify-center rounded-xl',
                   isOn
                     ? 'bg-violet-600 text-white'
-                    : 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700 dark:text-[var(--color-text-subtle)]'
+                    : 'bg-gray-100 text-wibe-secondary dark:bg-gray-700 dark:text-(--color-text-subtle)'
                 )}
               >
                 <Icon className="h-5 w-5" />
               </div>
               <div className="w-full">
-                <span className="text-sm font-semibold text-[var(--color-text)] dark:text-white block">
+                <span className="text-sm font-semibold text-(--color-text) dark:text-white block">
                   {meta.label}
                 </span>
-                <span className="text-[10px] text-[var(--color-text-subtle)] font-mono">{meta.sub}</span>
+                <span className="text-[10px] text-(--color-text-subtle) font-mono">{meta.sub}</span>
               </div>
               <div className="w-full pt-1 border-t border-gray-100 dark:border-gray-700/80">
                 {statsLoading ? (
-                  <span className="text-xs text-[var(--color-text-subtle)]">در حال شمارش…</span>
+                  <span className="text-xs text-(--color-text-subtle)">در حال شمارش…</span>
                 ) : (
                   <span className="text-lg font-bold tabular-nums text-violet-700 dark:text-violet-300">
                     {count != null ? count.toLocaleString('fa-IR') : '—'}
-                    <span className="text-[11px] font-normal text-[var(--color-text-muted)] mr-1">رکورد</span>
+                    <span className="text-[11px] font-normal text-wibe-secondary mr-1">رکورد</span>
                   </span>
                 )}
               </div>
@@ -115,7 +115,7 @@ export default function BackupContentCore({
       </div>
 
       {selected.length > 0 && stats && (
-        <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] text-center">
+        <p className="text-xs text-wibe-secondary dark:text-(--color-text-subtle) text-center">
           جمع انتخاب‌شده هسته محتوا:{' '}
           <strong className="text-violet-700 dark:text-violet-300">
             {(selectedRows ?? 0).toLocaleString('fa-IR')}

@@ -219,7 +219,7 @@ export default function AvatarSelectionSheet({
                     </span>
                   )}
                   {(isActive || selected) && unlocked && (
-                    <span className="absolute end-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm">
+                    <span className="absolute inset-e-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm">
                       <Check className="h-3 w-3" strokeWidth={3} />
                     </span>
                   )}
@@ -260,7 +260,7 @@ export default function AvatarSelectionSheet({
                       setUploadPreview(null);
                       setUploadFile(null);
                     }}
-                    className="absolute start-2 top-2 flex size-11 items-center justify-center rounded-full bg-foreground/50 text-background backdrop-blur-sm"
+                    className="absolute inset-s-2 top-2 flex size-11 items-center justify-center rounded-full bg-foreground/50 text-background backdrop-blur-sm"
                     aria-label="حذف پیش‌نمایش"
                   >
                     <X className="h-4 w-4" />

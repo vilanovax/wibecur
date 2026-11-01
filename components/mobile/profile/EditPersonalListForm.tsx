@@ -227,7 +227,7 @@ export default function EditPersonalListForm({
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, coverImage: '' }))}
-                    className="absolute end-2 top-2 flex size-11 items-center justify-center rounded-full bg-destructive text-white"
+                    className="absolute inset-e-2 top-2 flex size-11 items-center justify-center rounded-full bg-destructive text-white"
                     disabled={isLoading || isUploadingImage}
                   >
                     <X className="w-4 h-4" />
@@ -257,7 +257,7 @@ export default function EditPersonalListForm({
           </div>
         </div>
 
-        <div className="flex-shrink-0 border-t border-border bg-popover p-4">
+        <div className="shrink-0 border-t border-border bg-popover p-4">
           <div className="flex gap-3">
             <Button type="button" variant="secondary" size="lg" className="flex-1" onClick={onClose} disabled={isLoading || isUploadingImage}>
               انصراف

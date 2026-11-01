@@ -24,14 +24,14 @@ export default function DashboardPeriodKpis({
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-[var(--color-text-muted)]">
-          <span className="font-medium text-[var(--color-text)]">
+        <p className="text-sm text-wibe-secondary">
+          <span className="font-medium text-(--color-text)">
             شاخص‌های {periodLabel}
           </span>
-          <span className="mx-2 text-[var(--color-border)]">·</span>
+          <span className="mx-2 text-(--color-border)">·</span>
           بازه انتخاب‌شده:{' '}
           <span className="font-medium">{RANGE_LABELS[range]}</span>
-          <span className="mx-2 text-[var(--color-border)]">·</span>
+          <span className="mx-2 text-(--color-border)">·</span>
           <span className="text-xs">
             پالس سیستم و رادار ترند لحظه‌ای هستند
           </span>

@@ -366,7 +366,7 @@ export default function ProfileHeader({
               <LogOut className="size-7" strokeWidth={1.75} />
             </div>
             <p className="wibe-body font-semibold text-foreground">از حساب خارج می‌شوید؟</p>
-            <p className="mt-2 max-w-[18rem] wibe-small leading-relaxed text-muted-foreground">
+            <p className="mt-2 max-w-72 wibe-small leading-relaxed text-muted-foreground">
               لیست‌ها و ذخیره‌های شما بعد از ورود مجدد در دسترس خواهند بود.
             </p>
           </div>

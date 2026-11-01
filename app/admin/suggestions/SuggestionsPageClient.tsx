@@ -52,8 +52,8 @@ function SegmentedControl<T extends string>({
             onClick={() => onChange(opt.id)}
             className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
               active
-                ? 'bg-white dark:bg-gray-800 text-[var(--color-text)] dark:text-white shadow-sm'
-                : 'text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] hover:text-[var(--color-text)]'
+                ? 'bg-white dark:bg-gray-800 text-(--color-text) dark:text-white shadow-sm'
+                : 'text-wibe-secondary dark:text-(--color-text-subtle) hover:text-(--color-text)'
             }`}
           >
             {opt.label}
@@ -120,7 +120,7 @@ export default function SuggestionsPageClient({
                   className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
                     active
                       ? 'bg-white dark:bg-gray-800 text-violet-700 dark:text-violet-300 shadow-sm'
-                      : 'text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] hover:text-[var(--color-text)]'
+                      : 'text-wibe-secondary dark:text-(--color-text-subtle) hover:text-(--color-text)'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -142,7 +142,7 @@ export default function SuggestionsPageClient({
 
         {activeTab === 'items' && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">منبع:</span>
+            <span className="text-xs text-wibe-secondary dark:text-(--color-text-subtle)">منبع:</span>
             <SegmentedControl
               value={source}
               options={sourceFilters}

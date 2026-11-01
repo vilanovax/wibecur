@@ -186,7 +186,7 @@ export default function RecentActivityTab({
                   active:scale-[0.99] active:shadow
                   ${isViral ? 'p-5 lg:p-4' : 'p-4 lg:p-3'}
                   ${isViral
-                    ? 'border bg-white shadow-sm border-orange-200/80 bg-gradient-to-b from-white to-orange-50/30'
+                    ? 'border bg-white shadow-sm border-orange-200/80 bg-linear-to-b from-white to-orange-50/30'
                     : 'border border-wibe bg-white shadow-sm hover:shadow-md lg:hover:border-primary/15'}
                 `}
               >

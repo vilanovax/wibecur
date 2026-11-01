@@ -92,7 +92,7 @@ interface EditListFormProps {
 }
 
 const sectionCard =
-  'rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden';
+  'rounded-xl border border-(--color-border-muted) bg-(--color-surface) shadow-(--shadow-card) overflow-hidden';
 
 export default function EditListForm({ list, categories, intelligence }: EditListFormProps) {
   const router = useRouter();
@@ -349,13 +349,13 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
         <div className="min-w-0">
           <Link
             href={`/admin/lists/${list.id}`}
-            className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--primary)] mb-2"
+            className="inline-flex items-center gap-1 text-xs text-wibe-secondary hover:text-primary mb-2"
           >
             <ChevronRight className="w-3.5 h-3.5" />
             بازگشت به workspace
           </Link>
-          <h1 className="text-xl font-bold text-[var(--color-text)]">ویرایش لیست</h1>
-          <p className="text-sm text-[var(--color-text-muted)] truncate mt-0.5">{list.title}</p>
+          <h1 className="text-xl font-bold text-(--color-text)">ویرایش لیست</h1>
+          <p className="text-sm text-wibe-secondary truncate mt-0.5">{list.title}</p>
         </div>
         <ListEditHeaderActions
           listId={list.id}
@@ -411,8 +411,8 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
 
           {step === 1 && (
             <section className={sectionCard}>
-              <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
-                <h2 className="text-sm font-semibold text-[var(--color-text)]">اطلاعات پایه</h2>
+              <div className="px-4 py-3 border-b border-(--color-border-muted) bg-(--color-bg)/50">
+                <h2 className="text-sm font-semibold text-(--color-text)">اطلاعات پایه</h2>
               </div>
               <div className="p-4">
                 <ListFormIdentity
@@ -445,9 +445,9 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
           {step === 2 && (
             <>
               <section className={sectionCard}>
-                <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
-                  <h2 className="text-sm font-semibold text-[var(--color-text)]">نمایش و وضعیت</h2>
-                  <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">انتشار، Featured و تعامل</p>
+                <div className="px-4 py-3 border-b border-(--color-border-muted) bg-(--color-bg)/50">
+                  <h2 className="text-sm font-semibold text-(--color-text)">نمایش و وضعیت</h2>
+                  <p className="text-[10px] text-wibe-secondary mt-0.5">انتشار، Featured و تعامل</p>
                 </div>
                 <div className="p-4">
                   <ListEditStatusToggles
@@ -464,16 +464,16 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
               </section>
 
               <section className={sectionCard}>
-                <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
-                  <h2 className="text-sm font-semibold text-[var(--color-text)]">ظاهر</h2>
+                <div className="px-4 py-3 border-b border-(--color-border-muted) bg-(--color-bg)/50">
+                  <h2 className="text-sm font-semibold text-(--color-text)">ظاهر</h2>
                 </div>
                 <div className="p-4 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-4 items-start">
                   <div>
-                    <label className="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">نشان</label>
+                    <label className="block text-xs font-medium text-wibe-secondary mb-1.5">نشان</label>
                     <select
                       value={formData.badge}
                       onChange={(e) => setFormData((p) => ({ ...p, badge: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm"
+                      className="w-full px-3 py-2 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm"
                     >
                       <option value="">بدون نشان</option>
                       <option value="TRENDING">Trending</option>

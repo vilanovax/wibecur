@@ -115,7 +115,7 @@ function CopyUrlButton({ url, disabled }: { url: string; disabled?: boolean }) {
       onClick={handleCopy}
       disabled={disabled}
       title={url}
-      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-[var(--color-text-muted)] transition-colors hover:bg-gray-100 hover:text-[var(--color-text)] disabled:opacity-40 disabled:pointer-events-none"
+      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-wibe-secondary transition-colors hover:bg-gray-100 hover:text-(--color-text) disabled:opacity-40 disabled:pointer-events-none"
     >
       {copied ? (
         <>
@@ -217,7 +217,7 @@ function ItemTitleRow({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-gray-200 p-1.5 text-[var(--color-text-muted)] hover:bg-gray-50"
+          className="rounded-lg border border-gray-200 p-1.5 text-wibe-secondary hover:bg-gray-50"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -236,15 +236,15 @@ function ItemTitleRow({
       >
         <p
           className={`truncate text-sm font-semibold ${
-            item.isHidden ? 'text-[var(--color-text-subtle)] line-through' : 'text-[var(--color-text)]'
+            item.isHidden ? 'text-(--color-text-subtle) line-through' : 'text-(--color-text)'
           }`}
         >
           {item.title}
         </p>
-        <Pencil className="h-3 w-3 shrink-0 text-[var(--color-text-subtle)] opacity-0 group-hover/title:opacity-100" />
+        <Pencil className="h-3 w-3 shrink-0 text-(--color-text-subtle) opacity-0 group-hover/title:opacity-100" />
       </button>
       {item.isHidden && (
-        <span className="rounded-full bg-gray-200 px-1.5 py-0.5 text-[9px] font-bold text-[var(--color-text-muted)]">
+        <span className="rounded-full bg-gray-200 px-1.5 py-0.5 text-[9px] font-bold text-wibe-secondary">
           غیرفعال
         </span>
       )}
@@ -807,7 +807,7 @@ export default function ExternalImageItemsModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/45 p-0 sm:p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-70 flex items-end sm:items-center justify-center bg-black/45 p-0 sm:p-4 backdrop-blur-[2px]"
       onClick={(e) => e.target === e.currentTarget && !isBusy && handleClose()}
       dir="rtl"
     >
@@ -819,14 +819,14 @@ export default function ExternalImageItemsModal({
         aria-labelledby="external-images-title"
       >
         {/* Header */}
-        <div className="relative shrink-0 border-b border-gray-100 bg-gradient-to-l from-amber-50/80 via-white to-white px-5 py-4">
+        <div className="relative shrink-0 border-b border-gray-100 bg-linear-to-l from-amber-50/80 via-white to-white px-5 py-4">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 ring-1 ring-amber-200/70">
               <CloudOff className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 id="external-images-title" className="text-base sm:text-lg font-bold text-[var(--color-text)]">
+                <h2 id="external-images-title" className="text-base sm:text-lg font-bold text-(--color-text)">
                   S3
                 </h2>
                 {!loading && totalCount > 0 && (
@@ -835,15 +835,15 @@ export default function ExternalImageItemsModal({
                   </span>
                 )}
               </div>
-              <p className="mt-0.5 truncate text-sm font-medium text-[var(--color-text)]">{scopeTitle}</p>
-              <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+              <p className="mt-0.5 truncate text-sm font-medium text-(--color-text)">{scopeTitle}</p>
+              <p className="mt-1 text-xs leading-relaxed text-wibe-secondary">
                 تصاویر خارجی به ParsPack منتقل می‌شوند؛ موارد بدون تصویر از OMDb دریافت می‌شوند (در صورت داشتن IMDb).
               </p>
             </div>
             <button
               type="button"
               onClick={handleClose}
-              className="shrink-0 rounded-xl p-2 text-[var(--color-text-subtle)] transition-colors hover:bg-gray-100 hover:text-[var(--color-text)]"
+              className="shrink-0 rounded-xl p-2 text-(--color-text-subtle) transition-colors hover:bg-gray-100 hover:text-(--color-text)"
               aria-label="بستن"
             >
               <X className="h-5 w-5" />
@@ -852,7 +852,7 @@ export default function ExternalImageItemsModal({
 
           {showProgress && (
             <div className="mt-4 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] font-medium text-[var(--color-text-muted)]">
+              <div className="flex items-center justify-between text-[11px] font-medium text-wibe-secondary">
                 <span>
                   {isMigrating
                     ? 'در حال تبدیل تصاویر…'
@@ -871,7 +871,7 @@ export default function ExternalImageItemsModal({
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-gray-200">
                 <div
-                  className="h-full rounded-full bg-gradient-to-l from-emerald-500 to-violet-500 transition-all duration-500 ease-out"
+                  className="h-full rounded-full bg-linear-to-l from-emerald-500 to-violet-500 transition-all duration-500 ease-out"
                   style={{ width: `${Math.max(isMigrating ? 4 : 0, migrateProgress.percent)}%` }}
                 />
               </div>
@@ -900,14 +900,14 @@ export default function ExternalImageItemsModal({
         {!loading && !error && (items.length > 0 || missingPosters.length > 0) && (
           <div className="shrink-0 space-y-3 border-b border-gray-100 bg-gray-50/60 px-5 py-3">
             <div className="relative">
-              <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-subtle)]" />
+              <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--color-text-subtle)" />
               <input
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 disabled={isBusy}
                 placeholder="جستجو در عنوان یا لیست…"
-                className="w-full rounded-xl border border-gray-200 bg-white py-2 pr-9 pl-3 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 disabled:opacity-60"
+                className="w-full rounded-xl border border-gray-200 bg-white py-2 pr-9 pl-3 text-sm text-(--color-text) placeholder:text-(--color-text-subtle) focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 disabled:opacity-60"
               />
             </div>
 
@@ -920,7 +920,7 @@ export default function ExternalImageItemsModal({
                   className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50 ${
                     hostFilter === 'all'
                       ? 'bg-gray-900 text-white'
-                      : 'bg-white text-[var(--color-text-muted)] ring-1 ring-gray-200 hover:bg-gray-100'
+                      : 'bg-white text-wibe-secondary ring-1 ring-gray-200 hover:bg-gray-100'
                   }`}
                 >
                   همه ({items.length.toLocaleString('fa-IR')})
@@ -934,7 +934,7 @@ export default function ExternalImageItemsModal({
                     className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors disabled:opacity-50 ${
                       hostFilter === host
                         ? 'bg-amber-600 text-white'
-                        : 'bg-white text-[var(--color-text-muted)] ring-1 ring-gray-200 hover:bg-amber-50'
+                        : 'bg-white text-wibe-secondary ring-1 ring-gray-200 hover:bg-amber-50'
                     }`}
                   >
                     {label} ({count.toLocaleString('fa-IR')})
@@ -948,7 +948,7 @@ export default function ExternalImageItemsModal({
         {/* Body */}
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4">
           {loading && (
-            <div className="flex flex-col items-center justify-center py-16 text-[var(--color-text-muted)]">
+            <div className="flex flex-col items-center justify-center py-16 text-wibe-secondary">
               <Loader2 className="mb-3 h-9 w-9 animate-spin text-amber-500" />
               <span className="text-sm font-medium">در حال بررسی تصاویر…</span>
             </div>
@@ -969,12 +969,12 @@ export default function ExternalImageItemsModal({
                   <Sparkles className="h-6 w-6" />
                 )}
               </div>
-              <p className="text-sm font-semibold text-[var(--color-text)]">
+              <p className="text-sm font-semibold text-(--color-text)">
                 {migrateSummary?.success
                   ? `${migrateSummary.success.toLocaleString('fa-IR')} تصویر با موفقیت به ParsPack منتقل شد`
                   : 'همه تصاویر روی ParsPack هستند'}
               </p>
-              <p className="mt-1 max-w-sm text-xs leading-relaxed text-[var(--color-text-muted)]">
+              <p className="mt-1 max-w-sm text-xs leading-relaxed text-wibe-secondary">
                 {migrateSummary?.failed
                   ? `${migrateSummary.failed.toLocaleString('fa-IR')} مورد با خطا مواجه شد — می‌توانید دوباره تلاش کنید.`
                   : scope === 'catalog'
@@ -991,7 +991,7 @@ export default function ExternalImageItemsModal({
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
                 <div className="flex items-center gap-2">
                   <ImageOff className="h-4 w-4 text-sky-600" />
-                  <h3 className="text-sm font-bold text-[var(--color-text)]">بدون تصویر (OMDb)</h3>
+                  <h3 className="text-sm font-bold text-(--color-text)">بدون تصویر (OMDb)</h3>
                   <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-800">
                     {missingPosters.length.toLocaleString('fa-IR')}
                   </span>
@@ -1041,7 +1041,7 @@ export default function ExternalImageItemsModal({
                       }`}
                     >
                       <div className="relative flex w-6 shrink-0 flex-col items-center gap-1">
-                        <span className="text-[10px] font-mono text-[var(--color-text-subtle)]">
+                        <span className="text-[10px] font-mono text-(--color-text-subtle)">
                           {(index + 1).toLocaleString('fa-IR')}
                         </span>
                         {isDone && (
@@ -1063,7 +1063,7 @@ export default function ExternalImageItemsModal({
                         )}
                       </div>
 
-                      <div className="relative flex h-[4.5rem] w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-100 shadow-sm ring-1 ring-black/5 sm:h-16 sm:w-11 sm:rounded-lg">
+                      <div className="relative flex h-18 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-100 shadow-sm ring-1 ring-black/5 sm:h-16 sm:w-11 sm:rounded-lg">
                         {isDone && displayUrl ? (
                           <Image
                             src={toAdminStorageImageSrc(displayUrl)}
@@ -1073,7 +1073,7 @@ export default function ExternalImageItemsModal({
                             unoptimized
                           />
                         ) : (
-                          <ImageOff className="h-5 w-5 text-[var(--color-text-subtle)]" />
+                          <ImageOff className="h-5 w-5 text-(--color-text-subtle)" />
                         )}
                       </div>
 
@@ -1094,7 +1094,7 @@ export default function ExternalImageItemsModal({
                         </div>
                         <p className="mt-0.5 truncate text-[11px] text-violet-600">{item.listTitle}</p>
                         {!isDone && (
-                          <p className="mt-1 font-mono text-[10px] text-[var(--color-text-muted)]">
+                          <p className="mt-1 font-mono text-[10px] text-wibe-secondary">
                             {item.imdbId || 'بدون IMDb'}
                           </p>
                         )}
@@ -1113,8 +1113,8 @@ export default function ExternalImageItemsModal({
                               title={item.isHidden ? 'فعال کردن' : 'غیرفعال کردن'}
                               className={`inline-flex items-center justify-center rounded-lg border p-1.5 text-[10px] disabled:opacity-50 ${
                                 item.isHidden
-                                  ? 'border-gray-300 bg-gray-100 text-[var(--color-text-muted)]'
-                                  : 'border-gray-200 bg-white text-[var(--color-text-muted)] hover:bg-gray-50'
+                                  ? 'border-gray-300 bg-gray-100 text-wibe-secondary'
+                                  : 'border-gray-200 bg-white text-wibe-secondary hover:bg-gray-50'
                               }`}
                             >
                               {togglingHideIds.has(item.id) ? (
@@ -1142,7 +1142,7 @@ export default function ExternalImageItemsModal({
                                   ? `/admin/catalog/${item.id}/edit`
                                   : `/admin/items/${item.id}/edit`
                               }
-                              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[var(--color-text)] transition-colors hover:bg-gray-50 sm:px-3 sm:text-xs"
+                              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-(--color-text) transition-colors hover:bg-gray-50 sm:px-3 sm:text-xs"
                             >
                               <Pencil className="h-3 w-3" />
                             </Link>
@@ -1152,7 +1152,7 @@ export default function ExternalImageItemsModal({
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 title="باز کردن در IMDb"
-                                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 text-[var(--color-text-muted)] transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-[var(--color-text)]"
+                                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 text-wibe-secondary transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-(--color-text)"
                               >
                                 <ExternalLink className="h-3.5 w-3.5" />
                               </a>
@@ -1168,7 +1168,7 @@ export default function ExternalImageItemsModal({
           )}
 
           {!loading && items.length > 0 && filteredItems.length === 0 && filteredMissingPosters.length === 0 && (
-            <div className="mx-1 rounded-xl border border-dashed border-gray-200 py-10 text-center text-sm text-[var(--color-text-muted)]">
+            <div className="mx-1 rounded-xl border border-dashed border-gray-200 py-10 text-center text-sm text-wibe-secondary">
               نتیجه‌ای برای «{query}» پیدا نشد.
             </div>
           )}
@@ -1178,7 +1178,7 @@ export default function ExternalImageItemsModal({
               {missingPosters.length > 0 && (
                 <div className="mb-2 flex items-center gap-2 px-1">
                   <CloudOff className="h-4 w-4 text-amber-600" />
-                  <h3 className="text-sm font-bold text-[var(--color-text)]">تصاویر خارجی</h3>
+                  <h3 className="text-sm font-bold text-(--color-text)">تصاویر خارجی</h3>
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
                     {items.length.toLocaleString('fa-IR')}
                   </span>
@@ -1207,7 +1207,7 @@ export default function ExternalImageItemsModal({
                     }`}
                   >
                     <div className="relative flex w-6 shrink-0 flex-col items-center gap-1">
-                      <span className="text-[10px] font-mono text-[var(--color-text-subtle)]">
+                      <span className="text-[10px] font-mono text-(--color-text-subtle)">
                         {(index + 1).toLocaleString('fa-IR')}
                       </span>
                       {isDone && (
@@ -1229,7 +1229,7 @@ export default function ExternalImageItemsModal({
                       )}
                     </div>
 
-                    <div className="relative h-[4.5rem] w-8 shrink-0 overflow-hidden rounded-md bg-gray-200 shadow-sm ring-1 ring-black/5 sm:h-16 sm:w-11 sm:rounded-lg">
+                    <div className="relative h-18 w-8 shrink-0 overflow-hidden rounded-md bg-gray-200 shadow-sm ring-1 ring-black/5 sm:h-16 sm:w-11 sm:rounded-lg">
                       <Image
                         src={imageSrc}
                         alt=""
@@ -1247,7 +1247,7 @@ export default function ExternalImageItemsModal({
                     <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                       {mode !== 'catalog' && (
-                        <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-mono text-[var(--color-text-muted)]">
+                        <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-mono text-wibe-secondary">
                           #{item.order}
                         </span>
                       )}
@@ -1296,8 +1296,8 @@ export default function ExternalImageItemsModal({
                             title={item.isHidden ? 'فعال کردن' : 'غیرفعال کردن'}
                             className={`inline-flex items-center justify-center rounded-lg border p-1.5 text-[10px] disabled:opacity-50 ${
                               item.isHidden
-                                ? 'border-gray-300 bg-gray-100 text-[var(--color-text-muted)]'
-                                : 'border-gray-200 bg-white text-[var(--color-text-muted)] hover:bg-gray-50'
+                                ? 'border-gray-300 bg-gray-100 text-wibe-secondary'
+                                : 'border-gray-200 bg-white text-wibe-secondary hover:bg-gray-50'
                             }`}
                           >
                             {togglingHideIds.has(item.id) ? (
@@ -1324,7 +1324,7 @@ export default function ExternalImageItemsModal({
                             target="_blank"
                             rel="noopener noreferrer"
                             title="باز کردن تصویر"
-                            className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 text-[var(--color-text-muted)] transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-[var(--color-text)]"
+                            className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 text-wibe-secondary transition-colors hover:border-gray-300 hover:bg-gray-50 hover:text-(--color-text)"
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
                           </a>
@@ -1343,7 +1343,7 @@ export default function ExternalImageItemsModal({
         {!loading && (totalCount > 0 || migrateSummary) && (
           <div className="shrink-0 border-t border-gray-100 bg-gray-50/80 px-5 py-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="text-xs text-[var(--color-text-muted)]">
+              <span className="text-xs text-wibe-secondary">
                 {totalCount > 0 ? (
                   <>
                     {filteredItems.length + filteredMissingPosters.length > 0
@@ -1365,7 +1365,7 @@ export default function ExternalImageItemsModal({
                   onClick={() => void handleMigrateAll()}
                   disabled={isBusy || !storageReady}
                   title={!storageReady ? storageError : undefined}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-l from-violet-600 to-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-violet-700 hover:to-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl bg-linear-to-l from-violet-600 to-violet-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-violet-700 hover:to-violet-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isMigrating ? (
                     <>

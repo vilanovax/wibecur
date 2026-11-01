@@ -7,7 +7,7 @@ const AnalyticsDashboard = nextDynamic(
   {
     loading: () => (
       <div
-        className="h-[32rem] animate-pulse rounded-2xl bg-[var(--color-border-muted)]"
+        className="h-128 animate-pulse rounded-2xl bg-(--color-border-muted)"
         aria-hidden
       />
     ),

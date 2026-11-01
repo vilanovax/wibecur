@@ -8,10 +8,10 @@ import { parseUserFilter } from '@/lib/admin/user-filter-utils';
 function UsersSkeleton() {
   return (
     <div className="space-y-6 animate-pulse" dir="rtl">
-      <div className="h-16 rounded-2xl bg-[var(--color-border-muted)]" />
-      <div className="h-11 rounded-xl bg-[var(--color-border-muted)]" />
-      <div className="h-11 rounded-xl bg-[var(--color-border-muted)]" />
-      <div className="h-80 rounded-2xl bg-[var(--color-border-muted)]" />
+      <div className="h-16 rounded-2xl bg-(--color-border-muted)" />
+      <div className="h-11 rounded-xl bg-(--color-border-muted)" />
+      <div className="h-11 rounded-xl bg-(--color-border-muted)" />
+      <div className="h-80 rounded-2xl bg-(--color-border-muted)" />
     </div>
   );
 }

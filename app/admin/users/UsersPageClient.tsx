@@ -19,7 +19,7 @@ import {
 import { faNumber } from '@/lib/utils';
 
 const tableFallback = (
-  <div className="min-h-80 animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
+  <div className="min-h-80 animate-pulse rounded-2xl bg-(--color-border-muted)" />
 );
 
 const UsersIntelligenceTable = dynamic(
@@ -236,10 +236,10 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
       <div>
         <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-[var(--color-text)] mb-2">
+            <h1 className="text-2xl font-bold text-(--color-text) mb-2">
               مدیریت کاربران
             </h1>
-            <p className="text-sm text-[var(--color-text-muted)]">
+            <p className="text-sm text-wibe-secondary">
               جستجو و فیلتر کاربران. عدد روی هر فیلتر همان تعداد فهرست است.
             </p>
           </div>
@@ -263,7 +263,7 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
         />
 
         {/* حین ناوبری سرور (فیلتر/جستجو/مرتب) جدول کم‌رنگ و غیرفعال می‌شود تا فریزِ بی‌بازخورد نباشد */}
-        <p className="mb-3 text-sm text-[var(--color-text-muted)] tabular-nums">
+        <p className="mb-3 text-sm text-wibe-secondary tabular-nums">
           {faNumber(data.totalCount)} کاربر
           {filterKind !== 'all' && (
             <> در {USER_FILTER_PILLS.find((p) => p.value === filterKind)?.label}</>

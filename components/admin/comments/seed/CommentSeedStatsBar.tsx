@@ -31,11 +31,11 @@ export default function CommentSeedStatsBar({
       {items.map(({ icon: Icon, label, value }) => (
         <div
           key={label}
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs"
+          className="inline-flex items-center gap-2 rounded-full border border-(--color-border) bg-(--color-surface) px-3 py-1.5 text-xs"
         >
-          <Icon className="h-3.5 w-3.5 text-[var(--color-text-muted)]" />
-          <span className="text-[var(--color-text-muted)]">{label}</span>
-          <span className="font-bold tabular-nums text-[var(--color-text)]">
+          <Icon className="h-3.5 w-3.5 text-wibe-secondary" />
+          <span className="text-wibe-secondary">{label}</span>
+          <span className="font-bold tabular-nums text-(--color-text)">
             {value.toLocaleString('fa-IR')}
           </span>
         </div>

@@ -27,7 +27,7 @@ export default function ListEditFormBar({
 }: ListEditFormBarProps) {
   return (
     <div
-      className="sticky bottom-0 z-20 -mx-5 px-5 py-3 mt-2 bg-[var(--color-bg)]/95 backdrop-blur-md border-t border-[var(--color-border)] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)]"
+      className="sticky bottom-0 z-20 -mx-5 px-5 py-3 mt-2 bg-(--color-bg)/95 backdrop-blur-md border-t border-(--color-border) shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)]"
       dir="rtl"
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -35,7 +35,7 @@ export default function ListEditFormBar({
           <button
             type="button"
             onClick={onPrevStep}
-            className="inline-flex items-center gap-1 px-3 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+            className="inline-flex items-center gap-1 px-3 py-2.5 rounded-xl border border-(--color-border) text-sm font-medium text-(--color-text) hover:bg-(--color-surface)"
           >
             <ChevronRight className="w-4 h-4" />
             قبلی
@@ -47,7 +47,7 @@ export default function ListEditFormBar({
             type="button"
             onClick={onNextStep}
             disabled={!canNextStep}
-            className="inline-flex items-center gap-1 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+            className="inline-flex items-center gap-1 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
           >
             بعدی
             <ChevronLeft className="w-4 h-4" />
@@ -57,7 +57,7 @@ export default function ListEditFormBar({
             type="submit"
             form="list-edit-form"
             disabled={loading || !canSave}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4" />
             {loading ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
@@ -70,7 +70,7 @@ export default function ListEditFormBar({
           disabled={loading || !canSave}
           className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
             step < 3
-              ? 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]'
+              ? 'border-(--color-border) text-wibe-secondary hover:bg-(--color-surface) hover:text-(--color-text)'
               : 'hidden'
           } disabled:opacity-50`}
         >
@@ -80,7 +80,7 @@ export default function ListEditFormBar({
 
         <Link
           href="/admin/lists"
-          className="px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+          className="px-4 py-2.5 rounded-xl border border-(--color-border) text-sm font-medium text-(--color-text) hover:bg-(--color-surface)"
         >
           انصراف
         </Link>
@@ -88,7 +88,7 @@ export default function ListEditFormBar({
           href={`/lists/${listSlug}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface)] hover:text-[var(--color-text)]"
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-(--color-border) text-sm font-medium text-wibe-secondary hover:bg-(--color-surface) hover:text-(--color-text)"
         >
           <ExternalLink className="w-4 h-4" />
           <span className="hidden sm:inline">پیش‌نمایش اپ</span>

@@ -22,13 +22,13 @@ export default function CommentsHubDashboard({
 
   return (
     <div dir="rtl" className="space-y-6">
-      <div className="flex items-center gap-3 text-[var(--color-text)]">
-        <span className="p-2.5 rounded-2xl bg-[var(--primary)]/10">
-          <MessageSquare className="w-8 h-8 text-[var(--primary)]" />
+      <div className="flex items-center gap-3 text-(--color-text)">
+        <span className="p-2.5 rounded-2xl bg-primary/10">
+          <MessageSquare className="w-8 h-8 text-primary" />
         </span>
         <div>
           <h1 className="text-2xl font-bold">داشبورد کامنت‌ها</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+          <p className="text-sm text-wibe-secondary mt-0.5">
             {actionTotal > 0
               ? `${actionTotal.toLocaleString('fa-IR')} مورد نیازمند اقدام`
               : 'صف بررسی خالی است — همه چیز به‌روز است'}
@@ -41,13 +41,13 @@ export default function CommentsHubDashboard({
       <CommentsHubPriorityQueue items={priorityItems} />
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-[var(--color-text)]">
+        <h2 className="text-sm font-semibold text-(--color-text)">
           خلاصه وضعیت
         </h2>
         <CommentsHubKpiStrip stats={stats} />
       </section>
 
-      <p className="text-xs text-[var(--color-text-muted)]">
+      <p className="text-xs text-wibe-secondary">
         از نوار بالا برای رفتن به صف کار، ریپورت‌ها یا تنظیم کلمات ممنوع استفاده
         کنید.
       </p>

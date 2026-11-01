@@ -30,7 +30,7 @@ export default function CommentSeedStepper({
   return (
     <nav
       aria-label="مراحل کامنت هوشمند"
-      className="mb-6 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/60 p-3"
+      className="mb-6 rounded-xl border border-(--color-border) bg-(--color-bg)/60 p-3"
       dir="rtl"
     >
       <ol className="grid grid-cols-4 gap-1">
@@ -48,9 +48,9 @@ export default function CommentSeedStepper({
                 onClick={() => clickable && onStepClick?.(item.step)}
                 className={`flex w-full flex-col items-center gap-1.5 rounded-lg px-2 py-2.5 text-center transition ${
                   active
-                    ? 'bg-[var(--color-surface)] shadow-sm ring-1 ring-primary/20'
+                    ? 'bg-(--color-surface) shadow-sm ring-1 ring-primary/20'
                     : clickable
-                      ? 'hover:bg-[var(--color-surface)]/80'
+                      ? 'hover:bg-(--color-surface)/80'
                       : 'opacity-60'
                 } ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
               >
@@ -60,7 +60,7 @@ export default function CommentSeedStepper({
                       ? 'border-primary bg-primary text-white'
                       : done
                         ? 'border-emerald-500 bg-emerald-500 text-white'
-                        : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)]'
+                        : 'border-(--color-border) bg-(--color-surface) text-wibe-secondary'
                   }`}
                 >
                   {done && !active ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
@@ -68,12 +68,12 @@ export default function CommentSeedStepper({
                 <span className="min-w-0">
                   <span
                     className={`block text-xs font-semibold ${
-                      active ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'
+                      active ? 'text-(--color-text)' : 'text-wibe-secondary'
                     }`}
                   >
                     {item.title}
                   </span>
-                  <span className="hidden text-[10px] text-[var(--color-text-muted)] sm:block">
+                  <span className="hidden text-[10px] text-wibe-secondary sm:block">
                     {item.subtitle}
                   </span>
                 </span>

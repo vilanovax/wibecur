@@ -31,7 +31,7 @@ import {
 import Toast, { type ToastType } from '@/components/shared/Toast';
 
 const viewFallback = (
-  <div className="min-h-[280px] animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
+  <div className="min-h-70 animate-pulse rounded-2xl bg-(--color-border-muted)" />
 );
 
 const ListIntelligenceCard = dynamic(
@@ -359,8 +359,8 @@ export default function ListsIntelligenceClient({
   const tabClass = (active: boolean) =>
     `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
       active
-        ? 'bg-[var(--primary)] text-white shadow-sm'
-        : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)]'
+        ? 'bg-primary text-white shadow-sm'
+        : 'text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text)'
     }`;
 
   return (
@@ -371,23 +371,23 @@ export default function ListsIntelligenceClient({
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <h1 className="text-xl font-bold text-[var(--color-text)]">لیست‌ها</h1>
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--color-bg)] border border-[var(--color-border-muted)] text-[var(--color-text-muted)] tabular-nums">
+            <h1 className="text-xl font-bold text-(--color-text)">لیست‌ها</h1>
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-(--color-bg) border border-(--color-border-muted) text-wibe-secondary tabular-nums">
               {data.pulse.totalLists.toLocaleString('fa-IR')} کل
             </span>
             {activeCategory && (
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)]">
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                 {activeCategory.icon} {activeCategory.name}
               </span>
             )}
           </div>
           {data.pulseFromSample && !isTrashView && (
-            <p className="text-xs text-[var(--color-text-muted)]">
+            <p className="text-xs text-wibe-secondary">
               KPI از {LISTS_PULSE_SAMPLE.toLocaleString('fa-IR')} لیست برتر
             </p>
           )}
           {!isTrashView && kpiCollapsed && data.pulse.insightLine && (
-            <p className="text-xs text-[var(--color-text-muted)] mt-1 truncate" title={data.pulse.insightLine}>
+            <p className="text-xs text-wibe-secondary mt-1 truncate" title={data.pulse.insightLine}>
               {data.pulse.insightLine}
             </p>
           )}
@@ -395,7 +395,7 @@ export default function ListsIntelligenceClient({
 
         <div className="flex flex-wrap items-center gap-2">
           {/* تب‌ها */}
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border-muted)]">
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-(--color-bg) border border-(--color-border-muted)">
             <Link
               href={
                 categoryId !== 'all' && activeCategory
@@ -444,30 +444,30 @@ export default function ListsIntelligenceClient({
 
       {/* KPI — قابل جمع‌شدن */}
       {!isTrashView && (
-        <section className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden">
+        <section className="rounded-xl border border-(--color-border-muted) bg-(--color-surface) shadow-(--shadow-card) overflow-hidden">
           <button
             type="button"
             onClick={() => setKpiCollapsed((c) => !c)}
-            className="w-full flex items-center justify-between gap-2 px-3 py-2 hover:bg-[var(--color-bg)]/50 transition-colors"
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 hover:bg-(--color-bg)/50 transition-colors"
           >
-            <span className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text)]">
-              <BarChart3 className="w-4 h-4 text-[var(--primary)]" />
+            <span className="inline-flex items-center gap-2 text-sm font-medium text-(--color-text)">
+              <BarChart3 className="w-4 h-4 text-primary" />
               خلاصه KPI
               {kpiCollapsed && (
-                <span className="text-xs font-normal text-[var(--color-text-muted)] tabular-nums">
+                <span className="text-xs font-normal text-wibe-secondary tabular-nums">
                   · {data.pulse.totalLists.toLocaleString('fa-IR')} کل
                   {data.pulse.lowEngagementLists > 0 && ` · ${data.pulse.lowEngagementLists.toLocaleString('fa-IR')} کم‌تعامل`}
                 </span>
               )}
             </span>
             {kpiCollapsed ? (
-              <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <ChevronDown className="w-4 h-4 text-wibe-secondary" />
             ) : (
-              <ChevronUp className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <ChevronUp className="w-4 h-4 text-wibe-secondary" />
             )}
           </button>
           {!kpiCollapsed && (
-            <div className="px-3 pb-3 border-t border-[var(--color-border-muted)] pt-2">
+            <div className="px-3 pb-3 border-t border-(--color-border-muted) pt-2">
               <ListPulseSummary
                 pulse={data.pulse}
                 activeFilter={filter}
@@ -481,7 +481,7 @@ export default function ListsIntelligenceClient({
       )}
 
       {embedded && (
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border-muted)] w-fit">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-(--color-bg) border border-(--color-border-muted) w-fit">
           <Link
             href={
               categoryId !== 'all' && activeCategory
@@ -499,12 +499,12 @@ export default function ListsIntelligenceClient({
       )}
 
       {isTrashView && lists.length > 0 && (
-        <p className="text-sm text-[var(--color-text-muted)] px-1">
+        <p className="text-sm text-wibe-secondary px-1">
           {lists.length.toLocaleString('fa-IR')} لیست — قابل بازگردانی
         </p>
       )}
 
-      <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] px-3 py-3">
+      <div className="rounded-xl border border-(--color-border-muted) bg-(--color-surface) px-3 py-3">
         <ListSmartFilterBar {...filterBarProps} />
       </div>
 
@@ -560,19 +560,19 @@ export default function ListsIntelligenceClient({
             type="button"
             disabled={safePage <= 1}
             onClick={() => goToPage(safePage - 1)}
-            className="inline-flex size-11 items-center justify-center rounded-lg border border-[var(--color-border-muted)] bg-white disabled:opacity-40"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-(--color-border-muted) bg-white disabled:opacity-40"
             aria-label="صفحه قبل"
           >
             <ChevronRight className="size-5" />
           </button>
-          <span className="text-sm text-[var(--color-text-muted)]">
+          <span className="text-sm text-wibe-secondary">
             صفحه {safePage.toLocaleString('fa-IR')} از {pageCount.toLocaleString('fa-IR')}
           </span>
           <button
             type="button"
             disabled={safePage >= pageCount}
             onClick={() => goToPage(safePage + 1)}
-            className="inline-flex size-11 items-center justify-center rounded-lg border border-[var(--color-border-muted)] bg-white disabled:opacity-40"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-(--color-border-muted) bg-white disabled:opacity-40"
             aria-label="صفحه بعد"
           >
             <ChevronLeft className="size-5" />
@@ -589,8 +589,8 @@ export default function ListsIntelligenceClient({
       />
 
       {showEmpty && (
-        <div className="rounded-xl border border-dashed border-[var(--color-border)] py-10 text-center">
-          <p className="text-[var(--color-text-muted)] text-sm mb-3">
+        <div className="rounded-xl border border-dashed border-(--color-border) py-10 text-center">
+          <p className="text-wibe-secondary text-sm mb-3">
             {search.trim()
               ? 'نتیجه‌ای یافت نشد.'
               : categoryId !== 'all'
@@ -600,7 +600,7 @@ export default function ListsIntelligenceClient({
           <button
             type="button"
             onClick={handleClearFilters}
-            className="text-sm text-[var(--primary)] hover:underline"
+            className="text-sm text-primary hover:underline"
           >
             پاک کردن فیلترها
           </button>
@@ -608,7 +608,7 @@ export default function ListsIntelligenceClient({
       )}
 
       {sorted.length === 0 && !showEmpty && filter === 'all' && categoryId === 'all' && !search.trim() && (
-        <div className="rounded-xl border border-dashed border-[var(--color-border)] py-10 text-center text-sm text-[var(--color-text-muted)]">
+        <div className="rounded-xl border border-dashed border-(--color-border) py-10 text-center text-sm text-wibe-secondary">
           لیستی یافت نشد.
         </div>
       )}

@@ -18,23 +18,23 @@ export default function ReportsTable({
   filterBadWords,
 }: Props) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-      <table className="w-full min-w-[640px]" dir="rtl">
-        <thead className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
+    <div className="overflow-x-auto rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-sm">
+      <table className="w-full min-w-160" dir="rtl">
+        <thead className="bg-(--color-bg) border-b border-(--color-border)">
           <tr>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)] w-16">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary w-16">
               ریپورت
             </th>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary">
               کامنت
             </th>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary">
               آیتم
             </th>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary">
               زمان
             </th>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary">
               وضعیت
             </th>
           </tr>
@@ -53,21 +53,21 @@ export default function ReportsTable({
               <tr
                 key={group.comment.id}
                 onClick={() => onSelect(group)}
-                className={`border-b border-[var(--color-border-muted)] cursor-pointer transition-colors ${
+                className={`border-b border-(--color-border-muted) cursor-pointer transition-colors ${
                   active
-                    ? 'bg-[var(--primary)]/8 ring-1 ring-inset ring-[var(--primary)]/30'
-                    : 'hover:bg-[var(--color-bg)]'
+                    ? 'bg-primary/8 ring-1 ring-inset ring-(--primary)/30'
+                    : 'hover:bg-(--color-bg)'
                 } ${openCount > 0 ? 'border-r-4 border-r-rose-500' : ''}`}
               >
                 <td className="px-3 py-2.5">
-                  <span className="inline-flex min-w-[2rem] justify-center px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 text-xs font-bold tabular-nums">
+                  <span className="inline-flex min-w-8 justify-center px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 text-xs font-bold tabular-nums">
                     {group.reportCount.toLocaleString('fa-IR')}
                   </span>
                 </td>
-                <td className="px-3 py-2.5 max-w-[280px]">
-                  <p className="text-sm text-[var(--color-text)] line-clamp-2">{preview}</p>
+                <td className="px-3 py-2.5 max-w-70">
+                  <p className="text-sm text-(--color-text) line-clamp-2">{preview}</p>
                   <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                    <p className="text-xs text-[var(--color-text-muted)] truncate">
+                    <p className="text-xs text-wibe-secondary truncate">
                       {group.comment.users.name || group.comment.users.email}
                     </p>
                     {group.comment.userModeration && (
@@ -79,10 +79,10 @@ export default function ReportsTable({
                     )}
                   </div>
                 </td>
-                <td className="px-3 py-2.5 text-sm text-[var(--color-text-muted)] max-w-[140px] truncate">
+                <td className="px-3 py-2.5 text-sm text-wibe-secondary max-w-35 truncate">
                   {group.comment.items.title}
                 </td>
-                <td className="px-3 py-2.5 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
+                <td className="px-3 py-2.5 text-xs text-wibe-secondary whitespace-nowrap">
                   {formatRelativeTime(group.comment.createdAt)}
                 </td>
                 <td className="px-3 py-2.5">
@@ -95,7 +95,7 @@ export default function ReportsTable({
                       باز
                     </span>
                   ) : (
-                    <span className="text-xs text-[var(--color-text-muted)] bg-[var(--color-bg)] px-2 py-0.5 rounded-lg">
+                    <span className="text-xs text-wibe-secondary bg-(--color-bg) px-2 py-0.5 rounded-lg">
                       حل‌شده
                     </span>
                   )}

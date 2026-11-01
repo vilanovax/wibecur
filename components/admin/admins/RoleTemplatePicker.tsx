@@ -52,7 +52,7 @@ export default function RoleTemplatePicker({ templates, value, onChange, disable
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold text-sm text-[var(--color-text)] dark:text-white">
+                  <span className="font-semibold text-sm text-(--color-text) dark:text-white">
                     {template.label}
                   </span>
                   <span
@@ -61,7 +61,7 @@ export default function RoleTemplatePicker({ templates, value, onChange, disable
                     {template.permissions.length.toLocaleString('fa-IR')} دسترسی
                   </span>
                 </div>
-                <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
+                <p className="mt-1 text-xs leading-relaxed text-wibe-secondary dark:text-(--color-text-subtle)">
                   {template.description}
                 </p>
               </div>

@@ -152,11 +152,11 @@ export default function DashboardActionCenter({
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="inline-flex items-center gap-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-wibe-secondary hover:text-(--color-text) transition-colors"
           >
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
             <span>
-              <span className="font-medium text-[var(--color-text)]">صف‌های مودریشن خالی</span>
+              <span className="font-medium text-(--color-text)">صف‌های مودریشن خالی</span>
               {' — '}
               کلیک برای جزئیات
             </span>
@@ -164,7 +164,7 @@ export default function DashboardActionCenter({
           </button>
           <Link
             href="/admin/comments"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-[var(--primary)] hover:bg-[var(--color-bg)] transition-colors"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-primary hover:bg-(--color-bg) transition-colors"
           >
             <LayoutGrid className="w-3.5 h-3.5" />
             کامنت‌ها
@@ -176,10 +176,10 @@ export default function DashboardActionCenter({
 
   return (
     <section
-      className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden"
+      className="rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-(--shadow-card) overflow-hidden"
       dir="rtl"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-(--color-border) bg-(--color-bg)/80">
         <div className="flex items-center gap-3">
           <span
             className={`p-2 rounded-xl ${
@@ -193,10 +193,10 @@ export default function DashboardActionCenter({
             />
           </span>
           <div>
-            <h2 className="text-base font-semibold text-[var(--color-text)]">
+            <h2 className="text-base font-semibold text-(--color-text)">
               مرکز اقدام
             </h2>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+            <p className="text-xs text-wibe-secondary mt-0.5">
               {allClear
                 ? 'همه صف‌ها خالی است'
                 : `${actionTotal.toLocaleString('fa-IR')} مورد اولویت‌دار`}
@@ -208,7 +208,7 @@ export default function DashboardActionCenter({
             <button
               type="button"
               onClick={() => setExpanded(false)}
-              className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] transition-colors"
+              className="p-1.5 rounded-lg text-wibe-secondary hover:bg-(--color-bg) transition-colors"
               title="جمع کردن"
             >
               <ChevronUp className="w-4 h-4" />
@@ -216,7 +216,7 @@ export default function DashboardActionCenter({
           )}
           <Link
             href="/admin/comments"
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity"
           >
             <LayoutGrid className="w-4 h-4" />
             داشبورد کامنت‌ها
@@ -228,8 +228,8 @@ export default function DashboardActionCenter({
       {allClear ? (
         <div className="flex items-center gap-2.5 px-4 sm:px-6 py-3 text-emerald-700">
           <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
-          <p className="text-sm text-[var(--color-text-muted)]">
-            <span className="font-medium text-[var(--color-text)]">صف‌های مودریشن خالی است</span>
+          <p className="text-sm text-wibe-secondary">
+            <span className="font-medium text-(--color-text)">صف‌های مودریشن خالی است</span>
             {' — '}
             کامنت معلق، ریپورت باز و هشدار اضافه‌ای وجود ندارد.
           </p>
@@ -244,21 +244,21 @@ export default function DashboardActionCenter({
                   <Link
                     key={item.id}
                     href={item.href}
-                    className={`min-h-11 w-full rounded-xl border bg-[var(--color-surface)] p-4 transition-all hover:border-[var(--primary)]/40 hover:shadow-md ring-1 sm:w-56 ${severityRing[item.severity]}`}
+                    className={`min-h-11 w-full rounded-xl border bg-(--color-surface) p-4 transition-all hover:border-(--primary)/40 hover:shadow-md ring-1 sm:w-56 ${severityRing[item.severity]}`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="p-2 rounded-lg bg-[var(--color-bg)]">
-                        <Icon className="w-5 h-5 text-[var(--color-text)]" />
+                      <span className="p-2 rounded-lg bg-(--color-bg)">
+                        <Icon className="w-5 h-5 text-(--color-text)" />
                       </span>
-                      <ChevronLeft className="w-4 h-4 text-[var(--color-text-muted)] rotate-180" />
+                      <ChevronLeft className="w-4 h-4 text-wibe-secondary rotate-180" />
                     </div>
-                    <p className="mt-3 text-2xl font-bold tabular-nums text-[var(--color-text)]">
+                    <p className="mt-3 text-2xl font-bold tabular-nums text-(--color-text)">
                       {item.count.toLocaleString('fa-IR')}
                     </p>
-                    <p className="text-sm font-medium text-[var(--color-text)] mt-1">
+                    <p className="text-sm font-medium text-(--color-text) mt-1">
                       {item.label}
                     </p>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                    <p className="text-xs text-wibe-secondary mt-0.5">
                       نیازمند اقدام
                     </p>
                   </Link>
@@ -272,14 +272,14 @@ export default function DashboardActionCenter({
             <div
               className={`px-4 sm:px-6 ${activePrimary.length > 0 ? 'pb-4' : 'py-4'} flex flex-wrap items-center gap-2`}
             >
-              <span className="text-xs text-[var(--color-text-muted)] shrink-0">
+              <span className="text-xs text-wibe-secondary shrink-0">
                 صف‌های خالی:
               </span>
               {emptyPrimary.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:border-[var(--primary)]/30 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-(--color-border) bg-(--color-bg) px-2.5 py-1 text-xs text-wibe-secondary hover:text-(--color-text) hover:border-(--primary)/30 transition-colors"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                   {item.label}
@@ -292,24 +292,24 @@ export default function DashboardActionCenter({
             <div className="px-4 sm:px-6 pb-4 flex flex-col gap-3">
               {secondary.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-[var(--color-text-muted)] shrink-0">
+                  <span className="text-xs text-wibe-secondary shrink-0">
                     سایر موارد:
                   </span>
                   {secondary.map((s) => (
                     <Link
                       key={s.key}
                       href={s.href}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text)] hover:border-[var(--primary)]/40 transition-colors"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-(--color-border) bg-(--color-bg) px-2.5 py-1.5 text-xs font-medium text-(--color-text) hover:border-(--primary)/40 transition-colors"
                     >
                       {s.label}
-                      <span className="tabular-nums text-[var(--primary)]">
+                      <span className="tabular-nums text-primary">
                         {s.value.toLocaleString('fa-IR')}
                       </span>
                     </Link>
                   ))}
                   <Link
                     href="/admin/comments/all?filter=approved"
-                    className="ms-auto text-xs text-[var(--color-text-muted)] hover:text-[var(--primary)]"
+                    className="ms-auto text-xs text-wibe-secondary hover:text-primary"
                   >
                     {comments.approved.toLocaleString('fa-IR')} تاییدشده ←
                   </Link>

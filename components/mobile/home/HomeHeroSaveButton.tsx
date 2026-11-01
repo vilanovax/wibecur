@@ -17,7 +17,7 @@ export default function HomeHeroSaveButton({
   saveCount = 0,
 }: HomeHeroSaveButtonProps) {
   return (
-    <div className="absolute end-3 top-3 z-20 sm:end-4 sm:top-4 lg:end-5 lg:top-5">
+    <div className="absolute inset-e-3 top-3 z-20 sm:inset-e-4 sm:top-4 lg:inset-e-5 lg:top-5">
       <HomeListSaveControl
         listId={listId}
         listSlug={listSlug}

@@ -28,7 +28,7 @@ const colorMap = {
 const deltaColorMap = {
   up: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
   down: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
-  neutral: 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-500/15 dark:text-[var(--color-text-subtle)]',
+  neutral: 'bg-gray-100 text-wibe-secondary dark:bg-gray-500/15 dark:text-(--color-text-subtle)',
 };
 
 interface SystemPulseBarProps {
@@ -46,7 +46,7 @@ export default function SystemPulseBar({ cards }: SystemPulseBarProps) {
         return (
           <div
             key={card.id}
-            className={`group relative rounded-2xl border bg-gradient-to-br ${colors} p-4 sm:p-5 shadow-[var(--shadow-card)] transition-all duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]`}
+            className={`group relative rounded-2xl border bg-linear-to-br ${colors} p-4 sm:p-5 shadow-(--shadow-card) transition-all duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]`}
             title={card.tooltip}
           >
             <div className="flex items-start justify-between gap-2 mb-2">
@@ -54,7 +54,7 @@ export default function SystemPulseBar({ cards }: SystemPulseBarProps) {
                 <span className="p-1.5 rounded-lg bg-white/60">
                   <Icon className="w-4 h-4" />
                 </span>
-                <span className="text-[13px] font-medium text-[var(--color-text-muted)]">
+                <span className="text-[13px] font-medium text-wibe-secondary">
                   {card.label}
                 </span>
               </div>
@@ -74,7 +74,7 @@ export default function SystemPulseBar({ cards }: SystemPulseBarProps) {
                 )}
               </span>
             </div>
-            <p className="text-2xl sm:text-3xl font-bold tabular-nums text-[var(--color-text)] mb-3">
+            <p className="text-2xl sm:text-3xl font-bold tabular-nums text-(--color-text) mb-3">
               {typeof card.value === 'number' ? card.value.toLocaleString('fa-IR') : card.value}
             </p>
             {card.sparkline.length > 0 && (

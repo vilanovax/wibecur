@@ -77,15 +77,15 @@ export default function ListDescriptionImportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-2 sm:items-center sm:p-4">
-      <div className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl">
-        <header className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] px-4 py-3 sm:px-5">
+      <div className="flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-2xl">
+        <header className="flex items-start justify-between gap-3 border-b border-(--color-border) px-4 py-3 sm:px-5">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
               <Upload className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="font-bold text-[var(--color-text)]">ورود JSON توضیحات لیست‌ها</h2>
-              <p className="text-xs text-[var(--color-text-muted)]">
+              <h2 className="font-bold text-(--color-text)">ورود JSON توضیحات لیست‌ها</h2>
+              <p className="text-xs text-wibe-secondary">
                 خروجی هوش مصنوعی را بچسبانید — فقط description به‌روز می‌شود
               </p>
             </div>
@@ -94,14 +94,14 @@ export default function ListDescriptionImportModal({
             type="button"
             onClick={onClose}
             disabled={isRunning}
-            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] disabled:opacity-40"
+            className="rounded-lg p-1.5 text-wibe-secondary hover:bg-(--color-bg) disabled:opacity-40"
             aria-label="بستن"
           >
             <X className="h-5 w-5" />
           </button>
         </header>
 
-        <div className="flex items-center gap-2 border-b border-[var(--color-border)] px-4 py-2 sm:px-5">
+        <div className="flex items-center gap-2 border-b border-(--color-border) px-4 py-2 sm:px-5">
           {parseState.status === 'valid' ? (
             <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
               <CheckCircle2 className="h-3.5 w-3.5" />
@@ -113,13 +113,13 @@ export default function ListDescriptionImportModal({
               {parseState.error}
             </span>
           ) : (
-            <span className="text-xs text-[var(--color-text-muted)]">JSON را در کادر زیر وارد کنید</span>
+            <span className="text-xs text-wibe-secondary">JSON را در کادر زیر وارد کنید</span>
           )}
           <div className="mr-auto flex items-center gap-2">
             <button
               type="button"
               onClick={handlePasteExample}
-              className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-2 py-1 text-[11px] font-medium hover:bg-[var(--color-bg)]"
+              className="inline-flex items-center gap-1 rounded-lg border border-(--color-border) px-2 py-1 text-[11px] font-medium hover:bg-(--color-bg)"
             >
               <FileJson className="h-3.5 w-3.5" />
               نمونه
@@ -141,16 +141,16 @@ export default function ListDescriptionImportModal({
             dir="ltr"
             spellCheck={false}
             placeholder='{ "lists": [ { "id": "...", "description": "..." } ] }'
-            className="h-[min(52vh,420px)] w-full resize-y rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/40 p-3 font-mono text-xs leading-relaxed text-left"
+            className="h-[min(52vh,420px)] w-full resize-y rounded-xl border border-(--color-border) bg-(--color-bg)/40 p-3 font-mono text-xs leading-relaxed text-left"
           />
         </div>
 
-        <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--color-border)] px-4 py-3 sm:px-5">
+        <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-(--color-border) px-4 py-3 sm:px-5">
           <button
             type="button"
             onClick={onClose}
             disabled={isRunning}
-            className="rounded-xl border border-[var(--color-border)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-bg)] disabled:opacity-40"
+            className="rounded-xl border border-(--color-border) px-4 py-2 text-sm font-medium hover:bg-(--color-bg) disabled:opacity-40"
           >
             {importProgress.phase === 'done' ? 'بستن' : 'انصراف'}
           </button>

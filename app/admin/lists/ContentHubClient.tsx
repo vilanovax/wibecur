@@ -19,7 +19,7 @@ import type { DiscoverPeopleResult } from '@/lib/person-profiles';
 function ViewFallback() {
   return (
     <div
-      className="py-16 text-center text-sm text-[var(--color-text-muted)] animate-pulse"
+      className="py-16 text-center text-sm text-wibe-secondary animate-pulse"
       dir="rtl"
     >
       در حال بارگذاری…
@@ -97,7 +97,7 @@ function tabClass(active: boolean) {
   return `inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
     active
       ? 'bg-white text-violet-700 shadow-sm'
-      : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+      : 'text-wibe-secondary hover:text-(--color-text)'
   }`;
 }
 
@@ -169,12 +169,12 @@ export default function ContentHubClient({
   return (
     <div className="space-y-4" dir="rtl">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold text-[var(--color-text)]">لیست‌ها و محتوا</h1>
+        <h1 className="text-xl font-bold text-(--color-text)">لیست‌ها و محتوا</h1>
         {showHubTools && (
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/admin/media"
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)]"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm font-semibold text-(--color-text)"
             >
               <Images className="size-4" strokeWidth={2} />
               کتابخانه تصاویر

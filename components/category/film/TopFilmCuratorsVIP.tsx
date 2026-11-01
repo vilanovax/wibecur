@@ -41,7 +41,7 @@ export default function TopFilmCuratorsVIP({
       <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide -mx-4 px-4">
         <Link
           href={topCurator.username ? `/u/${topCurator.username}` : '#'}
-          className="flex-shrink-0 flex flex-col items-center p-5 rounded-2xl bg-white border-2 border-amber-300 shadow-lg min-w-[140px]"
+          className="shrink-0 flex flex-col items-center p-5 rounded-2xl bg-white border-2 border-amber-300 shadow-lg min-w-35"
         >
           <div className="relative">
             {topCurator.image ? (
@@ -80,7 +80,7 @@ export default function TopFilmCuratorsVIP({
           <Link
             key={c.id}
             href={c.username ? `/u/${c.username}` : '#'}
-            className="flex-shrink-0 flex flex-col items-center p-4 rounded-2xl bg-white border border-wibe shadow-sm min-w-[100px]"
+            className="shrink-0 flex flex-col items-center p-4 rounded-2xl bg-white border border-wibe shadow-sm min-w-25"
           >
             {c.image ? (
               <ImageWithFallback

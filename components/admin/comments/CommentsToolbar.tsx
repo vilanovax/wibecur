@@ -58,7 +58,7 @@ export default function CommentsToolbar({
 
   return (
     <div
-      className="bg-[var(--color-surface)] rounded-2xl shadow-sm border border-[var(--color-border)] p-4 mb-4"
+      className="bg-(--color-surface) rounded-2xl shadow-sm border border-(--color-border) p-4 mb-4"
       dir="rtl"
     >
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -70,25 +70,25 @@ export default function CommentsToolbar({
           }}
         >
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-wibe-secondary" />
             <input
               type="text"
               value={searchInput}
               onChange={handleSearchChange}
               placeholder="جستجو در متن کامنت…"
-              className="w-full pr-10 pl-4 py-2 border border-[var(--color-border)] rounded-xl focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent text-sm bg-[var(--color-bg)]"
+              className="w-full pr-10 pl-4 py-2 border border-(--color-border) rounded-xl focus:ring-2 focus:ring-(--primary) focus:border-transparent text-sm bg-(--color-bg)"
             />
           </div>
         </form>
         <div className="flex items-center gap-3 flex-wrap">
-          <label className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+          <label className="flex items-center gap-2 text-sm text-wibe-secondary">
             <span className="whitespace-nowrap">
               {isSecondaryFilter ? 'فیلتر' : 'فیلتر دیگر'}
             </span>
             <select
               value={isSecondaryFilter ? currentFilter : 'all'}
               onChange={(e) => onFilterChange(e.target.value)}
-              className="py-2 px-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-sm"
+              className="py-2 px-3 rounded-xl border border-(--color-border) bg-(--color-bg) text-sm"
             >
               {MORE_FILTERS.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -97,12 +97,12 @@ export default function CommentsToolbar({
               ))}
             </select>
           </label>
-          <label className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+          <label className="flex items-center gap-2 text-sm text-wibe-secondary">
             <span className="whitespace-nowrap">مرتب‌سازی</span>
             <select
               value={currentSort}
               onChange={(e) => onSortChange(e.target.value as CommentSortKind)}
-              className="py-2 px-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] text-sm"
+              className="py-2 px-3 rounded-xl border border-(--color-border) bg-(--color-bg) text-sm"
             >
               {COMMENT_SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -111,17 +111,17 @@ export default function CommentsToolbar({
               ))}
             </select>
           </label>
-          <span className="text-sm text-[var(--color-text-muted)] tabular-nums whitespace-nowrap">
+          <span className="text-sm text-wibe-secondary tabular-nums whitespace-nowrap">
             {totalCount.toLocaleString('fa-IR')} نتیجه
           </span>
           <button
             type="button"
             onClick={() => onRefresh()}
-            className="p-2 rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+            className="p-2 rounded-xl border border-(--color-border) hover:bg-(--color-bg)"
             title="بروزرسانی"
             aria-label="بروزرسانی"
           >
-            <RefreshCw className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <RefreshCw className="w-4 h-4 text-wibe-secondary" />
           </button>
         </div>
       </div>

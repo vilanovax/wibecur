@@ -31,10 +31,10 @@ export default function FilmTrendingNowCarousel({
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex-shrink-0 w-[140px] snap-start group"
+            className="shrink-0 w-35 snap-start group"
           >
             <div className="rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 shadow-xl active:scale-[0.97] transition-transform">
-              <div className="relative aspect-[3/4] bg-gray-800">
+              <div className="relative aspect-3/4 bg-gray-800">
                 {list.coverImage ? (
                   <ImageWithFallback
                     src={list.coverImage}
@@ -51,7 +51,7 @@ export default function FilmTrendingNowCarousel({
                   </div>
                 )}
                 <div
-                  className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-80"
+                  className="absolute inset-0 bg-linear-to-t from-black/90 via-transparent to-transparent opacity-80"
                   aria-hidden
                 />
                 <span
@@ -74,10 +74,10 @@ export default function FilmTrendingNowCarousel({
                     <ImageWithFallback
                       src={list.creator.image}
                       alt={list.creator.name || ''}
-                      className="w-5 h-5 rounded-full object-cover flex-shrink-0 ring-1 ring-white/30"
+                      className="w-5 h-5 rounded-full object-cover shrink-0 ring-1 ring-white/30"
                     />
                   ) : (
-                    <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center wibe-caption text-white flex-shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center wibe-caption text-white shrink-0">
                       {(list.creator?.name || '?')[0]}
                     </div>
                   )}

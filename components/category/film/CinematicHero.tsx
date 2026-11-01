@@ -27,11 +27,11 @@ export default function CinematicHero({
 
   return (
     <section className="relative mt-3 overflow-hidden rounded-2xl lg:mt-5">
-      <div className="relative aspect-[5/3] w-full overflow-hidden bg-neutral-950 lg:aspect-[16/9]">
+      <div className="relative aspect-5/3 w-full overflow-hidden bg-neutral-950 lg:aspect-16/9">
         <CategoryHeroMedia src={heroImage} alt={category.name} priority />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/15" />
-        <div className="absolute inset-0 bg-gradient-to-l from-black/50 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/95 via-black/40 to-black/15" />
+        <div className="absolute inset-0 bg-linear-to-l from-black/50 via-transparent to-transparent" />
 
         <div className="absolute inset-0 flex flex-col justify-end p-3.5 pb-4 text-right lg:p-7 lg:pb-6">
           <div className="mr-auto max-w-xl lg:max-w-2xl">

@@ -19,11 +19,11 @@ import UserRowActionMenu from '@/components/admin/users/UserRowActionMenu';
 const qualityClass: Record<Row['quality'], string> = {
   high_impact: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   stable: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  low_engagement: 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700/50 dark:text-[var(--color-text-subtle)]',
+  low_engagement: 'bg-gray-100 text-wibe-secondary dark:bg-gray-700/50 dark:text-(--color-text-subtle)',
 };
 
 const roleColors: Record<string, string> = {
-  USER: 'bg-gray-100 text-[var(--color-text)] dark:bg-gray-700/50 dark:text-gray-200',
+  USER: 'bg-gray-100 text-(--color-text) dark:bg-gray-700/50 dark:text-gray-200',
   EDITOR: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
   ADMIN: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 };
@@ -63,49 +63,49 @@ export default function UsersIntelligenceTable({
   hasSearch = false,
 }: UsersIntelligenceTableProps) {
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+    <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-[var(--color-bg)] sticky top-0 z-10">
-            <tr className="border-b border-[var(--color-border)]">
-              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
+          <thead className="bg-(--color-bg) sticky top-0 z-10">
+            <tr className="border-b border-(--color-border)">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-wibe-secondary">
                 کاربر
               </th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-wibe-secondary">
                 وضعیت
               </th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-wibe-secondary">
                 نقش
               </th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-wibe-secondary">
                 کیفیت
               </th>
               <th
-                className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]"
+                className="px-4 py-3 text-start text-xs font-semibold text-wibe-secondary"
                 title="بوکمارک و لیست جدید در ۷ روز اخیر نسبت به ۷ روز قبل"
               >
                 {USER_GROWTH_7D_LABEL}
               </th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-wibe-secondary">
                 لیست‌ها
               </th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-wibe-secondary">
                 ذخیره‌ها
               </th>
-              <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="px-4 py-3 text-start text-xs font-semibold text-wibe-secondary">
                 ریسک
               </th>
-              <th className="sticky end-0 w-14 bg-[var(--color-bg)] px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-muted)]">
+              <th className="sticky inset-e-0 w-14 bg-(--color-bg) px-4 py-3 text-start text-xs font-semibold text-wibe-secondary">
                 عمل
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--color-border-muted)]">
+          <tbody className="divide-y divide-(--color-border-muted)">
             {users.map((user) => (
               <tr
                 key={user.id}
                 onClick={() => onUserClick(user)}
-                className={`hover:bg-[var(--color-bg)] transition-colors cursor-pointer group ${
+                className={`hover:bg-(--color-bg) transition-colors cursor-pointer group ${
                   !user.isActive ? 'opacity-75' : ''
                 }`}
               >
@@ -119,7 +119,7 @@ export default function UsersIntelligenceTable({
                         size={44}
                       />
                       <span
-                        className={`absolute bottom-0 start-0 h-3 w-3 rounded-full border-2 border-[var(--color-surface)] ${
+                        className={`absolute bottom-0 inset-s-0 h-3 w-3 rounded-full border-2 border-(--color-surface) ${
                           user.isActive ? 'bg-emerald-500' : 'bg-gray-400'
                         }`}
                         title={user.isActive ? 'فعال' : 'غیرفعال'}
@@ -127,7 +127,7 @@ export default function UsersIntelligenceTable({
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium text-[var(--color-text)] truncate">
+                        <p className="font-medium text-(--color-text) truncate">
                           {user.name || 'بدون نام'}
                         </p>
                         {user.isBot && (
@@ -137,11 +137,11 @@ export default function UsersIntelligenceTable({
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-[var(--color-text-muted)] truncate">
+                      <p className="text-xs text-wibe-secondary truncate">
                         {user.username ? `@${user.username}` : user.email}
                       </p>
                       {user.username && user.email && (
-                        <p className="truncate text-xs text-[var(--color-text-subtle)]" title="ایمیل کامل در جزئیات کاربر">
+                        <p className="truncate text-xs text-(--color-text-subtle)" title="ایمیل کامل در جزئیات کاربر">
                           {maskEmail(user.email)}
                         </p>
                       )}
@@ -153,7 +153,7 @@ export default function UsersIntelligenceTable({
                     className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${
                       user.isActive
                         ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
-                        : 'bg-gray-100 text-[var(--color-text-muted)] dark:bg-gray-700/50 dark:text-[var(--color-text-subtle)]'
+                        : 'bg-gray-100 text-wibe-secondary dark:bg-gray-700/50 dark:text-(--color-text-subtle)'
                     }`}
                   >
                     {user.isActive ? 'فعال' : 'غیرفعال'}
@@ -184,7 +184,7 @@ export default function UsersIntelligenceTable({
                         ? 'text-emerald-600'
                         : user.growthPercent < 0
                           ? 'text-red-600'
-                          : 'text-[var(--color-text-muted)]'
+                          : 'text-wibe-secondary'
                     }`}
                     title={
                       user.growth7dRecent != null
@@ -199,12 +199,12 @@ export default function UsersIntelligenceTable({
                     {user.growthPercent.toLocaleString('fa-IR')}٪
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm tabular-nums text-[var(--color-text)]">
+                <td className="px-4 py-3 text-sm tabular-nums text-(--color-text)">
                   {user.listsCount > 0 ? (
                     <Link
                       href={`/admin/lists?search=${encodeURIComponent(user.email)}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-[var(--primary)] hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {user.listsCount.toLocaleString('fa-IR')}
                     </Link>
@@ -212,12 +212,12 @@ export default function UsersIntelligenceTable({
                     '۰'
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm tabular-nums text-[var(--color-text)]">
+                <td className="px-4 py-3 text-sm tabular-nums text-(--color-text)">
                   {user.bookmarksCount.toLocaleString('fa-IR')}
                 </td>
                 <td className="px-4 py-3">
                   {user.risk === 'clean' ? (
-                    <span className="text-xs text-[var(--color-text-muted)]">
+                    <span className="text-xs text-wibe-secondary">
                       {USER_RISK_LABELS.clean}
                     </span>
                   ) : (
@@ -227,7 +227,7 @@ export default function UsersIntelligenceTable({
                   )}
                 </td>
                 <td
-                  className="sticky end-0 bg-[var(--color-surface)] px-4 py-3 group-hover:bg-[var(--color-bg)]"
+                  className="sticky inset-e-0 bg-(--color-surface) px-4 py-3 group-hover:bg-(--color-bg)"
                   onClick={(e) => e.stopPropagation()}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
@@ -248,17 +248,17 @@ export default function UsersIntelligenceTable({
         <div className="py-14 px-6 text-center">
           {emptyBecauseFilter || hasSearch ? (
             <>
-              <p className="text-sm font-medium text-[var(--color-text)] mb-1">
+              <p className="text-sm font-medium text-(--color-text) mb-1">
                 {hasSearch
                   ? 'نتیجه‌ای برای جستجوی شما نیست'
                   : `کاربری با فیلتر «${filterLabel ?? 'انتخاب‌شده'}» یافت نشد`}
               </p>
-              <p className="text-xs text-[var(--color-text-muted)]">
+              <p className="text-xs text-wibe-secondary">
                 فیلتر یا عبارت جستجو را عوض کنید.
               </p>
             </>
           ) : (
-            <p className="text-sm text-[var(--color-text-muted)]">کاربری یافت نشد.</p>
+            <p className="text-sm text-wibe-secondary">کاربری یافت نشد.</p>
           )}
         </div>
       )}

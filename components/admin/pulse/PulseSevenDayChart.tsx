@@ -56,7 +56,7 @@ export default function PulseSevenDayChart({ dailyStats, compact }: PulseSevenDa
                 'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
                 metric === tab.id
                   ? 'bg-white dark:bg-gray-800 text-violet-700 dark:text-violet-300 shadow-sm'
-                  : 'text-admin-text-tertiary dark:text-[var(--color-text-subtle)] hover:text-admin-text-primary'
+                  : 'text-admin-text-tertiary dark:text-(--color-text-subtle) hover:text-admin-text-primary'
               )}
             >
               {tab.label}
@@ -95,7 +95,7 @@ function SevenDayLineChart({
     <div className="relative">
       <svg
         viewBox={`0 0 ${w} ${h}`}
-        className={clsx('w-full max-w-full', dense ? 'h-[72px]' : 'h-auto')}
+        className={clsx('w-full max-w-full', dense ? 'h-18' : 'h-auto')}
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>
@@ -116,7 +116,7 @@ function SevenDayLineChart({
       </svg>
       <div
         className={clsx(
-          'flex justify-between text-admin-text-tertiary dark:text-[var(--color-text-subtle)]',
+          'flex justify-between text-admin-text-tertiary dark:text-(--color-text-subtle)',
           dense ? 'mt-0.5 text-[10px]' : 'mt-1 text-xs'
         )}
       >

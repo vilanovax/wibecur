@@ -29,7 +29,7 @@ import {
 import { searchCategories, sortCategories } from '@/lib/admin/category-list-utils';
 
 const viewFallback = (
-  <div className="min-h-60 animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
+  <div className="min-h-60 animate-pulse rounded-2xl bg-(--color-border-muted)" />
 );
 
 /** Conditional / below-fold views — keep off the critical path (bundle-dynamic-imports) */
@@ -200,16 +200,16 @@ export default function CategoriesPageClient({
       {hideChrome ? null : (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[var(--color-text)]">
+            <h1 className="text-2xl font-bold text-(--color-text)">
               مدیریت دسته‌بندی‌ها
             </h1>
-            <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+            <p className="text-sm text-wibe-secondary mt-0.5">
               ابزار تصمیم‌گیری — سلامت، رشد و قابلیت درآمدزایی
             </p>
           </div>
           <Link
             href="/admin/categories/new"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 transition-opacity shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity shrink-0"
           >
             <Plus className="w-4 h-4" />
             دسته‌بندی جدید
@@ -221,14 +221,14 @@ export default function CategoriesPageClient({
         <button
           type="button"
           onClick={() => setStatsOpen((open) => !open)}
-          className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-start text-sm text-[var(--color-text)]"
+          className="flex min-h-11 w-full items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-start text-sm text-(--color-text)"
           aria-expanded={statsOpen}
         >
           <span className="min-w-0 flex-1 truncate">
             {pulse.totalCategories.toLocaleString('fa-IR')} دسته · {activeCount.toLocaleString('fa-IR')} فعال · میانگین تعامل {avgEngagement}
           </span>
           <ChevronDown
-            className={`size-4 shrink-0 text-[var(--color-text-muted)] transition-transform ${statsOpen ? 'rotate-180' : ''}`}
+            className={`size-4 shrink-0 text-wibe-secondary transition-transform ${statsOpen ? 'rotate-180' : ''}`}
             strokeWidth={1.5}
           />
         </button>
@@ -274,7 +274,7 @@ export default function CategoriesPageClient({
 
       <section>
         {viewMode === 'grid' ? (
-          <div className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+          <div className="divide-y divide-(--color-border) overflow-hidden rounded-xl border border-(--color-border) bg-(--color-surface)">
             {displayed.map((cat) => (
               <CategoryCard
                 key={cat.id}
@@ -308,8 +308,8 @@ export default function CategoriesPageClient({
       </section>
 
       {showEmpty ? (
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-12 text-center">
-          <p className="text-[var(--color-text-muted)] mb-4">
+        <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-12 text-center">
+          <p className="text-wibe-secondary mb-4">
             {search.trim()
               ? 'نتیجه‌ای برای جستجو یافت نشد.'
               : filter === 'needs_boost'
@@ -321,7 +321,7 @@ export default function CategoriesPageClient({
               <button
                 type="button"
                 onClick={() => setSearch('')}
-                className="text-sm text-[var(--primary)] hover:underline"
+                className="text-sm text-primary hover:underline"
               >
                 پاک کردن جستجو
               </button>
@@ -330,7 +330,7 @@ export default function CategoriesPageClient({
               <button
                 type="button"
                 onClick={() => setFilter('all')}
-                className="text-sm text-[var(--primary)] hover:underline"
+                className="text-sm text-primary hover:underline"
               >
                 نمایش همه
               </button>
@@ -344,13 +344,13 @@ export default function CategoriesPageClient({
       filter === 'all' &&
       !search.trim() &&
       categories.length === 0 ? (
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-12 text-center">
-          <p className="text-[var(--color-text-muted)] mb-4">
+        <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-12 text-center">
+          <p className="text-wibe-secondary mb-4">
             دسته‌بندی‌ای وجود ندارد.
           </p>
           <Link
             href="/admin/categories/new"
-            className="text-sm text-[var(--primary)] hover:underline"
+            className="text-sm text-primary hover:underline"
           >
             ایجاد اولین دسته
           </Link>

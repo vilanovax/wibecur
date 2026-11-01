@@ -116,7 +116,7 @@ export default function ItemSaveButton({
           }`}
         />
         {showCountBadge && savedCount > 0 ? (
-          <span className="absolute -top-1 end-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-bold leading-none text-brand-foreground shadow-sm">
+          <span className="absolute -top-1 inset-e-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1 text-xs font-bold leading-none text-brand-foreground shadow-sm">
             {savedCount.toLocaleString('fa-IR')}
           </span>
         ) : null}

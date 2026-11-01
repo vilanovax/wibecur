@@ -31,7 +31,7 @@ function StatChip({
   const tones = {
     default: active
       ? 'bg-gray-900 text-white border-gray-900'
-      : 'bg-[var(--color-bg)] text-[var(--color-text)] border-[var(--color-border-muted)] hover:border-[var(--primary)]/30',
+      : 'bg-(--color-bg) text-(--color-text) border-(--color-border-muted) hover:border-(--primary)/30',
     amber: active
       ? 'bg-amber-600 text-white border-amber-600'
       : ok
@@ -50,7 +50,7 @@ function StatChip({
         : 'bg-rose-50 text-rose-900 border-rose-200 hover:bg-rose-100',
   };
 
-  const className = `inline-flex flex-col items-center justify-center min-w-[4.25rem] px-2.5 py-2 rounded-xl border text-center transition-colors ${tones[tone]}`;
+  const className = `inline-flex flex-col items-center justify-center min-w-17 px-2.5 py-2 rounded-xl border text-center transition-colors ${tones[tone]}`;
 
   const content = (
     <>
@@ -104,9 +104,9 @@ export default function ContentHubStatsBar({
       <button
         type="button"
         onClick={onToggleCollapse}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] text-sm hover:bg-[var(--color-bg)]/50 transition-colors"
+        className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-(--color-border-muted) bg-(--color-surface) text-sm hover:bg-(--color-bg)/50 transition-colors"
       >
-        <span className="flex items-center gap-2 min-w-0 text-[var(--color-text-muted)]">
+        <span className="flex items-center gap-2 min-w-0 text-wibe-secondary">
           {hasHealthIssues ? (
             <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
           ) : (
@@ -114,20 +114,20 @@ export default function ContentHubStatsBar({
           )}
           <span className="truncate tabular-nums">{healthSummary(stats)}</span>
         </span>
-        <span className="text-xs text-[var(--primary)] shrink-0">نمایش آمار</span>
+        <span className="text-xs text-primary shrink-0">نمایش آمار</span>
       </button>
     );
   }
 
   return (
-    <section className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-3 shadow-[var(--shadow-card)] space-y-3">
+    <section className="rounded-xl border border-(--color-border-muted) bg-(--color-surface) p-3 shadow-(--shadow-card) space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-[var(--color-text)]">وضعیت محتوا</p>
+        <p className="text-sm font-semibold text-(--color-text)">وضعیت محتوا</p>
         {onToggleCollapse && (
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+            className="text-xs text-wibe-secondary hover:text-(--color-text)"
           >
             جمع کردن
           </button>
@@ -135,7 +135,7 @@ export default function ContentHubStatsBar({
       </div>
 
       <div>
-        <p className="text-[10px] font-semibold text-[var(--color-text-muted)] mb-1.5">حجم</p>
+        <p className="text-[10px] font-semibold text-wibe-secondary mb-1.5">حجم</p>
         <div className="flex flex-wrap gap-2">
           <StatChip
             label="لیست فعال"
@@ -176,7 +176,7 @@ export default function ContentHubStatsBar({
 
       <div>
         <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
-          <p className="text-[10px] font-semibold text-[var(--color-text-muted)]">نیاز به توجه</p>
+          <p className="text-[10px] font-semibold text-wibe-secondary">نیاز به توجه</p>
           {(stats.catalogExternalImages > 0 || stats.catalogMissingPosters > 0) && (
             <Link
               href="/admin/catalog/storage-images"
@@ -245,7 +245,7 @@ export default function ContentHubStatsBar({
         </div>
       </div>
 
-      <p className="text-xs text-[var(--color-text-muted)] flex items-start gap-1.5">
+      <p className="text-xs text-wibe-secondary flex items-start gap-1.5">
         {hasHealthIssues ? (
           <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
         ) : (

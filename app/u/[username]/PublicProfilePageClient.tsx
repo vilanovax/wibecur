@@ -364,7 +364,7 @@ export default function PublicProfilePageClient({
                 className="block"
               >
                 <Card className="overflow-hidden bg-popover p-0">
-                <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                <div className="relative aspect-4/3 overflow-hidden bg-muted">
                   <ListCoverImage
                     coverImage={list.coverImage}
                     title={list.title}
@@ -374,9 +374,9 @@ export default function PublicProfilePageClient({
                     fallbackIcon={list.categories?.icon ?? '📋'}
                     fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-2xl"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/55 to-transparent" />
                   {list.isFeatured && (
-                    <span className="absolute end-2 top-2 rounded-full bg-warning px-2 py-0.5 text-sm font-semibold text-foreground">
+                    <span className="absolute inset-e-2 top-2 rounded-full bg-warning px-2 py-0.5 text-sm font-semibold text-foreground">
                       ویژه
                     </span>
                   )}

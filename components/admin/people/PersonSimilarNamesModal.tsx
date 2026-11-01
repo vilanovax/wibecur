@@ -99,15 +99,15 @@ export default function PersonSimilarNamesModal({ open, onClose, roleFilter, onM
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/45 p-3 sm:items-center sm:p-6">
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl">
-        <div className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] px-4 py-3 sm:px-5">
+    <div className="fixed inset-0 z-80 flex items-end justify-center bg-black/45 p-3 sm:items-center sm:p-6">
+      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-2xl">
+        <div className="flex items-start justify-between gap-3 border-b border-(--color-border) px-4 py-3 sm:px-5">
           <div>
-            <h2 className="flex items-center gap-2 text-base font-semibold text-[var(--color-text)]">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-(--color-text)">
               <GitMerge className="h-4 w-4 text-violet-600" />
               ادغام نام‌های مشابه
             </h2>
-            <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+            <p className="mt-1 text-xs leading-relaxed text-wibe-secondary">
               موارد با املای نزدیک (مثل «استفن کینگ» و «استیفن کینگ») را بررسی کنید، نام اصلی را
               انتخاب کنید و پس از تایید ادغام کنید.
             </p>
@@ -115,22 +115,22 @@ export default function PersonSimilarNamesModal({ open, onClose, roleFilter, onM
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-(--color-border) hover:bg-(--color-bg)"
             aria-label="بستن"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-b border-[var(--color-border)] px-4 py-2 sm:px-5">
-          <span className="text-xs text-[var(--color-text-muted)]">
+        <div className="flex items-center justify-between gap-2 border-b border-(--color-border) px-4 py-2 sm:px-5">
+          <span className="text-xs text-wibe-secondary">
             {groups.length.toLocaleString('fa-IR')} پیشنهاد
           </span>
           <button
             type="button"
             onClick={() => void loadGroups()}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-xs hover:bg-[var(--color-bg)] disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-(--color-border) px-2.5 py-1.5 text-xs hover:bg-(--color-bg) disabled:opacity-60"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             بروزرسانی
@@ -139,12 +139,12 @@ export default function PersonSimilarNamesModal({ open, onClose, roleFilter, onM
 
         <div className="min-h-0 flex-1 overflow-auto px-4 py-3 sm:px-5">
           {loading ? (
-            <div className="flex items-center justify-center gap-2 py-16 text-sm text-[var(--color-text-muted)]">
+            <div className="flex items-center justify-center gap-2 py-16 text-sm text-wibe-secondary">
               <Loader2 className="h-5 w-5 animate-spin" />
               در حال بررسی نام‌ها…
             </div>
           ) : groups.length === 0 ? (
-            <div className="py-16 text-center text-sm text-[var(--color-text-muted)]">
+            <div className="py-16 text-center text-sm text-wibe-secondary">
               نام مشابهی برای ادغام پیدا نشد
             </div>
           ) : (
@@ -155,7 +155,7 @@ export default function PersonSimilarNamesModal({ open, onClose, roleFilter, onM
                 return (
                   <article
                     key={key}
-                    className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg)]/40 p-3 sm:p-4"
+                    className="rounded-2xl border border-(--color-border) bg-(--color-bg)/40 p-3 sm:p-4"
                   >
                     <div className="mb-3 flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-medium text-violet-800 dark:bg-violet-900/30 dark:text-violet-200">
@@ -164,7 +164,7 @@ export default function PersonSimilarNamesModal({ open, onClose, roleFilter, onM
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700 dark:bg-slate-800 dark:text-slate-200">
                         شباهت {Math.round(group.score * 100).toLocaleString('fa-IR')}٪
                       </span>
-                      <span className="text-[11px] text-[var(--color-text-muted)]">{group.reason}</span>
+                      <span className="text-[11px] text-wibe-secondary">{group.reason}</span>
                     </div>
 
                     <div className="space-y-2">
@@ -176,7 +176,7 @@ export default function PersonSimilarNamesModal({ open, onClose, roleFilter, onM
                             className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors ${
                               checked
                                 ? 'border-violet-400 bg-violet-50/70 dark:border-violet-700 dark:bg-violet-950/20'
-                                : 'border-[var(--color-border)] bg-[var(--color-surface)]'
+                                : 'border-(--color-border) bg-(--color-surface)'
                             }`}
                           >
                             <input
@@ -192,10 +192,10 @@ export default function PersonSimilarNamesModal({ open, onClose, roleFilter, onM
                               className="mt-1"
                             />
                             <div className="min-w-0 flex-1">
-                              <div className="font-medium text-[var(--color-text)]">
+                              <div className="font-medium text-(--color-text)">
                                 {member.displayName}
                               </div>
-                              <div className="mt-0.5 text-[11px] text-[var(--color-text-muted)]">
+                              <div className="mt-0.5 text-[11px] text-wibe-secondary">
                                 slug: {member.slug} · {member.itemCount.toLocaleString('fa-IR')} آیتم
                                 {member.hasBio ? ' · bio دارد' : ' · بدون bio'}
                               </div>
@@ -228,7 +228,7 @@ export default function PersonSimilarNamesModal({ open, onClose, roleFilter, onM
         </div>
 
         {(error || message) && (
-          <div className="border-t border-[var(--color-border)] px-4 py-3 sm:px-5">
+          <div className="border-t border-(--color-border) px-4 py-3 sm:px-5">
             {error && (
               <p className="text-sm text-red-600 dark:text-red-300">{error}</p>
             )}

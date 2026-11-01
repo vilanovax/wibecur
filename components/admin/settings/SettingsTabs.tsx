@@ -35,8 +35,8 @@ export default function SettingsTabs({ active }: Props) {
             onClick={() => setTab(id)}
             className={`shrink-0 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
               isActive
-                ? 'bg-[var(--primary)] text-white'
-                : 'bg-[var(--color-bg)] text-[var(--color-text)] hover:bg-[var(--color-border-muted)]'
+                ? 'bg-primary text-white'
+                : 'bg-(--color-bg) text-(--color-text) hover:bg-(--color-border-muted)'
             }`}
           >
             {label}

@@ -46,14 +46,14 @@ export default function ActionMenu({ actions, className = '' }: ActionMenuProps)
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="p-2 rounded-lg text-[var(--color-text-muted)] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="p-2 rounded-lg text-wibe-secondary hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         aria-label="منوی عملیات"
       >
         <MoreVertical className="h-4 w-4" />
       </button>
       {open && (
         <div
-          className={`absolute left-0 mt-1 min-w-[160px] ${adminRadius.card} border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg py-1 z-50`}
+          className={`absolute left-0 mt-1 min-w-40 ${adminRadius.card} border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg py-1 z-50`}
         >
           {visible.map((action, i) => (
             <button
@@ -66,7 +66,7 @@ export default function ActionMenu({ actions, className = '' }: ActionMenuProps)
               className={`w-full text-right px-4 py-2 text-sm transition-colors ${
                 action.variant === 'danger'
                   ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
-                  : 'text-[var(--color-text)] dark:text-[var(--color-text-subtle)] hover:bg-gray-100 dark:hover:bg-gray-700'
+                  : 'text-(--color-text) dark:text-(--color-text-subtle) hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               {action.label}

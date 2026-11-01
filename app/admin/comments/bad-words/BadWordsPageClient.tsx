@@ -178,7 +178,7 @@ export default function BadWordsPageClient({
         totalFiltered={stats.totalFiltered}
       />
 
-      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 mb-4 space-y-3">
+      <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-3 mb-4 space-y-3">
         <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <input
@@ -186,14 +186,14 @@ export default function BadWordsPageClient({
               value={newWord}
               onChange={(e) => setNewWord(e.target.value)}
               placeholder="کلمه جدید — چند کلمه با ویرگول: کلمه۱، کلمه۲"
-              className="w-full pr-3 pl-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] focus:ring-2 focus:ring-[var(--primary)]/30"
+              className="w-full pr-3 pl-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg) focus:ring-2 focus:ring-(--primary)/30"
               disabled={isLoading}
             />
           </div>
           <button
             type="submit"
             disabled={isLoading || !newWord.trim()}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 shrink-0"
           >
             <Plus className="w-4 h-4" />
             {isLoading ? 'در حال افزودن…' : 'افزودن'}
@@ -201,34 +201,34 @@ export default function BadWordsPageClient({
         </form>
 
         <div className="relative">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-wibe-secondary" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="جستجو در لیست کلمات…"
-            className="w-full pr-10 pl-9 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]"
+            className="w-full pr-10 pl-9 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg)"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch('')}
-              className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-[var(--color-border-muted)]"
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-(--color-border-muted)"
               aria-label="پاک کردن جستجو"
             >
-              <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <X className="w-4 h-4 text-wibe-secondary" />
             </button>
           )}
         </div>
-        <p className="text-[10px] text-[var(--color-text-subtle)]">
+        <p className="text-[10px] text-(--color-text-subtle)">
           {filteredWords.length.toLocaleString('fa-IR')} از{' '}
           {localWords.length.toLocaleString('fa-IR')} کلمه نمایش داده می‌شود
         </p>
       </div>
 
       {filteredWords.length === 0 ? (
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-12 text-center">
-          <p className="text-[var(--color-text-muted)]">
+        <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-12 text-center">
+          <p className="text-wibe-secondary">
             {localWords.length === 0
               ? 'هنوز کلمه‌ای ثبت نشده — از فرم بالا اضافه کنید'
               : 'نتیجه‌ای برای جستجو یافت نشد'}
@@ -237,7 +237,7 @@ export default function BadWordsPageClient({
             <button
               type="button"
               onClick={() => setSearch('')}
-              className="mt-3 text-sm text-[var(--primary)] hover:underline"
+              className="mt-3 text-sm text-primary hover:underline"
             >
               پاک کردن جستجو
             </button>

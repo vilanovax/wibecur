@@ -34,7 +34,7 @@ export default function FilmNewListsSection({
             href={`/lists/${list.slug}`}
             className="flex gap-4 p-4 rounded-2xl bg-gray-900 border border-gray-800 active:scale-[0.99] transition-transform"
           >
-            <div className="w-20 h-28 rounded-xl bg-gray-800 flex-shrink-0 overflow-hidden">
+            <div className="w-20 h-28 rounded-xl bg-gray-800 shrink-0 overflow-hidden">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}

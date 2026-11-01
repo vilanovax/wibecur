@@ -32,7 +32,7 @@ export default function TopCuratorSpotlight({
         href={curator.username ? `/u/${curator.username}` : '#'}
         className="mt-4 flex flex-col sm:flex-row gap-4 p-5 rounded-2xl bg-white border-2 border-amber-100 shadow-sm hover:shadow-md transition-shadow active:scale-[0.99]"
       >
-        <div className="flex items-center gap-4 flex-shrink-0">
+        <div className="flex items-center gap-4 shrink-0">
           <div className="relative">
             {curator.image ? (
               <ImageWithFallback
@@ -43,7 +43,7 @@ export default function TopCuratorSpotlight({
                 className="w-20 h-20 rounded-full object-cover border-4 border-amber-200"
               />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl font-bold text-white border-4 border-amber-200">
+              <div className="w-20 h-20 rounded-full bg-linear-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl font-bold text-white border-4 border-amber-200">
                 {(curator.name || '?')[0]}
               </div>
             )}
@@ -70,16 +70,16 @@ export default function TopCuratorSpotlight({
                 key={list.id}
                 href={`/lists/${list.slug}`}
                 onClick={(e) => e.stopPropagation()}
-                className="flex-shrink-0 w-24 rounded-xl overflow-hidden border border-wibe"
+                className="shrink-0 w-24 rounded-xl overflow-hidden border border-wibe"
               >
                 {list.coverImage ? (
                   <ImageWithFallback
                     src={list.coverImage}
                     alt={list.title}
-                    className="w-full aspect-[3/4] object-cover"
+                    className="w-full aspect-3/4 object-cover"
                   />
                 ) : (
-                  <div className="w-full aspect-[3/4] bg-wibe-surface flex items-center justify-center text-2xl">
+                  <div className="w-full aspect-3/4 bg-wibe-surface flex items-center justify-center text-2xl">
                     📋
                   </div>
                 )}

@@ -47,16 +47,16 @@ const tiles = [
 export default function ContentOverviewStrip({ overview }: ContentOverviewStripProps) {
   return (
     <section
-      className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden"
+      className="rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-(--shadow-card) overflow-hidden"
       dir="rtl"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg)]/60">
-        <p className="text-sm font-semibold text-[var(--color-text)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-(--color-border) bg-(--color-bg)/60">
+        <p className="text-sm font-semibold text-(--color-text)">
           وضعیت محتوا
         </p>
         <Link
           href="/admin/catalog"
-          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--primary)] hover:underline"
+          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
         >
           مرکز محتوا
           <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
@@ -69,38 +69,38 @@ export default function ContentOverviewStrip({ overview }: ContentOverviewStripP
             <Link
               key={key}
               href={href}
-              className="group rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/50 px-3 py-3 transition-colors hover:border-[var(--primary)]/40 hover:bg-[var(--color-bg)]"
+              className="group rounded-xl border border-(--color-border) bg-(--color-bg)/50 px-3 py-3 transition-colors hover:border-(--primary)/40 hover:bg-(--color-bg)"
             >
-              <div className="flex items-center gap-2 text-[var(--color-text-muted)] mb-1">
+              <div className="flex items-center gap-2 text-wibe-secondary mb-1">
                 <Icon className="w-4 h-4 shrink-0" />
                 <span className="text-xs font-medium">{label}</span>
               </div>
-              <p className="text-xl sm:text-2xl font-bold tabular-nums text-[var(--color-text)]">
+              <p className="text-xl sm:text-2xl font-bold tabular-nums text-(--color-text)">
                 {overview[key].toLocaleString('fa-IR')}
               </p>
             </Link>
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-3 pt-1 border-t border-[var(--color-border-muted)]">
-          <div className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/50 px-3 py-2">
+        <div className="flex flex-wrap gap-3 pt-1 border-t border-(--color-border-muted)">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-bg)/50 px-3 py-2">
             <Eye className="w-4 h-4 text-blue-600 shrink-0" />
-            <span className="text-xs text-[var(--color-text-muted)]">بازدید کل</span>
-            <strong className="text-sm tabular-nums text-[var(--color-text)]">
+            <span className="text-xs text-wibe-secondary">بازدید کل</span>
+            <strong className="text-sm tabular-nums text-(--color-text)">
               {overview.totalViews.toLocaleString('fa-IR')}
             </strong>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/50 px-3 py-2">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-bg)/50 px-3 py-2">
             <Bookmark className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="text-xs text-[var(--color-text-muted)]">ذخیره کل</span>
-            <strong className="text-sm tabular-nums text-[var(--color-text)]">
+            <span className="text-xs text-wibe-secondary">ذخیره کل</span>
+            <strong className="text-sm tabular-nums text-(--color-text)">
               {overview.totalSaves.toLocaleString('fa-IR')}
             </strong>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/50 px-3 py-2">
+          <div className="inline-flex items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-bg)/50 px-3 py-2">
             <Percent className="w-4 h-4 text-violet-600 shrink-0" />
-            <span className="text-xs text-[var(--color-text-muted)]">نرخ ذخیره</span>
-            <strong className="text-sm tabular-nums text-[var(--color-text)]">
+            <span className="text-xs text-wibe-secondary">نرخ ذخیره</span>
+            <strong className="text-sm tabular-nums text-(--color-text)">
               {overview.saveRate}
             </strong>
           </div>

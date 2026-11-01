@@ -95,7 +95,7 @@ export default function CommentsSubNav({ stats }: { stats?: CommentsNavStats }) 
 
   return (
     <nav
-      className="flex gap-0.5 p-0.5 rounded-lg bg-[var(--color-bg)] border border-[var(--color-border)] overflow-x-auto mb-3"
+      className="flex gap-0.5 p-0.5 rounded-lg bg-(--color-bg) border border-(--color-border) overflow-x-auto mb-3"
       dir="rtl"
       aria-label="ناوبری کامنت‌ها"
     >
@@ -111,8 +111,8 @@ export default function CommentsSubNav({ stats }: { stats?: CommentsNavStats }) 
             href={href}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
               active
-                ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                ? 'bg-(--color-surface) text-(--color-text) shadow-sm'
+                : 'text-wibe-secondary hover:text-(--color-text)'
             }`}
           >
             <Icon className="w-3.5 h-3.5 shrink-0" />

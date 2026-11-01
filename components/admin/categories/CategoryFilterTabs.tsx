@@ -3,7 +3,7 @@
 import type { CategoryFilterKind } from '@/lib/admin/categories-types';
 
 const tabs: { value: CategoryFilterKind; label: string; color: string; title?: string }[] = [
-  { value: 'all', label: 'همه', color: 'bg-[var(--color-surface)] text-[var(--color-text)]' },
+  { value: 'all', label: 'همه', color: 'bg-(--color-surface) text-(--color-text)' },
   {
     value: 'healthy',
     label: 'سالم',
@@ -23,7 +23,7 @@ const tabs: { value: CategoryFilterKind; label: string; color: string; title?: s
   {
     value: 'inactive',
     label: 'غیرفعال',
-    color: 'bg-gray-100 dark:bg-gray-700 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]',
+    color: 'bg-gray-100 dark:bg-gray-700 text-wibe-secondary dark:text-(--color-text-subtle)',
   },
 ];
 
@@ -36,7 +36,7 @@ interface CategoryFilterTabsProps {
 export default function CategoryFilterTabs({ value, onChange, counts }: CategoryFilterTabsProps) {
   return (
     <div
-      className="inline-flex flex-wrap rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] p-1 gap-0.5"
+      className="inline-flex flex-wrap rounded-full border border-(--color-border) bg-(--color-bg) p-1 gap-0.5"
       dir="rtl"
       role="tablist"
     >
@@ -53,9 +53,9 @@ export default function CategoryFilterTabs({ value, onChange, counts }: Category
             className={`min-h-11 rounded-full px-4 text-sm font-medium transition-colors ${
               value === tab.value
                 ? tab.value === 'all'
-                  ? 'bg-[var(--color-surface)] shadow-sm text-[var(--color-text)] ring-1 ring-[var(--color-border)]'
+                  ? 'bg-(--color-surface) shadow-sm text-(--color-text) ring-1 ring-(--color-border)'
                   : tab.color + ' shadow-sm'
-                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]/80'
+                : 'text-wibe-secondary hover:text-(--color-text) hover:bg-(--color-surface)/80'
             }`}
           >
             {tab.label}

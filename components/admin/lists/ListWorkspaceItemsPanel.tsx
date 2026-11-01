@@ -299,7 +299,7 @@ export default function ListWorkspaceItemsPanel({
           href={`/admin/items/${item.id}/edit`}
           target="_blank"
           rel="noopener noreferrer"
-          className="p-1.5 rounded-lg hover:bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:text-[var(--primary)] transition-colors"
+          className="p-1.5 rounded-lg hover:bg-(--color-bg) text-wibe-secondary hover:text-primary transition-colors"
           title="ویرایش در تب جدید"
         >
           <Pencil className="w-3.5 h-3.5" />
@@ -325,12 +325,12 @@ export default function ListWorkspaceItemsPanel({
     <button
       type="button"
       onClick={() => toggleSelect(itemId)}
-      className="p-1 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--primary)] transition-colors"
+      className="p-1 rounded-md text-wibe-secondary hover:bg-(--color-bg) hover:text-primary transition-colors"
       title={selectedIds.has(itemId) ? 'لغو انتخاب' : 'انتخاب'}
       aria-pressed={selectedIds.has(itemId)}
     >
       {selectedIds.has(itemId) ? (
-        <CheckSquare className="w-4 h-4 text-[var(--primary)]" />
+        <CheckSquare className="w-4 h-4 text-primary" />
       ) : (
         <Square className="w-4 h-4" />
       )}
@@ -344,7 +344,7 @@ export default function ListWorkspaceItemsPanel({
       disabled={reorderLoading || Boolean(searchQuery)}
       onDragStart={() => handleDragStart(index)}
       onDragEnd={() => void handleDragEnd()}
-      className="p-1 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] cursor-grab active:cursor-grabbing disabled:opacity-30 disabled:cursor-not-allowed touch-none"
+      className="p-1 rounded-md text-wibe-secondary hover:bg-(--color-bg) cursor-grab active:cursor-grabbing disabled:opacity-30 disabled:cursor-not-allowed touch-none"
       title={searchQuery ? 'برای مرتب‌سازی، جستجو را پاک کنید' : 'کشیدن برای تغییر ترتیب'}
     >
       <GripVertical className="w-4 h-4" />
@@ -352,7 +352,7 @@ export default function ListWorkspaceItemsPanel({
   );
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] overflow-hidden shadow-[var(--shadow-card)]">
+    <div className="rounded-2xl border border-(--color-border-muted) bg-(--color-surface) overflow-hidden shadow-(--shadow-card)">
       {isBookCategory && (
         <BookCoverItemsModal
           isOpen={bookCoverModalOpen}
@@ -372,16 +372,16 @@ export default function ListWorkspaceItemsPanel({
         />
       )}
       {/* Toolbar */}
-      <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50 space-y-3">
+      <div className="px-4 py-3 border-b border-(--color-border-muted) bg-(--color-bg)/50 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-sm font-semibold text-[var(--color-text)]">
+            <h2 className="text-sm font-semibold text-(--color-text)">
               آیتم‌های لیست
-              <span className="text-[var(--color-text-muted)] font-normal mr-1">
+              <span className="text-wibe-secondary font-normal mr-1">
                 ({items.length.toLocaleString('fa-IR')})
               </span>
             </h2>
-            <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5 flex items-center gap-1">
+            <p className="text-[10px] text-wibe-secondary mt-0.5 flex items-center gap-1">
               {reorderLoading ? (
                 <>
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -395,7 +395,7 @@ export default function ListWorkspaceItemsPanel({
           <div className="flex flex-wrap gap-1.5">
             <Link
               href={`/admin/lists?view=catalog&mode=place&listId=${listId}`}
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[var(--primary)] text-white hover:opacity-90"
+              className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-primary text-white hover:opacity-90"
             >
               + افزودن
             </Link>
@@ -407,7 +407,7 @@ export default function ListWorkspaceItemsPanel({
             </Link>
             <Link
               href={`/admin/lists?view=catalog&mode=place&listId=${listId}`}
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-gray-200 text-[var(--color-text)] hover:bg-gray-50"
+              className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-gray-200 text-(--color-text) hover:bg-gray-50"
             >
               کاتالوگ
             </Link>
@@ -435,20 +435,20 @@ export default function ListWorkspaceItemsPanel({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)] pointer-events-none" />
+          <div className="relative flex-1 min-w-50">
+            <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-wibe-secondary pointer-events-none" />
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="جستجو در آیتم‌ها…"
-              className="w-full rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] py-2 pr-9 pl-8 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/25"
+              className="w-full rounded-xl border border-(--color-border-muted) bg-(--color-surface) py-2 pr-9 pl-8 text-sm text-(--color-text) placeholder:text-wibe-secondary focus:outline-none focus:ring-2 focus:ring-(--primary)/25"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute left-2 top-1/2 -translate-y-1/2 p-0.5 rounded-md text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-0.5 rounded-md text-wibe-secondary hover:bg-(--color-bg)"
                 aria-label="پاک کردن جستجو"
               >
                 <X className="w-4 h-4" />
@@ -456,14 +456,14 @@ export default function ListWorkspaceItemsPanel({
             )}
           </div>
 
-          <div className="flex items-center rounded-xl border border-[var(--color-border-muted)] p-0.5 bg-[var(--color-surface)]">
+          <div className="flex items-center rounded-xl border border-(--color-border-muted) p-0.5 bg-(--color-surface)">
             <button
               type="button"
               onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded-lg transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+                  ? 'bg-primary text-white'
+                  : 'text-wibe-secondary hover:bg-(--color-bg)'
               }`}
               title="نمای گرید"
               aria-pressed={viewMode === 'grid'}
@@ -475,8 +475,8 @@ export default function ListWorkspaceItemsPanel({
               onClick={() => setViewMode('list')}
               className={`p-1.5 rounded-lg transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'
+                  ? 'bg-primary text-white'
+                  : 'text-wibe-secondary hover:bg-(--color-bg)'
               }`}
               title="نمای لیست"
               aria-pressed={viewMode === 'list'}
@@ -491,10 +491,10 @@ export default function ListWorkspaceItemsPanel({
             <button
               type="button"
               onClick={toggleSelectAllFiltered}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-[var(--color-border-muted)] hover:bg-[var(--color-bg)] text-[var(--color-text-muted)]"
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-(--color-border-muted) hover:bg-(--color-bg) text-wibe-secondary"
             >
               {allFilteredSelected ? (
-                <CheckSquare className="w-3.5 h-3.5 text-[var(--primary)]" />
+                <CheckSquare className="w-3.5 h-3.5 text-primary" />
               ) : (
                 <Square className="w-3.5 h-3.5" />
               )}
@@ -524,7 +524,7 @@ export default function ListWorkspaceItemsPanel({
             )}
 
             {searchQuery && (
-              <span className="text-[11px] text-[var(--color-text-muted)] mr-auto">
+              <span className="text-[11px] text-wibe-secondary mr-auto">
                 {filteredItems.length.toLocaleString('fa-IR')} نتیجه از{' '}
                 {items.length.toLocaleString('fa-IR')}
               </span>
@@ -535,11 +535,11 @@ export default function ListWorkspaceItemsPanel({
 
       {items.length === 0 ? (
         <div className="p-10 text-center">
-          <p className="text-sm text-[var(--color-text-muted)] mb-4">هنوز آیتمی در این لیست نیست</p>
+          <p className="text-sm text-wibe-secondary mb-4">هنوز آیتمی در این لیست نیست</p>
           <div className="flex flex-wrap justify-center gap-2">
             <Link
               href={`/admin/lists?view=catalog&mode=place&listId=${listId}`}
-              className="inline-flex items-center px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold"
+              className="inline-flex items-center px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold"
             >
               افزودن از کاتالوگ
             </Link>
@@ -552,7 +552,7 @@ export default function ListWorkspaceItemsPanel({
           </div>
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="p-10 text-center text-sm text-[var(--color-text-muted)]">
+        <div className="p-10 text-center text-sm text-wibe-secondary">
           آیتمی با این عبارت پیدا نشد.
         </div>
       ) : viewMode === 'grid' ? (
@@ -567,8 +567,8 @@ export default function ListWorkspaceItemsPanel({
                 onDragOver={(e) => handleDragOver(e, globalIndex)}
                 className={`group relative flex flex-col rounded-xl border overflow-hidden transition-all ${
                   isSelected
-                    ? 'border-[var(--primary)] ring-2 ring-[var(--primary)]/20'
-                    : 'border-[var(--color-border-muted)] hover:border-[var(--primary)]/30 hover:shadow-sm'
+                    ? 'border-(--primary) ring-2 ring-(--primary)/20'
+                    : 'border-(--color-border-muted) hover:border-(--primary)/30 hover:shadow-sm'
                 } ${dragIndex === globalIndex ? 'opacity-60 scale-[0.98]' : ''}`}
               >
                 <div className="absolute top-1.5 right-1.5 z-10 flex items-center gap-0.5">
@@ -576,7 +576,7 @@ export default function ListWorkspaceItemsPanel({
                   {renderDragHandle(globalIndex)}
                 </div>
 
-                <div className="relative aspect-[3/4] bg-gray-100 border-b border-[var(--color-border-muted)]">
+                <div className="relative aspect-3/4 bg-gray-100 border-b border-(--color-border-muted)">
                   {renderThumbnail(item)}
                   <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-bold text-white tabular-nums">
                     {(globalIndex + 1).toLocaleString('fa-IR')}
@@ -585,12 +585,12 @@ export default function ListWorkspaceItemsPanel({
 
                 <div className="flex flex-1 flex-col gap-1.5 p-2.5 min-h-0">
                   <div className="flex items-start gap-1 min-w-0">
-                    <p className="text-xs font-semibold text-[var(--color-text)] line-clamp-2 leading-snug flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-(--color-text) line-clamp-2 leading-snug flex-1 min-w-0">
                       {item.title}
                     </p>
                   </div>
                   {renderEntryLink(item)}
-                  <div className="mt-auto pt-1 flex items-center justify-end border-t border-[var(--color-border-muted)]/60">
+                  <div className="mt-auto pt-1 flex items-center justify-end border-t border-(--color-border-muted)/60">
                     {renderItemActions(item, true)}
                   </div>
                 </div>
@@ -599,7 +599,7 @@ export default function ListWorkspaceItemsPanel({
           })}
         </div>
       ) : (
-        <ul className="divide-y divide-[var(--color-border-muted)] max-h-[calc(100vh-16rem)] overflow-y-auto">
+        <ul className="divide-y divide-(--color-border-muted) max-h-[calc(100vh-16rem)] overflow-y-auto">
           {filteredItems.map((item) => {
             const globalIndex = items.findIndex((i) => i.id === item.id);
             const isSelected = selectedIds.has(item.id);
@@ -609,19 +609,19 @@ export default function ListWorkspaceItemsPanel({
                 key={item.id}
                 onDragOver={(e) => handleDragOver(e, globalIndex)}
                 className={`flex items-center gap-2 px-3 py-2.5 transition-colors ${
-                  isSelected ? 'bg-[var(--primary)]/5' : 'hover:bg-[var(--color-bg)]/40'
-                } ${dragIndex === globalIndex ? 'bg-[var(--primary)]/8' : ''}`}
+                  isSelected ? 'bg-primary/5' : 'hover:bg-(--color-bg)/40'
+                } ${dragIndex === globalIndex ? 'bg-primary/8' : ''}`}
               >
                 {renderSelectButton(item.id)}
                 {renderDragHandle(globalIndex)}
-                <span className="text-xs font-bold text-[var(--color-text-muted)] w-6 tabular-nums text-center shrink-0">
+                <span className="text-xs font-bold text-wibe-secondary w-6 tabular-nums text-center shrink-0">
                   {(globalIndex + 1).toLocaleString('fa-IR')}
                 </span>
-                <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-lg border border-[var(--color-border-muted)] bg-gray-100">
+                <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-lg border border-(--color-border-muted) bg-gray-100">
                   {renderThumbnail(item)}
                 </div>
                 <div className="flex-1 min-w-0 flex items-center gap-2">
-                  <p className="text-sm font-semibold text-[var(--color-text)] truncate min-w-0">
+                  <p className="text-sm font-semibold text-(--color-text) truncate min-w-0">
                     {item.title}
                   </p>
                   {renderEntryLink(item)}

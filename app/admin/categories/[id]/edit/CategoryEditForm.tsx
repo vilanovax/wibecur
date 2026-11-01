@@ -225,7 +225,7 @@ export default function CategoryEditForm({
   };
 
   const sectionCard =
-    'rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm overflow-hidden';
+    'rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-sm overflow-hidden';
 
   return (
     <>
@@ -234,13 +234,13 @@ export default function CategoryEditForm({
           <div>
             <Link
               href="/admin/categories"
-              className="inline-flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] text-sm mb-2"
+              className="inline-flex items-center gap-2 text-wibe-secondary hover:text-(--color-text) text-sm mb-2"
             >
               <ChevronRight className="w-4 h-4" />
               بازگشت به دسته‌بندی‌ها
             </Link>
-            <h1 className="text-2xl font-bold text-[var(--color-text)]">ویرایش دسته‌بندی</h1>
-            <p className="text-sm text-[var(--color-text-muted)] mt-0.5">{category.name}</p>
+            <h1 className="text-2xl font-bold text-(--color-text)">ویرایش دسته‌بندی</h1>
+            <p className="text-sm text-wibe-secondary mt-0.5">{category.name}</p>
           </div>
           <CategoryEditHeaderActions
             categoryId={category.id}
@@ -271,8 +271,8 @@ export default function CategoryEditForm({
           </div>
 
           <section className={sectionCard}>
-            <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-              <h2 className="font-semibold text-[var(--color-text)]">هویت</h2>
+            <div className="px-5 py-4 border-b border-(--color-border) bg-(--color-bg)">
+              <h2 className="font-semibold text-(--color-text)">هویت</h2>
             </div>
             <div className="p-5">
               <CategoryFormIdentity
@@ -315,8 +315,8 @@ export default function CategoryEditForm({
           </section>
 
           <section className={sectionCard}>
-            <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-              <h2 className="font-semibold text-[var(--color-text)]">ظاهر صفحه دسته در اپ</h2>
+            <div className="px-5 py-4 border-b border-(--color-border) bg-(--color-bg)">
+              <h2 className="font-semibold text-(--color-text)">ظاهر صفحه دسته در اپ</h2>
             </div>
             <div className="p-5">
               <CategoryPageAppearanceFields
@@ -331,7 +331,7 @@ export default function CategoryEditForm({
               {!formData.accentColor && (
                 <button
                   type="button"
-                  className="mt-3 text-sm text-[var(--primary)] hover:underline"
+                  className="mt-3 text-sm text-primary hover:underline"
                   onClick={() => setFormData((p) => ({ ...p, accentColor: p.color }))}
                 >
                   کپی رنگ اصلی به رنگ تاکید
@@ -341,9 +341,9 @@ export default function CategoryEditForm({
           </section>
 
           <section className={sectionCard}>
-            <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-              <h2 className="font-semibold text-[var(--color-text)]">رتبه‌بندی، نمایش و تعامل</h2>
-              <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+            <div className="px-5 py-4 border-b border-(--color-border) bg-(--color-bg)">
+              <h2 className="font-semibold text-(--color-text)">رتبه‌بندی، نمایش و تعامل</h2>
+              <p className="text-xs text-wibe-secondary mt-0.5">
                 ترتیب، وضعیت انتشار، کامنت‌ها و وزن الگوریتم
               </p>
             </div>
@@ -355,11 +355,11 @@ export default function CategoryEditForm({
                   className={`rounded-xl border p-4 text-right transition-colors ${
                     !formData.isActive
                       ? 'border-amber-400 bg-amber-50/80 dark:bg-amber-900/20 ring-1 ring-amber-400/50'
-                      : 'border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                      : 'border-(--color-border) hover:bg-(--color-bg)'
                   }`}
                 >
-                  <p className="text-sm font-semibold text-[var(--color-text)]">غیرفعال</p>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-1">در اپ نمایش داده نمی‌شود</p>
+                  <p className="text-sm font-semibold text-(--color-text)">غیرفعال</p>
+                  <p className="text-xs text-wibe-secondary mt-1">در اپ نمایش داده نمی‌شود</p>
                 </button>
                 <button
                   type="button"
@@ -367,16 +367,16 @@ export default function CategoryEditForm({
                   className={`rounded-xl border p-4 text-right transition-colors ${
                     formData.isActive
                       ? 'border-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/20 ring-1 ring-emerald-400/50'
-                      : 'border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                      : 'border-(--color-border) hover:bg-(--color-bg)'
                   }`}
                 >
-                  <p className="text-sm font-semibold text-[var(--color-text)]">فعال در اپ</p>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-1">برای کاربران قابل مشاهده</p>
+                  <p className="text-sm font-semibold text-(--color-text)">فعال در اپ</p>
+                  <p className="text-xs text-wibe-secondary mt-1">برای کاربران قابل مشاهده</p>
                 </button>
               </div>
 
               <div>
-                <label htmlFor="order" className="block text-sm font-medium text-[var(--color-text)] mb-1">
+                <label htmlFor="order" className="block text-sm font-medium text-(--color-text) mb-1">
                   ترتیب نمایش
                 </label>
                 <input
@@ -388,9 +388,9 @@ export default function CategoryEditForm({
                     setFormData((p) => ({ ...p, order: parseInt(e.target.value, 10) || 0 }))
                   }
                   min={0}
-                  className="w-full max-w-[120px] px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] focus:ring-2 focus:ring-[var(--primary)]"
+                  className="w-full max-w-30 px-3 py-2 rounded-xl border border-(--color-border) bg-(--color-surface) focus:ring-2 focus:ring-(--primary)"
                 />
-                <p className="text-xs text-[var(--color-text-muted)] mt-1">عدد کوچکتر = نمایش زودتر</p>
+                <p className="text-xs text-wibe-secondary mt-1">عدد کوچکتر = نمایش زودتر</p>
               </div>
 
               <ToggleRow
@@ -401,10 +401,10 @@ export default function CategoryEditForm({
 
               <details
                 id="weight"
-                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)]/50"
+                className="rounded-xl border border-(--color-border) bg-(--color-bg)/50"
                 open={formData.trendingWeight !== 1}
               >
-                <summary className="px-4 py-3 text-sm font-medium text-[var(--color-text)] cursor-pointer">
+                <summary className="px-4 py-3 text-sm font-medium text-(--color-text) cursor-pointer">
                   وزن الگوریتمی (پیشرفته)
                   {formData.trendingWeight !== 1 && (
                     <span className="mr-2 text-xs font-normal text-indigo-600 dark:text-indigo-300">
@@ -426,15 +426,15 @@ export default function CategoryEditForm({
           <CategoryImpactCard categoryId={category.id} />
 
           <section className={sectionCard}>
-            <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg)] flex flex-wrap items-center justify-between gap-2">
+            <div className="px-5 py-4 border-b border-(--color-border) bg-(--color-bg) flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="font-semibold text-[var(--color-text)]">آمار این دسته</h2>
-                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">فقط نمایش</p>
+                <h2 className="font-semibold text-(--color-text)">آمار این دسته</h2>
+                <p className="text-xs text-wibe-secondary mt-0.5">فقط نمایش</p>
               </div>
               {analytics.listCount > 0 && (
                 <Link
                   href={`/admin/lists?category=${encodeURIComponent(category.slug)}`}
-                  className="text-xs font-medium text-[var(--primary)] hover:underline"
+                  className="text-xs font-medium text-primary hover:underline"
                 >
                   {analytics.listCount.toLocaleString('fa-IR')} لیست — مشاهده همه
                 </Link>
@@ -516,9 +516,9 @@ export default function CategoryEditForm({
 
       {deleteConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-[var(--color-surface)] rounded-2xl shadow-xl max-w-md w-full p-6 border border-[var(--color-border)]">
-            <h3 className="font-semibold text-[var(--color-text)] mb-2">تأیید انتقال به زباله‌دان</h3>
-            <p className="text-sm text-[var(--color-text-muted)] mb-4">
+          <div className="bg-(--color-surface) rounded-2xl shadow-xl max-w-md w-full p-6 border border-(--color-border)">
+            <h3 className="font-semibold text-(--color-text) mb-2">تأیید انتقال به زباله‌دان</h3>
+            <p className="text-sm text-wibe-secondary mb-4">
               برای انتقال این دسته به زباله‌دان عبارت <strong>حذف</strong> را وارد کنید.
               {analytics.listCount > 0 && (
                 <>
@@ -534,7 +534,7 @@ export default function CategoryEditForm({
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder="حذف"
-              className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] mb-4"
+              className="w-full px-3 py-2 rounded-xl border border-(--color-border) mb-4"
               dir="rtl"
             />
             <div className="flex gap-3 justify-end">
@@ -544,7 +544,7 @@ export default function CategoryEditForm({
                   setDeleteConfirmOpen(false);
                   setDeleteConfirmText('');
                 }}
-                className="px-4 py-2 rounded-xl border border-[var(--color-border)]"
+                className="px-4 py-2 rounded-xl border border-(--color-border)"
               >
                 انصراف
               </button>
@@ -570,9 +570,9 @@ export default function CategoryEditForm({
 
 function StatBox({ label, value, title }: { label: string; value: string; title?: string }) {
   return (
-    <div className="p-3 rounded-xl bg-[var(--color-bg)]" title={title}>
-      <p className="text-xs text-[var(--color-text-muted)]">{label}</p>
-      <p className="text-lg font-bold tabular-nums text-[var(--color-text)]">{value}</p>
+    <div className="p-3 rounded-xl bg-(--color-bg)" title={title}>
+      <p className="text-xs text-wibe-secondary">{label}</p>
+      <p className="text-lg font-bold tabular-nums text-(--color-text)">{value}</p>
     </div>
   );
 }
@@ -588,14 +588,14 @@ function ToggleRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 py-1">
-      <span className="text-sm font-medium text-[var(--color-text)]">{label}</span>
+      <span className="text-sm font-medium text-(--color-text)">{label}</span>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-          checked ? 'bg-[var(--primary)]' : 'bg-[var(--color-border)]'
+          checked ? 'bg-primary' : 'bg-(--color-border)'
         }`}
       >
         <span

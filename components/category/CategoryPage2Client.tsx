@@ -82,7 +82,7 @@ export default function CategoryPage2Client({
           <Skeleton className="mt-6 h-6 w-48" />
           <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="aspect-[4/3] w-full rounded-xl" />
+              <Skeleton key={i} className="aspect-4/3 w-full rounded-xl" />
             ))}
           </div>
         </div>

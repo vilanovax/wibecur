@@ -20,10 +20,10 @@ export default function FeaturedHeroHeader({
   return (
     <header className="flex flex-wrap items-center justify-between gap-4" dir="rtl">
       <div>
-        <h1 className="text-xl font-bold text-[var(--color-text)]">
+        <h1 className="text-xl font-bold text-(--color-text)">
           منتخب هوم
         </h1>
-        <p className="mt-1 text-sm leading-normal text-[var(--color-text-muted)]">
+        <p className="mt-1 text-sm leading-normal text-wibe-secondary">
           بنر اول اپ را برای این هفته و هفته‌های بعد بچینید.
           {upcomingCount > 0
             ? ` ${upcomingCount.toLocaleString('fa-IR')} اسلات در صف است.`
@@ -35,7 +35,7 @@ export default function FeaturedHeroHeader({
           className={`inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-medium ${
             hasActiveSlot
               ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300'
-              : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
+              : 'bg-(--color-bg) text-wibe-secondary border border-(--color-border)'
           }`}
         >
           <span
@@ -47,7 +47,7 @@ export default function FeaturedHeroHeader({
           <button
             type="button"
             onClick={onAddSlot}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[var(--primary)] px-3 text-sm font-medium text-white hover:opacity-90"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-3 text-sm font-medium text-white hover:opacity-90"
           >
             <Plus className="w-4 h-4" />
             اسلات جدید
@@ -57,7 +57,7 @@ export default function FeaturedHeroHeader({
           type="button"
           onClick={onRefresh}
           disabled={refreshing}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 text-sm hover:bg-[var(--color-bg)] disabled:opacity-50"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) px-3 text-sm hover:bg-(--color-bg) disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           بروزرسانی

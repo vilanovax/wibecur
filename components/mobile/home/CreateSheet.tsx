@@ -64,7 +64,7 @@ function CreateActionCard({
         }
       `}
     >
-      <span className="text-2xl flex-shrink-0 leading-none" aria-hidden>
+      <span className="text-2xl shrink-0 leading-none" aria-hidden>
         {icon}
       </span>
       <div className="flex-1 min-w-0">
@@ -138,7 +138,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
                 hover:bg-brand/10 active:scale-95
               "
             >
-              <span className="text-2xl flex-shrink-0 leading-none" aria-hidden>
+              <span className="text-2xl shrink-0 leading-none" aria-hidden>
                 🧩
               </span>
               <div className="flex-1 min-w-0">
@@ -156,7 +156,7 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
               "
             >
               <div className="flex items-center gap-3 p-4 pb-3">
-                <span className="text-2xl flex-shrink-0 leading-none">🧩</span>
+                <span className="text-2xl shrink-0 leading-none">🧩</span>
                 <div className="flex-1 min-w-0">
                   <span className="font-semibold text-foreground block">ساخت لیست جدید</span>
                   <span className="mt-0.5 block text-sm text-muted-foreground">

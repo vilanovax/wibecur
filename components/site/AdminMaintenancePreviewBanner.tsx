@@ -5,7 +5,7 @@ import { AlertTriangle } from 'lucide-react';
 export default function AdminMaintenancePreviewBanner() {
   return (
     <div
-      className="sticky top-0 z-[100] border-b border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-950 shadow-sm"
+      className="sticky top-0 z-100 border-b border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-950 shadow-sm"
       dir="rtl"
       role="status"
     >

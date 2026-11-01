@@ -33,7 +33,7 @@ interface CategoryFormIdentityProps {
 }
 
 const inputClass =
-  'w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent';
+  'w-full px-3 py-2 rounded-xl border border-(--color-border) bg-(--color-surface) focus:ring-2 focus:ring-(--primary) focus:border-transparent';
 
 export default function CategoryFormIdentity({
   values,
@@ -62,7 +62,7 @@ export default function CategoryFormIdentity({
     <div className={`grid grid-cols-1 ${showInlinePreview ? 'lg:grid-cols-2' : ''} gap-6`} dir="rtl">
       <div className="space-y-4">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-[var(--color-text)] mb-1">
+          <label htmlFor="name" className="block text-sm font-medium text-(--color-text) mb-1">
             نام دسته‌بندی *
           </label>
           <input
@@ -79,14 +79,14 @@ export default function CategoryFormIdentity({
 
         <div>
           <div className="flex items-center justify-between gap-2 mb-1">
-            <label htmlFor="slug" className="block text-sm font-medium text-[var(--color-text)]">
+            <label htmlFor="slug" className="block text-sm font-medium text-(--color-text)">
               Slug (نامک) *
             </label>
             {slugEditable && onResetSlugAuto && (
               <button
                 type="button"
                 onClick={onResetSlugAuto}
-                className="inline-flex items-center gap-1 text-xs text-[var(--primary)] hover:underline"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
               >
                 <RefreshCw className="w-3 h-3" />
                 {slugAutoMode ? 'ویرایش دستی' : 'تولید خودکار از نام'}
@@ -115,16 +115,16 @@ export default function CategoryFormIdentity({
                   : slugCheck?.status === 'taken' || (values.slug.length > 0 && !slugValid)
                     ? 'border-red-400 ring-1 ring-red-400/20'
                     : ''
-            } ${slugAutoMode && onSlugChange ? 'bg-[var(--color-bg)] cursor-default' : ''}`}
+            } ${slugAutoMode && onSlugChange ? 'bg-(--color-bg) cursor-default' : ''}`}
             placeholder="movies"
           />
-          <p className="text-xs text-[var(--color-text-muted)] mt-1">
+          <p className="text-xs text-wibe-secondary mt-1">
             {slugAutoMode
               ? 'از نام دسته ساخته می‌شود — برای slug سفارشی «ویرایش دستی» را بزنید'
               : 'حروف انگلیسی کوچک، اعداد و خط تیره'}
           </p>
           {values.slug.length > 0 && slugCheck?.status === 'checking' && (
-            <p className="text-xs mt-1 text-[var(--color-text-muted)] inline-flex items-center gap-1">
+            <p className="text-xs mt-1 text-wibe-secondary inline-flex items-center gap-1">
               <Loader2 className="w-3 h-3 animate-spin" />
               در حال بررسی…
             </p>
@@ -142,7 +142,7 @@ export default function CategoryFormIdentity({
                 <button
                   type="button"
                   onClick={() => onApplySlugSuggestion(slugCheck.suggestion!)}
-                  className="text-[var(--primary)] hover:underline font-mono"
+                  className="text-primary hover:underline font-mono"
                   dir="ltr"
                 >
                   پیشنهاد: {slugCheck.suggestion}
@@ -156,7 +156,7 @@ export default function CategoryFormIdentity({
         </div>
 
         <div>
-          <label htmlFor="icon" className="block text-sm font-medium text-[var(--color-text)] mb-1">
+          <label htmlFor="icon" className="block text-sm font-medium text-(--color-text) mb-1">
             آیکون (Emoji) *
           </label>
           <div className="flex gap-3 items-center">
@@ -182,7 +182,7 @@ export default function CategoryFormIdentity({
                 key={emoji}
                 type="button"
                 onClick={() => onChange({ icon: emoji })}
-                className="w-9 h-9 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-bg)] text-lg"
+                className="w-9 h-9 rounded-lg border border-(--color-border) hover:bg-(--color-bg) text-lg"
               >
                 {emoji}
               </button>
@@ -191,7 +191,7 @@ export default function CategoryFormIdentity({
         </div>
 
         <div>
-          <label htmlFor="color" className="block text-sm font-medium text-[var(--color-text)] mb-1">
+          <label htmlFor="color" className="block text-sm font-medium text-(--color-text) mb-1">
             رنگ
           </label>
           <div className="flex gap-3 items-center">
@@ -201,7 +201,7 @@ export default function CategoryFormIdentity({
               name="color"
               value={values.color}
               onChange={(e) => onChange({ color: e.target.value })}
-              className="h-10 w-14 rounded-lg cursor-pointer border border-[var(--color-border)]"
+              className="h-10 w-14 rounded-lg cursor-pointer border border-(--color-border)"
             />
             <input
               type="text"
@@ -216,7 +216,7 @@ export default function CategoryFormIdentity({
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-[var(--color-text)] mb-1">
+          <label htmlFor="description" className="block text-sm font-medium text-(--color-text) mb-1">
             توضیحات
           </label>
           <textarea
@@ -240,9 +240,9 @@ export default function CategoryFormIdentity({
 
       {showInlinePreview && (
         <div>
-          <p className="text-sm font-medium text-[var(--color-text-muted)] mb-2">پیش‌نمایش در اپ</p>
+          <p className="text-sm font-medium text-wibe-secondary mb-2">پیش‌نمایش در اپ</p>
           <div
-            className="rounded-2xl border border-[var(--color-border)] p-5 flex items-center gap-4"
+            className="rounded-2xl border border-(--color-border) p-5 flex items-center gap-4"
             style={{
               backgroundColor: (values.accentColor || values.color)
                 ? `${values.accentColor || values.color}12`
@@ -261,12 +261,12 @@ export default function CategoryFormIdentity({
               {values.icon || '📁'}
             </div>
             <div>
-              <p className="font-semibold text-[var(--color-text)]">{values.name || 'نام دسته'}</p>
-              <p className="text-xs text-[var(--color-text-muted)] font-mono" dir="ltr">
+              <p className="font-semibold text-(--color-text)">{values.name || 'نام دسته'}</p>
+              <p className="text-xs text-wibe-secondary font-mono" dir="ltr">
                 /{values.slug || 'slug'}
               </p>
               {values.description && (
-                <p className="text-xs text-[var(--color-text-muted)] mt-1 line-clamp-2">
+                <p className="text-xs text-wibe-secondary mt-1 line-clamp-2">
                   {values.description}
                 </p>
               )}

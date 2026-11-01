@@ -90,11 +90,11 @@ export default function FeaturedPerformanceSection({
   if (loading) {
     return (
       <section
-        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+        className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4"
         dir="rtl"
       >
-        <h2 className="mb-2 text-sm font-semibold text-[var(--color-text)]">عملکرد همین اسلات</h2>
-        <p className="text-sm text-[var(--color-text-muted)]">در حال بارگذاری…</p>
+        <h2 className="mb-2 text-sm font-semibold text-(--color-text)">عملکرد همین اسلات</h2>
+        <p className="text-sm text-wibe-secondary">در حال بارگذاری…</p>
       </section>
     );
   }
@@ -102,10 +102,10 @@ export default function FeaturedPerformanceSection({
   if (error || !performance) {
     return (
       <section
-        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+        className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4"
         dir="rtl"
       >
-        <h2 className="mb-2 text-sm font-semibold text-[var(--color-text)]">عملکرد همین اسلات</h2>
+        <h2 className="mb-2 text-sm font-semibold text-(--color-text)">عملکرد همین اسلات</h2>
         <p className="text-sm text-red-700">
           {error || 'داده‌ای یافت نشد'}
         </p>
@@ -122,45 +122,45 @@ export default function FeaturedPerformanceSection({
 
   return (
     <section className="space-y-4" dir="rtl">
-      <h2 className="text-lg font-semibold leading-snug text-[var(--color-text)]">عملکرد همین اسلات</h2>
+      <h2 className="text-lg font-semibold leading-snug text-(--color-text)">عملکرد همین اسلات</h2>
       {quiet ? (
-        <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-sm leading-relaxed text-[var(--color-text-muted)]">
+        <p className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4 text-sm leading-relaxed text-wibe-secondary">
           هنوز نمایش یا کلیکی برای این اسلات ثبت نشده.
         </p>
       ) : (
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+        <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm text-wibe-secondary">
             <BarChart3 className="size-4" strokeWidth={1.5} />
             <span>تعامل</span>
           </div>
-          <p className="text-lg font-bold text-[var(--color-text)]">{formatNum(performance.impressions)}</p>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">نمایش</p>
-          <p className="mt-2 text-lg font-bold text-[var(--color-text)]">{formatNum(performance.clicks)}</p>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">کلیک</p>
+          <p className="text-lg font-bold text-(--color-text)">{formatNum(performance.impressions)}</p>
+          <p className="mt-1 text-sm text-wibe-secondary">نمایش</p>
+          <p className="mt-2 text-lg font-bold text-(--color-text)">{formatNum(performance.clicks)}</p>
+          <p className="mt-1 text-sm text-wibe-secondary">کلیک</p>
           <p className={`mt-2 text-sm font-semibold ${ctrColor(ctr)}`}>نرخ کلیک {formatPct(ctr * 100)}</p>
         </div>
 
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+        <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm text-wibe-secondary">
             <Save className="size-4" strokeWidth={1.5} />
             <span>رشد ذخیره</span>
           </div>
-          <p className="text-lg font-bold text-[var(--color-text)]">{formatNum(performance.savesDuring)}</p>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">ذخیره در بازه اسلات</p>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">پایه {formatNum(performance.baselineSaves)}</p>
+          <p className="text-lg font-bold text-(--color-text)">{formatNum(performance.savesDuring)}</p>
+          <p className="mt-1 text-sm text-wibe-secondary">ذخیره در بازه اسلات</p>
+          <p className="mt-1 text-sm text-wibe-secondary">پایه {formatNum(performance.baselineSaves)}</p>
           <p className={`mt-2 text-sm font-semibold ${liftColor(saveLiftPercent)}`}>
             {saveLiftPercent != null ? formatPct(saveLiftPercent) : 'هنوز نیست'}
           </p>
         </div>
 
-        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+        <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4">
+          <div className="mb-3 flex items-center gap-2 text-sm text-wibe-secondary">
             <TrendingUp className="size-4" strokeWidth={1.5} />
             <span>تأثیر ترند</span>
           </div>
-          <p className="text-sm text-[var(--color-text-muted)]">پایه {formatNum(performance.baselineScore)}</p>
-          <p className="mt-1 text-sm text-[var(--color-text-muted)]">اوج {formatNum(performance.peakScore)}</p>
+          <p className="text-sm text-wibe-secondary">پایه {formatNum(performance.baselineScore)}</p>
+          <p className="mt-1 text-sm text-wibe-secondary">اوج {formatNum(performance.peakScore)}</p>
           <p className={`mt-2 text-sm font-semibold ${liftColor(scoreLiftPercent)}`}>
             {scoreLiftPercent != null ? formatPct(scoreLiftPercent) : 'هنوز نیست'}
           </p>

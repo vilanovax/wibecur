@@ -514,7 +514,7 @@ export function NotificationUnreadBadge({ count }: { count: number }) {
 
   return (
     <span
-      className="pointer-events-none absolute -top-0.5 end-0 z-20 flex size-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold leading-none text-white ring-2 ring-background"
+      className="pointer-events-none absolute -top-0.5 inset-e-0 z-20 flex size-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-bold leading-none text-white ring-2 ring-background"
       aria-hidden
     >
       {label}

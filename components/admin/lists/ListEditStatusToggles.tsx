@@ -35,7 +35,7 @@ const TOGGLES: Array<{
     label: 'فعال',
     hint: 'لیست در اپ نمایش داده می‌شود',
     icon: Power,
-    onClass: 'border-[var(--primary)] bg-[var(--primary)]/8 ring-1 ring-[var(--primary)]/30',
+    onClass: 'border-(--primary) bg-primary/8 ring-1 ring-(--primary)/30',
   },
   {
     key: 'commentsEnabled',
@@ -69,21 +69,21 @@ export default function ListEditStatusToggles({ values, onChange }: ListEditStat
             type="button"
             onClick={() => onChange(key, !on)}
             className={`min-h-11 rounded-xl border p-3 text-right transition-all ${
-              on ? onClass : 'border-[var(--color-border-muted)] hover:border-[var(--color-border)] hover:bg-[var(--color-bg)]/60'
+              on ? onClass : 'border-(--color-border-muted) hover:border-(--color-border) hover:bg-(--color-bg)/60'
             }`}
           >
             <div className="flex items-center justify-between gap-2 mb-1">
-              <Icon className={`w-4 h-4 shrink-0 ${on ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'}`} />
+              <Icon className={`w-4 h-4 shrink-0 ${on ? 'text-(--color-text)' : 'text-wibe-secondary'}`} />
               <span
                 className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                  on ? 'bg-white/80 text-[var(--color-text)]' : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
+                  on ? 'bg-white/80 text-(--color-text)' : 'bg-(--color-bg) text-wibe-secondary'
                 }`}
               >
                 {on ? 'روشن' : 'خاموش'}
               </span>
             </div>
-            <p className="text-sm font-semibold text-[var(--color-text)]">{label}</p>
-            <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5 leading-snug">{hint}</p>
+            <p className="text-sm font-semibold text-(--color-text)">{label}</p>
+            <p className="text-[10px] text-wibe-secondary mt-0.5 leading-snug">{hint}</p>
           </button>
         );
       })}

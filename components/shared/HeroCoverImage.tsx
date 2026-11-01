@@ -37,7 +37,7 @@ export default function HeroCoverImage({
       sizes={sizes}
       className={className}
       fallbackIcon={fallbackIcon}
-      fallbackClassName="flex h-full w-full min-h-[12rem] items-center justify-center bg-gradient-to-br from-neutral-800 to-neutral-950 text-5xl lg:text-7xl"
+      fallbackClassName="flex h-full w-full min-h-48 items-center justify-center bg-linear-to-br from-neutral-800 to-neutral-950 text-5xl lg:text-7xl"
       categorySlug={categorySlug}
       listSlug={listSlug}
       listTitle={listTitle}

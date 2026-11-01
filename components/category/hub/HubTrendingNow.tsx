@@ -38,10 +38,10 @@ export default function HubTrendingNow({
             <Link
               key={list.id}
               href={`/lists/${list.slug}`}
-              className="flex-shrink-0 w-[68vw] max-w-[240px] snap-start"
+              className="shrink-0 w-[68vw] max-w-60 snap-start"
             >
               <div className="rounded-2xl overflow-hidden bg-white border border-wibe shadow-lg active:scale-[0.98] transition-transform">
-                <div className="relative aspect-[3/4] bg-wibe-surface">
+                <div className="relative aspect-3/4 bg-wibe-surface">
                   {list.coverImage ? (
                     <ImageWithFallback
                       src={list.coverImage}

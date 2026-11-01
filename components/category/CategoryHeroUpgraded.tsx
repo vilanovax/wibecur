@@ -19,7 +19,7 @@ export default function CategoryHeroUpgraded({
 }: CategoryHeroUpgradedProps) {
   return (
     <section className="relative -mx-4 -mt-4 mb-6">
-      <div className="relative aspect-[4/3] min-h-[220px] overflow-hidden">
+      <div className="relative aspect-4/3 min-h-55 overflow-hidden">
         {category.heroImage || category.slug ? (
           <>
             <ImageWithFallback
@@ -30,7 +30,7 @@ export default function CategoryHeroUpgraded({
               priority
         sizes="100vw"
       />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/50 to-black/30" />
           </>
         ) : (
           <div

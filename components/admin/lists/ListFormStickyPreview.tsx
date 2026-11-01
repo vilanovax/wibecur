@@ -81,36 +81,36 @@ export default function ListFormStickyPreview({ values, step = 1 }: ListFormStic
 
   return (
     <div
-      className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] shadow-sm overflow-hidden"
+      className="rounded-xl border border-(--color-border-muted) bg-(--color-surface) shadow-sm overflow-hidden"
       dir="rtl"
     >
-      <div className="px-3 py-2 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/60">
-        <p className="text-xs font-semibold text-[var(--color-text)]">پیش‌نمایش</p>
-        <p className="text-[10px] text-[var(--color-text-muted)]">کارت + بنر · {stepHint}</p>
+      <div className="px-3 py-2 border-b border-(--color-border-muted) bg-(--color-bg)/60">
+        <p className="text-xs font-semibold text-(--color-text)">پیش‌نمایش</p>
+        <p className="text-[10px] text-wibe-secondary">کارت + بنر · {stepHint}</p>
       </div>
       <div className="p-3 space-y-3">
         {step >= 2 && (
-          <div className="rounded-lg border border-[var(--color-border-muted)] overflow-hidden">
-            <p className="text-[9px] px-2 py-1 bg-[var(--color-bg)] text-[var(--color-text-muted)]">
+          <div className="rounded-lg border border-(--color-border-muted) overflow-hidden">
+            <p className="text-[9px] px-2 py-1 bg-(--color-bg) text-wibe-secondary">
               بنر افقی
             </p>
             <ImageArea
               src={values.horizontalImage}
               fallback={bannerFallback}
-              className="h-16 bg-[var(--color-bg)]"
+              className="h-16 bg-(--color-bg)"
             />
           </div>
         )}
 
         <div
           className={`rounded-xl border overflow-hidden ${
-            values.isFeatured ? 'border-amber-300 ring-1 ring-amber-200/50' : 'border-[var(--color-border-muted)]'
+            values.isFeatured ? 'border-amber-300 ring-1 ring-amber-200/50' : 'border-(--color-border-muted)'
           }`}
         >
-          <p className="text-[9px] px-2 py-1 bg-[var(--color-bg)] text-[var(--color-text-muted)] border-b border-[var(--color-border-muted)]">
+          <p className="text-[9px] px-2 py-1 bg-(--color-bg) text-wibe-secondary border-b border-(--color-border-muted)">
             کارت کاور
           </p>
-          <ImageArea src={values.coverImage} fallback={cardFallback} className="h-24 bg-[var(--color-bg)]" />
+          <ImageArea src={values.coverImage} fallback={cardFallback} className="h-24 bg-(--color-bg)" />
           <div className="p-2.5">
             <div className="flex flex-wrap gap-1 mb-1">
               <span
@@ -131,20 +131,20 @@ export default function ListFormStickyPreview({ values, step = 1 }: ListFormStic
                 <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-800">خصوصی</span>
               )}
               {values.badge && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-[var(--color-bg)]">{values.badge}</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-(--color-bg)">{values.badge}</span>
               )}
             </div>
-            <p className="font-semibold text-sm text-[var(--color-text)] truncate">
+            <p className="font-semibold text-sm text-(--color-text) truncate">
               {values.title || 'عنوان لیست'}
             </p>
-            <p className="text-[10px] text-[var(--color-text-muted)] font-mono truncate mt-0.5" dir="ltr">
+            <p className="text-[10px] text-wibe-secondary font-mono truncate mt-0.5" dir="ltr">
               /lists/{values.slug || 'slug'}
             </p>
             {values.description && (
-              <p className="text-[10px] text-[var(--color-text-muted)] mt-1 line-clamp-2">{values.description}</p>
+              <p className="text-[10px] text-wibe-secondary mt-1 line-clamp-2">{values.description}</p>
             )}
             {step >= 3 && values.itemCount != null && (
-              <p className="text-[10px] text-[var(--color-text-muted)] mt-1.5 pt-1.5 border-t border-[var(--color-border-muted)]">
+              <p className="text-[10px] text-wibe-secondary mt-1.5 pt-1.5 border-t border-(--color-border-muted)">
                 {values.itemCount.toLocaleString('fa-IR')} آیتم در لیست
               </p>
             )}

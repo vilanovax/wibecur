@@ -616,8 +616,8 @@ export default function PeoplePageClient({
       {!embedded && (
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h1 className="text-xl font-bold text-[var(--color-text)] md:text-2xl">اشخاص</h1>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            <h1 className="text-xl font-bold text-(--color-text) md:text-2xl">اشخاص</h1>
+            <p className="mt-1 text-sm text-wibe-secondary">
               پروفایل کارگردان، بازیگر، نویسنده و مترجم
             </p>
           </div>
@@ -642,23 +642,23 @@ export default function PeoplePageClient({
         </div>
       )}
 
-      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:p-4 space-y-3">
+      <section className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-3 sm:p-4 space-y-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="relative min-w-0 flex-1 max-w-md">
-              <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+              <Search className="pointer-events-none absolute inset-s-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary" />
               <input
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="جستجوی نام…"
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] py-2.5 ps-9 pe-3 text-sm"
+                className="w-full rounded-xl border border-(--color-border) bg-(--color-bg) py-2.5 ps-9 pe-3 text-sm"
               />
             </div>
             <button
               type="button"
               onClick={() => void loadPeople()}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-(--color-border) hover:bg-(--color-bg)"
               aria-label="بارگذاری مجدد"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -684,13 +684,13 @@ export default function PeoplePageClient({
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-[var(--color-border)] pt-3">
+        <div className="flex flex-wrap items-center gap-2 border-t border-(--color-border) pt-3">
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => void handleExportMissing()}
               disabled={exporting}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm font-medium hover:bg-[var(--color-surface)] disabled:opacity-60"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-bg) px-3 text-sm font-medium hover:bg-(--color-surface) disabled:opacity-60"
             >
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
               خروجی بدون زندگی‌نامه
@@ -704,9 +704,9 @@ export default function PeoplePageClient({
               ورود JSON
             </button>
           </div>
-          <p className="text-xs text-[var(--color-text-muted)]">
+          <p className="text-xs text-wibe-secondary">
             برای{' '}
-            <span className="font-medium text-[var(--color-text)]">
+            <span className="font-medium text-(--color-text)">
               {roleFilter === 'all' ? 'همهٔ نقش‌ها' : PERSON_ROLE_META[roleFilter].label}
             </span>
             {!debouncedQuery && stats.total > 0
@@ -733,17 +733,17 @@ export default function PeoplePageClient({
 
       <div>
         <div className="min-w-0">
-          <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-sm">
             {loading && people.length === 0 ? (
               <PeopleTableSkeleton />
             ) : people.length === 0 ? (
-              <div className="px-6 py-20 text-center text-sm text-[var(--color-text-muted)]">
+              <div className="px-6 py-20 text-center text-sm text-wibe-secondary">
                 شخصی پیدا نشد
               </div>
             ) : (
               <div className={`max-h-[calc(100vh-18rem)] overflow-auto ${loading ? 'opacity-60' : ''}`}>
                 <table className="min-w-full text-sm">
-                  <thead className="sticky top-0 z-10 bg-[var(--color-bg)] text-[var(--color-text-muted)] shadow-[0_1px_0_var(--color-border)]">
+                  <thead className="sticky top-0 z-10 bg-(--color-bg) text-wibe-secondary shadow-[0_1px_0_var(--color-border)]">
                     <tr>
                       <th className="px-3 py-2.5 text-right font-medium">نام</th>
                       <th className="px-3 py-2.5 text-right font-medium">نقش</th>
@@ -761,12 +761,12 @@ export default function PeoplePageClient({
                       return (
                         <tr
                           key={`${person.role}:${person.slug}`}
-                          className={`border-t border-[var(--color-border)] cursor-pointer transition-colors hover:bg-[var(--color-bg)]/70 ${
+                          className={`border-t border-(--color-border) cursor-pointer transition-colors hover:bg-(--color-bg)/70 ${
                             isSelected ? 'bg-indigo-50/70 dark:bg-indigo-950/25' : ''
                           }`}
                           onClick={() => void openEditor(person)}
                         >
-                          <td className="px-3 py-2.5 font-medium text-[var(--color-text)] max-w-[180px] truncate">
+                          <td className="px-3 py-2.5 font-medium text-(--color-text) max-w-45 truncate">
                             {person.displayName}
                           </td>
                           <td className="px-3 py-2.5">
@@ -777,7 +777,7 @@ export default function PeoplePageClient({
                               <span className="hidden sm:inline">{PERSON_ROLE_META[person.role].label}</span>
                             </span>
                           </td>
-                          <td className="hidden sm:table-cell px-3 py-2.5 tabular-nums text-[var(--color-text-muted)]">
+                          <td className="hidden sm:table-cell px-3 py-2.5 tabular-nums text-wibe-secondary">
                             {person.itemCount.toLocaleString('fa-IR')}
                           </td>
                           <td className="px-3 py-2.5">
@@ -786,7 +786,7 @@ export default function PeoplePageClient({
                                 {person.profileStatus === 'draft' ? 'پیش‌نویس' : 'منتشر'}
                               </span>
                             ) : (
-                              <span className="text-[11px] text-[var(--color-text-muted)]">—</span>
+                              <span className="text-[11px] text-wibe-secondary">—</span>
                             )}
                           </td>
                           <td className="px-3 py-2.5 text-left" onClick={(e) => e.stopPropagation()}>
@@ -824,7 +824,7 @@ export default function PeoplePageClient({
                                   <Link
                                     href={personPublicPath(person.role, person.slug)}
                                     target="_blank"
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-wibe-secondary hover:bg-(--color-bg)"
                                     title="صفحه عمومی در سایت"
                                   >
                                     <ExternalLink className="h-3.5 w-3.5" />
@@ -834,7 +834,7 @@ export default function PeoplePageClient({
                               <button
                                 type="button"
                                 onClick={() => void openEditor(person)}
-                                className="inline-flex min-h-11 items-center rounded-lg border border-[var(--color-border)] px-3 text-xs font-medium hover:bg-[var(--color-bg)]"
+                                className="inline-flex min-h-11 items-center rounded-lg border border-(--color-border) px-3 text-xs font-medium hover:bg-(--color-bg)"
                               >
                                 ویرایش
                               </button>
@@ -849,8 +849,8 @@ export default function PeoplePageClient({
             )}
 
             {pagination.totalPages > 0 && people.length > 0 && (
-              <div className="flex flex-col gap-2 border-t border-[var(--color-border)] px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-[var(--color-text-muted)]">
+              <div className="flex flex-col gap-2 border-t border-(--color-border) px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-wibe-secondary">
                   {pagination.total === 0
                     ? 'بدون نتیجه'
                     : `${rangeStart.toLocaleString('fa-IR')}–${rangeEnd.toLocaleString('fa-IR')} از ${pagination.total.toLocaleString('fa-IR')}`}
@@ -861,7 +861,7 @@ export default function PeoplePageClient({
                     onChange={(e) =>
                       setPageSize(Number(e.target.value) as (typeof PAGE_SIZES)[number])
                     }
-                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1.5 text-xs"
+                    className="rounded-lg border border-(--color-border) bg-(--color-bg) px-2 py-1.5 text-xs"
                     aria-label="تعداد در صفحه"
                   >
                     {PAGE_SIZES.map((size) => (
@@ -874,19 +874,19 @@ export default function PeoplePageClient({
                     type="button"
                     disabled={pagination.page <= 1}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] disabled:opacity-40 hover:bg-[var(--color-bg)]"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-(--color-border) disabled:opacity-40 hover:bg-(--color-bg)"
                     aria-label="صفحه قبل"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
-                  <span className="min-w-[4.5rem] text-center text-xs tabular-nums">
+                  <span className="min-w-18 text-center text-xs tabular-nums">
                     {pagination.page.toLocaleString('fa-IR')} / {pagination.totalPages.toLocaleString('fa-IR')}
                   </span>
                   <button
                     type="button"
                     disabled={pagination.page >= pagination.totalPages}
                     onClick={() => setPage((p) => p + 1)}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] disabled:opacity-40 hover:bg-[var(--color-bg)]"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-(--color-border) disabled:opacity-40 hover:bg-(--color-bg)"
                     aria-label="صفحه بعد"
                   >
                     <ChevronLeft className="h-4 w-4" />
@@ -910,7 +910,7 @@ export default function PeoplePageClient({
             className="max-h-[min(40rem,calc(100vh-2rem))] w-full max-w-lg overflow-y-auto"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
+            <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-4 shadow-sm">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <span
@@ -918,10 +918,10 @@ export default function PeoplePageClient({
                   >
                     {PERSON_ROLE_META[selected.role].icon} {PERSON_ROLE_META[selected.role].label}
                   </span>
-                  <h2 className="mt-2 text-lg font-bold text-[var(--color-text)] truncate">
+                  <h2 className="mt-2 text-lg font-bold text-(--color-text) truncate">
                     {selected.displayName}
                   </h2>
-                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                  <p className="mt-1 text-xs text-wibe-secondary">
                     {itemCount.toLocaleString('fa-IR')} آیتم ·{' '}
                     <span dir="ltr" className="font-mono text-[10px]">
                       {selected.slug}
@@ -931,7 +931,7 @@ export default function PeoplePageClient({
                 <button
                   type="button"
                   onClick={closeEditor}
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-wibe-secondary hover:bg-(--color-bg)"
                   aria-label="بستن"
                 >
                   <X className="h-4 w-4" />
@@ -939,7 +939,7 @@ export default function PeoplePageClient({
               </div>
 
               {detailLoading ? (
-                <div className="flex items-center justify-center gap-2 py-12 text-sm text-[var(--color-text-muted)]">
+                <div className="flex items-center justify-center gap-2 py-12 text-sm text-wibe-secondary">
                   <Loader2 className="h-5 w-5 animate-spin" />
                   بارگذاری…
                 </div>
@@ -980,7 +980,7 @@ export default function PeoplePageClient({
                     <input
                       value={edit.displayName}
                       onChange={(e) => setEdit((s) => ({ ...s, displayName: e.target.value }))}
-                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-(--color-border) bg-(--color-bg) px-3 py-2 text-sm"
                     />
                   </Field>
 
@@ -989,10 +989,10 @@ export default function PeoplePageClient({
                       value={edit.bio}
                       onChange={(e) => setEdit((s) => ({ ...s, bio: e.target.value }))}
                       rows={5}
-                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm leading-relaxed"
+                      className="w-full rounded-lg border border-(--color-border) bg-(--color-bg) px-3 py-2 text-sm leading-relaxed"
                       placeholder="۲–۴ جمله فارسی برای صفحه پروفایل"
                     />
-                    <p className="text-[11px] text-[var(--color-text-muted)]">
+                    <p className="text-[11px] text-wibe-secondary">
                       {edit.bio.length.toLocaleString('fa-IR')} کاراکتر
                     </p>
                   </Field>
@@ -1004,7 +1004,7 @@ export default function PeoplePageClient({
                         <img
                           src={edit.imageUrl}
                           alt=""
-                          className="h-20 w-20 rounded-2xl object-cover ring-1 ring-[var(--color-border)]"
+                          className="h-20 w-20 rounded-2xl object-cover ring-1 ring-(--color-border)"
                         />
                       </div>
                     )}
@@ -1012,7 +1012,7 @@ export default function PeoplePageClient({
                       value={edit.imageUrl}
                       onChange={(e) => setEdit((s) => ({ ...s, imageUrl: e.target.value }))}
                       dir="ltr"
-                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-(--color-border) bg-(--color-bg) px-3 py-2 text-sm"
                       placeholder="https://…"
                     />
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -1036,7 +1036,7 @@ export default function PeoplePageClient({
                           type="button"
                           onClick={() => void handleMigrateImage()}
                           disabled={busy}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11px] font-semibold hover:bg-[var(--color-bg)] disabled:opacity-60"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-(--color-border) px-2.5 py-1.5 text-[11px] font-semibold hover:bg-(--color-bg) disabled:opacity-60"
                         >
                           {imageLoading === 'migrate' ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
@@ -1054,7 +1054,7 @@ export default function PeoplePageClient({
                       value={edit.externalUrl}
                       onChange={(e) => setEdit((s) => ({ ...s, externalUrl: e.target.value }))}
                       dir="ltr"
-                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-(--color-border) bg-(--color-bg) px-3 py-2 text-sm"
                     />
                   </Field>
 
@@ -1067,7 +1067,7 @@ export default function PeoplePageClient({
                           status: e.target.value as 'draft' | 'published',
                         }))
                       }
-                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-(--color-border) bg-(--color-bg) px-3 py-2 text-sm"
                     >
                       <option value="published">منتشر شده</option>
                       <option value="draft">پیش‌نویس</option>
@@ -1075,7 +1075,7 @@ export default function PeoplePageClient({
                   </Field>
 
                   {saveMessage && (
-                    <p className="rounded-lg bg-[var(--color-bg)] px-3 py-2 text-xs text-[var(--color-text-muted)]">
+                    <p className="rounded-lg bg-(--color-bg) px-3 py-2 text-xs text-wibe-secondary">
                       {saveMessage}
                     </p>
                   )}
@@ -1108,14 +1108,14 @@ export default function PeoplePageClient({
                       <Link
                         href={personPublicPath(selected.role, selected.slug)}
                         target="_blank"
-                        className="flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-medium hover:bg-[var(--color-bg)]"
+                        className="flex items-center justify-center gap-2 rounded-xl border border-(--color-border) px-3 py-2 text-sm font-medium hover:bg-(--color-bg)"
                       >
                         <ExternalLink className="h-4 w-4" />
                         سایت
                       </Link>
                     </div>
                   ) : selected ? (
-                    <p className="text-[11px] text-center text-[var(--color-text-muted)]">
+                    <p className="text-[11px] text-center text-wibe-secondary">
                       برای انتشار در سایت: زندگی‌نامه بنویسید، وضعیت را «منتشر شده» بگذارید و ذخیره کنید.
                     </p>
                   ) : null}
@@ -1127,7 +1127,7 @@ export default function PeoplePageClient({
         )}
       </div>
 
-      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+      <section className="rounded-2xl border border-(--color-border) bg-(--color-surface)">
         <button
           type="button"
           onClick={() => setToolsOpen((open) => !open)}
@@ -1135,19 +1135,19 @@ export default function PeoplePageClient({
           aria-expanded={toolsOpen}
         >
           <span>
-            <span className="block text-sm font-semibold text-[var(--color-text)]">
+            <span className="block text-sm font-semibold text-(--color-text)">
               ابزار زندگی‌نامه و تصویر
             </span>
-            <span className="mt-0.5 block text-xs text-[var(--color-text-muted)]">
+            <span className="mt-0.5 block text-xs text-wibe-secondary">
               پرامپت، نام‌های مشابه و تصویر پروفایل
             </span>
           </span>
-          <ChevronLeft className={`h-4 w-4 shrink-0 text-[var(--color-text-muted)] transition-transform ${toolsOpen ? '-rotate-90' : ''}`} />
+          <ChevronLeft className={`h-4 w-4 shrink-0 text-wibe-secondary transition-transform ${toolsOpen ? '-rotate-90' : ''}`} />
         </button>
         {toolsOpen && (
-          <div className="space-y-4 border-t border-[var(--color-border)] px-4 py-4">
+          <div className="space-y-4 border-t border-(--color-border) px-4 py-4">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs font-medium text-[var(--color-text-muted)]">مدل زندگی‌نامه:</span>
+              <span className="text-xs font-medium text-wibe-secondary">مدل زندگی‌نامه:</span>
               {COMMENT_AI_PROVIDER_OPTIONS.map((option) => {
                 const configured =
                   option.value === 'openai'
@@ -1162,7 +1162,7 @@ export default function PeoplePageClient({
                     className={`min-h-11 rounded-lg px-3 text-xs font-medium transition-colors disabled:opacity-60 ${
                       aiProvider === option.value
                         ? 'bg-indigo-600 text-white'
-                        : 'border border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                        : 'border border-(--color-border) hover:bg-(--color-bg)'
                     } ${!configured ? 'opacity-70' : ''}`}
                     title={configured ? undefined : `کلید ${option.label} در تنظیمات وارد نشده`}
                   >
@@ -1182,7 +1182,7 @@ export default function PeoplePageClient({
               </p>
             )}
             {aiSettings.fallbackActive && aiSettings.effectiveProvider && (
-              <p className="text-xs text-[var(--color-text-muted)]">
+              <p className="text-xs text-wibe-secondary">
                 {commentAiProviderLabel(aiSettings.personBioAiProvider)} فعال نیست — از{' '}
                 {commentAiProviderLabel(aiSettings.effectiveProvider)} استفاده می‌شود.
               </p>
@@ -1210,7 +1210,7 @@ export default function PeoplePageClient({
             </div>
             <Suspense
               fallback={
-                <p className="text-xs text-[var(--color-text-muted)]">در حال آماده‌سازی بخش تصاویر…</p>
+                <p className="text-xs text-wibe-secondary">در حال آماده‌سازی بخش تصاویر…</p>
               }
             >
               <PersonImagesSection
@@ -1234,7 +1234,7 @@ export default function PeoplePageClient({
             value={copyModal.content}
             rows={14}
             dir={copyModal.title.includes('JSON') ? 'ltr' : 'rtl'}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-xs font-mono leading-relaxed"
+            className="w-full rounded-xl border border-(--color-border) bg-(--color-bg) px-3 py-2 text-xs font-mono leading-relaxed"
           />
           <button
             type="button"
@@ -1272,16 +1272,16 @@ export default function PeoplePageClient({
 function BioProgressBar({ withBio, total }: { withBio: number; total: number }) {
   const pct = Math.round((withBio / total) * 100);
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5">
+    <div className="rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2.5">
       <div className="mb-1.5 flex items-center justify-between text-[11px]">
-        <span className="font-medium text-[var(--color-text-muted)]">پیشرفت زندگی‌نامه</span>
+        <span className="font-medium text-wibe-secondary">پیشرفت زندگی‌نامه</span>
         <span className="tabular-nums font-semibold text-emerald-700 dark:text-emerald-300">
           {pct.toLocaleString('fa-IR')}٪
         </span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-[var(--color-bg)]">
+      <div className="h-1.5 overflow-hidden rounded-full bg-(--color-bg)">
         <div
-          className="h-full rounded-full bg-gradient-to-l from-emerald-500 to-emerald-400 transition-all duration-500"
+          className="h-full rounded-full bg-linear-to-l from-emerald-500 to-emerald-400 transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -1307,22 +1307,22 @@ function StatChip({
       ? 'text-emerald-700 dark:text-emerald-300'
       : tone === 'amber'
         ? 'text-amber-700 dark:text-amber-300'
-        : 'text-[var(--color-text)]';
+        : 'text-(--color-text)';
 
   return (
-    <div className="flex min-h-11 items-center gap-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 min-w-[7rem]">
+    <div className="flex min-h-11 items-center gap-2.5 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2 min-w-28">
       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/40">
         <Icon className="h-3.5 w-3.5 text-indigo-600" />
       </div>
       <div>
         {loading ? (
-          <span className="block h-4 w-8 animate-pulse rounded bg-[var(--color-border)]" />
+          <span className="block h-4 w-8 animate-pulse rounded bg-(--color-border)" />
         ) : (
           <p className={`text-base font-bold tabular-nums leading-none ${toneClass}`}>
             {value.toLocaleString('fa-IR')}
           </p>
         )}
-        <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">{label}</p>
+        <p className="text-[11px] text-wibe-secondary mt-0.5">{label}</p>
       </div>
     </div>
   );
@@ -1332,10 +1332,10 @@ function PeopleTableSkeleton() {
   return (
     <div className="space-y-2 p-3" aria-busy="true" aria-label="در حال چیدن فهرست اشخاص">
       {Array.from({ length: 8 }, (_, index) => (
-        <div key={index} className="flex items-center gap-3 rounded-xl bg-[var(--color-bg)] px-3 py-3">
-          <span className="h-4 w-32 animate-pulse rounded bg-[var(--color-border)]" />
-          <span className="h-4 w-16 animate-pulse rounded bg-[var(--color-border)]" />
-          <span className="ms-auto h-4 w-12 animate-pulse rounded bg-[var(--color-border)]" />
+        <div key={index} className="flex items-center gap-3 rounded-xl bg-(--color-bg) px-3 py-3">
+          <span className="h-4 w-32 animate-pulse rounded bg-(--color-border)" />
+          <span className="h-4 w-16 animate-pulse rounded bg-(--color-border)" />
+          <span className="ms-auto h-4 w-12 animate-pulse rounded bg-(--color-border)" />
         </div>
       ))}
     </div>
@@ -1362,7 +1362,7 @@ function FilterChip({
           ? accent === 'amber'
             ? 'bg-amber-500 text-white'
             : 'bg-indigo-600 text-white'
-          : 'bg-[var(--color-bg)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+          : 'bg-(--color-bg) text-wibe-secondary hover:text-(--color-text)'
       }`}
     >
       {label}
@@ -1394,8 +1394,8 @@ function ActionButton({
         primary
           ? 'bg-emerald-600 text-white hover:bg-emerald-700'
           : subtle
-            ? 'hover:bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
-            : 'border border-[var(--color-border)] bg-[var(--color-bg)] hover:bg-[var(--color-surface)]'
+            ? 'hover:bg-(--color-surface) text-wibe-secondary hover:text-(--color-text)'
+            : 'border border-(--color-border) bg-(--color-bg) hover:bg-(--color-surface)'
       }`}
     >
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : icon}
@@ -1407,7 +1407,7 @@ function ActionButton({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block space-y-1">
-      <span className="text-xs font-medium text-[var(--color-text-muted)]">{label}</span>
+      <span className="text-xs font-medium text-wibe-secondary">{label}</span>
       {children}
     </label>
   );
@@ -1424,13 +1424,13 @@ function Modal({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-      <div className="w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xl">
+      <div className="w-full max-w-2xl rounded-2xl border border-(--color-border) bg-(--color-surface) p-4 shadow-xl">
         <div className="mb-3 flex items-center justify-between gap-3">
-          <h3 className="font-bold text-[var(--color-text)]">{title}</h3>
+          <h3 className="font-bold text-(--color-text)">{title}</h3>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 hover:bg-[var(--color-bg)]"
+            className="rounded-lg p-1.5 hover:bg-(--color-bg)"
             aria-label="بستن"
           >
             <X className="h-4 w-4" />

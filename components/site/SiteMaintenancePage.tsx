@@ -20,8 +20,8 @@ export default function SiteMaintenancePage({ config, preview = false }: Props) 
 
   return (
     <div
-      className={`min-h-screen flex items-center justify-center px-4 py-10 bg-gradient-to-b from-[#f4f5f8] to-[#e8eaef] ${
-        preview ? 'min-h-[420px] rounded-2xl overflow-hidden' : ''
+      className={`min-h-screen flex items-center justify-center px-4 py-10 bg-linear-to-b from-[#f4f5f8] to-[#e8eaef] ${
+        preview ? 'min-h-105 rounded-2xl overflow-hidden' : ''
       }`}
       dir="rtl"
     >
@@ -34,7 +34,7 @@ export default function SiteMaintenancePage({ config, preview = false }: Props) 
                 alt=""
                 width={240}
                 height={60}
-                className="h-12 w-auto max-w-[220px] object-contain"
+                className="h-12 w-auto max-w-55 object-contain"
                 unoptimized
               />
             </div>

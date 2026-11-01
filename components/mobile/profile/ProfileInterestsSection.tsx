@@ -168,7 +168,7 @@ export default function ProfileInterestsSection() {
               تا {MAX_PINNED.toLocaleString('fa-IR')} کلمه کلیدی انتخاب کن — مثل «اکشن»، «قهوه»،
               «تهران». پیشنهاد اکسپلور بر اساس این‌ها و بازدیدهایت شخصی‌سازی می‌شود.
             </p>
-            <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
               {catalog.map((group) => (
                 <div key={group.group}>
                   <p className="mb-1.5 wibe-caption font-semibold text-wibe-secondary">

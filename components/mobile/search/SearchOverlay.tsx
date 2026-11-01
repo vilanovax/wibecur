@@ -515,7 +515,7 @@ export default function SearchOverlay({
   return createPortal(
     <div
       data-theme="paper"
-      className="fixed inset-0 z-[70] flex animate-in fade-in justify-center bg-black/60 backdrop-blur-sm duration-200"
+      className="fixed inset-0 z-70 flex animate-in fade-in justify-center bg-black/60 backdrop-blur-sm duration-200"
       dir="rtl"
       onClick={onClose}
       role="presentation"
@@ -527,7 +527,7 @@ export default function SearchOverlay({
         aria-modal="true"
         aria-label="جستجو"
       >
-        <div className="flex-shrink-0 border-b border-border bg-background/95 px-2.5 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm">
+        <div className="shrink-0 border-b border-border bg-background/95 px-2.5 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm">
         <div className="mb-2 flex items-center gap-2">
           <Button
             type="button"

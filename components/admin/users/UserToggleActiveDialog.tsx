@@ -40,29 +40,29 @@ export default function UserToggleActiveDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60"
+      className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/60"
       onClick={() => { if (!isSubmitting) onCancel(); }}
     >
       <div
-        className="bg-[var(--color-surface)] rounded-2xl shadow-xl max-w-sm w-full p-5 border border-[var(--color-border)]"
+        className="bg-(--color-surface) rounded-2xl shadow-xl max-w-sm w-full p-5 border border-(--color-border)"
         role="dialog"
         aria-modal="true"
         aria-labelledby="user-toggle-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 id="user-toggle-title" className="font-semibold text-[var(--color-text)] mb-2">
+        <h3 id="user-toggle-title" className="font-semibold text-(--color-text) mb-2">
           {isActive ? 'غیرفعال کردن کاربر' : 'فعال کردن کاربر'}
         </h3>
-        <p className="text-sm text-[var(--color-text-muted)] mb-4">
+        <p className="text-sm text-wibe-secondary mb-4">
           {isActive ? (
             <>
-              <span className="font-medium text-[var(--color-text)]">{userName}</span> پس از
+              <span className="font-medium text-(--color-text)">{userName}</span> پس از
               غیرفعال‌سازی نمی‌تواند وارد شود. برای تأیید عبارت «غیرفعال» را وارد کنید.
             </>
           ) : (
             <>
               با فعال‌سازی،{' '}
-              <span className="font-medium text-[var(--color-text)]">{userName}</span> دوباره به
+              <span className="font-medium text-(--color-text)">{userName}</span> دوباره به
               حساب خود دسترسی خواهد داشت.
             </>
           )}
@@ -73,7 +73,7 @@ export default function UserToggleActiveDialog({
             value={confirmText}
             onChange={(e) => onConfirmTextChange(e.target.value)}
             placeholder="غیرفعال"
-            className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] mb-4 text-sm"
+            className="w-full px-3 py-2 rounded-xl border border-(--color-border) mb-4 text-sm"
             dir="rtl"
             autoFocus
           />
@@ -83,7 +83,7 @@ export default function UserToggleActiveDialog({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="flex-1 py-2 rounded-xl border border-[var(--color-border)] font-medium text-sm disabled:opacity-50"
+            className="flex-1 py-2 rounded-xl border border-(--color-border) font-medium text-sm disabled:opacity-50"
           >
             انصراف
           </button>

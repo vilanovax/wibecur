@@ -185,28 +185,28 @@ export default function UserCreatedListsPageClient({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--color-text)]">لیست‌های کاربران</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+          <h1 className="text-2xl font-bold text-(--color-text)">لیست‌های کاربران</h1>
+          <p className="text-sm text-wibe-secondary mt-0.5">
             {totalCount.toLocaleString('fa-IR')} لیست · مدیریت و بررسی محتوای کاربران
           </p>
         </div>
         <Link
           href="/admin/lists"
-          className="px-4 py-2 rounded-xl text-sm font-medium border border-[var(--color-border)] hover:bg-[var(--color-bg)]"
+          className="px-4 py-2 rounded-xl text-sm font-medium border border-(--color-border) hover:bg-(--color-bg)"
         >
           هوش لیست‌ها
         </Link>
       </div>
 
       {/* Filters */}
-      <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] p-4 shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl border border-(--color-border-muted) bg-(--color-surface) p-4 shadow-(--shadow-card)">
         <div className="flex flex-wrap gap-2 mb-4">
           <button
             onClick={() => handleFilterChange('all')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'all'
                 ? 'bg-primary text-white'
-                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
+                : 'bg-gray-100 text-(--color-text) hover:bg-gray-200'
             }`}
           >
             همه
@@ -216,7 +216,7 @@ export default function UserCreatedListsPageClient({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
               filter === 'bad_words'
                 ? 'bg-red-500 text-white'
-                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
+                : 'bg-gray-100 text-(--color-text) hover:bg-gray-200'
             }`}
           >
             <AlertTriangle className="w-4 h-4" />
@@ -227,7 +227,7 @@ export default function UserCreatedListsPageClient({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'public'
                 ? 'bg-green-500 text-white'
-                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
+                : 'bg-gray-100 text-(--color-text) hover:bg-gray-200'
             }`}
           >
             عمومی
@@ -237,7 +237,7 @@ export default function UserCreatedListsPageClient({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'private'
                 ? 'bg-purple-500 text-white'
-                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
+                : 'bg-gray-100 text-(--color-text) hover:bg-gray-200'
             }`}
           >
             خصوصی
@@ -247,7 +247,7 @@ export default function UserCreatedListsPageClient({
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === 'inactive'
                 ? 'bg-gray-500 text-white'
-                : 'bg-gray-100 text-[var(--color-text)] hover:bg-gray-200'
+                : 'bg-gray-100 text-(--color-text) hover:bg-gray-200'
             }`}
           >
             غیرفعال
@@ -273,7 +273,7 @@ export default function UserCreatedListsPageClient({
       </div>
 
       {/* Lists Grid */}
-      <div className="rounded-2xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] overflow-hidden shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl border border-(--color-border-muted) bg-(--color-surface) overflow-hidden shadow-(--shadow-card)">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
           {localLists.map((list) => (
             <div
@@ -282,7 +282,7 @@ export default function UserCreatedListsPageClient({
             >
               {/* Cover Image */}
               {list.coverImage ? (
-                <div className="relative h-48 bg-gradient-to-br from-purple-100 to-blue-100">
+                <div className="relative h-48 bg-linear-to-br from-purple-100 to-blue-100">
                   <Image
                     src={list.coverImage}
                     alt={list.title}
@@ -292,7 +292,7 @@ export default function UserCreatedListsPageClient({
                   />
                 </div>
               ) : (
-                <div className="h-48 bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                <div className="h-48 bg-linear-to-br from-purple-100 to-blue-100 flex items-center justify-center">
                   <span className="text-6xl">
                     {list.categories?.icon || '📋'}
                   </span>
@@ -303,7 +303,7 @@ export default function UserCreatedListsPageClient({
               <div className="p-4">
                 {/* Title */}
                 <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-bold text-lg text-[var(--color-text)] line-clamp-2 flex-1">
+                  <h3 className="font-bold text-lg text-(--color-text) line-clamp-2 flex-1">
                     {list.hasBadWord && (
                       <AlertTriangle className="w-4 h-4 text-red-500 inline ml-1" />
                     )}
@@ -312,14 +312,14 @@ export default function UserCreatedListsPageClient({
                 </div>
 
                 {/* Category & Creator */}
-                <div className="flex items-center gap-2 mb-3 text-sm text-[var(--color-text-muted)]">
+                <div className="flex items-center gap-2 mb-3 text-sm text-wibe-secondary">
                   <span className="text-lg">
                     {list.categories?.icon || '📋'}
                   </span>
                   <span className="text-xs">
                     {list.categories?.name || 'بدون دسته‌بندی'}
                   </span>
-                  <span className="text-[var(--color-text-subtle)] mx-1">•</span>
+                  <span className="text-(--color-text-subtle) mx-1">•</span>
                   <span className="text-xs">
                     {list.users.name || list.users.email.split('@')[0]}
                   </span>
@@ -327,13 +327,13 @@ export default function UserCreatedListsPageClient({
 
                 {/* Description */}
                 {list.description && (
-                  <p className="text-[var(--color-text-muted)] text-sm mb-3 line-clamp-2">
+                  <p className="text-wibe-secondary text-sm mb-3 line-clamp-2">
                     {list.description}
                   </p>
                 )}
 
                 {/* Stats */}
-                <div className="flex items-center gap-4 text-xs text-[var(--color-text-muted)] mb-3">
+                <div className="flex items-center gap-4 text-xs text-wibe-secondary mb-3">
                   <span>📋 {list.itemCount ?? list._count.items} آیتم</span>
                 </div>
 
@@ -360,14 +360,14 @@ export default function UserCreatedListsPageClient({
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-3 border-t border-[var(--color-border-muted)]">
+                <div className="flex items-center gap-2 pt-3 border-t border-(--color-border-muted)">
                   <button
                     type="button"
                     onClick={() => {
                       setViewingListId(list.id);
                       setViewingListTitle(list.title);
                     }}
-                    className="flex-1 px-3 py-2 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-border-muted)] transition-colors text-sm flex items-center justify-center gap-1"
+                    className="flex-1 px-3 py-2 bg-(--color-bg) border border-(--color-border) rounded-xl hover:bg-(--color-border-muted) transition-colors text-sm flex items-center justify-center gap-1"
                     title="مشاهده آیتم‌ها"
                   >
                     <Eye className="w-4 h-4" />
@@ -375,7 +375,7 @@ export default function UserCreatedListsPageClient({
                   </button>
                   <Link
                     href={`/admin/lists/${list.id}/edit`}
-                    className="px-3 py-2 bg-[var(--primary)] text-white rounded-xl hover:opacity-90 transition-colors text-sm flex items-center gap-1"
+                    className="px-3 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-colors text-sm flex items-center gap-1"
                     title="ویرایش کامل"
                   >
                     <Edit className="w-4 h-4" />
@@ -398,7 +398,7 @@ export default function UserCreatedListsPageClient({
 
         {localLists.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-[var(--color-text-muted)]">لیستی یافت نشد</p>
+            <p className="text-wibe-secondary">لیستی یافت نشد</p>
           </div>
         )}
 

@@ -88,14 +88,14 @@ export default function SponsoredPlacementRowMenu({
           <div
             ref={menuRef}
             role="menu"
-            className="fixed z-[200] w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-lg"
+            className="fixed z-200 w-48 rounded-xl border border-(--color-border) bg-(--color-surface) py-1 shadow-lg"
             style={{ top: menuPos.top, left: menuPos.left }}
             dir="rtl"
           >
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-bg)"
               onClick={() => {
                 setOpen(false);
                 onEdit();
@@ -124,7 +124,7 @@ export default function SponsoredPlacementRowMenu({
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-bg)"
               onClick={() => {
                 setOpen(false);
                 onPerformance();
@@ -160,7 +160,7 @@ export default function SponsoredPlacementRowMenu({
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="rounded-lg p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] transition-colors"
+        className="rounded-lg p-2 text-wibe-secondary hover:bg-(--color-bg) transition-colors"
         aria-label="منوی عملیات"
         aria-expanded={open}
         aria-haspopup="menu"

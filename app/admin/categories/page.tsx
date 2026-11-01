@@ -8,14 +8,14 @@ import { getCachedCategoriesIntelligenceData } from '@/lib/admin/categories-inte
 function CategoriesSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="h-24 animate-pulse rounded-2xl bg-[var(--color-border-muted)]" />
-      <div className="h-12 animate-pulse rounded-xl bg-[var(--color-border-muted)]" />
-      <div className="divide-y divide-[var(--color-border)] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+      <div className="h-24 animate-pulse rounded-2xl bg-(--color-border-muted)" />
+      <div className="h-12 animate-pulse rounded-xl bg-(--color-border-muted)" />
+      <div className="divide-y divide-(--color-border) overflow-hidden rounded-xl border border-(--color-border) bg-(--color-surface)">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex animate-pulse items-center gap-3 px-3 py-3">
-            <div className="size-11 rounded-xl bg-[var(--color-bg)]" />
-            <div className="h-4 flex-1 rounded bg-[var(--color-bg)]" />
-            <div className="h-11 w-16 rounded-lg bg-[var(--color-bg)]" />
+            <div className="size-11 rounded-xl bg-(--color-bg)" />
+            <div className="h-4 flex-1 rounded bg-(--color-bg)" />
+            <div className="h-11 w-16 rounded-lg bg-(--color-bg)" />
           </div>
         ))}
       </div>
@@ -28,16 +28,16 @@ function CategoriesPageChrome() {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold text-[var(--color-text)]">
+        <h1 className="text-2xl font-bold text-(--color-text)">
           مدیریت دسته‌بندی‌ها
         </h1>
-        <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+        <p className="text-sm text-wibe-secondary mt-0.5">
           ابزار تصمیم‌گیری — سلامت، رشد و قابلیت درآمدزایی
         </p>
       </div>
       <Link
         href="/admin/categories/new"
-        className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-[var(--primary)] px-4 text-sm font-medium text-white transition-opacity hover:opacity-90"
+        className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-white transition-opacity hover:opacity-90"
       >
         <Plus className="w-4 h-4" />
         دسته‌بندی جدید

@@ -300,17 +300,17 @@ export default function CommentSeedTargetPicker({
             return (
               <span
                 key={id}
-                className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1.5 text-xs"
+                className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-(--color-border) bg-(--color-bg) px-3 py-1.5 text-xs"
               >
-                <span className="min-w-0 truncate font-medium text-[var(--color-text)]">{label}</span>
+                <span className="min-w-0 truncate font-medium text-(--color-text)">{label}</span>
                 {sub && (
-                  <span className="hidden truncate text-[var(--color-text-muted)] sm:inline">({sub})</span>
+                  <span className="hidden truncate text-wibe-secondary sm:inline">({sub})</span>
                 )}
                 {!disabled && (
                   <button
                     type="button"
                     onClick={() => removeId(id)}
-                    className="shrink-0 rounded-full p-0.5 text-[var(--color-text-muted)] hover:bg-white hover:text-rose-600"
+                    className="shrink-0 rounded-full p-0.5 text-wibe-secondary hover:bg-white hover:text-rose-600"
                     aria-label="حذف"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -326,7 +326,7 @@ export default function CommentSeedTargetPicker({
         type="button"
         disabled={disabled}
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-xl border border-dashed border-[var(--color-border)] px-4 py-2.5 text-sm font-medium text-primary transition hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-xl border border-dashed border-(--color-border) px-4 py-2.5 text-sm font-medium text-primary transition hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
       >
         <Plus className="h-4 w-4" />
         {addButtonLabel}
@@ -338,7 +338,7 @@ export default function CommentSeedTargetPicker({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center p-0 sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-80 flex items-end justify-center p-0 sm:items-center sm:p-4">
           <button
             type="button"
             className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
@@ -346,26 +346,26 @@ export default function CommentSeedTargetPicker({
             onClick={() => setOpen(false)}
           />
           <div
-            className="relative flex max-h-[min(85vh,640px)] w-full max-w-lg flex-col rounded-t-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl sm:rounded-2xl"
+            className="relative flex max-h-[min(85vh,640px)] w-full max-w-lg flex-col rounded-t-2xl border border-(--color-border) bg-(--color-surface) shadow-xl sm:rounded-2xl"
             dir="rtl"
           >
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
-              <h3 className="text-base font-semibold text-[var(--color-text)]">{pickerTitle}</h3>
+            <div className="flex items-center justify-between border-b border-(--color-border) px-4 py-3">
+              <h3 className="text-base font-semibold text-(--color-text)">{pickerTitle}</h3>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+                className="rounded-lg p-1.5 text-wibe-secondary hover:bg-(--color-bg)"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="space-y-3 border-b border-[var(--color-border)] px-4 py-3">
+            <div className="space-y-3 border-b border-(--color-border) px-4 py-3">
               {targetType === 'list' && (
                 <select
                   value={filterCategoryId}
                   onChange={(e) => setFilterCategoryId(e.target.value)}
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                  className="w-full rounded-xl border border-(--color-border) bg-white px-3 py-2 text-sm"
                 >
                   <option value="">همه دسته‌ها</option>
                   {categories.map((c) => (
@@ -384,7 +384,7 @@ export default function CommentSeedTargetPicker({
                       setFilterCategoryId(e.target.value);
                       setFilterListId('');
                     }}
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-xl border border-(--color-border) bg-white px-3 py-2 text-sm"
                   >
                     <option value="">فیلتر دسته</option>
                     {categories.map((c) => (
@@ -396,7 +396,7 @@ export default function CommentSeedTargetPicker({
                   <select
                     value={filterListId}
                     onChange={(e) => setFilterListId(e.target.value)}
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-xl border border-(--color-border) bg-white px-3 py-2 text-sm"
                     disabled={lists.length === 0 && !filterCategoryId}
                   >
                     <option value="">انتخاب لیست</option>
@@ -411,24 +411,24 @@ export default function CommentSeedTargetPicker({
 
               {(targetType === 'category' || targetType === 'list') && (
                 <div className="relative">
-                  <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+                  <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary" />
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="جستجو…"
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-white py-2.5 pr-10 pl-3 text-sm"
+                    className="w-full rounded-xl border border-(--color-border) bg-white py-2.5 pr-10 pl-3 text-sm"
                   />
                 </div>
               )}
 
               {targetType === 'item' && filterListId && (
                 <div className="relative">
-                  <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
+                  <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-wibe-secondary" />
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="جستجو در آیتم‌های لیست…"
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-white py-2.5 pr-10 pl-3 text-sm"
+                    className="w-full rounded-xl border border-(--color-border) bg-white py-2.5 pr-10 pl-3 text-sm"
                   />
                 </div>
               )}
@@ -436,7 +436,7 @@ export default function CommentSeedTargetPicker({
 
             <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
               {loading && (
-                <div className="flex items-center justify-center gap-2 py-12 text-sm text-[var(--color-text-muted)]">
+                <div className="flex items-center justify-center gap-2 py-12 text-sm text-wibe-secondary">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   در حال بارگذاری…
                 </div>
@@ -447,13 +447,13 @@ export default function CommentSeedTargetPicker({
               )}
 
               {!loading && !error && targetType === 'item' && !filterListId && (
-                <p className="px-3 py-8 text-center text-sm text-[var(--color-text-muted)]">
+                <p className="px-3 py-8 text-center text-sm text-wibe-secondary">
                   ابتدا یک لیست انتخاب کنید
                 </p>
               )}
 
               {!loading && !error && (targetType !== 'item' || filterListId) && modalOptions.length === 0 && (
-                <p className="px-3 py-8 text-center text-sm text-[var(--color-text-muted)]">
+                <p className="px-3 py-8 text-center text-sm text-wibe-secondary">
                   موردی یافت نشد
                 </p>
               )}
@@ -468,22 +468,22 @@ export default function CommentSeedTargetPicker({
                       type="button"
                       onClick={() => toggleId(opt.id)}
                       className={`mb-1 flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition ${
-                        checked ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-[var(--color-bg)]'
+                        checked ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-(--color-bg)'
                       }`}
                     >
                       <span
                         className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
                           checked
                             ? 'border-primary bg-primary text-white'
-                            : 'border-[var(--color-border)] bg-white'
+                            : 'border-(--color-border) bg-white'
                         }`}
                       >
                         {checked && <Check className="h-3.5 w-3.5" />}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block font-medium text-[var(--color-text)]">{opt.title}</span>
+                        <span className="block font-medium text-(--color-text)">{opt.title}</span>
                         {opt.subtitle && (
-                          <span className="mt-0.5 block text-xs text-[var(--color-text-muted)]">
+                          <span className="mt-0.5 block text-xs text-wibe-secondary">
                             {opt.subtitle}
                           </span>
                         )}
@@ -494,7 +494,7 @@ export default function CommentSeedTargetPicker({
             </div>
 
             {multiple && (
-              <div className="border-t border-[var(--color-border)] px-4 py-3">
+              <div className="border-t border-(--color-border) px-4 py-3">
                 <button
                   type="button"
                   onClick={() => setOpen(false)}

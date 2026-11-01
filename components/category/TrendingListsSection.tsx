@@ -32,7 +32,7 @@ function TrendingListCard({
       className="group block active:scale-95 transition-transform lg:hover:-translate-y-0.5"
     >
       <div className="overflow-hidden rounded-surface border border-border bg-popover shadow-surface lg:transition-shadow lg:group-hover:shadow-md">
-        <div className="relative aspect-[4/3] bg-muted">
+        <div className="relative aspect-4/3 bg-muted">
           {list.coverImage ? (
             <ImageWithFallback
               src={list.coverImage}
@@ -44,14 +44,14 @@ function TrendingListCard({
               📋
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/65 via-foreground/10 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-foreground/65 via-foreground/10 to-transparent" />
           {showTrendBadge && (
-            <span className="absolute end-2 top-2 rounded-full bg-warning px-2 py-0.5 text-xs font-semibold text-foreground">
+            <span className="absolute inset-e-2 top-2 rounded-full bg-warning px-2 py-0.5 text-xs font-semibold text-foreground">
               ترند
             </span>
           )}
           {list.cityTag && (
-            <span className="absolute bottom-2 end-2 rounded-full bg-foreground/40 px-2 py-0.5 text-xs text-background backdrop-blur-sm">
+            <span className="absolute bottom-2 inset-e-2 rounded-full bg-foreground/40 px-2 py-0.5 text-xs text-background backdrop-blur-sm">
               {list.cityTag}
             </span>
           )}

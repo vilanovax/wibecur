@@ -36,20 +36,20 @@ export default function CategoryWeightCard({
 
   return (
     <div
-      className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-5 space-y-4 ${className}`}
+      className={`rounded-xl border border-(--color-border) bg-(--color-bg) p-5 space-y-4 ${className}`}
       style={{ direction: 'rtl' }}
     >
       <div>
-        <h3 className="font-semibold text-[var(--color-text)] mb-0.5">
+        <h3 className="font-semibold text-(--color-text) mb-0.5">
           وزن الگوریتمی دسته
         </h3>
-        <p className="text-xs text-[var(--color-text-muted)]">
+        <p className="text-xs text-wibe-secondary">
           وزن در محاسبه امتیاز نهایی ترندینگ ضرب می‌شود.
         </p>
       </div>
 
       <div>
-        <p className="text-sm font-medium text-[var(--color-text)] mb-2">
+        <p className="text-sm font-medium text-(--color-text) mb-2">
           سطح تقویت
         </p>
         <div className="flex flex-wrap gap-2">
@@ -61,8 +61,8 @@ export default function CategoryWeightCard({
               onClick={() => canEdit && onChange(level.value)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                 value === level.value
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border)] hover:bg-[var(--color-border)]'
+                  ? 'bg-primary text-white'
+                  : 'bg-(--color-surface) text-wibe-secondary border border-(--color-border) hover:bg-(--color-border)'
               } ${!canEdit ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {level.label}
@@ -72,17 +72,17 @@ export default function CategoryWeightCard({
       </div>
 
       <div className="text-sm">
-        <p className="font-medium text-[var(--color-text)]">
+        <p className="font-medium text-(--color-text)">
           ضریب فعلی: {value}x
         </p>
-        <p className="text-[var(--color-text-muted)] mt-1">{explanation}</p>
+        <p className="text-wibe-secondary mt-1">{explanation}</p>
       </div>
 
-      <div className="rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] p-3">
-        <p className="text-xs font-medium text-[var(--color-text-muted)] mb-1">
+      <div className="rounded-lg bg-(--color-surface) border border-(--color-border) p-3">
+        <p className="text-xs font-medium text-wibe-secondary mb-1">
           پیش‌نمایش تاثیر
         </p>
-        <p className="text-sm text-[var(--color-text)] font-mono">
+        <p className="text-sm text-(--color-text) font-mono">
           امتیاز {EXAMPLE_RAW} → با وزن فعلی → {rounded}
         </p>
       </div>

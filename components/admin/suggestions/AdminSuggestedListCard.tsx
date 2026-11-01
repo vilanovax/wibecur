@@ -78,12 +78,12 @@ export default function AdminSuggestedListCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-base font-bold text-[var(--color-text)] dark:text-white">{suggestion.title}</h3>
-              <p className="mt-0.5 truncate text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
+              <h3 className="truncate text-base font-bold text-(--color-text) dark:text-white">{suggestion.title}</h3>
+              <p className="mt-0.5 truncate text-sm text-wibe-secondary dark:text-(--color-text-subtle)">
                 {suggestion.categories?.name || 'بدون دسته'}
-                <span className="mx-1.5 text-[var(--color-text-subtle)]">·</span>
+                <span className="mx-1.5 text-(--color-text-subtle)">·</span>
                 {suggestedBy}
-                <span className="mx-1.5 text-[var(--color-text-subtle)]">·</span>
+                <span className="mx-1.5 text-(--color-text-subtle)">·</span>
                 {timeAgo}
               </p>
             </div>
@@ -99,7 +99,7 @@ export default function AdminSuggestedListCard({
                 <button
                   type="button"
                   onClick={() => setMenuOpen((o) => !o)}
-                  className="rounded-lg p-1.5 text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)] opacity-0 transition-opacity hover:bg-gray-100 hover:text-[var(--color-text-muted)] group-hover:opacity-100"
+                  className="rounded-lg p-1.5 text-(--color-text-subtle) dark:text-wibe-secondary opacity-0 transition-opacity hover:bg-gray-100 hover:text-wibe-secondary group-hover:opacity-100"
                   aria-label="گزینه‌ها"
                 >
                   <MoreVertical className="h-4 w-4" />
@@ -111,7 +111,7 @@ export default function AdminSuggestedListCard({
                       <button
                         type="button"
                         onClick={() => { onEdit(suggestion); setMenuOpen(false); }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50"
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-(--color-text) dark:text-gray-200 hover:bg-gray-50"
                       >
                         <Edit className="h-4 w-4" /> ویرایش
                       </button>
@@ -132,7 +132,7 @@ export default function AdminSuggestedListCard({
           </div>
 
           {description && (
-            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">{description}</p>
+            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-wibe-secondary dark:text-(--color-text-subtle)">{description}</p>
           )}
 
           {isPending && (
@@ -154,7 +154,7 @@ export default function AdminSuggestedListCard({
                 type="button"
                 disabled={processing}
                 onClick={() => onReject(suggestion)}
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 text-sm font-medium text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 text-sm font-medium text-(--color-text) dark:text-gray-200 hover:bg-gray-50 disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
                 رد

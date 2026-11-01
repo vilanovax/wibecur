@@ -25,7 +25,7 @@ export default function HubHero({
 
   return (
     <section className="relative -mx-4 -mt-4 mb-4">
-      <div className="relative aspect-[4/3] min-h-[240px] overflow-hidden">
+      <div className="relative aspect-4/3 min-h-60 overflow-hidden">
         <ImageWithFallback
           src={heroImage}
           alt={category.name}
@@ -34,7 +34,7 @@ export default function HubHero({
           placeholderSize="cover"
         sizes="100vw"
       />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/50 to-black/20" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/92 via-black/50 to-black/20" />
 
         <div className="absolute inset-0 flex flex-col justify-end p-5 pb-5">
           <h1 className="text-2xl font-bold text-white drop-shadow-lg">

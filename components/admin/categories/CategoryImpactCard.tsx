@@ -50,16 +50,16 @@ export default function CategoryImpactCard({
   if (loading) {
     return (
       <section
-        className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-5 ${className}`}
+        className={`rounded-xl border border-(--color-border) bg-(--color-bg) p-5 ${className}`}
         style={{ direction: 'rtl' }}
       >
-        <div className="flex items-center gap-2 text-[var(--color-text-muted)]">
+        <div className="flex items-center gap-2 text-wibe-secondary">
           <BarChart3 className="w-5 h-5" />
-          <h2 className="font-semibold text-[var(--color-text)]">
+          <h2 className="font-semibold text-(--color-text)">
             خلاصه تأثیر دسته
           </h2>
         </div>
-        <div className="mt-4 h-24 flex items-center justify-center text-[var(--color-text-muted)] text-sm">
+        <div className="mt-4 h-24 flex items-center justify-center text-wibe-secondary text-sm">
           در حال بارگذاری...
         </div>
       </section>
@@ -69,12 +69,12 @@ export default function CategoryImpactCard({
   if (error || !data) {
     return (
       <section
-        className={`rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-5 ${className}`}
+        className={`rounded-xl border border-(--color-border) bg-(--color-bg) p-5 ${className}`}
         style={{ direction: 'rtl' }}
       >
         <div className="flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-[var(--color-text-muted)]" />
-          <h2 className="font-semibold text-[var(--color-text)]">
+          <BarChart3 className="w-5 h-5 text-wibe-secondary" />
+          <h2 className="font-semibold text-(--color-text)">
             خلاصه تأثیر دسته
           </h2>
         </div>
@@ -97,7 +97,7 @@ export default function CategoryImpactCard({
     stable: {
       icon: Minus,
       label: 'پایدار',
-      badgeClass: 'bg-gray-100 text-[var(--color-text)] border-gray-200',
+      badgeClass: 'bg-gray-100 text-(--color-text) border-gray-200',
     },
   };
 
@@ -113,7 +113,7 @@ export default function CategoryImpactCard({
 
   return (
     <section
-      className={`rounded-xl border border-[var(--color-border)] overflow-hidden ${className}`}
+      className={`rounded-xl border border-(--color-border) overflow-hidden ${className}`}
       style={{
         direction: 'rtl',
         backgroundColor: 'rgba(139, 92, 246, 0.06)',
@@ -121,45 +121,45 @@ export default function CategoryImpactCard({
     >
       <div className="p-5">
         <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="w-5 h-5 text-[var(--color-text-muted)]" />
-          <h2 className="font-semibold text-[var(--color-text)]">
+          <BarChart3 className="w-5 h-5 text-wibe-secondary" />
+          <h2 className="font-semibold text-(--color-text)">
             خلاصه تأثیر دسته
           </h2>
         </div>
-        <p className="text-xs text-[var(--color-text-muted)] mb-4">
+        <p className="text-xs text-wibe-secondary mb-4">
           Impact This Week
         </p>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
-            <p className="text-xs text-[var(--color-text-muted)]">
+          <div className="p-3 rounded-xl bg-(--color-surface) border border-(--color-border)">
+            <p className="text-xs text-wibe-secondary">
               سهم از کل ذخیره‌ها
             </p>
-            <p className="text-lg font-bold tabular-nums text-[var(--color-text)]">
+            <p className="text-lg font-bold tabular-nums text-(--color-text)">
               {data.weeklySaveShare}٪
             </p>
           </div>
-          <div className="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
-            <p className="text-xs text-[var(--color-text-muted)]">
+          <div className="p-3 rounded-xl bg-(--color-surface) border border-(--color-border)">
+            <p className="text-xs text-wibe-secondary">
               لیست‌های در حال رشد
             </p>
-            <p className="text-lg font-bold tabular-nums text-[var(--color-text)]">
+            <p className="text-lg font-bold tabular-nums text-(--color-text)">
               {data.growingLists.toLocaleString('fa-IR')}
             </p>
           </div>
-          <div className="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
-            <p className="text-xs text-[var(--color-text-muted)]">
+          <div className="p-3 rounded-xl bg-(--color-surface) border border-(--color-border)">
+            <p className="text-xs text-wibe-secondary">
               میانگین امتیاز ترند
             </p>
-            <p className="text-lg font-bold tabular-nums text-[var(--color-text)]">
+            <p className="text-lg font-bold tabular-nums text-(--color-text)">
               {data.avgTrendingScore.toLocaleString('fa-IR')}
             </p>
           </div>
-          <div className="p-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)]">
-            <p className="text-xs text-[var(--color-text-muted)]">
+          <div className="p-3 rounded-xl bg-(--color-surface) border border-(--color-border)">
+            <p className="text-xs text-wibe-secondary">
               رشد تعامل
             </p>
-            <p className="text-lg font-bold tabular-nums text-[var(--color-text)]">
+            <p className="text-lg font-bold tabular-nums text-(--color-text)">
               {data.engagementGrowth >= 0 ? '+' : ''}
               {data.engagementGrowth}٪
             </p>
@@ -175,7 +175,7 @@ export default function CategoryImpactCard({
           </span>
         </div>
 
-        <p className="text-sm text-[var(--color-text-muted)] leading-relaxed">
+        <p className="text-sm text-wibe-secondary leading-relaxed">
           {insightLine}
         </p>
       </div>

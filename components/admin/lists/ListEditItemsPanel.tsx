@@ -96,14 +96,14 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
   };
 
   return (
-    <div className="rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] overflow-hidden shadow-[var(--shadow-card)]">
-      <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50 flex items-center justify-between gap-2">
+    <div className="rounded-xl border border-(--color-border-muted) bg-(--color-surface) overflow-hidden shadow-(--shadow-card)">
+      <div className="px-4 py-3 border-b border-(--color-border-muted) bg-(--color-bg)/50 flex items-center justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-[var(--color-text)]">
+          <h2 className="text-sm font-semibold text-(--color-text)">
             آیتم‌ها
-            <span className="text-[var(--color-text-muted)] font-normal mr-1">({items.length})</span>
+            <span className="text-wibe-secondary font-normal mr-1">({items.length})</span>
           </h2>
-          <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5 flex items-center gap-1">
+          <p className="text-[10px] text-wibe-secondary mt-0.5 flex items-center gap-1">
             {reorderLoading ? (
               <>
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -117,7 +117,7 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
         <div className="flex gap-1.5">
           <Link
             href={`/admin/lists?view=catalog&mode=place&listId=${listId}`}
-            className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[var(--primary)] text-white hover:opacity-90"
+            className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-primary text-white hover:opacity-90"
           >
             + افزودن
           </Link>
@@ -129,7 +129,7 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
           </Link>
           <Link
             href={`/admin/lists?view=catalog&mode=place&listId=${listId}`}
-            className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/15"
+            className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15"
           >
             مدیریت
           </Link>
@@ -142,9 +142,9 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
         </div>
       )}
 
-      <ul className="divide-y divide-[var(--color-border-muted)] max-h-[400px] overflow-y-auto">
+      <ul className="divide-y divide-(--color-border-muted) max-h-100 overflow-y-auto">
         {items.length === 0 ? (
-          <li className="text-sm text-[var(--color-text-muted)] p-4">هنوز آیتمی اضافه نشده است.</li>
+          <li className="text-sm text-wibe-secondary p-4">هنوز آیتمی اضافه نشده است.</li>
         ) : (
           items.map((item, index) => (
             <li
@@ -152,8 +152,8 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
               onDragOver={(e) => handleDragOver(e, index)}
               className={`flex items-center gap-2 px-3 py-2.5 transition-colors group ${
                 dragIndex === index
-                  ? 'bg-[var(--primary)]/8'
-                  : 'hover:bg-[var(--color-bg)]/40'
+                  ? 'bg-primary/8'
+                  : 'hover:bg-(--color-bg)/40'
               }`}
             >
               <button
@@ -162,21 +162,21 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
                 disabled={reorderLoading}
                 onDragStart={() => handleDragStart(index)}
                 onDragEnd={() => void handleDragEnd()}
-                className="p-1 rounded-md text-[var(--color-text-muted)] shrink-0 opacity-50 group-hover:opacity-100 cursor-grab active:cursor-grabbing disabled:opacity-30 touch-none"
+                className="p-1 rounded-md text-wibe-secondary shrink-0 opacity-50 group-hover:opacity-100 cursor-grab active:cursor-grabbing disabled:opacity-30 touch-none"
                 title="کشیدن برای تغییر ترتیب"
               >
                 <GripVertical className="w-4 h-4" />
               </button>
-              <span className="text-[10px] font-bold text-[var(--color-text-muted)] w-5 tabular-nums text-center shrink-0">
+              <span className="text-[10px] font-bold text-wibe-secondary w-5 tabular-nums text-center shrink-0">
                 {index + 1}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[var(--color-text)] truncate">{item.title}</p>
+                <p className="text-sm font-medium text-(--color-text) truncate">{item.title}</p>
               </div>
               <div className="flex items-center gap-0.5 shrink-0">
                 <Link
                   href={`/admin/items/${item.id}/edit`}
-                  className="p-1.5 rounded-lg hover:bg-[var(--color-bg)] text-[var(--color-text-muted)]"
+                  className="p-1.5 rounded-lg hover:bg-(--color-bg) text-wibe-secondary"
                   title="ویرایش آیتم"
                   onClick={(e) => e.stopPropagation()}
                 >

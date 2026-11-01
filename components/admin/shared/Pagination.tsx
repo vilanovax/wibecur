@@ -74,8 +74,8 @@ export default function Pagination({
         href={createUrl(currentPage - 1)}
         className={`px-4 py-2 rounded-lg border transition-colors ${
           currentPage === 1
-            ? 'border-gray-200 text-[var(--color-text-subtle)] cursor-not-allowed pointer-events-none'
-            : 'border-gray-300 text-[var(--color-text)] hover:bg-gray-50 hover:border-primary'
+            ? 'border-gray-200 text-(--color-text-subtle) cursor-not-allowed pointer-events-none'
+            : 'border-gray-300 text-(--color-text) hover:bg-gray-50 hover:border-primary'
         }`}
       >
         قبلی
@@ -86,7 +86,7 @@ export default function Pagination({
         {getPageNumbers().map((page, index) => {
           if (page === 'ellipsis') {
             return (
-              <span key={`ellipsis-${index}`} className="px-2 text-[var(--color-text-subtle)]">
+              <span key={`ellipsis-${index}`} className="px-2 text-(--color-text-subtle)">
                 ...
               </span>
             );
@@ -99,10 +99,10 @@ export default function Pagination({
             <Link
               key={pageNum}
               href={createUrl(pageNum)}
-              className={`min-w-[40px] px-3 py-2 text-center rounded-lg border transition-colors ${
+              className={`min-w-10 px-3 py-2 text-center rounded-lg border transition-colors ${
                 isActive
                   ? 'bg-primary text-white border-primary'
-                  : 'border-gray-300 text-[var(--color-text)] hover:bg-gray-50 hover:border-primary'
+                  : 'border-gray-300 text-(--color-text) hover:bg-gray-50 hover:border-primary'
               }`}
             >
               {pageNum}
@@ -116,15 +116,15 @@ export default function Pagination({
         href={createUrl(currentPage + 1)}
         className={`px-4 py-2 rounded-lg border transition-colors ${
           currentPage === totalPages
-            ? 'border-gray-200 text-[var(--color-text-subtle)] cursor-not-allowed pointer-events-none'
-            : 'border-gray-300 text-[var(--color-text)] hover:bg-gray-50 hover:border-primary'
+            ? 'border-gray-200 text-(--color-text-subtle) cursor-not-allowed pointer-events-none'
+            : 'border-gray-300 text-(--color-text) hover:bg-gray-50 hover:border-primary'
         }`}
       >
         بعدی
       </Link>
 
       {/* Page Info */}
-      <div className="mr-4 text-sm text-[var(--color-text-muted)]">
+      <div className="mr-4 text-sm text-wibe-secondary">
         صفحه {currentPage} از {totalPages}
       </div>
     </div>

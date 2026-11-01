@@ -37,14 +37,14 @@ export default function DebugTable<T extends Record<string, unknown>>({
       ].join(' ')}
     >
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[400px] text-sm">
+        <table className="w-full min-w-100 text-sm">
           <thead>
             <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={[
-                    'text-start py-3 px-4 font-semibold text-[var(--color-text)] dark:text-[var(--color-text-subtle)]',
+                    'text-start py-3 px-4 font-semibold text-(--color-text) dark:text-(--color-text-subtle)',
                     col.className ?? '',
                   ].join(' ')}
                 >
@@ -58,7 +58,7 @@ export default function DebugTable<T extends Record<string, unknown>>({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="py-8 text-center text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]"
+                  className="py-8 text-center text-wibe-secondary dark:text-(--color-text-subtle)"
                 >
                   {emptyMessage}
                 </td>
@@ -73,7 +73,7 @@ export default function DebugTable<T extends Record<string, unknown>>({
                     <td
                       key={col.key}
                       className={[
-                        'py-3 px-4 text-[var(--color-text)] dark:text-[var(--color-text-subtle)]',
+                        'py-3 px-4 text-(--color-text) dark:text-(--color-text-subtle)',
                         col.className ?? '',
                       ].join(' ')}
                     >

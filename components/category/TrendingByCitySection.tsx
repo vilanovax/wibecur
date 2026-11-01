@@ -36,7 +36,7 @@ export default function TrendingByCitySection({
             key={city}
             type="button"
             onClick={() => setSelectedCity(selectedCity === city ? null : city)}
-            className={`flex-shrink-0 px-4 py-2 rounded-lg wibe-small font-medium transition-colors ${
+            className={`shrink-0 px-4 py-2 rounded-lg wibe-small font-medium transition-colors ${
               selectedCity === city
                 ? 'bg-primary text-white shadow-sm'
                 : 'bg-wibe-card text-wibe-secondary border border-wibe'

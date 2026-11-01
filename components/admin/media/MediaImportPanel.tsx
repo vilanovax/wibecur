@@ -68,14 +68,14 @@ export default function MediaImportPanel() {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex min-h-11 items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-sm font-semibold text-[var(--color-text)]"
+        className="inline-flex min-h-11 items-center rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm font-semibold text-(--color-text)"
         aria-expanded={open}
       >
         ایمپورت JSON
       </button>
       {open ? (
-        <div className="basis-full space-y-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-          <p className="text-xs text-[var(--color-text-muted)]">
+        <div className="basis-full space-y-2 rounded-xl border border-(--color-border) bg-(--color-surface) p-3">
+          <p className="text-xs text-wibe-secondary">
             برای عنوان، شناسهٔ کاتالوگ و title بفرستید. برای تصویر، url را بگذارید. عنوان و تصویر کاتالوگ روی رکورد همان آیتم در لیست‌ها هم می‌نشیند و آیتم تازه ساخته نمی‌شود. در هر بار تا ۲۰۰ ردیف. آدرس بیرونی اول روی فضای تصاویر سایت کپی می‌شود. بنرهای ثابت سایت از اینجا عوض نمی‌شوند.
           </p>
           <textarea
@@ -84,17 +84,17 @@ export default function MediaImportPanel() {
             dir="ltr"
             rows={8}
             placeholder={SAMPLE}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-3 text-start text-sm text-[var(--color-text)]"
+            className="w-full rounded-xl border border-(--color-border) bg-(--color-bg) p-3 text-start text-sm text-(--color-text)"
           />
           <button
             type="button"
             onClick={() => void submit()}
             disabled={busy || !text.trim()}
-            className="inline-flex min-h-11 items-center rounded-xl bg-[var(--primary)] px-4 text-sm font-semibold text-white disabled:opacity-40"
+            className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-white disabled:opacity-40"
           >
             {busy ? 'در حال ثبت' : 'ثبت نسبت‌ها'}
           </button>
-          {message ? <p className="text-sm text-[var(--color-text)]">{message}</p> : null}
+          {message ? <p className="text-sm text-(--color-text)">{message}</p> : null}
           {error ? <p className="text-sm text-red-700">{error}</p> : null}
         </div>
       ) : null}

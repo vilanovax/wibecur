@@ -53,10 +53,10 @@ export default function PersonalizedFilmSection({
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex-shrink-0 w-[140px] snap-start"
+            className="shrink-0 w-35 snap-start"
           >
             <div className="rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 active:scale-[0.97] transition-transform">
-              <div className="relative aspect-[3/4] bg-gray-800">
+              <div className="relative aspect-3/4 bg-gray-800">
                 {list.coverImage ? (
                   <ImageWithFallback
                     src={list.coverImage}
@@ -73,7 +73,7 @@ export default function PersonalizedFilmSection({
                     🎬
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/70 to-transparent" />
               </div>
               <div className="p-2">
                 <h3 className="font-semibold text-white/90 text-xs line-clamp-2">

@@ -13,7 +13,7 @@ export default function LoadingSkeleton() {
         <div className="h-6 w-32 bg-wibe-surface rounded mb-4"></div>
         <div className="flex gap-4 overflow-x-auto">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex-shrink-0 w-72">
+            <div key={i} className="shrink-0 w-72">
               <div className="h-40 bg-wibe-surface rounded-2xl mb-3"></div>
               <div className="h-4 bg-wibe-surface rounded w-3/4 mb-2"></div>
               <div className="h-3 bg-wibe-surface rounded w-1/2"></div>
@@ -27,7 +27,7 @@ export default function LoadingSkeleton() {
         <div className="h-6 w-32 bg-wibe-surface rounded mb-4"></div>
         <div className="flex gap-4 overflow-x-auto">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="flex-shrink-0 w-28">
+            <div key={i} className="shrink-0 w-28">
               <div className="h-28 bg-wibe-surface rounded-2xl"></div>
             </div>
           ))}

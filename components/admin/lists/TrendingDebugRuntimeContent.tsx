@@ -45,7 +45,7 @@ export default function TrendingDebugRuntimeContent({ listId }: { listId: string
 
   if (loading && !data) {
     return (
-      <div className="rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border-muted)] p-8 text-center text-[var(--color-text-muted)]">
+      <div className="rounded-2xl bg-(--color-surface) border border-(--color-border-muted) p-8 text-center text-wibe-secondary">
         در حال بارگذاری...
       </div>
     );
@@ -64,14 +64,14 @@ export default function TrendingDebugRuntimeContent({ listId }: { listId: string
   return (
     <div className="space-y-6">
       {/* SECTION 1 — Runtime Score Panel */}
-      <section className="rounded-2xl bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)] border border-[var(--color-border-muted)]">
+      <section className="rounded-2xl bg-(--color-surface) p-6 shadow-(--shadow-card) border border-(--color-border-muted)">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-[var(--color-text)] mb-1">
+            <h1 className="text-xl font-bold text-(--color-text) mb-1">
               {data.listTitle}
             </h1>
             {data.categoryName && (
-              <p className="text-[var(--color-text-muted)] text-sm">
+              <p className="text-wibe-secondary text-sm">
                 دسته: {data.categoryName}
               </p>
             )}
@@ -80,7 +80,7 @@ export default function TrendingDebugRuntimeContent({ listId }: { listId: string
             type="button"
             onClick={handleRecalculate}
             disabled={recalculating}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[var(--primary)] text-white hover:opacity-90 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-white hover:opacity-90 disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${recalculating ? 'animate-spin' : ''}`} />
             Recalculate (Bypass Cache)
@@ -88,25 +88,25 @@ export default function TrendingDebugRuntimeContent({ listId }: { listId: string
         </div>
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <p className="text-xs text-[var(--color-text-muted)] mb-0.5">Final Trending Score (runtime)</p>
+            <p className="text-xs text-wibe-secondary mb-0.5">Final Trending Score (runtime)</p>
             <p className="text-2xl font-bold tabular-nums" style={{ color: 'var(--primary)' }}>
               {data.scoreRounded}
             </p>
           </div>
           <div>
-            <p className="text-xs text-[var(--color-text-muted)] mb-0.5">Position in Global Trending</p>
-            <p className="text-lg font-medium text-[var(--color-text)]">
+            <p className="text-xs text-wibe-secondary mb-0.5">Position in Global Trending</p>
+            <p className="text-lg font-medium text-(--color-text)">
               {data.positionInGlobalTrending != null ? `#${data.positionInGlobalTrending}` : `—`}
             </p>
           </div>
           <div>
-            <p className="text-xs text-[var(--color-text-muted)] mb-0.5">Calculated at</p>
-            <p className="text-lg font-medium text-[var(--color-text)] tabular-nums">
+            <p className="text-xs text-wibe-secondary mb-0.5">Calculated at</p>
+            <p className="text-lg font-medium text-(--color-text) tabular-nums">
               {formatTime(data.calculatedAt)}
             </p>
           </div>
           <div>
-            <p className="text-xs text-[var(--color-text-muted)] mb-0.5">Cache status</p>
+            <p className="text-xs text-wibe-secondary mb-0.5">Cache status</p>
             <p className="text-lg font-medium">
               <span className={data.cacheStatus === 'BYPASS' ? 'text-amber-600' : 'text-emerald-600'}>
                 {data.cacheStatus === 'BYPASS' ? 'MISS (Bypass)' : 'HIT'}
@@ -114,15 +114,15 @@ export default function TrendingDebugRuntimeContent({ listId }: { listId: string
             </p>
           </div>
           <div>
-            <p className="text-xs text-[var(--color-text-muted)] mb-0.5">Badge</p>
-            <p className="text-sm font-medium text-[var(--color-text)]">{data.badge}</p>
+            <p className="text-xs text-wibe-secondary mb-0.5">Badge</p>
+            <p className="text-sm font-medium text-(--color-text)">{data.badge}</p>
           </div>
         </div>
       </section>
 
       {/* SECTION 2 — Raw Metrics (from DB) */}
-      <section className="rounded-2xl bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)] border border-[var(--color-border-muted)]">
-        <h2 className="text-base font-semibold text-[var(--color-text)] mb-4">
+      <section className="rounded-2xl bg-(--color-surface) p-6 shadow-(--shadow-card) border border-(--color-border-muted)">
+        <h2 className="text-base font-semibold text-(--color-text) mb-4">
           Raw Metrics (از DB)
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -144,11 +144,11 @@ export default function TrendingDebugRuntimeContent({ listId }: { listId: string
       </section>
 
       {/* SECTION 3 — Weighted Breakdown */}
-      <section className="rounded-2xl bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)] border border-[var(--color-border-muted)]">
-        <h2 className="text-base font-semibold text-[var(--color-text)] mb-2">
+      <section className="rounded-2xl bg-(--color-surface) p-6 shadow-(--shadow-card) border border-(--color-border-muted)">
+        <h2 className="text-base font-semibold text-(--color-text) mb-2">
           Weighted Breakdown
         </h2>
-        <p className="text-xs text-[var(--color-text-muted)] mb-4 font-mono">
+        <p className="text-xs text-wibe-secondary mb-4 font-mono">
           lib/trending/score.ts → calculateTrendingScore(metrics)
         </p>
         <div className="space-y-2 text-sm">
@@ -158,14 +158,14 @@ export default function TrendingDebugRuntimeContent({ listId }: { listId: string
           <Row label="V7 × 0.5" formula={`${breakdown.V7} × 0.5`} result={breakdown.weighted.V7_weighted} note={breakdown.V7 === 0 ? 'Not tracked' : undefined} />
           <Row label="SaveVelocity × 5" formula={`${breakdown.SaveVelocity.toFixed(2)} × 5`} result={breakdown.weighted.SaveVelocity_weighted} />
         </div>
-        <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
-          <p className="text-[var(--color-text-muted)] text-sm">
+        <div className="mt-4 pt-4 border-t border-(--color-border)">
+          <p className="text-wibe-secondary text-sm">
             Numerator = {breakdown.numerator.toFixed(2)}
           </p>
-          <p className="text-[var(--color-text-muted)] text-sm">
+          <p className="text-wibe-secondary text-sm">
             Denominator = (1 + AgeDays×0.1) = {breakdown.denominator.toFixed(2)} (AgeDays = {breakdown.AgeDays})
           </p>
-          <p className="mt-2 font-semibold text-[var(--color-text)]">
+          <p className="mt-2 font-semibold text-(--color-text)">
             Final Score = max(0, {breakdown.numerator.toFixed(2)} / {breakdown.denominator.toFixed(2)}) = {data.scoreRounded}
           </p>
         </div>
@@ -194,23 +194,23 @@ export default function TrendingDebugRuntimeContent({ listId }: { listId: string
       )}
 
       {/* SECTION 5 — Comparison (Runtime-Based Position) */}
-      <section className="rounded-2xl bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)] border border-[var(--color-border-muted)]">
-        <h2 className="text-base font-semibold text-[var(--color-text)] mb-2">
+      <section className="rounded-2xl bg-(--color-surface) p-6 shadow-(--shadow-card) border border-(--color-border-muted)">
+        <h2 className="text-base font-semibold text-(--color-text) mb-2">
           Comparison (Runtime-Based)
         </h2>
-        <p className="text-xs text-[var(--color-text-muted)] mb-4">
+        <p className="text-xs text-wibe-secondary mb-4">
           Rank ذخیره نشده؛ موقعیت از آرایهٔ getFullGlobalTrendingSorted محاسبه شده.
         </p>
         <div className="flex items-baseline gap-2">
-          <span className="text-[var(--color-text-muted)]">Current Position in Global Trending:</span>
-          <span className="text-2xl font-bold text-[var(--primary)]">
+          <span className="text-wibe-secondary">Current Position in Global Trending:</span>
+          <span className="text-2xl font-bold text-primary">
             {data.positionInGlobalTrending != null
               ? `#${data.positionInGlobalTrending}`
               : `خارج از تاپ ${data.totalRanked}`}
           </span>
         </div>
         {data.positionInGlobalTrending != null && (
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">
+          <p className="text-sm text-wibe-secondary mt-1">
             از {data.totalRanked} لیست (runtime index در آرایه)
           </p>
         )}
@@ -219,13 +219,13 @@ export default function TrendingDebugRuntimeContent({ listId }: { listId: string
       <div className="flex gap-2">
         <Link
           href={`/admin/lists/${listId}/edit`}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-[var(--color-bg)] text-[var(--color-text)] hover:bg-[var(--color-border)]"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-(--color-bg) text-(--color-text) hover:bg-(--color-border)"
         >
           ویرایش لیست
         </Link>
         <Link
           href="/admin/lists"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)]"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border border-(--color-border) text-(--color-text)"
         >
           بازگشت به لیست‌ها
         </Link>
@@ -248,9 +248,9 @@ function MetricRow({
   const display = typeof value === 'number' ? value.toLocaleString('fa-IR') : value;
   const short = isDate && typeof value === 'string' && value.length > 20 ? value.slice(0, 19) + '…' : display;
   return (
-    <div className="p-3 rounded-xl bg-[var(--color-bg)] border border-[var(--color-border-muted)]">
-      <p className="text-xs text-[var(--color-text-muted)] mb-0.5 font-mono">{label}</p>
-      <p className="text-sm font-medium tabular-nums text-[var(--color-text)]">{short}</p>
+    <div className="p-3 rounded-xl bg-(--color-bg) border border-(--color-border-muted)">
+      <p className="text-xs text-wibe-secondary mb-0.5 font-mono">{label}</p>
+      <p className="text-sm font-medium tabular-nums text-(--color-text)">{short}</p>
       {note && <p className="text-xs text-amber-600 mt-0.5">{note}</p>}
     </div>
   );
@@ -268,9 +268,9 @@ function Row({
   note?: string;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 py-1.5 border-b border-[var(--color-border-muted)] last:border-0">
-      <span className="text-[var(--color-text-muted)]">{label}{note ? ` (${note})` : ''}</span>
-      <span className="font-mono text-xs text-[var(--color-text)]">{formula}</span>
+    <div className="flex flex-wrap items-center justify-between gap-2 py-1.5 border-b border-(--color-border-muted) last:border-0">
+      <span className="text-wibe-secondary">{label}{note ? ` (${note})` : ''}</span>
+      <span className="font-mono text-xs text-(--color-text)">{formula}</span>
       <span className="font-semibold tabular-nums" style={{ color: 'var(--primary)' }}>
         = {result.toFixed(2)}
       </span>

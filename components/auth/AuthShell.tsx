@@ -12,17 +12,17 @@ const AUTH_COLLAGE = [
   {
     src: '/images/banners/cafe.webp',
     className:
-      'start-4 top-6 z-20 w-2/5 -rotate-6 shadow-overlay sm:start-8 lg:start-12 lg:top-20 lg:w-1/2',
+      'inset-s-4 top-6 z-20 w-2/5 -rotate-6 shadow-overlay sm:inset-s-8 lg:inset-s-12 lg:top-20 lg:w-1/2',
   },
   {
     src: '/images/banners/movies.webp',
     className:
-      'end-2 top-10 z-10 w-1/2 rotate-6 shadow-overlay sm:end-6 sm:w-2/5 lg:end-8 lg:top-28 lg:w-1/2',
+      'inset-e-2 top-10 z-10 w-1/2 rotate-6 shadow-overlay sm:inset-e-6 sm:w-2/5 lg:inset-e-8 lg:top-28 lg:w-1/2',
   },
   {
     src: '/images/banners/books.webp',
     className:
-      'start-16 bottom-4 z-30 w-2/5 rotate-2 shadow-overlay sm:bottom-6 lg:start-24 lg:bottom-20 lg:w-1/2',
+      'inset-s-16 bottom-4 z-30 w-2/5 rotate-2 shadow-overlay sm:bottom-6 lg:inset-s-24 lg:bottom-20 lg:w-1/2',
   },
 ] as const;
 

@@ -32,7 +32,7 @@ export default function CafeWeeklyTrending({
             href={`/lists/${list.slug}`}
             className="block rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-card active:scale-[0.99] transition-transform"
           >
-            <div className="relative aspect-[3/4] bg-wibe-surface">
+            <div className="relative aspect-3/4 bg-wibe-surface">
               {list.coverImage ? (
                 <ImageWithFallback
                   src={list.coverImage}
@@ -49,7 +49,7 @@ export default function CafeWeeklyTrending({
               <span className="absolute top-2 right-2 wibe-caption font-semibold text-white px-2 py-0.5 rounded-pill bg-warning">
                 ترند
               </span>
-              <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+              <div className="absolute inset-x-0 bottom-0 p-3 bg-linear-to-t from-black/90 via-black/50 to-transparent">
                 <h3 className="wibe-small font-semibold text-white line-clamp-2">{list.title}</h3>
                 <ListCardStats saves={list.saveCount} itemCount={list.itemCount} variant="overlay" className="mt-1" />
                 {list.creator?.name && (

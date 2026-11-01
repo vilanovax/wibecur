@@ -1,5 +1,5 @@
 /** شِل یکسان صفحه دسته — موبایل + دسکتاپ */
-export const CATEGORY_PAGE_SHELL = 'mx-auto w-full max-w-[1024px] px-4 pb-6 lg:px-6 lg:pb-8';
+export const CATEGORY_PAGE_SHELL = 'mx-auto w-full max-w-256 px-4 pb-6 lg:px-6 lg:pb-8';
 
 export const CATEGORY_SECTION = 'py-5 lg:py-6';
 

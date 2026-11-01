@@ -25,8 +25,8 @@ export default async function NewListPage() {
     return (
       <div className="space-y-4" dir="rtl">
         <div>
-          <h1 className="text-xl font-bold text-[var(--color-text)]">لیست جدید</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">ایجاد لیست جدید در پلتفرم</p>
+          <h1 className="text-xl font-bold text-(--color-text)">لیست جدید</h1>
+          <p className="text-sm text-wibe-secondary mt-0.5">ایجاد لیست جدید در پلتفرم</p>
         </div>
         <AdminDatabaseUnavailable
           message={databaseErrorMessage(error)}

@@ -18,7 +18,7 @@ type Props = {
 };
 
 const inputClass =
-  'w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] focus:ring-2 focus:ring-[var(--primary)]/30 tabular-nums';
+  'w-full px-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg) focus:ring-2 focus:ring-(--primary)/30 tabular-nums';
 
 export default function ListSettingsPanel({
   minItemsForPublicList,
@@ -34,7 +34,7 @@ export default function ListSettingsPanel({
     <SettingsSectionCard
       title="لیست‌های کاربران"
       description="قوانین عمومی‌کردن و سقف لیست خصوصی"
-      icon={<List className="w-5 h-5 text-[var(--primary)]" />}
+      icon={<List className="w-5 h-5 text-primary" />}
       footer={
         <SettingsSaveButton
           onClick={onSave}
@@ -45,7 +45,7 @@ export default function ListSettingsPanel({
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+          <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
             حداقل آیتم برای لیست عمومی
           </label>
           <input
@@ -61,7 +61,7 @@ export default function ListSettingsPanel({
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-[var(--color-text)] mb-1.5 block">
+          <label className="text-sm font-medium text-(--color-text) mb-1.5 block">
             حداکثر لیست خصوصی هر کاربر
           </label>
           <input
@@ -79,10 +79,10 @@ export default function ListSettingsPanel({
       </div>
       <div>
         <div className="flex justify-between items-center mb-1.5">
-          <label className="text-sm font-medium text-[var(--color-text)]">
+          <label className="text-sm font-medium text-(--color-text)">
             پیام راهنمای عمومی‌کردن لیست
           </label>
-          <span className="text-[10px] text-[var(--color-text-subtle)] tabular-nums">
+          <span className="text-[10px] text-(--color-text-subtle) tabular-nums">
             {charCount.toLocaleString('fa-IR')} کاراکتر
           </span>
         </div>
@@ -92,15 +92,15 @@ export default function ListSettingsPanel({
             onChange({ personalListPublicInstructions: e.target.value })
           }
           rows={4}
-          className="w-full px-3 py-2 text-sm rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] resize-y min-h-[96px] focus:ring-2 focus:ring-[var(--primary)]/30"
+          className="w-full px-3 py-2 text-sm rounded-xl border border-(--color-border) bg-(--color-bg) resize-y min-h-24 focus:ring-2 focus:ring-(--primary)/30"
           placeholder="متنی که هنگام عمومی کردن لیست به کاربر نشان داده می‌شود…"
         />
         {personalListPublicInstructions.trim() && (
-          <div className="mt-2 rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-bg)] p-3">
-            <p className="text-[10px] text-[var(--color-text-muted)] mb-1">
+          <div className="mt-2 rounded-xl border border-dashed border-(--color-border) bg-(--color-bg) p-3">
+            <p className="text-[10px] text-wibe-secondary mb-1">
               پیش‌نمایش
             </p>
-            <p className="text-sm text-[var(--color-text)] whitespace-pre-wrap">
+            <p className="text-sm text-(--color-text) whitespace-pre-wrap">
               {personalListPublicInstructions}
             </p>
           </div>

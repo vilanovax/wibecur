@@ -24,17 +24,17 @@ export default function SettingsStatusStrip({ settings }: Props) {
     <div
       className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3"
     >
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] mb-1">
-          <Plug className="w-3.5 h-3.5 text-[var(--primary)]" />
+      <div className="rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-1.5 text-xs text-wibe-secondary mb-1">
+          <Plug className="w-3.5 h-3.5 text-primary" />
           سرویس‌های متصل
         </div>
-        <p className="text-lg sm:text-xl font-bold tabular-nums text-[var(--color-text)]">
+        <p className="text-lg sm:text-xl font-bold tabular-nums text-(--color-text)">
           {configured.toLocaleString('fa-IR')} / {total.toLocaleString('fa-IR')}
         </p>
       </div>
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] mb-1">
+      <div className="rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-1.5 text-xs text-wibe-secondary mb-1">
           <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
           آماده استفاده
         </div>
@@ -42,8 +42,8 @@ export default function SettingsStatusStrip({ settings }: Props) {
           {configured.toLocaleString('fa-IR')}
         </p>
       </div>
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] mb-1">
+      <div className="rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-1.5 text-xs text-wibe-secondary mb-1">
           <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
           نیاز به تنظیم
         </div>

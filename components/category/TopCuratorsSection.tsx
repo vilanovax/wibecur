@@ -33,7 +33,7 @@ export default function TopCuratorsSection({
             href={c.username ? `/u/${c.username}` : '#'}
             className="flex items-center gap-3 p-3 rounded-lg bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform"
           >
-            <div className="relative flex-shrink-0">
+            <div className="relative shrink-0">
               {c.image ? (
                 <ImageWithFallback
                   src={c.image}

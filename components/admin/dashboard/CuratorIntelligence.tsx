@@ -32,18 +32,18 @@ interface CuratorIntelligenceProps {
 
 export default function CuratorIntelligence({ curators }: CuratorIntelligenceProps) {
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden">
-      <div className="px-4 sm:px-6 py-4 border-b border-[var(--color-border)]">
-        <h2 className="text-base font-semibold text-[var(--color-text)]">
+    <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-(--shadow-card) overflow-hidden">
+      <div className="px-4 sm:px-6 py-4 border-b border-(--color-border)">
+        <h2 className="text-base font-semibold text-(--color-text)">
           برترین کیوریتورها
         </h2>
-        <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+        <p className="text-xs text-wibe-secondary mt-0.5">
           برترین کیوریتورها بر اساس رشد و اعتماد
         </p>
       </div>
-      <div className="divide-y divide-[var(--color-border-muted)]">
+      <div className="divide-y divide-(--color-border-muted)">
         {curators.length === 0 ? (
-          <div className="py-8 text-center text-sm text-[var(--color-text-muted)]">
+          <div className="py-8 text-center text-sm text-wibe-secondary">
             داده کیوریتور در دسترس نیست.
           </div>
         ) : (
@@ -54,9 +54,9 @@ export default function CuratorIntelligence({ curators }: CuratorIntelligencePro
               <Link
                 key={c.id}
                 href={`/admin/users/${c.id}`}
-                className="flex items-center gap-4 px-4 sm:px-6 py-3 hover:bg-[var(--color-bg)] transition-colors"
+                className="flex items-center gap-4 px-4 sm:px-6 py-3 hover:bg-(--color-bg) transition-colors"
               >
-                <span className="text-sm font-medium text-[var(--color-text-muted)] w-6">
+                <span className="text-sm font-medium text-wibe-secondary w-6">
                   {c.rank}
                 </span>
                 <UserAvatar
@@ -66,16 +66,16 @@ export default function CuratorIntelligence({ curators }: CuratorIntelligencePro
                   className="shrink-0"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-[var(--color-text)] truncate">
+                  <p className="font-medium text-(--color-text) truncate">
                     {c.name}
                     {c.username && (
-                      <span className="text-[var(--color-text-muted)] font-normal">
+                      <span className="text-wibe-secondary font-normal">
                         {' '}
                         @{c.username}
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-[var(--color-text-muted)]">
+                  <p className="text-xs text-wibe-secondary">
                     میانگین ذخیره هر لیست: {c.avgSavesPerList.toLocaleString('fa-IR')}
                   </p>
                 </div>
@@ -84,7 +84,7 @@ export default function CuratorIntelligence({ curators }: CuratorIntelligencePro
                     +{c.growthPercent.toLocaleString('fa-IR')}٪
                   </span>
                 ) : (
-                  <span className="text-sm text-[var(--color-text-subtle)] shrink-0">
+                  <span className="text-sm text-(--color-text-subtle) shrink-0">
                     —
                   </span>
                 )}

@@ -128,7 +128,7 @@ function MetadataLinks({ metadata }: { metadata: CafeCoverMetadata }) {
   return (
     <div className="mt-1 flex flex-wrap items-center gap-1.5">
       {metadata.address && (
-        <span className="inline-flex max-w-full items-center gap-1 truncate rounded-md bg-gray-100 px-2 py-0.5 text-[10px] text-[var(--color-text-muted)]">
+        <span className="inline-flex max-w-full items-center gap-1 truncate rounded-md bg-gray-100 px-2 py-0.5 text-[10px] text-wibe-secondary">
           <MapPin className="h-3 w-3 shrink-0" />
           <span className="truncate">{metadata.address}</span>
         </span>
@@ -498,7 +498,7 @@ export default function CafeCoverItemsModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/45 p-0 sm:p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-70 flex items-end sm:items-center justify-center bg-black/45 p-0 sm:p-4 backdrop-blur-[2px]"
       onClick={(e) => e.target === e.currentTarget && !isBusy && handleClose()}
       dir="rtl"
     >
@@ -508,14 +508,14 @@ export default function CafeCoverItemsModal({
         role="dialog"
         aria-modal="true"
       >
-        <div className="relative shrink-0 border-b border-gray-100 bg-gradient-to-l from-orange-50/80 via-white to-white px-5 py-4">
+        <div className="relative shrink-0 border-b border-gray-100 bg-linear-to-l from-orange-50/80 via-white to-white px-5 py-4">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-700 ring-1 ring-orange-200/70">
               <Coffee className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold text-[var(--color-text)]">
+                <h2 className="text-base sm:text-lg font-bold text-(--color-text)">
                   تصویر کافه/رستوران — ParsPack
                 </h2>
                 {!loading && items.length > 0 && (
@@ -524,8 +524,8 @@ export default function CafeCoverItemsModal({
                   </span>
                 )}
               </div>
-              <p className="mt-0.5 truncate text-sm font-medium text-[var(--color-text)]">{scopeTitle}</p>
-              <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+              <p className="mt-0.5 truncate text-sm font-medium text-(--color-text)">{scopeTitle}</p>
+              <p className="mt-1 text-xs leading-relaxed text-wibe-secondary">
                 برای هر آیتم تصویر را از Google جستجو کنید، یکی را انتخاب کنید و روی ParsPack ذخیره
                 کنید. تصاویر خارجی موجود را هم می‌توانید گروهی منتقل کنید.
               </p>
@@ -533,7 +533,7 @@ export default function CafeCoverItemsModal({
             <button
               type="button"
               onClick={handleClose}
-              className="shrink-0 rounded-xl p-2 text-[var(--color-text-subtle)] transition-colors hover:bg-gray-100 hover:text-[var(--color-text)]"
+              className="shrink-0 rounded-xl p-2 text-(--color-text-subtle) transition-colors hover:bg-gray-100 hover:text-(--color-text)"
               aria-label="بستن"
             >
               <X className="h-5 w-5" />
@@ -549,17 +549,17 @@ export default function CafeCoverItemsModal({
 
         <div className="shrink-0 border-b border-gray-100 px-4 py-3">
           <div className="relative">
-            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-subtle)]" />
+            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--color-text-subtle)" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="جستجو در عنوان، لیست یا آدرس…"
-              className="w-full rounded-xl border border-gray-200 bg-white py-2 pr-9 pl-3 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-subtle)] focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200/60"
+              className="w-full rounded-xl border border-gray-200 bg-white py-2 pr-9 pl-3 text-sm text-(--color-text) placeholder:text-(--color-text-subtle) focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200/60"
             />
           </div>
           {!loading && items.length > 0 && (
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-wibe-secondary">
               <span>
                 {allMissingCount.toLocaleString('fa-IR')} بدون تصویر ·{' '}
                 {allExternalCount.toLocaleString('fa-IR')} خارجی
@@ -581,7 +581,7 @@ export default function CafeCoverItemsModal({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4">
           {loading && (
-            <div className="flex items-center justify-center py-16 text-sm text-[var(--color-text-muted)]">
+            <div className="flex items-center justify-center py-16 text-sm text-wibe-secondary">
               <Loader2 className="ml-2 h-5 w-5 animate-spin" />
               در حال بارگذاری…
             </div>
@@ -594,13 +594,13 @@ export default function CafeCoverItemsModal({
           )}
 
           {!loading && !error && items.length === 0 && (
-            <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center text-sm text-[var(--color-text-muted)]">
+            <div className="rounded-xl border border-dashed border-gray-200 py-12 text-center text-sm text-wibe-secondary">
               همه آیتم‌ها تصویر ParsPack دارند.
             </div>
           )}
 
           {!loading && filteredItems.length === 0 && items.length > 0 && (
-            <div className="rounded-xl border border-dashed border-gray-200 py-10 text-center text-sm text-[var(--color-text-muted)]">
+            <div className="rounded-xl border border-dashed border-gray-200 py-10 text-center text-sm text-wibe-secondary">
               نتیجه‌ای برای «{query}» پیدا نشد.
             </div>
           )}
@@ -625,7 +625,7 @@ export default function CafeCoverItemsModal({
                   className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
                 >
                   <div className="flex items-start gap-3 px-3 py-2.5">
-                    <span className="mt-2 text-[10px] font-mono text-[var(--color-text-subtle)]">
+                    <span className="mt-2 text-[10px] font-mono text-(--color-text-subtle)">
                       {(index + 1).toLocaleString('fa-IR')}
                     </span>
 
@@ -633,7 +633,7 @@ export default function CafeCoverItemsModal({
                       {imageSrc ? (
                         <Image src={imageSrc} alt="" fill className="object-cover" unoptimized />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[var(--color-text-subtle)]">
+                        <div className="flex h-full w-full items-center justify-center text-(--color-text-subtle)">
                           <ImageOff className="h-5 w-5" />
                         </div>
                       )}
@@ -641,7 +641,7 @@ export default function CafeCoverItemsModal({
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-[var(--color-text)]">{item.title}</p>
+                        <p className="font-semibold text-(--color-text)">{item.title}</p>
                         <span
                           className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                             isExternal
@@ -666,7 +666,7 @@ export default function CafeCoverItemsModal({
                         type="button"
                         onClick={() => void toggleItemHidden(item)}
                         disabled={togglingHideIds.has(item.id)}
-                        className="rounded-lg p-1.5 text-[var(--color-text-subtle)] hover:bg-gray-100 hover:text-[var(--color-text)]"
+                        className="rounded-lg p-1.5 text-(--color-text-subtle) hover:bg-gray-100 hover:text-(--color-text)"
                         title={item.isHidden ? 'نمایش' : 'مخفی'}
                       >
                         {item.isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -697,7 +697,7 @@ export default function CafeCoverItemsModal({
                       )}
                       <Link
                         href={`/admin/items/${item.id}/edit`}
-                        className="rounded-lg p-1.5 text-[var(--color-text-subtle)] hover:bg-gray-100 hover:text-[var(--color-text)]"
+                        className="rounded-lg p-1.5 text-(--color-text-subtle) hover:bg-gray-100 hover:text-(--color-text)"
                         title="ویرایش"
                       >
                         <ExternalLink className="h-4 w-4" />
@@ -722,7 +722,7 @@ export default function CafeCoverItemsModal({
                               },
                             }))
                           }
-                          className="min-w-[12rem] flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+                          className="min-w-48 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
                         />
                         <button
                           type="button"
@@ -757,7 +757,7 @@ export default function CafeCoverItemsModal({
                               type="button"
                               onClick={() => void applyPhoto(item, result.link)}
                               disabled={isBusy || !storageReady}
-                              className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-white hover:border-orange-400 hover:ring-2 hover:ring-orange-200 disabled:opacity-50"
+                              className="group relative aspect-4/3 overflow-hidden rounded-lg border border-gray-200 bg-white hover:border-orange-400 hover:ring-2 hover:ring-orange-200 disabled:opacity-50"
                               title={result.title}
                             >
                               <Image
@@ -790,7 +790,7 @@ export default function CafeCoverItemsModal({
           </ul>
         </div>
 
-        <div className="shrink-0 border-t border-gray-100 bg-gray-50/80 px-4 py-3 text-[11px] text-[var(--color-text-muted)]">
+        <div className="shrink-0 border-t border-gray-100 bg-gray-50/80 px-4 py-3 text-[11px] text-wibe-secondary">
           {items.length.toLocaleString('fa-IR')} آیتم نیازمند تصویر ParsPack
         </div>
       </div>

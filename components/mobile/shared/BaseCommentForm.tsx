@@ -116,7 +116,7 @@ export default function BaseCommentForm({
         </div>
 
         {/* نوار دکمه‌ها — شیت با maxHeight calc(100vh - 100px) تمام می‌شود پس دکمه‌ها بالای ناو می‌مانند */}
-        <div className="flex-shrink-0 border-t border-border bg-popover p-4">
+        <div className="shrink-0 border-t border-border bg-popover p-4">
           <div className="flex gap-3">
             <Button type="button" variant="secondary" size="lg" className="flex-1" onClick={onClose} disabled={isLoading}>
               انصراف

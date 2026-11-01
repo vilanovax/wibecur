@@ -67,10 +67,10 @@ function TrendingCard({
   return (
     <Link
       href={`/lists/${list.slug}`}
-      className="flex-shrink-0 w-[70vw] max-w-[260px] snap-start"
+      className="shrink-0 w-[70vw] max-w-65 snap-start"
     >
       <div ref={ref} className="rounded-2xl overflow-hidden bg-white border border-wibe shadow-xl active:scale-[0.98] transition-transform">
-        <div className="relative aspect-[3/4] bg-wibe-surface">
+        <div className="relative aspect-3/4 bg-wibe-surface">
           {list.coverImage ? (
             <ImageWithFallback
               src={list.coverImage}
@@ -102,7 +102,7 @@ function TrendingCard({
           )}
 
           {/* Bottom overlay */}
-          <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+          <div className="absolute inset-x-0 bottom-0 p-3 bg-linear-to-t from-black/90 via-black/50 to-transparent">
             <h3 className="font-bold text-white text-sm line-clamp-1 drop-shadow">
               {list.title}
             </h3>

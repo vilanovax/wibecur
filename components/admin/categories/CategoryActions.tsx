@@ -134,17 +134,17 @@ export default function CategoryActions({
   };
 
   const btnPrimary =
-    'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-[var(--primary)] text-white hover:opacity-90 transition-opacity disabled:opacity-50';
+    'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:opacity-90 transition-opacity disabled:opacity-50';
   const btnActivate =
     'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50';
   const btnSecondary =
-    'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-bg)] transition-colors';
+    'inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-(--color-border) text-(--color-text) hover:bg-(--color-bg) transition-colors';
 
   const moreMenu = open ? (
-    <div className="absolute top-full end-0 z-50 mt-1 w-48 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-1 shadow-lg">
+    <div className="absolute top-full inset-e-0 z-50 mt-1 w-48 rounded-xl border border-(--color-border) bg-(--color-surface) py-1 shadow-lg">
       <Link
         href={`/admin/categories/${categoryId}/edit#weight`}
-        className="flex min-h-11 items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+        className="flex min-h-11 items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
         onClick={() => setOpen(false)}
       >
         <Scale className="size-4" strokeWidth={1.5} />
@@ -152,7 +152,7 @@ export default function CategoryActions({
       </Link>
       <Link
         href={`/admin/analytics?category=${categoryId}`}
-        className="flex min-h-11 items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+        className="flex min-h-11 items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
         onClick={() => setOpen(false)}
       >
         <BarChart3 className="size-4" strokeWidth={1.5} />
@@ -161,7 +161,7 @@ export default function CategoryActions({
       <Link
         href={`/categories/${categorySlug}`}
         target="_blank"
-        className="flex min-h-11 items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+        className="flex min-h-11 items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
         onClick={() => setOpen(false)}
       >
         <ExternalLink className="size-4" strokeWidth={1.5} />
@@ -170,7 +170,7 @@ export default function CategoryActions({
       <button
         type="button"
         disabled={loading}
-        className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)] disabled:opacity-50"
+        className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg) disabled:opacity-50"
         onClick={handleDuplicate}
       >
         <Copy className="size-4" strokeWidth={1.5} />
@@ -198,7 +198,7 @@ export default function CategoryActions({
             e.stopPropagation();
             setOpen(!open);
           }}
-          className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+          className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-(--color-border) px-3 text-sm font-medium text-(--color-text) hover:bg-(--color-bg)"
           aria-expanded={open}
           aria-label={`کارهای بیشتر ${categoryName}`}
         >

@@ -19,8 +19,8 @@ function DebatedListCard({ list }: { list: CategoryListCard }) {
       href={`/lists/${list.slug}`}
       className="group flex items-stretch gap-3 overflow-hidden rounded-xl border border-wibe bg-wibe-card p-3 shadow-sm transition-all active:scale-[0.99] lg:gap-4 lg:rounded-2xl lg:p-4 lg:hover:border-primary/20 lg:hover:shadow-md"
     >
-      <div className="relative w-[4.5rem] shrink-0 overflow-hidden rounded-lg bg-gray-800 lg:w-[5.5rem]">
-        <div className="aspect-[2/3]">
+      <div className="relative w-18 shrink-0 overflow-hidden rounded-lg bg-gray-800 lg:w-22">
+        <div className="aspect-2/3">
           {poster ? (
             <ImageWithFallback
               src={poster}

@@ -132,18 +132,18 @@ export default function AddSlotWizardModal({
       aria-modal="true"
       dir="rtl"
     >
-      <div className="bg-[var(--color-surface)] rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-[var(--color-border)]">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)] shrink-0">
+      <div className="bg-(--color-surface) rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-(--color-border)">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-(--color-border) shrink-0">
           <div>
-            <h2 className="text-lg font-bold text-[var(--color-text)]">زمان‌بندی اسلات جدید</h2>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+            <h2 className="text-lg font-bold text-(--color-text)">زمان‌بندی اسلات جدید</h2>
+            <p className="text-xs text-wibe-secondary mt-0.5">
               مرحله {step.toLocaleString('fa-IR')} از ۲
             </p>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="p-2 rounded-xl hover:bg-[var(--color-bg)]"
+            className="p-2 rounded-xl hover:bg-(--color-bg)"
             aria-label="بستن"
           >
             <X className="w-5 h-5" />
@@ -155,14 +155,14 @@ export default function AddSlotWizardModal({
             <div className="flex gap-2">
               <span
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-medium ${
-                  step === 1 ? 'bg-[var(--primary)] text-white' : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
+                  step === 1 ? 'bg-primary text-white' : 'bg-(--color-bg) text-wibe-secondary'
                 }`}
               >
                 ۱. انتخاب لیست
               </span>
               <span
                 className={`flex-1 text-center py-1.5 rounded-lg text-xs font-medium ${
-                  step === 2 ? 'bg-[var(--primary)] text-white' : 'bg-[var(--color-bg)] text-[var(--color-text-muted)]'
+                  step === 2 ? 'bg-primary text-white' : 'bg-(--color-bg) text-wibe-secondary'
                 }`}
               >
                 ۲. بازه زمانی
@@ -190,7 +190,7 @@ export default function AddSlotWizardModal({
                         if (!ok) onListChange('');
                       }
                     }}
-                    className="rounded-xl border border-[var(--color-border)] text-sm px-3 py-2"
+                    className="rounded-xl border border-(--color-border) text-sm px-3 py-2"
                   >
                     <option value="">همه دسته‌ها</option>
                     {categories.map((c) => (
@@ -199,21 +199,21 @@ export default function AddSlotWizardModal({
                       </option>
                     ))}
                   </select>
-                  <div className="relative flex-1 min-w-[160px]">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+                  <div className="relative flex-1 min-w-40">
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-wibe-secondary" />
                     <input
                       type="search"
                       value={listSearch}
                       onChange={(e) => setListSearch(e.target.value)}
                       placeholder="جستجو..."
-                      className="w-full pr-9 pl-3 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+                      className="w-full pr-9 pl-3 py-2 rounded-xl border border-(--color-border) text-sm"
                     />
                   </div>
                 </div>
                 <select
                   value={formListId}
                   onChange={(e) => onListChange(e.target.value)}
-                  className="w-full rounded-xl border border-[var(--color-border)] text-sm px-3 py-2.5"
+                  className="w-full rounded-xl border border-(--color-border) text-sm px-3 py-2.5"
                   size={Math.min(8, Math.max(4, filteredLists.length))}
                 >
                   <option value="">
@@ -230,8 +230,8 @@ export default function AddSlotWizardModal({
             ) : (
               <form id="slot-wizard-form" onSubmit={onSubmit} className="space-y-4">
                 {selectedList && (
-                  <p className="text-sm text-[var(--color-text-muted)]">
-                    لیست: <strong className="text-[var(--color-text)]">{selectedList.title}</strong>
+                  <p className="text-sm text-wibe-secondary">
+                    لیست: <strong className="text-(--color-text)">{selectedList.title}</strong>
                   </p>
                 )}
                 <div className="flex flex-wrap gap-2">
@@ -249,8 +249,8 @@ export default function AddSlotWizardModal({
                       onClick={() => applyPreset(id)}
                       className={`px-4 py-2 rounded-xl text-sm font-medium border ${
                         activePreset === id
-                          ? 'bg-[var(--primary)] text-white border-[var(--primary)]'
-                          : 'border-[var(--color-border)]'
+                          ? 'bg-primary text-white border-(--primary)'
+                          : 'border-(--color-border)'
                       }`}
                     >
                       {label}
@@ -258,7 +258,7 @@ export default function AddSlotWizardModal({
                   ))}
                 </div>
                 {formStartDate && (
-                  <p className="text-xs text-[var(--color-text-muted)] bg-[var(--color-bg)] rounded-lg px-3 py-2">
+                  <p className="text-xs text-wibe-secondary bg-(--color-bg) rounded-lg px-3 py-2">
                     شروع: {formStartDate.format?.('DD MMMM YYYY') ?? '—'}
                     {formEndDate ? ` · پایان: ${formEndDate.format?.('DD MMMM YYYY') ?? '—'}` : ' · بدون پایان'}
                   </p>
@@ -266,14 +266,14 @@ export default function AddSlotWizardModal({
                 <button
                   type="button"
                   onClick={() => setShowAdvanced((v) => !v)}
-                  className="text-xs text-[var(--primary)]"
+                  className="text-xs text-primary"
                 >
                   {showAdvanced ? 'بستن تنظیم دستی' : 'تنظیم دستی تاریخ'}
                 </button>
                 {showAdvanced && (
-                  <div className="grid sm:grid-cols-2 gap-3 p-3 rounded-xl bg-[var(--color-bg)]">
+                  <div className="grid sm:grid-cols-2 gap-3 p-3 rounded-xl bg-(--color-bg)">
                     <div>
-                      <label className="text-xs text-[var(--color-text-muted)]">شروع</label>
+                      <label className="text-xs text-wibe-secondary">شروع</label>
                       <div className="flex gap-2 mt-1">
                         <DatePicker
                           value={formStartDate}
@@ -283,18 +283,18 @@ export default function AddSlotWizardModal({
                           }}
                           calendar={persian}
                           locale={persian_fa}
-                          inputClass="rounded-xl border border-[var(--color-border)] text-sm px-2 py-1.5 w-full"
+                          inputClass="rounded-xl border border-(--color-border) text-sm px-2 py-1.5 w-full"
                         />
                         <input
                           type="time"
                           value={formStartTime}
                           onChange={(e) => onStartTimeChange(e.target.value)}
-                          className="rounded-xl border border-[var(--color-border)] text-sm px-2"
+                          className="rounded-xl border border-(--color-border) text-sm px-2"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs text-[var(--color-text-muted)]">پایان</label>
+                      <label className="text-xs text-wibe-secondary">پایان</label>
                       <div className="flex gap-2 mt-1">
                         <DatePicker
                           value={formEndDate}
@@ -304,13 +304,13 @@ export default function AddSlotWizardModal({
                           }}
                           calendar={persian}
                           locale={persian_fa}
-                          inputClass="rounded-xl border border-[var(--color-border)] text-sm px-2 py-1.5 w-full"
+                          inputClass="rounded-xl border border-(--color-border) text-sm px-2 py-1.5 w-full"
                         />
                         <input
                           type="time"
                           value={formEndTime}
                           onChange={(e) => onEndTimeChange(e.target.value)}
-                          className="rounded-xl border border-[var(--color-border)] text-sm px-2"
+                          className="rounded-xl border border-(--color-border) text-sm px-2"
                         />
                       </div>
                     </div>
@@ -335,7 +335,7 @@ export default function AddSlotWizardModal({
             )}
           </div>
 
-          <div className="hidden lg:block w-[300px] shrink-0 border-r border-[var(--color-border)] bg-[var(--color-bg)] p-4">
+          <div className="hidden lg:block w-75 shrink-0 border-r border-(--color-border) bg-(--color-bg) p-4">
             <FeaturedMobilePreview
               list={selectedList ? toPreviewList(selectedList) : null}
               mode="preview"
@@ -343,11 +343,11 @@ export default function AddSlotWizardModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-[var(--color-border)] shrink-0">
+        <div className="flex items-center justify-between gap-2 px-5 py-4 border-t border-(--color-border) shrink-0">
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+            className="px-4 py-2 rounded-xl border border-(--color-border) text-sm"
           >
             انصراف
           </button>
@@ -356,7 +356,7 @@ export default function AddSlotWizardModal({
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="inline-flex items-center gap-1 px-4 py-2 rounded-xl border border-[var(--color-border)] text-sm"
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-xl border border-(--color-border) text-sm"
               >
                 <ChevronRight className="w-4 h-4" />
                 قبلی
@@ -367,7 +367,7 @@ export default function AddSlotWizardModal({
                 type="button"
                 disabled={!canGoStep2}
                 onClick={() => setStep(2)}
-                className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm disabled:opacity-50"
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-xl bg-primary text-white text-sm disabled:opacity-50"
               >
                 بعدی
                 <ChevronLeft className="w-4 h-4" />
@@ -377,7 +377,7 @@ export default function AddSlotWizardModal({
                 type="submit"
                 form="slot-wizard-form"
                 disabled={!canSubmit}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-sm disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm disabled:opacity-50"
               >
                 {submitLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 ثبت اسلات

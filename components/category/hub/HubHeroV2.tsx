@@ -19,9 +19,9 @@ export default function HubHeroV2({
 
   return (
     <section className="relative mb-2 mt-3 overflow-hidden rounded-2xl">
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-950 min-h-[200px]">
+      <div className="relative aspect-16/9 w-full overflow-hidden bg-neutral-950 min-h-50">
         <CategoryHeroMedia src={heroImage} alt={category.name} priority />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/45 to-black/15" />
 
         <div className="absolute inset-0 flex flex-col justify-end p-4 text-right pb-5">
           <h1 className="wibe-h1 text-white">

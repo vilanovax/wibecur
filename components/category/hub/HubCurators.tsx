@@ -38,8 +38,8 @@ export default function HubCurators({
           <Link
             key={c.id}
             href={c.username ? `/u/${c.username}` : '#'}
-            className={`flex-shrink-0 snap-start rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform ${
-              i === 0 ? 'w-[200px]' : 'w-[140px]'
+            className={`shrink-0 snap-start rounded-lg overflow-hidden bg-wibe-card border border-wibe shadow-sm active:scale-[0.99] transition-transform ${
+              i === 0 ? 'w-50' : 'w-35'
             }`}
           >
             <div className="p-3 text-center">

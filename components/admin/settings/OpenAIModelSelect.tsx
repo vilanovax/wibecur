@@ -19,7 +19,7 @@ export default function OpenAIModelSelect({ value, onChange, disabled }: Props) 
 
   return (
     <div className="space-y-2">
-      <label htmlFor="openai-model" className="block text-sm font-medium text-[var(--color-text)]">
+      <label htmlFor="openai-model" className="block text-sm font-medium text-(--color-text)">
         مدل OpenAI
       </label>
       <select
@@ -28,7 +28,7 @@ export default function OpenAIModelSelect({ value, onChange, disabled }: Props) 
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         dir="ltr"
-        className="w-full px-3 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text)] focus:ring-2 focus:ring-[var(--primary)]"
+        className="w-full px-3 py-2.5 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm text-(--color-text) focus:ring-2 focus:ring-(--primary)"
       >
         {OPENAI_MODEL_OPTIONS.map((m) => (
           <option key={m.id} value={m.id}>
@@ -46,7 +46,7 @@ export default function OpenAIModelSelect({ value, onChange, disabled }: Props) 
         <p className="mt-0.5 tabular-nums">{formatOpenAIModelPricingFa(selected)}</p>
         <p className="mt-1 text-violet-800/80 dark:text-violet-300/80">{selected.hint}</p>
       </div>
-      <p className="text-[11px] text-[var(--color-text-muted)]">
+      <p className="text-[11px] text-wibe-secondary">
         برای توضیحات کوتاه فارسی، معمولاً <strong>GPT-4o Mini</strong> یا{' '}
         <strong>GPT-5 Nano</strong> کافی و به‌صرفه‌ترین‌اند.
       </p>

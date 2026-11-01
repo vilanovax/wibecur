@@ -99,7 +99,7 @@ export default function ProfileAchievements({ creatorStats, className = 'mt-6' }
         <div className="h-5 w-28 bg-wibe-surface rounded mb-3" />
         <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-6 lg:gap-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="aspect-[4/5] rounded-lg bg-wibe-surface animate-pulse lg:aspect-auto lg:min-h-[72px]" />
+            <div key={i} className="aspect-4/5 rounded-lg bg-wibe-surface animate-pulse lg:aspect-auto lg:min-h-18" />
           ))}
         </div>
       </section>
@@ -128,7 +128,7 @@ export default function ProfileAchievements({ creatorStats, className = 'mt-6' }
             type="button"
             onClick={() => setSelected(a)}
             title={a.unlocked || !a.isSecret ? a.title : 'دستاورد مخفی'}
-            className={`flex min-h-[88px] flex-col items-center justify-center rounded-lg border p-3 transition-all active:scale-95 lg:min-h-[72px] lg:p-2.5 lg:hover:bg-wibe-surface ${
+            className={`flex min-h-22 flex-col items-center justify-center rounded-lg border p-3 transition-all active:scale-95 lg:min-h-18 lg:p-2.5 lg:hover:bg-wibe-surface ${
               a.unlocked
                 ? 'border-wibe bg-wibe-card hover:bg-wibe-surface'
                 : 'border-dashed border-wibe bg-wibe-surface/80'

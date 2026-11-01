@@ -61,28 +61,28 @@ export default function CommentsPulseSummary({
             type="button"
             onClick={() => onFilterClick?.(key)}
             disabled={!clickable}
-            className={`rounded-2xl border bg-gradient-to-br ${bg} p-4 shadow-sm text-right transition-all ${
-              isActive ? 'ring-2 ring-[var(--primary)] ring-offset-2' : ''
+            className={`rounded-2xl border bg-linear-to-br ${bg} p-4 shadow-sm text-right transition-all ${
+              isActive ? 'ring-2 ring-(--primary) ring-offset-2' : ''
             } ${
               clickable
-                ? 'hover:shadow-md hover:scale-[1.01] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--primary)]'
+                ? 'hover:shadow-md hover:scale-[1.01] cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--primary)'
                 : 'cursor-default'
             }`}
             title={clickable ? `فیلتر: ${label}` : undefined}
           >
             <div className="flex items-center gap-2 mb-2">
               <span className="p-1.5 rounded-lg bg-white/60 dark:bg-gray-800">
-                <Icon className="w-4 h-4 text-[var(--color-text)]" />
+                <Icon className="w-4 h-4 text-(--color-text)" />
               </span>
-              <span className="text-[13px] font-medium text-[var(--color-text-muted)]">
+              <span className="text-[13px] font-medium text-wibe-secondary">
                 {label}
               </span>
             </div>
-            <p className="text-2xl font-bold tabular-nums text-[var(--color-text)]">
+            <p className="text-2xl font-bold tabular-nums text-(--color-text)">
               {value.toLocaleString('fa-IR')}
             </p>
             {clickable && (
-              <p className="text-xs text-[var(--color-text-subtle)] mt-1">کلیک برای فیلتر</p>
+              <p className="text-xs text-(--color-text-subtle) mt-1">کلیک برای فیلتر</p>
             )}
           </button>
         );

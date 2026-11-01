@@ -51,8 +51,8 @@ export default function CommentSeedRulesPanel({
             دیتابیس.
           </p>
         </div>
-        <div className="flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 py-3 text-sm text-[var(--color-text-muted)]">
-          <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-text)]" />
+        <div className="flex items-start gap-3 rounded-xl border border-(--color-border) bg-(--color-bg) px-4 py-3 text-sm text-wibe-secondary">
+          <Shield className="mt-0.5 h-4 w-4 shrink-0 text-(--color-text)" />
           <p className="leading-relaxed">
             {rules.length === 0
               ? 'بدون قانون، همه کامنت‌های seed نمایش داده می‌شوند.'
@@ -61,15 +61,15 @@ export default function CommentSeedRulesPanel({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
-        <h3 className="text-sm font-semibold text-[var(--color-text)]">افزودن قانون جدید</h3>
-        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+      <div className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-5">
+        <h3 className="text-sm font-semibold text-(--color-text)">افزودن قانون جدید</h3>
+        <p className="mt-1 text-xs text-wibe-secondary">
           کنترل نمایش کامنت‌های seed در صفحات عمومی
         </p>
 
         <div className="mt-4 space-y-4">
           <div>
-            <span className="text-xs font-medium text-[var(--color-text-muted)]">نوع scope</span>
+            <span className="text-xs font-medium text-wibe-secondary">نوع scope</span>
             <div className="mt-2 flex flex-wrap gap-2">
               {(['item', 'list', 'category'] as const).map((t) => (
                 <button
@@ -82,7 +82,7 @@ export default function CommentSeedRulesPanel({
                   className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                     scopeType === t
                       ? 'bg-primary text-white shadow-sm'
-                      : 'border border-[var(--color-border)] hover:bg-[var(--color-bg)]'
+                      : 'border border-(--color-border) hover:bg-(--color-bg)'
                   }`}
                 >
                   {SCOPE_LABELS[t]}
@@ -104,8 +104,8 @@ export default function CommentSeedRulesPanel({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] pt-4">
-            <label className="inline-flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--color-border) pt-4">
+            <label className="inline-flex cursor-pointer items-center gap-3 rounded-xl border border-(--color-border) px-4 py-2.5 text-sm">
               <input
                 type="checkbox"
                 checked={enabled}
@@ -113,8 +113,8 @@ export default function CommentSeedRulesPanel({
                 className="h-4 w-4 rounded accent-primary"
               />
               <span>
-                <span className="font-medium text-[var(--color-text)]">نمایش فعال</span>
-                <span className="mr-2 text-xs text-[var(--color-text-muted)]">
+                <span className="font-medium text-(--color-text)">نمایش فعال</span>
+                <span className="mr-2 text-xs text-wibe-secondary">
                   {enabled ? 'کامنت‌ها در API عمومی دیده می‌شوند' : 'کامنت‌ها مخفی می‌شوند'}
                 </span>
               </span>
@@ -132,32 +132,32 @@ export default function CommentSeedRulesPanel({
       </div>
 
       {rules.length === 0 ? (
-        <div className="flex flex-col items-center rounded-2xl border border-dashed border-[var(--color-border)] px-6 py-12 text-center">
-          <EyeOff className="mb-3 h-8 w-8 text-[var(--color-text-muted)]" />
-          <p className="text-sm font-medium text-[var(--color-text)]">قانونی تعریف نشده</p>
-          <p className="mt-1 max-w-md text-xs text-[var(--color-text-muted)]">
+        <div className="flex flex-col items-center rounded-2xl border border-dashed border-(--color-border) px-6 py-12 text-center">
+          <EyeOff className="mb-3 h-8 w-8 text-wibe-secondary" />
+          <p className="text-sm font-medium text-(--color-text)">قانونی تعریف نشده</p>
+          <p className="mt-1 max-w-md text-xs text-wibe-secondary">
             همه کامنت‌های seed به‌صورت پیش‌فرض در API عمومی نمایش داده می‌شوند
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)]">
+        <div className="overflow-hidden rounded-2xl border border-(--color-border)">
           <table className="w-full text-sm" dir="rtl">
             <thead>
-              <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)] text-xs text-[var(--color-text-muted)]">
+              <tr className="border-b border-(--color-border) bg-(--color-bg) text-xs text-wibe-secondary">
                 <th className="px-4 py-3 text-right font-medium">نوع</th>
                 <th className="px-4 py-3 text-right font-medium">شناسه</th>
                 <th className="px-4 py-3 text-center font-medium">نمایش عمومی</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--color-border)]">
+            <tbody className="divide-y divide-(--color-border)">
               {rules.map((r) => (
-                <tr key={r.id} className="bg-[var(--color-surface)] hover:bg-[var(--color-bg)]/40">
+                <tr key={r.id} className="bg-(--color-surface) hover:bg-(--color-bg)/40">
                   <td className="px-4 py-3">
-                    <span className="rounded-md bg-[var(--color-bg)] px-2 py-0.5 text-xs font-medium">
+                    <span className="rounded-md bg-(--color-bg) px-2 py-0.5 text-xs font-medium">
                       {SCOPE_LABELS[r.scopeType]}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-[var(--color-text)]">{r.scopeId}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-(--color-text)">{r.scopeId}</td>
                   <td className="px-4 py-3 text-center">
                     <button
                       type="button"

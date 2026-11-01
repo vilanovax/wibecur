@@ -19,7 +19,7 @@ interface CategoryPageAppearanceFieldsProps {
 }
 
 const inputClass =
-  'w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent';
+  'w-full px-3 py-2 rounded-xl border border-(--color-border) bg-(--color-surface) focus:ring-2 focus:ring-(--primary) focus:border-transparent';
 
 export default function CategoryPageAppearanceFields({
   values,
@@ -29,7 +29,7 @@ export default function CategoryPageAppearanceFields({
   return (
     <div className="space-y-5" dir="rtl">
       <div>
-        <label htmlFor="accentColor" className="block text-sm font-medium text-[var(--color-text)] mb-1">
+        <label htmlFor="accentColor" className="block text-sm font-medium text-(--color-text) mb-1">
           رنگ تاکید (Accent)
         </label>
         <div className="flex gap-3 items-center">
@@ -38,7 +38,7 @@ export default function CategoryPageAppearanceFields({
             id="accentColor"
             value={values.accentColor || primaryColor}
             onChange={(e) => onChange({ accentColor: e.target.value })}
-            className="h-10 w-14 rounded-lg cursor-pointer border border-[var(--color-border)]"
+            className="h-10 w-14 rounded-lg cursor-pointer border border-(--color-border)"
           />
           <input
             type="text"
@@ -49,13 +49,13 @@ export default function CategoryPageAppearanceFields({
             placeholder={primaryColor}
           />
         </div>
-        <p className="text-xs text-[var(--color-text-muted)] mt-1">
+        <p className="text-xs text-wibe-secondary mt-1">
           در صفحه دسته در اپ استفاده می‌شود؛ اگر خالی باشد از رنگ اصلی دسته استفاده می‌شود.
         </p>
       </div>
 
       <div>
-        <label htmlFor="layoutType" className="block text-sm font-medium text-[var(--color-text)] mb-1">
+        <label htmlFor="layoutType" className="block text-sm font-medium text-(--color-text) mb-1">
           چیدمان صفحه دسته
         </label>
         <select
@@ -81,11 +81,11 @@ export default function CategoryPageAppearanceFields({
       />
 
       {(values.heroImage || values.layoutType) && (
-        <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-          <p className="text-xs font-medium text-[var(--color-text-muted)] px-3 py-2 bg-[var(--color-bg)]">
+        <div className="rounded-xl border border-(--color-border) overflow-hidden">
+          <p className="text-xs font-medium text-wibe-secondary px-3 py-2 bg-(--color-bg)">
             پیش‌نمایش صفحه دسته
           </p>
-          <div className="relative aspect-[16/9] max-h-44 overflow-hidden bg-neutral-950">
+          <div className="relative aspect-16/9 max-h-44 overflow-hidden bg-neutral-950">
             {values.heroImage && (
               <>
                 <Image
@@ -104,7 +104,7 @@ export default function CategoryPageAppearanceFields({
                 />
               </>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
             <div className="absolute inset-0 flex flex-col justify-end p-3 text-right">
               <p className="text-sm font-semibold text-white drop-shadow">
                 نمونه صفحه دسته

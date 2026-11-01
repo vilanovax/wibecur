@@ -1093,7 +1093,7 @@ export default function ListDetailClient({
           className="hidden grid-cols-[minmax(13rem,17.5rem)_minmax(0,1fr)] items-center gap-5 lg:grid xl:grid-cols-[18rem_minmax(0,1fr)] xl:gap-6"
           aria-hidden={!isDesktop || undefined}
         >
-          <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-muted shadow-sm xl:aspect-[16/10]">
+          <div className="relative aspect-4/3 overflow-hidden rounded-xl bg-muted shadow-sm xl:aspect-16/10">
             <ImageWithFallback
               src={heroImage}
               alt={displayTitle}
@@ -1110,7 +1110,7 @@ export default function ListDetailClient({
               variant="secondary"
               size="icon"
               onClick={() => setMoreOpen(true)}
-              className="absolute start-3 top-3 size-11 rounded-full bg-popover/95 shadow-sm backdrop-blur"
+              className="absolute inset-s-3 top-3 size-11 rounded-full bg-popover/95 shadow-sm backdrop-blur"
               aria-label="بیشتر"
             >
               <MoreVertical />
@@ -1145,8 +1145,8 @@ export default function ListDetailClient({
             listTitle={list.title}
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/15" />
-          <div className="absolute start-4 top-4 z-10">
+          <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/45 to-black/15" />
+          <div className="absolute inset-s-4 top-4 z-10">
             <Button
               type="button"
               variant="secondary"
@@ -1159,7 +1159,7 @@ export default function ListDetailClient({
             </Button>
           </div>
           {isViral && (
-            <div className="absolute end-4 top-4 z-10">
+            <div className="absolute inset-e-4 top-4 z-10">
               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md wibe-caption font-semibold bg-warning text-foreground">
                 <Flame className="w-3.5 h-3.5" /> وایرال
               </span>

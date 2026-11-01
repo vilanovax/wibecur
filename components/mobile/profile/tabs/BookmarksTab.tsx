@@ -302,7 +302,7 @@ export default function BookmarksTab({
                 type="button"
                 onClick={() => void handleRemoveBookmark(list.id)}
                 disabled={removingId === list.id}
-                className="absolute end-2 top-2 z-10 flex size-11 items-center justify-center rounded-full border border-border bg-popover/95 text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground disabled:opacity-50"
+                className="absolute inset-e-2 top-2 z-10 flex size-11 items-center justify-center rounded-full border border-border bg-popover/95 text-muted-foreground shadow-sm hover:bg-muted hover:text-foreground disabled:opacity-50"
                 aria-label={`حذف «${list.title}» از ذخیره‌ها`}
               >
                 <X className="size-5" strokeWidth={1.75} />

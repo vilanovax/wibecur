@@ -27,7 +27,7 @@ export default function ContentHubToolsMenu({ showNewList = false }: ContentHubT
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border border-[var(--color-border-muted)] text-[var(--color-text)] bg-[var(--color-surface)] hover:bg-[var(--color-bg)] transition-colors"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border border-(--color-border-muted) text-(--color-text) bg-(--color-surface) hover:bg-(--color-bg) transition-colors"
       >
         <MoreHorizontal className="w-4 h-4" />
         ابزارها
@@ -35,12 +35,12 @@ export default function ContentHubToolsMenu({ showNewList = false }: ContentHubT
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[12.5rem] rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] py-1 shadow-lg">
+        <div className="absolute left-0 top-full z-50 mt-1 min-w-50 rounded-xl border border-(--color-border-muted) bg-(--color-surface) py-1 shadow-lg">
           {showNewList && (
             <Link
               href="/admin/lists/new"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-bg)"
             >
               <Plus className="w-4 h-4" />
               لیست جدید
@@ -49,7 +49,7 @@ export default function ContentHubToolsMenu({ showNewList = false }: ContentHubT
           <Link
             href="/admin/lists?view=import"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-bg)"
           >
             <FileJson className="w-4 h-4" />
             import گروهی
@@ -57,7 +57,7 @@ export default function ContentHubToolsMenu({ showNewList = false }: ContentHubT
           <Link
             href="/admin/media"
             onClick={() => setOpen(false)}
-            className="flex min-h-11 items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+            className="flex min-h-11 items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
           >
             <Images className="w-4 h-4" />
             کتابخانه تصاویر
@@ -65,7 +65,7 @@ export default function ContentHubToolsMenu({ showNewList = false }: ContentHubT
           <Link
             href="/admin/catalog/storage-images"
             onClick={() => setOpen(false)}
-            className="flex min-h-11 items-center gap-2 px-3 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+            className="flex min-h-11 items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
           >
             <ImageIcon className="w-4 h-4" />
             تصاویر
@@ -73,7 +73,7 @@ export default function ContentHubToolsMenu({ showNewList = false }: ContentHubT
           <Link
             href="/admin/books/extract"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-bg)"
           >
             <BookOpen className="w-4 h-4" />
             استخراج کتاب
@@ -81,7 +81,7 @@ export default function ContentHubToolsMenu({ showNewList = false }: ContentHubT
           <Link
             href="/admin/custom/featured"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text)] hover:bg-[var(--color-bg)]"
+            className="flex items-center gap-2 px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-bg)"
           >
             <Sparkles className="w-4 h-4" />
             Featured

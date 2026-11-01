@@ -89,7 +89,7 @@ export default function AddToListModal({
         aria-labelledby="add-to-list-title"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 id="add-to-list-title" className="font-bold text-[var(--color-text)] flex items-center gap-2">
+          <h2 id="add-to-list-title" className="font-bold text-(--color-text) flex items-center gap-2">
             <ListPlus className="w-5 h-5 text-violet-600" />
             افزودن به لیست
           </h2>
@@ -98,8 +98,8 @@ export default function AddToListModal({
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <p className="text-sm text-[var(--color-text-muted)]">
-            «<span className="font-semibold text-[var(--color-text)]">{catalogTitle}</span>» به کدام لیست
+          <p className="text-sm text-wibe-secondary">
+            «<span className="font-semibold text-(--color-text)">{catalogTitle}</span>» به کدام لیست
             اضافه شود؟
           </p>
           {available.length === 0 ? (
@@ -122,7 +122,7 @@ export default function AddToListModal({
                 ))}
               </select>
               <div>
-                <label className="block text-xs font-semibold text-[var(--color-text-muted)] mb-1">
+                <label className="block text-xs font-semibold text-wibe-secondary mb-1">
                   جایگاه در لیست (اختیاری)
                 </label>
                 <input

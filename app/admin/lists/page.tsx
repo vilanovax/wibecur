@@ -46,9 +46,9 @@ function resolveView(raw?: string, trash?: boolean): ContentHubView {
 function ListsSkeleton() {
   return (
     <div className="space-y-4 animate-pulse" dir="rtl">
-      <div className="h-16 rounded-2xl bg-[var(--color-border-muted)]" />
-      <div className="h-12 rounded-xl bg-[var(--color-border-muted)]" />
-      <div className="h-[420px] rounded-2xl bg-[var(--color-border-muted)]" />
+      <div className="h-16 rounded-2xl bg-(--color-border-muted)" />
+      <div className="h-12 rounded-xl bg-(--color-border-muted)" />
+      <div className="h-105 rounded-2xl bg-(--color-border-muted)" />
     </div>
   );
 }

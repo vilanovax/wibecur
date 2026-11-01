@@ -16,7 +16,7 @@ export default function HomeDeferredMount({
   children,
   fallback,
   rootMargin = '320px',
-  className = 'min-h-[12rem] lg:min-h-[14rem]',
+  className = 'min-h-48 lg:min-h-56',
 }: HomeDeferredMountProps) {
   const { ref, inView } = useLazyInView<HTMLDivElement>({ rootMargin, once: true });
 

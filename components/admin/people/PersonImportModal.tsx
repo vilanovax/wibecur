@@ -98,16 +98,16 @@ export default function PersonImportModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-2 sm:items-center sm:p-4">
-      <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl">
-        <header className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] px-4 py-3 sm:px-5">
+      <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-2xl">
+        <header className="flex items-start justify-between gap-3 border-b border-(--color-border) px-4 py-3 sm:px-5">
           <div>
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
                 <Upload className="h-4 w-4" />
               </div>
               <div>
-                <h2 className="font-bold text-[var(--color-text)]">ورود JSON پروفایل‌ها</h2>
-                <p className="text-xs text-[var(--color-text-muted)]">
+                <h2 className="font-bold text-(--color-text)">ورود JSON پروفایل‌ها</h2>
+                <p className="text-xs text-wibe-secondary">
                   JSON را بچسبانید — پیش‌نمایش زنده قبل از اعمال
                 </p>
               </div>
@@ -116,14 +116,14 @@ export default function PersonImportModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg)]"
+            className="rounded-lg p-1.5 text-wibe-secondary hover:bg-(--color-bg)"
             aria-label="بستن"
           >
             <X className="h-5 w-5" />
           </button>
         </header>
 
-        <div className="flex items-center gap-2 border-b border-[var(--color-border)] px-4 py-2 sm:px-5">
+        <div className="flex items-center gap-2 border-b border-(--color-border) px-4 py-2 sm:px-5">
           {parseState.status === 'valid' ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
               <CheckCircle2 className="h-3.5 w-3.5" />
@@ -135,7 +135,7 @@ export default function PersonImportModal({
               {parseState.error}
             </span>
           ) : (
-            <span className="text-xs text-[var(--color-text-muted)]">JSON را وارد کنید یا نمونه را بارگذاری کنید</span>
+            <span className="text-xs text-wibe-secondary">JSON را وارد کنید یا نمونه را بارگذاری کنید</span>
           )}
 
           <div className="ms-auto flex gap-1 lg:hidden">
@@ -143,7 +143,7 @@ export default function PersonImportModal({
               type="button"
               onClick={() => setMobileTab('json')}
               className={`rounded-lg px-2.5 py-1 text-xs font-medium ${
-                mobileTab === 'json' ? 'bg-indigo-600 text-white' : 'text-[var(--color-text-muted)]'
+                mobileTab === 'json' ? 'bg-indigo-600 text-white' : 'text-wibe-secondary'
               }`}
             >
               JSON
@@ -152,7 +152,7 @@ export default function PersonImportModal({
               type="button"
               onClick={() => setMobileTab('preview')}
               className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium ${
-                mobileTab === 'preview' ? 'bg-indigo-600 text-white' : 'text-[var(--color-text-muted)]'
+                mobileTab === 'preview' ? 'bg-indigo-600 text-white' : 'text-wibe-secondary'
               }`}
             >
               <Eye className="h-3 w-3" />
@@ -163,14 +163,14 @@ export default function PersonImportModal({
 
         <div className="grid min-h-0 flex-1 lg:grid-cols-2">
           <div
-            className={`flex min-h-0 flex-col border-[var(--color-border)] p-4 sm:p-5 lg:border-e ${
+            className={`flex min-h-0 flex-col border-(--color-border) p-4 sm:p-5 lg:border-e ${
               mobileTab === 'preview' ? 'hidden lg:flex' : 'flex'
             }`}
           >
             <div className="mb-2 flex items-center justify-between gap-2">
-              <label className="text-xs font-semibold text-[var(--color-text-muted)]">JSON</label>
+              <label className="text-xs font-semibold text-wibe-secondary">JSON</label>
               <div className="flex gap-1">
-                <label className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 text-xs font-medium hover:bg-[var(--color-bg)]">
+                <label className="inline-flex min-h-11 cursor-pointer items-center gap-1 rounded-lg border border-(--color-border) px-3 text-xs font-medium hover:bg-(--color-bg)">
                   <FileJson className="h-3.5 w-3.5" />
                   انتخاب فایل JSON
                   <input
@@ -187,7 +187,7 @@ export default function PersonImportModal({
                 <button
                   type="button"
                   onClick={handlePasteExample}
-                  className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 text-xs font-medium hover:bg-[var(--color-bg)]"
+                  className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-(--color-border) px-3 text-xs font-medium hover:bg-(--color-bg)"
                 >
                   <ClipboardPaste className="h-3.5 w-3.5" />
                   نمونه
@@ -200,22 +200,22 @@ export default function PersonImportModal({
               dir="ltr"
               spellCheck={false}
               placeholder={JSON.stringify(PERSON_BIO_JSON_EXAMPLE, null, 2)}
-              className="min-h-[280px] flex-1 resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 font-mono text-xs leading-relaxed focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              className="min-h-70 flex-1 resize-none rounded-xl border border-(--color-border) bg-(--color-bg) px-3 py-2.5 font-mono text-xs leading-relaxed focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             />
-            <p className="mt-2 text-[11px] text-[var(--color-text-muted)]">
+            <p className="mt-2 text-[11px] text-wibe-secondary">
               ساختار:{' '}
-              <code dir="ltr" className="rounded bg-[var(--color-bg)] px-1">
+              <code dir="ltr" className="rounded bg-(--color-bg) px-1">
                 {'{ "people": [{ role, slug, displayName, bio, ... }] }'}
               </code>
             </p>
           </div>
 
           <div
-            className={`flex min-h-0 flex-col overflow-hidden bg-[var(--color-bg)]/40 p-4 sm:p-5 ${
+            className={`flex min-h-0 flex-col overflow-hidden bg-(--color-bg)/40 p-4 sm:p-5 ${
               mobileTab === 'json' ? 'hidden lg:flex' : 'flex'
             }`}
           >
-            <p className="mb-3 text-xs font-semibold text-[var(--color-text-muted)]">پیش‌نمایش</p>
+            <p className="mb-3 text-xs font-semibold text-wibe-secondary">پیش‌نمایش</p>
 
             {parseState.status === 'valid' ? (
               <>
@@ -229,7 +229,7 @@ export default function PersonImportModal({
                         className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                           selectedIndex === index
                             ? 'bg-indigo-600 text-white'
-                            : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] border border-[var(--color-border)]'
+                            : 'bg-(--color-surface) text-wibe-secondary border border-(--color-border)'
                         }`}
                       >
                         {person.displayName}
@@ -253,12 +253,12 @@ export default function PersonImportModal({
                 )}
               </>
             ) : (
-              <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)] px-6 py-12 text-center">
-                <FileJson className="mb-3 h-10 w-10 text-[var(--color-text-muted)] opacity-40" />
-                <p className="text-sm font-medium text-[var(--color-text)]">
+              <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-(--color-border) px-6 py-12 text-center">
+                <FileJson className="mb-3 h-10 w-10 text-wibe-secondary opacity-40" />
+                <p className="text-sm font-medium text-(--color-text)">
                   {parseState.status === 'invalid' ? 'JSON نیاز به اصلاح دارد' : 'منتظر JSON…'}
                 </p>
-                <p className="mt-1 max-w-xs text-xs text-[var(--color-text-muted)]">
+                <p className="mt-1 max-w-xs text-xs text-wibe-secondary">
                   {parseState.status === 'invalid'
                     ? parseState.error
                     : 'پس از وارد کردن JSON معتبر، پیش‌نمایش صفحه هر شخص اینجا نمایش داده می‌شود.'}
@@ -268,11 +268,11 @@ export default function PersonImportModal({
           </div>
         </div>
 
-        <footer className="flex flex-col-reverse gap-2 border-t border-[var(--color-border)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <footer className="flex flex-col-reverse gap-2 border-t border-(--color-border) px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm font-medium hover:bg-[var(--color-bg)]"
+            className="rounded-xl border border-(--color-border) px-4 py-2.5 text-sm font-medium hover:bg-(--color-bg)"
           >
             انصراف
           </button>

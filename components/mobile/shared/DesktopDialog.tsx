@@ -89,7 +89,7 @@ export default function DesktopDialog({
         onClick={(e) => e.stopPropagation()}
       >
         {(title || subtitle || headerAction) && (
-          <div className="flex flex-shrink-0 items-start justify-between gap-2 border-b border-border px-5 py-4">
+          <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border px-5 py-4">
             <div className="min-w-0 flex-1 text-start">
               {title && (
                 <h2 id="desktop-dialog-title" className="text-base font-semibold text-foreground">
@@ -118,7 +118,7 @@ export default function DesktopDialog({
         </div>
 
         {footer && (
-          <div className="flex-shrink-0 border-t border-border bg-popover px-4 py-3 lg:px-5">
+          <div className="shrink-0 border-t border-border bg-popover px-4 py-3 lg:px-5">
             {footer}
           </div>
         )}

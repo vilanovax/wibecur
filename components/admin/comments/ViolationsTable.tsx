@@ -45,26 +45,26 @@ export default function ViolationsTable({
   liftingUserId = null,
 }: Props) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
-      <table className="w-full min-w-[720px]" dir="rtl">
-        <thead className="bg-[var(--color-bg)] border-b border-[var(--color-border)]">
+    <div className="overflow-x-auto rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-sm">
+      <table className="w-full min-w-180" dir="rtl">
+        <thead className="bg-(--color-bg) border-b border-(--color-border)">
           <tr>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary">
               کاربر
             </th>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)] w-24">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary w-24">
               تخلف
             </th>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)] w-28">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary w-28">
               امتیاز منفی
             </th>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)] w-24">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary w-24">
               وضعیت
             </th>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)]">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary">
               آخرین تخلف
             </th>
-            <th className="px-3 py-2.5 text-right text-xs font-semibold text-[var(--color-text-muted)] hidden sm:table-cell">
+            <th className="px-3 py-2.5 text-right text-xs font-semibold text-wibe-secondary hidden sm:table-cell">
               عضویت
             </th>
             <th className="px-3 py-2.5 w-20" />
@@ -78,12 +78,12 @@ export default function ViolationsTable({
                 ? 'border-r-4 border-r-rose-500 bg-rose-50/50 dark:bg-rose-900/20'
                 : risk === 'mid'
                   ? 'border-r-4 border-r-amber-500 bg-amber-50/40 dark:bg-amber-900/20'
-                  : 'hover:bg-[var(--color-bg)]';
+                  : 'hover:bg-(--color-bg)';
 
             return (
               <tr
                 key={v.id}
-                className={`border-b border-[var(--color-border-muted)] transition-colors ${rowAccent}`}
+                className={`border-b border-(--color-border-muted) transition-colors ${rowAccent}`}
               >
                 <td className="px-3 py-2.5">
                   <div className="flex items-center gap-2 min-w-0">
@@ -94,10 +94,10 @@ export default function ViolationsTable({
                       size={36}
                     />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[var(--color-text)] truncate">
+                      <p className="text-sm font-medium text-(--color-text) truncate">
                         {v.user.name || 'بدون نام'}
                       </p>
-                      <p className="text-xs text-[var(--color-text-muted)] truncate">
+                      <p className="text-xs text-wibe-secondary truncate">
                         {v.user.email}
                       </p>
                     </div>
@@ -117,10 +117,10 @@ export default function ViolationsTable({
                 <td className="px-3 py-2.5">
                   <CommentRestrictionStatusBadge status={v.commentStatus} />
                 </td>
-                <td className="px-3 py-2.5 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
+                <td className="px-3 py-2.5 text-xs text-wibe-secondary whitespace-nowrap">
                   {formatRelativeTime(v.lastViolationDate)}
                 </td>
-                <td className="px-3 py-2.5 text-xs text-[var(--color-text-muted)] whitespace-nowrap hidden sm:table-cell">
+                <td className="px-3 py-2.5 text-xs text-wibe-secondary whitespace-nowrap hidden sm:table-cell">
                   {formatRelativeTime(v.user.createdAt)}
                 </td>
                 <td className="px-3 py-2.5">
@@ -140,14 +140,14 @@ export default function ViolationsTable({
                     <button
                       type="button"
                       onClick={() => onViewDetails(v.user.id)}
-                      className="p-1.5 rounded-lg text-[var(--primary)] hover:bg-[var(--primary)]/10 inline-flex"
+                      className="p-1.5 rounded-lg text-primary hover:bg-primary/10 inline-flex"
                       title="جزئیات و محدودیت"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <Link
                       href={`/admin/users?id=${v.user.id}`}
-                      className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] inline-flex"
+                      className="p-1.5 rounded-lg text-wibe-secondary hover:bg-(--color-bg) inline-flex"
                       title="پروفایل کاربر"
                     >
                       <ExternalLink className="w-4 h-4" />

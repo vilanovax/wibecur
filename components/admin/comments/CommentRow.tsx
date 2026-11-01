@@ -72,9 +72,9 @@ function CommentRow({
   const isBadWords = comment.isFiltered;
 
   const rowClass = [
-    'border-b border-[var(--color-border-muted)] transition-colors duration-150',
+    'border-b border-(--color-border-muted) transition-colors duration-150',
     isActive &&
-      'bg-[var(--primary)]/[0.07] shadow-[inset_3px_0_0_0_var(--primary)]',
+      'bg-primary/[0.07] shadow-[inset_3px_0_0_0_var(--primary)]',
     !isActive && comment.isSeeded && 'bg-violet-50/40',
     !isActive && isReported && 'bg-rose-50/50',
     !isActive && isBadWords && !isReported && 'bg-amber-50/45',
@@ -94,7 +94,7 @@ function CommentRow({
 
   return (
     <tr
-      className={`group hover:bg-[var(--color-bg)]/80 ${rowClass} ${
+      className={`group hover:bg-(--color-bg)/80 ${rowClass} ${
         onRowClick ? 'cursor-pointer' : ''
       }`}
       dir="rtl"
@@ -109,7 +109,7 @@ function CommentRow({
             onChange={() => onToggleSelect(comment.id)}
             onClick={(e) => e.stopPropagation()}
             aria-label={`انتخاب کامنت ${comment.users.name || comment.users.email}`}
-            className="rounded border-[var(--color-border)] text-[var(--primary)] focus:ring-[var(--primary)]"
+            className="rounded border-(--color-border) text-primary focus:ring-(--primary)"
           />
         )}
       </td>
@@ -123,7 +123,7 @@ function CommentRow({
           />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 min-w-0">
-              <p className="text-sm font-medium text-[var(--color-text)] truncate">
+              <p className="text-sm font-medium text-(--color-text) truncate">
                 {comment.users.name || 'بدون نام'}
               </p>
               {comment.userModeration && (
@@ -134,7 +134,7 @@ function CommentRow({
                 />
               )}
             </div>
-            <p className="text-xs text-[var(--color-text-muted)] truncate">
+            <p className="text-xs text-wibe-secondary truncate">
               {comment.users.email}
             </p>
           </div>
@@ -144,7 +144,7 @@ function CommentRow({
         <div className="flex items-start gap-2 min-w-0">
           <p
             title={displayContent}
-            className="text-sm text-[var(--color-text)] line-clamp-2 leading-snug flex-1 min-w-0"
+            className="text-sm text-(--color-text) line-clamp-2 leading-snug flex-1 min-w-0"
           >
             {displayContent}
           </p>
@@ -176,20 +176,20 @@ function CommentRow({
         <Link
           href={`/admin/items?id=${comment.items.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="text-sm text-[var(--primary)] hover:underline truncate block focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35 rounded"
+          className="text-sm text-primary hover:underline truncate block focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/35 rounded"
           title={comment.items.title}
         >
           {comment.items.title}
         </Link>
         {hideMetaColumns && (
-          <p className="text-xs text-[var(--color-text-muted)] tabular-nums mt-0.5">
+          <p className="text-xs text-wibe-secondary tabular-nums mt-0.5">
             {formatRelativeTime(comment.createdAt)}
           </p>
         )}
       </td>
       {!hideMetaColumns && (
         <>
-          <td className="px-2.5 py-2 text-xs text-[var(--color-text-muted)] whitespace-nowrap tabular-nums align-middle">
+          <td className="px-2.5 py-2 text-xs text-wibe-secondary whitespace-nowrap tabular-nums align-middle">
             {formatRelativeTime(comment.createdAt)}
           </td>
           <td className="px-2.5 py-2 align-middle">
@@ -208,7 +208,7 @@ function CommentRow({
               <button
                 type="button"
                 onClick={() => onView(comment)}
-                className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]/35"
+                className="p-1.5 rounded-lg text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text) focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)/35"
                 title="جزئیات"
               >
                 <Eye className="w-4 h-4" />

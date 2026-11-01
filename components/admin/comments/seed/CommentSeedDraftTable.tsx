@@ -145,9 +145,9 @@ export default function CommentSeedDraftTable({
 
   if (drafts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--color-border)] px-6 py-14 text-center">
-        <p className="text-sm font-medium text-[var(--color-text)]">پیش‌نویسی وجود ندارد</p>
-        <p className="mt-1 max-w-sm text-xs text-[var(--color-text-muted)]">
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-(--color-border) px-6 py-14 text-center">
+        <p className="text-sm font-medium text-(--color-text)">پیش‌نویسی وجود ندارد</p>
+        <p className="mt-1 max-w-sm text-xs text-wibe-secondary">
           در مرحله قبل دکمه «تولید پیش‌نویس‌ها» را بزنید تا AI کامنت‌ها را بسازد
         </p>
       </div>
@@ -156,7 +156,7 @@ export default function CommentSeedDraftTable({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-muted)]">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-wibe-secondary">
         <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 font-medium text-violet-700">
           <Sparkles className="h-3 w-3" />
           پیش‌نویس AI
@@ -172,7 +172,7 @@ export default function CommentSeedDraftTable({
               className={`inline-flex items-center gap-0.5 rounded-lg px-2 py-1 transition ${
                 sortKey === key
                   ? 'bg-primary/10 text-primary'
-                  : 'hover:bg-[var(--color-bg)]'
+                  : 'hover:bg-(--color-bg)'
               }`}
             >
               <ArrowDownUp className="h-3 w-3" />
@@ -188,11 +188,11 @@ export default function CommentSeedDraftTable({
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-[var(--color-border)]">
+      <div className="overflow-hidden rounded-xl border border-(--color-border)">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-sm" dir="rtl">
+          <table className="w-full min-w-215 text-sm" dir="rtl">
             <thead>
-              <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)] text-xs text-[var(--color-text-muted)]">
+              <tr className="border-b border-(--color-border) bg-(--color-bg) text-xs text-wibe-secondary">
                 <th className="w-10 px-2 py-2.5">
                   <input
                     type="checkbox"
@@ -211,14 +211,14 @@ export default function CommentSeedDraftTable({
                 <th className="px-3 py-2.5 text-center font-medium">عملیات</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--color-border)]">
+            <tbody className="divide-y divide-(--color-border)">
               {sortedDrafts.map((d) => {
                 const isPublished = d.status === 'published';
                 const editable = !isPublished;
                 return (
                   <tr
                     key={d.id}
-                    className={`bg-[var(--color-surface)] hover:bg-[var(--color-bg)]/50 ${
+                    className={`bg-(--color-surface) hover:bg-(--color-bg)/50 ${
                       selectedIds.has(d.id) ? 'ring-1 ring-inset ring-primary/20' : ''
                     }`}
                   >
@@ -232,25 +232,25 @@ export default function CommentSeedDraftTable({
                         />
                       )}
                     </td>
-                    <td className="max-w-[120px] px-3 py-3 align-top">
-                      <span className="line-clamp-2 text-xs font-medium text-[var(--color-text)]">
+                    <td className="max-w-30 px-3 py-3 align-top">
+                      <span className="line-clamp-2 text-xs font-medium text-(--color-text)">
                         {d.items.title}
                       </span>
                     </td>
-                    <td className="min-w-[220px] px-3 py-3 align-top">
+                    <td className="min-w-55 px-3 py-3 align-top">
                       <textarea
                         key={`${d.id}-${d.content.slice(0, 20)}`}
                         defaultValue={d.content}
                         rows={2}
                         disabled={loading || isPublished}
-                        className="w-full resize-y rounded-lg border border-[var(--color-border)] bg-white px-2.5 py-1.5 text-sm leading-relaxed disabled:opacity-60"
+                        className="w-full resize-y rounded-lg border border-(--color-border) bg-white px-2.5 py-1.5 text-sm leading-relaxed disabled:opacity-60"
                         onBlur={(e) => {
                           if (e.target.value !== d.content) {
                             void onUpdate(d.id, { content: e.target.value });
                           }
                         }}
                       />
-                      <span className="mt-1 block text-[10px] text-[var(--color-text-muted)]">
+                      <span className="mt-1 block text-[10px] text-wibe-secondary">
                         {d.content.length.toLocaleString('fa-IR')} کاراکتر
                       </span>
                     </td>
@@ -263,14 +263,14 @@ export default function CommentSeedDraftTable({
                             className="h-7 w-7 rounded-full object-cover"
                           />
                         ) : (
-                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-bg)]">
-                            <User className="h-3.5 w-3.5 text-[var(--color-text-muted)]" />
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-(--color-bg)">
+                            <User className="h-3.5 w-3.5 text-wibe-secondary" />
                           </span>
                         )}
                         <select
                           defaultValue={d.persona.id}
                           disabled={loading || isPublished}
-                          className="max-w-[120px] rounded-lg border border-[var(--color-border)] px-2 py-1 text-xs disabled:opacity-60"
+                          className="max-w-30 rounded-lg border border-(--color-border) px-2 py-1 text-xs disabled:opacity-60"
                           onChange={(e) => void onUpdate(d.id, { personaId: e.target.value })}
                         >
                           {personas.map((p) => (
@@ -285,7 +285,7 @@ export default function CommentSeedDraftTable({
                       <select
                         defaultValue={d.tone}
                         disabled={loading || isPublished}
-                        className="rounded-lg border border-[var(--color-border)] px-2 py-1 text-xs disabled:opacity-60"
+                        className="rounded-lg border border-(--color-border) px-2 py-1 text-xs disabled:opacity-60"
                         onChange={(e) => void onUpdate(d.id, { tone: e.target.value })}
                       >
                         {(Object.keys(TONE_LABELS) as Array<keyof ToneMix>).map((t) => (
@@ -295,7 +295,7 @@ export default function CommentSeedDraftTable({
                         ))}
                       </select>
                     </td>
-                    <td className="min-w-[140px] px-3 py-3 align-top">
+                    <td className="min-w-35 px-3 py-3 align-top">
                       {editable ? (
                         <DraftDateEditor
                           scheduledAt={d.scheduledAt}
@@ -303,7 +303,7 @@ export default function CommentSeedDraftTable({
                           onSave={(iso) => void onUpdate(d.id, { scheduledAt: iso })}
                         />
                       ) : (
-                        <span className="text-xs text-[var(--color-text-muted)]">
+                        <span className="text-xs text-wibe-secondary">
                           {formatPersianDateTime(d.scheduledAt)}
                         </span>
                       )}
@@ -380,7 +380,7 @@ export default function CommentSeedDraftTable({
       </div>
 
       {searchQuery && sortedDrafts.length === 0 && (
-        <p className="text-center text-sm text-[var(--color-text-muted)]">نتیجه‌ای یافت نشد</p>
+        <p className="text-center text-sm text-wibe-secondary">نتیجه‌ای یافت نشد</p>
       )}
     </div>
   );
@@ -420,7 +420,7 @@ function DraftDateEditor({
         type="button"
         disabled={disabled}
         onClick={openEditor}
-        className="text-right text-xs text-[var(--color-text-muted)] hover:text-primary disabled:opacity-60"
+        className="text-right text-xs text-wibe-secondary hover:text-primary disabled:opacity-60"
       >
         {formatPersianDateTime(scheduledAt)}
       </button>
@@ -443,7 +443,7 @@ function DraftDateEditor({
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="text-[10px] text-[var(--color-text-muted)] hover:underline"
+          className="text-[10px] text-wibe-secondary hover:underline"
         >
           انصراف
         </button>

@@ -109,7 +109,7 @@ function PickEditorCard({
 
   return (
     <div className="flex w-24 shrink-0 flex-col">
-      <div className="group relative aspect-[2/3] overflow-hidden rounded-xl bg-muted ring-1 ring-foreground/10">
+      <div className="group relative aspect-2/3 overflow-hidden rounded-xl bg-muted ring-1 ring-foreground/10">
         {pick.imageUrl ? (
           <ImageWithFallback
             src={pick.imageUrl}
@@ -121,14 +121,14 @@ function PickEditorCard({
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted text-xl">✨</div>
         )}
-        <span className="absolute start-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-foreground/55 text-xs font-bold text-background">
+        <span className="absolute inset-s-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-foreground/55 text-xs font-bold text-background">
           {(idx + 1).toLocaleString('fa-IR')}
         </span>
         <button
           type="button"
           disabled={isBusy}
           onClick={onRemove}
-          className="absolute end-1.5 top-1.5 flex size-8 items-center justify-center rounded-full bg-destructive text-white disabled:opacity-50"
+          className="absolute inset-e-1.5 top-1.5 flex size-8 items-center justify-center rounded-full bg-destructive text-white disabled:opacity-50"
           aria-label="حذف"
         >
           <Trash2 className="h-3 w-3" />
@@ -514,7 +514,7 @@ export default function ProfilePicksEditorSheet({
                   {search ? 'نتیجه‌ای یافت نشد' : 'برای جستجو تایپ کن'}
                 </p>
               ) : (
-                <ul className="max-h-[220px] space-y-1.5 overflow-y-auto overscroll-contain">
+                <ul className="max-h-55 space-y-1.5 overflow-y-auto overscroll-contain">
                   {browseItems.map((item) => {
                     const cid = item.catalogItemId;
                     if (!cid) return null;

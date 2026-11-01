@@ -24,7 +24,7 @@ export default function FeaturedCinematicList({ list }: FeaturedCinematicListPro
         className="group block active:scale-[0.99] transition-transform lg:hover:-translate-y-0.5"
       >
         <div className="relative rounded-xl overflow-hidden bg-wibe-card border border-wibe shadow-card lg:rounded-2xl lg:group-hover:shadow-lg lg:transition-shadow">
-          <div className="relative aspect-[16/9] min-h-[160px] overflow-hidden bg-gray-900 lg:min-h-[220px]">
+          <div className="relative aspect-16/9 min-h-40 overflow-hidden bg-gray-900 lg:min-h-55">
             {(list.bannerImage ?? list.coverImage) ? (
               <ImageWithFallback
                 src={list.bannerImage ?? list.coverImage ?? ''}
@@ -38,7 +38,7 @@ export default function FeaturedCinematicList({ list }: FeaturedCinematicListPro
                 🎬
               </div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent lg:from-black/90 lg:via-black/40" />
+            <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent lg:from-black/90 lg:via-black/40" />
             <div className="absolute inset-0 flex flex-col justify-end p-4 lg:flex-row lg:items-end lg:justify-between lg:p-6">
               <div className="min-w-0 flex-1">
                 <h3 className="wibe-h3 text-white line-clamp-1 lg:text-2xl">{list.title}</h3>

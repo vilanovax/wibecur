@@ -56,7 +56,7 @@ export default function ProfileTabs2({ userId }: ProfileTabs2Props) {
             );
           })}
           <div
-            className="absolute bottom-0 h-0.5 bg-gradient-to-r from-[#7C3AED] to-[#9333EA] rounded-full transition-colors duration-300 ease-out"
+            className="absolute bottom-0 h-0.5 bg-linear-to-r from-[#7C3AED] to-[#9333EA] rounded-full transition-colors duration-300 ease-out"
             style={{
               left: indicatorStyle.left,
               width: indicatorStyle.width,
@@ -65,7 +65,7 @@ export default function ProfileTabs2({ userId }: ProfileTabs2Props) {
         </div>
       </div>
 
-      <div className="min-h-[400px] -mx-4">
+      <div className="min-h-100 -mx-4">
         {activeTab === 'my-lists' && <MyListsTab userId={userId} />}
         {activeTab === 'bookmarks' && <BookmarksTab userId={userId} />}
         {activeTab === 'activity' && <RecentActivityTab userId={userId} />}

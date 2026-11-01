@@ -574,7 +574,7 @@ export default function AddItemClient({
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+              <Skeleton key={i} className="aspect-3/4 rounded-xl" />
             ))}
           </div>
         ) : isError ? (
@@ -625,7 +625,7 @@ export default function AddItemClient({
                     <div
                       className={`relative bg-muted ${
                         viewMode === 'grid'
-                          ? 'aspect-[4/3]'
+                          ? 'aspect-4/3'
                           : 'size-20 shrink-0 overflow-hidden rounded-xl'
                       }`}
                     >
@@ -637,7 +637,7 @@ export default function AddItemClient({
                         fallbackClassName="h-full w-full"
                       />
                       {inList && (
-                        <span className="absolute end-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-brand-foreground">
+                        <span className="absolute inset-e-2 top-2 inline-flex items-center gap-0.5 rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-brand-foreground">
                           <Check className="h-3 w-3" />
                           در لیست
                         </span>
@@ -685,7 +685,7 @@ export default function AddItemClient({
       </div>
 
       {undoItem && (
-        <div className="fixed inset-x-4 bottom-20 z-[100] mx-auto flex max-w-md items-center gap-3 rounded-xl border border-border bg-popover px-4 py-3 text-foreground shadow-overlay">
+        <div className="fixed inset-x-4 bottom-20 z-100 mx-auto flex max-w-md items-center gap-3 rounded-xl border border-border bg-popover px-4 py-3 text-foreground shadow-overlay">
           <p className="min-w-0 flex-1 text-sm">«{undoItem.title}» حذف شد</p>
           <Button type="button" variant="brand" size="sm" className="h-11" onClick={() => void handleUndo()}>
             <RotateCcw aria-hidden />

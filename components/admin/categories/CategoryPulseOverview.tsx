@@ -43,17 +43,17 @@ export default function CategoryPulseOverview({ data }: CategoryPulseOverviewPro
       {cards.map(({ key, label, icon: Icon, sub }) => (
         <div
           key={key}
-          className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm transition-shadow hover:shadow-md"
+          className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-4 shadow-sm transition-shadow hover:shadow-md"
         >
           <div className="flex items-center gap-2 mb-2">
-            <span className="p-1.5 rounded-lg bg-[var(--color-bg)]">
-              <Icon className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <span className="p-1.5 rounded-lg bg-(--color-bg)">
+              <Icon className="w-4 h-4 text-wibe-secondary" />
             </span>
-            <span className="text-[13px] font-medium text-[var(--color-text-muted)]">
+            <span className="text-[13px] font-medium text-wibe-secondary">
               {label}
             </span>
           </div>
-          <p className="text-2xl font-bold tabular-nums text-[var(--color-text)] truncate">
+          <p className="text-2xl font-bold tabular-nums text-(--color-text) truncate">
             {key === 'fastestGrowingName'
               ? (data[key] as string) || '—'
               : key === 'avgSaveGrowthPercent'
@@ -61,7 +61,7 @@ export default function CategoryPulseOverview({ data }: CategoryPulseOverviewPro
                 : (data[key] as number).toLocaleString('fa-IR')}
           </p>
           {sub && (
-            <p className="text-xs text-[var(--color-text-muted)] mt-1 truncate">
+            <p className="text-xs text-wibe-secondary mt-1 truncate">
               {sub(data)}
             </p>
           )}
