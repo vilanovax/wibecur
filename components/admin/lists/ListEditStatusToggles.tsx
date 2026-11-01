@@ -46,7 +46,7 @@ const TOGGLES: Array<{
   },
   {
     key: 'itemDetailEnabled',
-    label: 'صفحهٔ جزئیات',
+    label: 'مشاهده',
     hint: 'دکمهٔ مشاهده در پیش‌نمایش آیتم',
     icon: Eye,
     onClass: 'border-sky-400 bg-sky-50/80 ring-1 ring-sky-400/40',

@@ -59,8 +59,8 @@ const TOGGLES: { key: ToggleKey; label: string; hint: string }[] = [
   },
   {
     key: 'itemDetailEnabled',
-    label: 'صفحهٔ جزئیات',
-    hint: 'دکمهٔ «مشاهده» در پیش‌نمایش آیتم را نشان بدهد.',
+    label: 'مشاهده',
+    hint: 'خاموش باشد، دکمهٔ مشاهده در پیش‌نمایش آیتم دیده نمی‌شود.',
   },
 ];
 
