@@ -10,7 +10,12 @@ import ListFormIdentity from '@/components/admin/lists/ListFormIdentity';
 import ListFormStickyPreview from '@/components/admin/lists/ListFormStickyPreview';
 import ListEditStatusToggles from '@/components/admin/lists/ListEditStatusToggles';
 import ListNewFormStepper, { type ListNewFormStep } from '@/components/admin/lists/ListNewFormStepper';
-import { slugFromTitle, normalizeListSlug, isValidListSlug } from '@/lib/admin/list-slug';
+import {
+  slugFromTitle,
+  normalizeListSlug,
+  finalizeListSlug,
+  isValidListSlug,
+} from '@/lib/admin/list-slug';
 import {
   buildSlugFromListTitle,
   generateListDescriptionWithAi,
@@ -59,19 +64,23 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
     categoryId:
       categoryList.find((c) => c.isActive)?.id || categoryList[0]?.id || '',
     badge: '',
-    isPublic: true,
+    isPublic: false,
     isFeatured: false,
-    isActive: true,
+    isActive: false,
     commentsEnabled: true,
   });
 
-  const slugValid = useMemo(() => isValidListSlug(formData.slug), [formData.slug]);
-  const { state: slugCheck, isSlugBlocked } = useListSlugCheck(formData.slug, {
-    enabled: slugValid && formData.slug.length > 0,
+  const finalizedSlug = useMemo(() => finalizeListSlug(formData.slug), [formData.slug]);
+  const slugValid = useMemo(() => isValidListSlug(finalizedSlug), [finalizedSlug]);
+  const { state: slugCheck, isSlugBlocked } = useListSlugCheck(finalizedSlug, {
+    enabled: slugValid && finalizedSlug.length > 0,
   });
 
   const slugReady =
-    slugValid && formData.slug.length > 0 && slugCheck.status === 'available' && !isSlugBlocked;
+    slugValid &&
+    finalizedSlug.length > 0 &&
+    slugCheck.status === 'available' &&
+    !isSlugBlocked;
 
   const selectedCategory = categoryList.find((c) => c.id === formData.categoryId);
 
@@ -201,7 +210,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
       const response = await fetch('/api/admin/lists', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, slug: finalizedSlug }),
       });
       if (!response.ok) {
         const data = await response.json();
@@ -294,6 +303,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
                 <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
                   <h2 className="text-sm font-semibold text-[var(--color-text)]">نمایش و وضعیت</h2>
                   <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                    پیش‌فرض پیش‌نویس است (غیرفعال و خصوصی). بعد از کاور و آیتم‌ها، عمومی و فعال کنید.
                     Featured = اسلات صفحه اصلی · نشان = برچسب روی کارت
                   </p>
                 </div>

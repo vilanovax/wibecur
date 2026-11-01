@@ -32,7 +32,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
       <ItemTipField
         compact
         value={String(m.tip ?? '')}
-        onChange={(tip) => set('tip', tip.trim() || undefined)}
+        onChange={(tip) => set('tip', tip)}
       />
     </div>
   );

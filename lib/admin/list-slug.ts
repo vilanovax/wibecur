@@ -58,11 +58,16 @@ export function slugFromTitle(title: string): string {
   return slug === 'category' && !/[a-z0-9]/.test(text) ? 'list' : slug;
 }
 
+/** هنگام تایپ: خط تیرهٔ پایانی را نگه می‌دارد تا بشود mid-string و انتهای فیلد `-` زد. */
 export function normalizeListSlug(value: string): string {
   return value
     .toLowerCase()
-    .trim()
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+    .replace(/^-/g, '');
+}
+
+/** قبل از ذخیره / اعتبارسنجی نهایی — خط تیرهٔ ابتدا و انتها حذف می‌شود. */
+export function finalizeListSlug(value: string): string {
+  return normalizeListSlug(value).replace(/-+$/g, '');
 }

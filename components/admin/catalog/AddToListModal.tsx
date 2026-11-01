@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, ListPlus } from 'lucide-react';
+import ItemTipField from '@/components/admin/items/ItemTipField';
 
 type ListOption = { id: string; title: string; icon?: string | null };
 
@@ -25,12 +26,20 @@ export default function AddToListModal({
   onSuccess,
 }: AddToListModalProps) {
   const [listId, setListId] = useState('');
+  const [tip, setTip] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   if (!open) return null;
 
   const available = lists.filter((l) => !existingListIds.includes(l.id));
+
+  const handleClose = () => {
+    setListId('');
+    setTip('');
+    setError('');
+    onClose();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,17 +50,21 @@ export default function AddToListModal({
     setLoading(true);
     setError('');
     try {
+      const tipText = tip.trim();
       const res = await fetch('/api/admin/items/add-to-list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ catalogItemId: catalogId, listId }),
+        body: JSON.stringify({
+          catalogItemId: catalogId,
+          listId,
+          ...(tipText ? { tip: tipText } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'خطا');
       const title = lists.find((l) => l.id === listId)?.title ?? 'لیست';
       onSuccess?.(title);
-      onClose();
-      setListId('');
+      handleClose();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'خطا');
     } finally {
@@ -71,7 +84,7 @@ export default function AddToListModal({
             <ListPlus className="w-5 h-5 text-violet-600" />
             افزودن به لیست
           </h2>
-          <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100">
+          <button type="button" onClick={handleClose} className="p-1.5 rounded-lg hover:bg-gray-100" aria-label="بستن">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -85,19 +98,22 @@ export default function AddToListModal({
               این آیتم در همهٔ لیست‌های فعال موجود است.
             </p>
           ) : (
-            <select
-              value={listId}
-              onChange={(e) => setListId(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/25"
-              required
-            >
-              <option value="">انتخاب لیست…</option>
-              {available.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.icon || '📋'} {l.title}
-                </option>
-              ))}
-            </select>
+            <>
+              <select
+                value={listId}
+                onChange={(e) => setListId(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/25"
+                required
+              >
+                <option value="">انتخاب لیست…</option>
+                {available.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.icon || '📋'} {l.title}
+                  </option>
+                ))}
+              </select>
+              <ItemTipField value={tip} onChange={setTip} compact />
+            </>
           )}
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-2 pt-1">
@@ -110,7 +126,7 @@ export default function AddToListModal({
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
             >
               انصراف

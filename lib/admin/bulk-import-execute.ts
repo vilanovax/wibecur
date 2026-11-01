@@ -33,6 +33,11 @@ import {
 } from '@/lib/list-entry';
 import type { BulkImportPayloadItem } from '@/lib/admin/bulk-import';
 import { isOurStorageUrl } from '@/lib/object-storage-config';
+import {
+  revalidateListDetailCache,
+  revalidateCategoryCache,
+  revalidateHomeCache,
+} from '@/lib/public-cache';
 
 export type BulkImportRowResult = {
   index: number;
@@ -234,9 +239,18 @@ async function importOneRow(
 
     const match = ctx.match;
 
+    const directCatalogId = row.catalogItemId?.trim();
     let catalogId =
-      match.catalogId ??
-      (await resolveBulkImportCatalogId(db, ctx.categorySlug, row));
+      (directCatalogId &&
+        (await db.catalog_items.findUnique({
+          where: { id: directCatalogId },
+          select: { id: true },
+        }))?.id) ||
+      match.catalogId ||
+      (await resolveBulkImportCatalogId(db, ctx.categorySlug, {
+        ...row,
+        catalogItemId: directCatalogId,
+      }));
 
     const existingCatalog = !!catalogId;
 
@@ -413,6 +427,12 @@ export async function executeBulkImportForList(
       categoryName: list.categories?.name,
       listTitle: list.title,
     }).catch(console.error);
+  }
+
+  if (placementsAdded > 0 || updated > 0 || created > 0 || linked > 0) {
+    revalidateListDetailCache(list.slug);
+    revalidateCategoryCache(list.categoryId);
+    revalidateHomeCache();
   }
 
   return {

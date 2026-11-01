@@ -28,7 +28,23 @@ export type BulkImportRowInput = {
   externalUrl?: string | null;
   entryKind?: string;
   imageUrl?: string | null;
+  catalogItemId?: string | null;
 };
+
+/** کلیدهای پایدار (ISBN/IMDb/…) را بدون شرط عنوان سخت‌گیرانه می‌پذیریم. */
+export function isStrongCatalogExternalKey(externalKey: string | null | undefined): boolean {
+  if (!externalKey) return false;
+  return /^(imdb|tmdb|isbn|taaghche|fidibo|ketabrah):/i.test(externalKey);
+}
+
+function catalogMatchesImportTitle(
+  importTitle: string,
+  catalogTitle: string,
+  externalKey: string | null | undefined
+): boolean {
+  if (isStrongCatalogExternalKey(externalKey)) return true;
+  return catalogTitlesMatch(importTitle, catalogTitle);
+}
 
 function lightweightMatch(): BulkImportMatch {
   return {
@@ -178,13 +194,35 @@ export async function resolveBulkImportMatch(
   listId: string,
   row: BulkImportRowInput
 ): Promise<BulkImportMatch> {
+  const directId = row.catalogItemId?.trim();
+  if (directId) {
+    const byId = await prisma.catalog_items.findUnique({
+      where: { id: directId },
+      select: { id: true, title: true, externalKey: true },
+    });
+    if (byId) {
+      const { inTargetSet, countByCatalog, samplesByCatalog } = await loadCatalogListStats(
+        prisma,
+        [byId.id],
+        listId
+      );
+      return matchFromCatalog(
+        byId.externalKey,
+        byId,
+        inTargetSet,
+        countByCatalog,
+        samplesByCatalog
+      );
+    }
+  }
+
   const { title, externalKey } = buildBulkImportExternalKey(categorySlug, row);
   if (!title) return emptyMatch('عنوان خالی');
 
   let catalog: CatalogRef | null = null;
   if (externalKey != null) {
     const byKey = await findCatalogByExternalKey(prisma, externalKey);
-    if (byKey && catalogTitlesMatch(title, byKey.title)) {
+    if (byKey && catalogMatchesImportTitle(title, byKey.title, byKey.externalKey)) {
       catalog = {
         id: byKey.id,
         title: byKey.title,
@@ -242,6 +280,29 @@ export async function resolveBulkImportMatchesBatch(
     return { index, title, externalKey };
   });
 
+  const catalogByRowIndex = new Map<number, CatalogRef>();
+
+  const directIds = [
+    ...new Set(
+      rows
+        .map((row) => row.catalogItemId?.trim())
+        .filter((id): id is string => Boolean(id))
+    ),
+  ];
+  if (directIds.length > 0) {
+    const byIds = await prisma.catalog_items.findMany({
+      where: { id: { in: directIds } },
+      select: { id: true, title: true, externalKey: true },
+    });
+    const catalogById = new Map(byIds.map((c) => [c.id, c]));
+    for (let i = 0; i < rows.length; i++) {
+      const id = rows[i].catalogItemId?.trim();
+      if (!id) continue;
+      const catalog = catalogById.get(id);
+      if (catalog) catalogByRowIndex.set(i, catalog);
+    }
+  }
+
   const uniqueKeys = [
     ...new Set(rowKeys.map((r) => r.externalKey).filter(Boolean)),
   ] as string[];
@@ -260,12 +321,15 @@ export async function resolveBulkImportMatchesBatch(
       .map((c) => [c.externalKey as string, c])
   );
 
-  const catalogByRowIndex = new Map<number, CatalogRef>();
   for (let i = 0; i < rowKeys.length; i++) {
+    if (catalogByRowIndex.has(i)) continue;
     const { externalKey } = rowKeys[i];
     if (!externalKey) continue;
     const catalog = catalogByKey.get(externalKey);
-    if (catalog && catalogTitlesMatch(rowKeys[i].title, catalog.title)) {
+    if (
+      catalog &&
+      catalogMatchesImportTitle(rowKeys[i].title, catalog.title, catalog.externalKey)
+    ) {
       catalogByRowIndex.set(i, catalog);
     }
   }
@@ -343,12 +407,23 @@ export async function resolveBulkImportCatalogId(
   categorySlug: string,
   row: BulkImportRowInput
 ): Promise<string | null> {
+  const directId = row.catalogItemId?.trim();
+  if (directId) {
+    const byId = await prisma.catalog_items.findUnique({
+      where: { id: directId },
+      select: { id: true },
+    });
+    if (byId) return byId.id;
+  }
+
   const { title, externalKey } = buildBulkImportExternalKey(categorySlug, row);
   if (!title) return null;
 
   if (externalKey != null) {
     const byKey = await findCatalogByExternalKey(prisma, externalKey);
-    if (byKey && catalogTitlesMatch(title, byKey.title)) return byKey.id;
+    if (byKey && catalogMatchesImportTitle(title, byKey.title, byKey.externalKey)) {
+      return byKey.id;
+    }
   }
 
   const byTitle = await findCatalogByTitleMatch(prisma, categorySlug, title);

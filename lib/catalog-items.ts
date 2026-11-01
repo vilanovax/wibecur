@@ -2,7 +2,7 @@
  * کاتالوگ آیتم‌ها — موجودیت مشترک برای چندلیستی شدن بدون کپی دادهٔ پراکنده
  */
 
-import type { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, type PrismaClient } from '@prisma/client';
 import { nanoid } from 'nanoid';
 import {
   catalogTitlesMatch,
@@ -308,7 +308,12 @@ export async function resolveOrCreateCatalogItem(
       ? await findCatalogByExternalKey(prisma, fields.externalKey)
       : null;
 
-  if (existing && !catalogTitlesMatch(input.title, existing.title)) {
+  const strongKey =
+    typeof fields.externalKey === 'string' &&
+    /^(imdb|tmdb|isbn|taaghche|fidibo|ketabrah):/i.test(fields.externalKey);
+
+  // کلید پایدار (ISBN/IMDb) را حتی با اختلاف جزئی عنوان نگه می‌داریم تا تکراری ساخته نشود.
+  if (existing && !catalogTitlesMatch(input.title, existing.title) && !strongKey) {
     existing = null;
     const meta = { ...asMetadataRecord(fields.metadata) };
     delete meta.imdbId;
@@ -328,13 +333,26 @@ export async function resolveOrCreateCatalogItem(
     return enrichAndUpdateCatalogIfNeeded(prisma, existing, input);
   }
 
-  return catalogDb(prisma).create({
-    data: {
-      id: nanoid(),
-      ...fields,
-      updatedAt: new Date(),
-    },
-  });
+  try {
+    return await catalogDb(prisma).create({
+      data: {
+        id: nanoid(),
+        ...fields,
+        updatedAt: new Date(),
+      },
+    });
+  } catch (error) {
+    // مسابقهٔ همزمان import روی همان externalKey
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002' &&
+      fields.externalKey
+    ) {
+      const raced = await findCatalogByExternalKey(prisma, fields.externalKey);
+      if (raced) return enrichAndUpdateCatalogIfNeeded(prisma, raced, input);
+    }
+    throw error;
+  }
 }
 
 export async function createCatalogItem(

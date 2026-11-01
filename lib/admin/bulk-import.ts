@@ -31,6 +31,7 @@ const baseRawSchema = z.object({
   order: z.number().int().optional(),
   tip: z.string().optional().nullable(),
   entryKind: z.enum(ENTRY_KINDS).optional().nullable(),
+  catalogItemId: z.string().trim().min(1).optional().nullable(),
   metadata: z.record(z.unknown()).optional().nullable(),
 });
 
@@ -47,6 +48,7 @@ export type BulkImportRow = {
   imageUrl: string;
   externalUrl: string;
   order?: number;
+  catalogItemId?: string;
   metadata: Record<string, unknown>;
   match?: BulkImportMatch;
 };
@@ -59,6 +61,8 @@ export type BulkImportPayloadItem = {
   order?: number;
   tip?: string;
   entryKind?: EntryKind;
+  /** اتصال مستقیم به کاتالوگ موجود — بر تطبیق عنوان/کلید اولویت دارد */
+  catalogItemId?: string;
   metadata?: Record<string, unknown>;
 };
 
@@ -339,6 +343,11 @@ export function validateBulkImportRow(
     ? []
     : collectImportImageWarnings(data.imageUrl, imageUrl, metadata, externalUrl);
 
+  const catalogItemId =
+    typeof data.catalogItemId === 'string' && data.catalogItemId.trim()
+      ? data.catalogItemId.trim()
+      : undefined;
+
   return {
     id: `row-${index}-${title.slice(0, 12)}`,
     selected: errors.length === 0,
@@ -350,6 +359,7 @@ export function validateBulkImportRow(
     imageUrl,
     externalUrl,
     order: data.order,
+    catalogItemId,
     metadata: storedMetadata,
   };
 }
@@ -527,7 +537,7 @@ export function getBulkImportJsonHint(categorySlug: string, list?: BulkImportLis
     case 'cafe':
       return `title · description · imageUrl · tip · metadata.address (الزامی) · metadata.priceRange ($|$$|$$$|$$$$) · cuisine · phone · instagram · website · mapsUrl${listPart}`;
     default:
-      return `فرمت: { "items": [...] } · entryKind: tip (سبک، بدون کاتلگ) یا بدون entryKind (کاتالوگ) · title · description · tip · metadata.tags (حداکثر ۸) · externalUrl را خالی نگذارید${listPart}`;
+      return `فرمت: { "items": [...] } · entryKind: tip (سبک، بدون کاتلگ) یا بدون entryKind / catalog_ref (کاتالوگ) · catalogItemId برای اتصال مستقیم · title · description · tip · metadata.tags (حداکثر ۸)${listPart}`;
   }
 }
 

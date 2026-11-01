@@ -262,14 +262,18 @@ export default function NewItemForm({
         return;
       }
 
+      const metadata = {
+        ...(formData.metadata as Record<string, unknown>),
+        ...(isMixedList ? { entryKind } : {}),
+      };
+      const tip = typeof metadata.tip === 'string' ? metadata.tip.trim() : '';
+      if (tip) metadata.tip = tip;
+      else delete metadata.tip;
       const payload = {
         ...formData,
         title,
         description,
-        metadata: {
-          ...(formData.metadata as Record<string, unknown>),
-          ...(isMixedList ? { entryKind } : {}),
-        },
+        metadata,
       };
       const res = await fetch('/api/admin/items', {
         method: 'POST',
@@ -588,7 +592,7 @@ export default function NewItemForm({
                       ...prev,
                       metadata: {
                         ...(prev.metadata as Record<string, unknown>),
-                        tip: tip.trim() || undefined,
+                        tip,
                       },
                     }))
                   }

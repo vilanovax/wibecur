@@ -16,7 +16,12 @@ import ListEditStatusToggles from '@/components/admin/lists/ListEditStatusToggle
 import ListEditFormStepper, { type ListEditFormStep } from '@/components/admin/lists/ListEditFormStepper';
 import MoveToTrashModal from '@/components/admin/lists/MoveToTrashModal';
 import type { ListIntelligenceRow } from '@/lib/admin/lists-types';
-import { slugFromTitle, normalizeListSlug, isValidListSlug } from '@/lib/admin/list-slug';
+import {
+  slugFromTitle,
+  normalizeListSlug,
+  finalizeListSlug,
+  isValidListSlug,
+} from '@/lib/admin/list-slug';
 import {
   buildSlugFromListTitle,
   generateListDescriptionWithAi,
@@ -102,9 +107,10 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
   const [trashOpen, setTrashOpen] = useState(false);
   const [step, setStep] = useState<ListEditFormStep>(1);
 
-  const slugChanged = formData.slug !== list.slug;
-  const slugValid = useMemo(() => isValidListSlug(formData.slug), [formData.slug]);
-  const { state: slugCheck, isSlugBlocked } = useListSlugCheck(formData.slug, {
+  const finalizedSlug = useMemo(() => finalizeListSlug(formData.slug), [formData.slug]);
+  const slugChanged = finalizedSlug !== list.slug;
+  const slugValid = useMemo(() => isValidListSlug(finalizedSlug), [finalizedSlug]);
+  const { state: slugCheck, isSlugBlocked } = useListSlugCheck(finalizedSlug, {
     excludeId: list.id,
     enabled: slugValid && slugChanged,
   });
@@ -297,17 +303,19 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
     setLoading(true);
     setError('');
     try {
+      const payload = { ...formData, slug: finalizedSlug };
       const res = await fetch(`/api/admin/lists/${list.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'خطا در ویرایش لیست');
       }
       setToast({ message: 'تغییرات ذخیره شد', type: 'success' });
-      setBaseline({ ...formData });
+      setFormData(payload);
+      setBaseline({ ...payload });
       router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'خطا در ذخیره';

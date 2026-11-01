@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { addCatalogItemToList } from '@/lib/catalog-items';
+import { updateItemTip } from '@/lib/admin/item-tips-server';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
 
 /** POST /api/admin/items/add-to-list — افزودن آیتم کاتالوگ به لیست (بدون کپی محتوا) */
@@ -15,6 +16,7 @@ export async function POST(request: NextRequest) {
       listId,
       order,
       listNote,
+      tip,
       commentsEnabled,
       maxComments,
     } = body as {
@@ -22,6 +24,7 @@ export async function POST(request: NextRequest) {
       listId?: string;
       order?: number;
       listNote?: string;
+      tip?: string | null;
       commentsEnabled?: boolean;
       maxComments?: number | null;
     };
@@ -41,6 +44,11 @@ export async function POST(request: NextRequest) {
       commentsEnabled,
       maxComments,
     });
+
+    const tipText = typeof tip === 'string' ? tip.trim() : '';
+    if (tipText) {
+      await updateItemTip(prisma, item.id, tipText);
+    }
 
     const listTitle = item.lists?.title ?? 'لیست';
     const category = item.lists?.categories;

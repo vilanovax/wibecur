@@ -13,7 +13,7 @@ export default function ItemTipField({ value, onChange, compact = false }: Props
       <label className={`block font-medium text-[var(--color-text)] ${compact ? 'text-[10px] font-semibold text-[var(--color-text-muted)]' : 'text-sm mb-2'}`}>
         نکته (اختیاری)
         {!compact && (
-          <span className="text-xs font-normal text-[var(--color-text-muted)] mr-2">
+          <span className="text-xs font-normal text-[var(--color-text-muted)] ms-2">
             — توضیح ویژهٔ ادمین که در صفحه جزئیات آیتم نمایش داده می‌شود
           </span>
         )}

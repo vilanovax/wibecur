@@ -337,10 +337,16 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
           ...formData,
           title,
           description,
-          metadata: {
-            ...(formData.metadata as Record<string, unknown>),
-            ...(isMixedList && !hasCatalog ? { entryKind } : {}),
-          },
+          metadata: (() => {
+            const meta = {
+              ...(formData.metadata as Record<string, unknown>),
+              ...(isMixedList && !hasCatalog ? { entryKind } : {}),
+            };
+            const tip = typeof meta.tip === 'string' ? meta.tip.trim() : '';
+            if (tip) meta.tip = tip;
+            else delete meta.tip;
+            return meta;
+          })(),
         }),
       });
 
@@ -673,7 +679,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
                           ...prev,
                           metadata: {
                             ...(prev.metadata as Record<string, unknown>),
-                            tip: tip.trim() || undefined,
+                            tip,
                           },
                         }))
                       }

@@ -68,6 +68,7 @@ function rowToPayload(r: BulkImportRow) {
     externalUrl: r.externalUrl || undefined,
     order: r.order,
     entryKind: typeof entryKind === 'string' ? entryKind : undefined,
+    catalogItemId: r.catalogItemId || undefined,
     metadata: Object.keys(r.metadata).length ? r.metadata : undefined,
   };
 }

@@ -239,7 +239,13 @@ export default function CatalogEditForm({
           imageUrl: form.imageUrl,
           externalUrl: form.externalUrl,
           categorySlug: form.categorySlug || null,
-          metadata: form.metadata,
+          metadata: (() => {
+            const metadata = { ...form.metadata };
+            const tip = typeof metadata.tip === 'string' ? metadata.tip.trim() : '';
+            if (tip) metadata.tip = tip;
+            else delete metadata.tip;
+            return metadata;
+          })(),
         }),
       });
       const data = await res.json();
@@ -469,7 +475,7 @@ export default function CatalogEditForm({
                       ...p,
                       metadata: {
                         ...p.metadata,
-                        tip: tip.trim() || undefined,
+                        tip,
                       },
                     }))
                   }

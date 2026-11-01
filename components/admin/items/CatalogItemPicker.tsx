@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ItemTipField from '@/components/admin/items/ItemTipField';
 import { catalogCategoryLabel } from '@/lib/catalog-display';
 import { Search, Loader2, Check, Library, ArrowLeft } from 'lucide-react';
 
@@ -41,6 +42,8 @@ export default function CatalogItemPicker({
   const [recentLoading, setRecentLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [pendingHit, setPendingHit] = useState<CatalogSearchHit | null>(null);
+  const [pendingTip, setPendingTip] = useState('');
   const [message, setMessage] = useState('');
 
   const loadRecent = useCallback(async () => {
@@ -93,23 +96,41 @@ export default function CatalogItemPicker({
     return () => clearTimeout(t);
   }, [query, search]);
 
-  const handleAdd = async (hit: CatalogSearchHit) => {
+  const beginAdd = (hit: CatalogSearchHit) => {
     if (hit.alreadyInList) return;
-    setAddingId(hit.id);
+    setPendingHit(hit);
+    setPendingTip('');
+    setMessage('');
+  };
+
+  const cancelPending = () => {
+    setPendingHit(null);
+    setPendingTip('');
+  };
+
+  const confirmAdd = async () => {
+    if (!pendingHit) return;
+    setAddingId(pendingHit.id);
     setMessage('');
     try {
+      const tipText = pendingTip.trim();
       const res = await fetch('/api/admin/items/add-to-list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ catalogItemId: hit.id, listId }),
+        body: JSON.stringify({
+          catalogItemId: pendingHit.id,
+          listId,
+          ...(tipText ? { tip: tipText } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'خطا در افزودن');
-      setMessage(`«${hit.title}» به لیست اضافه شد`);
+      setMessage(`«${pendingHit.title}» به لیست اضافه شد`);
       const markAdded = (r: CatalogSearchHit) =>
-        r.id === hit.id ? { ...r, alreadyInList: true } : r;
+        r.id === pendingHit.id ? { ...r, alreadyInList: true } : r;
       setResults((prev) => prev.map(markAdded));
       setRecent((prev) => prev.map(markAdded));
+      cancelPending();
       onAdded?.();
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : 'خطا');
@@ -119,6 +140,51 @@ export default function CatalogItemPicker({
   };
 
   const queryReady = query.trim().length >= 2;
+
+  const renderHit = (hit: CatalogSearchHit) => (
+    <li
+      key={hit.id}
+      className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors"
+    >
+      <div className="w-11 h-11 rounded-lg overflow-hidden bg-gray-200 shrink-0 ring-1 ring-black/5">
+        <ImageWithFallback
+          src={hit.imageUrl ?? ''}
+          alt=""
+          className="w-full h-full object-cover"
+          fallbackIcon="📋"
+        />
+      </div>
+      <div className="flex-1 min-w-0 text-right">
+        <p className="text-sm font-semibold text-[var(--color-text)] truncate">{hit.title}</p>
+        <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
+          {catalogCategoryLabel(hit.categorySlug)}
+          {hit.listCount > 0 && (
+            <span> · در {hit.listCount.toLocaleString('fa-IR')} لیست</span>
+          )}
+        </p>
+        {hit.sampleListTitles[0] && (
+          <p className="text-[10px] text-[var(--color-text-subtle)] truncate mt-0.5">
+            مثلاً: {hit.sampleListTitles[0]}
+          </p>
+        )}
+      </div>
+      {hit.alreadyInList ? (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full shrink-0">
+          <Check className="w-3.5 h-3.5" />
+          موجود
+        </span>
+      ) : (
+        <button
+          type="button"
+          disabled={addingId === hit.id || pendingHit?.id === hit.id}
+          onClick={() => beginAdd(hit)}
+          className="shrink-0 text-xs font-bold px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50 shadow-sm min-h-11"
+        >
+          افزودن
+        </button>
+      )}
+    </li>
+  );
 
   return (
     <div className="rounded-2xl border border-violet-100 bg-gradient-to-b from-violet-50/50 to-white shadow-sm overflow-hidden">
@@ -164,6 +230,33 @@ export default function CatalogItemPicker({
           )}
         </div>
 
+        {pendingHit && (
+          <div className="rounded-xl border border-violet-200 bg-white p-4 space-y-3">
+            <p className="text-sm text-[var(--color-text)]">
+              افزودن «<span className="font-semibold">{pendingHit.title}</span>» به لیست
+            </p>
+            <ItemTipField value={pendingTip} onChange={setPendingTip} compact />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={addingId === pendingHit.id}
+                onClick={() => void confirmAdd()}
+                className="flex-1 min-h-11 rounded-lg bg-violet-600 text-white text-sm font-bold disabled:opacity-50"
+              >
+                {addingId === pendingHit.id ? '…' : 'تأیید و افزودن'}
+              </button>
+              <button
+                type="button"
+                disabled={addingId === pendingHit.id}
+                onClick={cancelPending}
+                className="min-h-11 px-4 rounded-lg border border-gray-200 text-sm font-medium"
+              >
+                انصراف
+              </button>
+            </div>
+          </div>
+        )}
+
         {message && (
           <p
             role="status"
@@ -190,45 +283,7 @@ export default function CatalogItemPicker({
                 <div className="p-2">
                   <p className="text-xs font-semibold text-[var(--color-text-muted)] px-2 py-2">اخیراً به‌روز شده</p>
                   <ul className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
-                    {recent.map((hit) => (
-                      <li
-                        key={hit.id}
-                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors"
-                      >
-                        <div className="w-11 h-11 rounded-lg overflow-hidden bg-gray-200 shrink-0 ring-1 ring-black/5">
-                          <ImageWithFallback
-                            src={hit.imageUrl ?? ''}
-                            alt=""
-                            className="w-full h-full object-cover"
-                            fallbackIcon="📋"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0 text-right">
-                          <p className="text-sm font-semibold text-[var(--color-text)] truncate">{hit.title}</p>
-                          <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
-                            {catalogCategoryLabel(hit.categorySlug)}
-                            {hit.listCount > 0 && (
-                              <span> · در {hit.listCount.toLocaleString('fa-IR')} لیست</span>
-                            )}
-                          </p>
-                        </div>
-                        {hit.alreadyInList ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full shrink-0">
-                            <Check className="w-3.5 h-3.5" />
-                            موجود
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={addingId === hit.id}
-                            onClick={() => handleAdd(hit)}
-                            className="shrink-0 text-xs font-bold px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50 shadow-sm"
-                          >
-                            {addingId === hit.id ? '…' : 'افزودن'}
-                          </button>
-                        )}
-                      </li>
-                    ))}
+                    {recent.map(renderHit)}
                   </ul>
                 </div>
               ) : (
@@ -256,50 +311,7 @@ export default function CatalogItemPicker({
 
           {queryReady && results.length > 0 && (
             <ul className="divide-y divide-gray-100 max-h-[340px] overflow-y-auto p-1">
-              {results.map((hit) => (
-                <li
-                  key={hit.id}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-white transition-colors"
-                >
-                  <div className="w-11 h-11 rounded-lg overflow-hidden bg-gray-200 shrink-0 ring-1 ring-black/5">
-                    <ImageWithFallback
-                      src={hit.imageUrl ?? ''}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      fallbackIcon="📋"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0 text-right">
-                    <p className="text-sm font-semibold text-[var(--color-text)] truncate">{hit.title}</p>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
-                      {catalogCategoryLabel(hit.categorySlug)}
-                      {hit.listCount > 0 && (
-                        <span> · در {hit.listCount.toLocaleString('fa-IR')} لیست</span>
-                      )}
-                    </p>
-                    {hit.sampleListTitles[0] && (
-                      <p className="text-[10px] text-[var(--color-text-subtle)] truncate mt-0.5">
-                        مثلاً: {hit.sampleListTitles[0]}
-                      </p>
-                    )}
-                  </div>
-                  {hit.alreadyInList ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full shrink-0">
-                      <Check className="w-3.5 h-3.5" />
-                      موجود
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={addingId === hit.id}
-                      onClick={() => handleAdd(hit)}
-                      className="shrink-0 text-xs font-bold px-4 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50 shadow-sm"
-                    >
-                      {addingId === hit.id ? '…' : 'افزودن'}
-                    </button>
-                  )}
-                </li>
-              ))}
+              {results.map(renderHit)}
             </ul>
           )}
         </div>
