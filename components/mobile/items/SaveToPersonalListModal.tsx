@@ -179,6 +179,8 @@ export default function SaveToPersonalListModal({
         ...(list.slug ? { list_slug: list.slug } : {}),
         source: 'save_modal',
       });
+      // بعد از افزودن موفق مودال بسته می‌شود؛ حذف با باز کردن دوبارهٔ نشانک
+      setTimeout(() => onClose(), 500);
     } catch (error: unknown) {
       setToastMessage(error instanceof Error ? error.message : 'خطا در افزودن آیتم');
       setToastType('error');
