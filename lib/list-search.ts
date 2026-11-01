@@ -19,8 +19,18 @@ export const SEARCH_CATEGORY_LINKS = [
   { slug: 'trending', label: '🔥 ترند', href: '/lists?mode=trending' },
 ] as const;
 
+/**
+ * Normalize user/search text for matching:
+ * - collapse whitespace
+ * - Arabic yeh/kaf/teh-marbuta → Persian ی/ک/ه
+ */
 export function normalizeSearchQuery(raw: string): string {
-  return raw.trim().replace(/\s+/g, ' ');
+  return raw
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/ي/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/ة/g, 'ه');
 }
 
 export function suggestionLabelForQuery(query: string): string {
@@ -40,9 +50,9 @@ export function filterListsByQuery<
   if (!q) return lists;
 
   return lists.filter((list) => {
-    const title = list.title.toLowerCase();
-    const desc = (list.description ?? '').toLowerCase();
-    const category = (list.categories?.name ?? '').toLowerCase();
+    const title = normalizeSearchQuery(list.title).toLowerCase();
+    const desc = normalizeSearchQuery(list.description ?? '').toLowerCase();
+    const category = normalizeSearchQuery(list.categories?.name ?? '').toLowerCase();
     return title.includes(q) || desc.includes(q) || category.includes(q);
   });
 }

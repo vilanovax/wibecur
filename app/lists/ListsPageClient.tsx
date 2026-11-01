@@ -824,7 +824,11 @@ export default function ListsPageClient({
   const savedBrowseEmpty =
     browseMode === 'saved' && !isGuest && bookmarksLoaded && sortedLists.length === 0;
   const trendingBrowseEmpty =
-    browseMode === 'trending' && trendingLoaded && sortedLists.length === 0 && publicLists.length > 0;
+    browseMode === 'trending' &&
+    !isSearchActive &&
+    trendingLoaded &&
+    sortedLists.length === 0 &&
+    publicLists.length > 0;
 
   const showContextBar = !isSearchActive;
   /** Featured lives below mode+category sticky chrome so browse controls own the first viewport */

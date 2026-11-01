@@ -5,6 +5,7 @@ import { getActiveSpotlightForUser } from '@/lib/spotlight';
 import { withResolvedListCover, withResolvedListCovers } from '@/lib/resolve-list-cover';
 import { getPublicProfilePicksForUser, type ProfilePickShelfDto } from '@/lib/profile-picks';
 import { publicProfileCacheTag } from '@/lib/public-cache';
+import { sanitizeOptionalText } from '@/lib/utils';
 
 export type PublicProfileData = {
   user: {
@@ -285,7 +286,7 @@ export async function fetchPublicProfile(
       name: user.name,
       image: user.image,
       username: displayUsername,
-      bio: user.bio,
+      bio: sanitizeOptionalText(user.bio),
       avatarType: user.avatarType,
       avatarId: user.avatarId,
       avatarStatus: user.avatarStatus,

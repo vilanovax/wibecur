@@ -17,7 +17,7 @@ export default function NotFoundSearchButton() {
     >
       <Search className="size-4 text-muted-foreground" aria-hidden />
       جستجو
-      <SearchShortcutHint className="!inline-flex opacity-70" />
+      <SearchShortcutHint className="opacity-70" />
     </button>
   );
 }

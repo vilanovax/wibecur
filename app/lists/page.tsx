@@ -8,7 +8,7 @@ import { getListsPageBootstrap } from '@/lib/lists-page-server';
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'لیست‌ها | WibeCur',
+  title: 'لیست‌ها',
   description: 'مرور و کشف لیست‌های کیوریت شده',
 };
 

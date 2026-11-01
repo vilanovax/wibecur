@@ -260,7 +260,7 @@ export default function ProfileHeader({
           ) : null}
         </div>
 
-        {user.bio?.trim() ? (
+        {user.bio?.trim() && user.bio.trim() !== 'null' && user.bio.trim() !== 'undefined' ? (
           <p className="mt-3 text-start wibe-small leading-relaxed text-muted-foreground line-clamp-2 whitespace-pre-wrap wrap-break-word">
             {user.bio.trim()}
           </p>

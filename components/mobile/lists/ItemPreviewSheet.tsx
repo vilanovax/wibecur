@@ -622,7 +622,10 @@ export default function ItemPreviewSheet({
     onPrev || onNext ? (
       <div className="flex items-center gap-0.5">
         {positionLabel ? (
-          <span className="me-1 tabular-nums wibe-caption text-muted-foreground">
+          <span
+            className="me-1 tabular-nums wibe-caption text-muted-foreground"
+            dir="ltr"
+          >
             {positionLabel}
           </span>
         ) : null}

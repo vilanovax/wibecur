@@ -60,3 +60,14 @@ export function mulberry32(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/**
+ * Optional text fields from JSON/DB — never persist or display the literal
+ * strings "null" / "undefined" (String(null) bug).
+ */
+export function sanitizeOptionalText(value: unknown, maxLen?: number): string | null {
+  if (value == null) return null;
+  const s = String(value).trim();
+  if (!s || s === 'null' || s === 'undefined') return null;
+  return maxLen != null ? s.slice(0, maxLen) : s;
+}

@@ -11,7 +11,7 @@ import {
 export const revalidate = 300;
 
 export const metadata = {
-  title: 'رتبه‌بندی کریتورها | وایب',
+  title: 'رتبه‌بندی کریتورها',
   description: 'تاثیرگذارترین کیوریتورهای وایب',
 };
 

@@ -12,6 +12,7 @@ import {
 } from '@/lib/api-db';
 import { normalizeUsername, validateUsernameFormat } from '@/lib/username';
 import { fetchApiProfileUser } from '@/lib/profile-server';
+import { sanitizeOptionalText } from '@/lib/utils';
 
 // GET /api/user/profile - دریافت پروفایل کاربر
 export async function GET(_request: NextRequest) {
@@ -140,7 +141,7 @@ export async function PUT(request: NextRequest) {
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (username !== undefined) updateData.username = username === '' ? null : String(username).trim().toLowerCase();
-    if (bio !== undefined) updateData.bio = bio === '' ? null : String(bio).slice(0, 160);
+    if (bio !== undefined) updateData.bio = sanitizeOptionalText(bio, 160);
     if (typeof showBadge === 'boolean') updateData.showBadge = showBadge;
     if (typeof allowCommentNotifications === 'boolean') updateData.allowCommentNotifications = allowCommentNotifications;
     if (typeof allowBookmarkListNotifications === 'boolean') {

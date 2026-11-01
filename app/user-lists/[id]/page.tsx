@@ -33,7 +33,7 @@ export async function generateMetadata({
     }
 
     return {
-      title: `${list.title} | WibeCur`,
+      title: list.title,
       description: list.description || `مشاهده لیست ${list.title}`,
     };
   } catch {

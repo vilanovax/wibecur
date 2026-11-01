@@ -4,6 +4,7 @@ import { prisma } from './prisma';
 import { dbQuery } from './db';
 import { calculateCuratorResult } from './curator';
 import type { ProfileUser } from '@/components/profile/types';
+import { sanitizeOptionalText } from '@/lib/utils';
 
 const VIRAL_LIKE_THRESHOLD = 50;
 const POPULAR_SAVE_THRESHOLD = 10;
@@ -207,7 +208,7 @@ export async function fetchApiProfileUser(
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       username: user.username ?? fallbackUsername,
-      bio: user.bio ?? null,
+      bio: sanitizeOptionalText(user.bio),
       avatarType: (String(user.avatarType ?? 'DEFAULT') === 'UPLOADED' ? 'UPLOADED' : 'DEFAULT') as
         | 'DEFAULT'
         | 'UPLOADED',

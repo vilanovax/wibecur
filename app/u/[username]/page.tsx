@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
   return {
-    title: `@${username} | وایب`,
+    title: `@${username}`,
     description: `پروفایل عمومی @${username} در وایب`,
   };
 }

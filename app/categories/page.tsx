@@ -15,7 +15,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 export const revalidate = 3600;
 
 export const metadata = {
-  title: 'دسته‌ها | WibeCur',
+  title: 'دسته‌ها',
   description: 'مرور دسته‌بندی‌های لیست‌های کیوریت‌شده',
 };
 

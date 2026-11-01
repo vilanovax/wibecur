@@ -231,9 +231,13 @@ export default function PublicProfilePageClient({
             <div className="mt-4 flex flex-col items-center text-center lg:mt-0 lg:flex-1 lg:items-start lg:text-start">
             <h1 className="wibe-h2 text-background lg:wibe-h1">{data.user.name || 'کاربر'}</h1>
             <p className="wibe-small text-background/85">@{data.user.username}</p>
-            {data.user.bio && (
-              <p className="mt-2 line-clamp-3 max-w-md wibe-small text-background/90 lg:max-w-xl">{data.user.bio}</p>
-            )}
+            {data.user.bio?.trim() &&
+            data.user.bio.trim() !== 'null' &&
+            data.user.bio.trim() !== 'undefined' ? (
+              <p className="mt-2 line-clamp-3 max-w-md wibe-small text-background/90 lg:max-w-xl">
+                {data.user.bio.trim()}
+              </p>
+            ) : null}
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
               {data.user.showBadge !== false && (
                 <CuratorBadge

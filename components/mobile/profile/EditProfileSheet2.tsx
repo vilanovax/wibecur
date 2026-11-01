@@ -262,11 +262,17 @@ function AvatarPreview({
   return inner;
 }
 
+function cleanBio(bio: string | null | undefined): string {
+  const raw = (bio ?? '').trim();
+  if (!raw || raw === 'null' || raw === 'undefined') return '';
+  return raw.slice(0, BIO_MAX);
+}
+
 function buildSnapshot(user: EditProfileUser) {
   return {
     displayName: user.name ?? '',
     username: user.username ?? '',
-    bio: (user.bio ?? '').slice(0, BIO_MAX),
+    bio: cleanBio(user.bio),
     showBadge: user.showBadge ?? true,
     allowCommentNotifications: user.allowCommentNotifications ?? true,
     allowBookmarkListNotifications: user.allowBookmarkListNotifications ?? true,
@@ -286,7 +292,7 @@ export default function EditProfileSheet2({
 
   const [displayName, setDisplayName] = useState(user.name ?? '');
   const [username, setUsername] = useState(user.username ?? '');
-  const [bio, setBio] = useState(user.bio ?? '');
+  const [bio, setBio] = useState(cleanBio(user.bio));
   const [showBadge, setShowBadge] = useState(user.showBadge ?? true);
   const [allowCommentNotifications, setAllowCommentNotifications] = useState(
     user.allowCommentNotifications ?? true
