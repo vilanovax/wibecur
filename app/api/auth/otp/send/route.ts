@@ -69,11 +69,32 @@ export async function POST(request: Request) {
 
     const code = generateOtpCode();
     const mobile = toSmsIrMobile(normalizedPhone);
+    const smsConfig = getSmsIrConfig();
+    if (!smsConfig.apiKey && !smsConfig.dryRun) {
+      console.error('[otp/send] SMS_IR_API_KEY is not set in this environment');
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'سرویس پیامک روی سرور تنظیم نشده است. کمی بعد دوباره تلاش کن.',
+          code: 'SMS_CONFIG_MISSING',
+        },
+        { status: 503 }
+      );
+    }
+
     const sms = await sendOtpSms(mobile, code);
 
     if (!sms.ok) {
+      console.error('[otp/send] sms.ir failed', {
+        status: 'status' in sms ? sms.status : undefined,
+        message: sms.message,
+      });
       return NextResponse.json(
-        { success: false, error: 'ارسال پیامک ناموفق بود. کمی بعد دوباره تلاش کن.' },
+        {
+          success: false,
+          error: 'ارسال پیامک ناموفق بود. کمی بعد دوباره تلاش کن.',
+          code: 'SMS_PROVIDER_ERROR',
+        },
         { status: 502 }
       );
     }
@@ -86,7 +107,6 @@ export async function POST(request: Request) {
       avatarId: purpose === 'register' ? avatarId : undefined,
     });
 
-    const config = getSmsIrConfig();
     const retryAfterSeconds = Math.ceil(OTP_RESEND_COOLDOWN_MS / 1000);
 
     return NextResponse.json({
@@ -96,7 +116,7 @@ export async function POST(request: Request) {
         resendAt,
         retryAfterSeconds,
         // فقط در dry-run برای توسعهٔ لوکال؛ در production هرگز برنمی‌گردد
-        ...(config.dryRun ? { devCode: code } : {}),
+        ...(smsConfig.dryRun ? { devCode: code } : {}),
       },
     });
   } catch (error) {

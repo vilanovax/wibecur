@@ -15,6 +15,9 @@
 | `NEXTAUTH_SECRET` | کلید امضا JWT — حداقل ۳۲ کاراکتر رندوم | `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | آدرس پایه اپ | `https://wibecur.ir` |
 | `ENCRYPTION_KEY` | کلید رمزنگاری API keys در دیتابیس — ۳۲ کاراکتر | ثابت و رندوم |
+| `SMS_IR_API_KEY` | کلید وب‌سرویس sms.ir برای OTP موبایل | از پنل sms.ir |
+| `SMS_IR_TEMPLATE_ID` | شناسه قالب Verify | `727683` |
+| `SMS_IR_OTP_PARAM` | نام پارامتر قالب (بدون `#`) | `CODE` |
 
 ### توصیه‌شده
 
