@@ -58,15 +58,18 @@ export default function ListCardStats({
   }
 
   if (variant === 'compact') {
+    const saveTone = saves > 0 ? 'font-medium text-brand' : 'text-muted-foreground';
     return (
       <p className={`flex items-center gap-2 wibe-caption text-muted-foreground ${className}`}>
-        <span className="inline-flex items-center gap-1 font-medium text-brand">
-          <Bookmark className="w-3.5 h-3.5" />
+        <span className={`inline-flex items-center gap-1 ${saveTone}`}>
+          <Bookmark className="size-3.5" strokeWidth={1.5} aria-hidden />
           {saveLabel} ذخیره
         </span>
-        <span className="text-muted-foreground/60">·</span>
+        <span className="text-muted-foreground/60" aria-hidden>
+          ·
+        </span>
         <span className="inline-flex items-center gap-1">
-          <Package className="w-3.5 h-3.5" />
+          <Package className="size-3.5" strokeWidth={1.5} aria-hidden />
           {itemLabel} آیتم
         </span>
       </p>

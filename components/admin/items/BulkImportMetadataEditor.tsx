@@ -39,11 +39,11 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
 
   if (kind === 'general') {
     if (Object.keys(m).length === 0) {
-      return wrap(<p className="text-xs text-[var(--color-text-muted)]">این دسته metadata اختصاصی ندارد.</p>);
+      return wrap(<p className="text-xs text-wibe-secondary">این دسته metadata اختصاصی ندارد.</p>);
     }
     return wrap(
       <div>
-        <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">metadata (JSON)</label>
+        <label className="text-[10px] font-semibold text-wibe-secondary">metadata (JSON)</label>
         <textarea
           dir="ltr"
           rows={3}
@@ -65,7 +65,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
     return wrap(
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         <div>
-          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">نویسنده</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">نویسنده</label>
           <input
             value={String(m.author ?? '')}
             onChange={(e) => set('author', e.target.value || undefined)}
@@ -73,7 +73,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
           />
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">ژانر</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">ژانر</label>
           <select
             value={String(m.genre ?? '')}
             onChange={(e) => set('genre', e.target.value || undefined)}
@@ -88,7 +88,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
           </select>
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">ISBN</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">ISBN</label>
           <input
             dir="ltr"
             value={String(m.isbn ?? '')}
@@ -104,7 +104,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
     return wrap(
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div className="sm:col-span-2">
-          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">آدرس *</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">آدرس *</label>
           <input
             value={String(m.address ?? '')}
             onChange={(e) => set('address', e.target.value || undefined)}
@@ -112,7 +112,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
           />
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">بازه قیمت *</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">بازه قیمت *</label>
           <select
             value={String(m.priceRange ?? '')}
             onChange={(e) => set('priceRange', e.target.value || undefined)}
@@ -127,7 +127,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
           </select>
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">نوع غذا</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">نوع غذا</label>
           <select
             value={String(m.cuisine ?? '')}
             onChange={(e) => set('cuisine', e.target.value || undefined)}
@@ -142,7 +142,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
           </select>
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">تلفن</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">تلفن</label>
           <input
             dir="ltr"
             value={String(m.phone ?? '')}
@@ -151,7 +151,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
           />
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">اینستاگرام</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">اینستاگرام</label>
           <input
             dir="ltr"
             value={String(m.instagram ?? '')}
@@ -161,7 +161,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
           />
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">وب‌سایت</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">وب‌سایت</label>
           <input
             dir="ltr"
             value={String(m.website ?? '')}
@@ -170,7 +170,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
           />
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">مسیریابی</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">مسیریابی</label>
           <input
             dir="ltr"
             value={String(m.mapsUrl ?? '')}
@@ -186,7 +186,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
   return wrap(
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
       <div>
-        <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">سال</label>
+        <label className="text-[10px] font-semibold text-wibe-secondary">سال</label>
         <input
           type="number"
           value={m.year != null ? String(m.year) : ''}
@@ -197,7 +197,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
         />
       </div>
       <div>
-        <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">ژانر</label>
+        <label className="text-[10px] font-semibold text-wibe-secondary">ژانر</label>
         <select
           value={String(m.genre ?? '')}
           onChange={(e) => set('genre', e.target.value || undefined)}
@@ -212,7 +212,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
         </select>
       </div>
       <div>
-        <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">کارگردان</label>
+        <label className="text-[10px] font-semibold text-wibe-secondary">کارگردان</label>
         <input
           value={String(m.director ?? '')}
           onChange={(e) => set('director', e.target.value || undefined)}
@@ -220,7 +220,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
         />
       </div>
       <div>
-        <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">IMDb</label>
+        <label className="text-[10px] font-semibold text-wibe-secondary">IMDb</label>
         <input
           value={String(m.imdbRating ?? '')}
           onChange={(e) => set('imdbRating', e.target.value || undefined)}
@@ -228,7 +228,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
         />
       </div>
       <div>
-        <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">کشور سازنده</label>
+        <label className="text-[10px] font-semibold text-wibe-secondary">کشور سازنده</label>
         <input
           value={String(m.country ?? '')}
           onChange={(e) => set('country', e.target.value || undefined)}
@@ -236,7 +236,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
         />
       </div>
       <div className="sm:col-span-2">
-        <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">بازیگران (حداکثر ۲، با کاما)</label>
+        <label className="text-[10px] font-semibold text-wibe-secondary">بازیگران (حداکثر ۲، با کاما)</label>
         <input
           value={
             Array.isArray(m.actors)
@@ -265,7 +265,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
         />
       </div>
       <div>
-        <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">imdbId (داخلی)</label>
+        <label className="text-[10px] font-semibold text-wibe-secondary">imdbId (داخلی)</label>
         <input
           dir="ltr"
           value={String(m.imdbId ?? '')}
@@ -274,7 +274,7 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
         />
       </div>
       <div>
-        <label className="text-[10px] font-semibold text-[var(--color-text-muted)]">tmdbId (داخلی)</label>
+        <label className="text-[10px] font-semibold text-wibe-secondary">tmdbId (داخلی)</label>
         <input
           type="number"
           value={m.tmdbId != null ? String(m.tmdbId) : ''}

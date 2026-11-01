@@ -79,7 +79,7 @@ function matchesSearch(row: TrashRow, tab: TrashEntity, query: string): boolean 
 
 function MetaChip({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] tabular-nums">
+    <span className="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 text-xs text-wibe-secondary dark:text-(--color-text-subtle) tabular-nums">
       {children}
     </span>
   );
@@ -92,7 +92,7 @@ function RowMeta({ row, tab }: { row: TrashRow; tab: TrashEntity }) {
       <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
         <MetaChip>{r.itemCount.toLocaleString('fa-IR')} آیتم</MetaChip>
         <MetaChip>{r.saveCount.toLocaleString('fa-IR')} ذخیره</MetaChip>
-        <span className="text-xs font-mono text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)] truncate max-w-[180px]" dir="ltr">
+        <span className="text-xs font-mono text-(--color-text-subtle) dark:text-wibe-secondary truncate max-w-45" dir="ltr">
           {r.slug}
         </span>
       </div>
@@ -104,7 +104,7 @@ function RowMeta({ row, tab }: { row: TrashRow; tab: TrashEntity }) {
       <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
         <span className="text-base">{r.icon || '📁'}</span>
         <MetaChip>{r.listCount.toLocaleString('fa-IR')} لیست</MetaChip>
-        <span className="text-xs font-mono text-[var(--color-text-subtle)] dark:text-[var(--color-text-muted)]" dir="ltr">
+        <span className="text-xs font-mono text-(--color-text-subtle) dark:text-wibe-secondary" dir="ltr">
           {r.slug}
         </span>
       </div>
@@ -331,24 +331,24 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
   return (
     <div className="space-y-5 pb-24" dir="rtl">
       {/* Header */}
-      <div className="rounded-2xl border border-gray-200 dark:border-gray-600 bg-gradient-to-l from-gray-50 to-white dark:from-gray-900/40 dark:to-gray-800 p-5 sm:p-6">
+      <div className="rounded-2xl border border-gray-200 dark:border-gray-600 bg-linear-to-l from-gray-50 to-white dark:from-gray-900/40 dark:to-gray-800 p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-200/80 dark:bg-gray-700 text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-200/80 dark:bg-gray-700 text-wibe-secondary dark:text-(--color-text-subtle)">
                 <Trash2 className="h-5 w-5" />
               </span>
               <div>
-                <h1 className="text-xl font-bold text-[var(--color-text)] dark:text-white">زباله‌دان</h1>
-                <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5">
+                <h1 className="text-xl font-bold text-(--color-text) dark:text-white">زباله‌دان</h1>
+                <p className="text-sm text-wibe-secondary dark:text-(--color-text-subtle) mt-0.5">
                   بازگردانی یا حذف دائمی موارد زباله‌دان
                 </p>
               </div>
             </div>
           </div>
           <div className="text-left">
-            <p className="text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">مجموع</p>
-            <p className="text-2xl font-bold text-[var(--color-text)] dark:text-white tabular-nums">
+            <p className="text-xs text-wibe-secondary dark:text-(--color-text-subtle)">مجموع</p>
+            <p className="text-2xl font-bold text-(--color-text) dark:text-white tabular-nums">
               {counts.total.toLocaleString('fa-IR')}
             </p>
           </div>
@@ -372,12 +372,12 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-violet-600' : 'text-[var(--color-text-subtle)]'}`} />
-                  <span className={`text-lg font-bold tabular-nums ${active ? 'text-violet-700 dark:text-violet-200' : 'text-[var(--color-text)] dark:text-white'}`}>
+                  <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-violet-600' : 'text-(--color-text-subtle)'}`} />
+                  <span className={`text-lg font-bold tabular-nums ${active ? 'text-violet-700 dark:text-violet-200' : 'text-(--color-text) dark:text-white'}`}>
                     {count.toLocaleString('fa-IR')}
                   </span>
                 </div>
-                <p className={`mt-1 text-xs font-medium ${active ? 'text-violet-700 dark:text-violet-300' : 'text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]'}`}>
+                <p className={`mt-1 text-xs font-medium ${active ? 'text-violet-700 dark:text-violet-300' : 'text-wibe-secondary dark:text-(--color-text-subtle)'}`}>
                   {t.label}
                 </p>
               </button>
@@ -401,20 +401,20 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-subtle)] pointer-events-none" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-(--color-text-subtle) pointer-events-none" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={`جستجو در ${tabLabel}…`}
-            className="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 py-2.5 pr-10 pl-3 text-sm text-[var(--color-text)] dark:text-white placeholder:text-[var(--color-text-subtle)]"
+            className="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 py-2.5 pr-10 pl-3 text-sm text-(--color-text) dark:text-white placeholder:text-(--color-text-subtle)"
           />
         </div>
         {filteredItems.length > 0 && (
           <button
             type="button"
             onClick={toggleAll}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0"
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm text-(--color-text) dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0"
           >
             {allSelected ? <CheckSquare className="h-4 w-4 text-violet-600" /> : <Square className="h-4 w-4" />}
             {allSelected ? 'لغو انتخاب همه' : 'انتخاب همه'}
@@ -425,23 +425,23 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
       {/* List */}
       <div className="rounded-2xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center gap-2 py-20 text-sm text-[var(--color-text-muted)]">
+          <div className="flex items-center justify-center gap-2 py-20 text-sm text-wibe-secondary">
             <Loader2 className="h-5 w-5 animate-spin text-violet-600" />
             در حال بارگذاری…
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="py-20 px-6 text-center">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700 text-[var(--color-text-subtle)]">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-700 text-(--color-text-subtle)">
               <Trash2 className="h-7 w-7" />
             </span>
-            <p className="mt-4 text-sm font-medium text-[var(--color-text)] dark:text-white">
+            <p className="mt-4 text-sm font-medium text-(--color-text) dark:text-white">
               {search.trim()
                 ? 'نتیجه‌ای یافت نشد'
                 : counts[tab] === 0
                   ? `زباله‌دان ${tabLabel} خالی است`
                   : 'موردی برای نمایش نیست'}
             </p>
-            <p className="mt-1 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
+            <p className="mt-1 text-xs text-wibe-secondary dark:text-(--color-text-subtle)">
               {search.trim()
                 ? 'عبارت جستجو را تغییر دهید'
                 : 'موارد حذف‌شده اینجا نمایش داده می‌شوند و قابل بازگردانی هستند'}
@@ -449,7 +449,7 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
           </div>
         ) : (
           <>
-            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/20 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] tabular-nums">
+            <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/20 text-xs text-wibe-secondary dark:text-(--color-text-subtle) tabular-nums">
               نمایش {filteredItems.length.toLocaleString('fa-IR')} از {items.length.toLocaleString('fa-IR')} مورد
               {!someSelected && ' · برای بازگردانی گروهی، چند مورد را انتخاب کنید'}
             </div>
@@ -473,7 +473,7 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
                         type="button"
                         onClick={() => toggleOne(row.id)}
                         aria-label={`انتخاب ${title}`}
-                        className="mt-0.5 shrink-0 text-[var(--color-text-subtle)] hover:text-violet-600 transition-colors"
+                        className="mt-0.5 shrink-0 text-(--color-text-subtle) hover:text-violet-600 transition-colors"
                       >
                         {isSelected ? (
                           <CheckSquare className="h-5 w-5 text-violet-600" />
@@ -482,14 +482,14 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
                         )}
                       </button>
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-[var(--color-text)] dark:text-white leading-snug">{title}</p>
+                        <p className="font-semibold text-(--color-text) dark:text-white leading-snug">{title}</p>
                         <RowMeta row={row} tab={tab} />
                         {row.deleteReason && (
                           <p className="mt-1.5 text-xs text-amber-700/90 dark:text-amber-300/90 line-clamp-2">
                             {row.deleteReason}
                           </p>
                         )}
-                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)]">
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-wibe-secondary dark:text-(--color-text-subtle)">
                           <span className="inline-flex items-center gap-1">
                             <User className="h-3 w-3" />
                             {actorLabel(row)}
@@ -503,7 +503,7 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
                       {editHref && (
                         <Link
                           href={editHref}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2 text-xs font-medium text-[var(--color-text)] dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2 text-xs font-medium text-(--color-text) dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                           مشاهده

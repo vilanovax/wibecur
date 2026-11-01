@@ -153,7 +153,7 @@ function EditTabBar({
             <span>{label}</span>
             {id !== 'security' && dirtyProfile && (
               <span
-                className={`absolute top-1.5 end-1.5 h-1.5 w-1.5 rounded-full ${
+                className={`absolute top-1.5 inset-e-1.5 h-1.5 w-1.5 rounded-full ${
                   selected ? 'bg-brand' : 'bg-warning'
                 }`}
                 aria-hidden
@@ -690,7 +690,7 @@ export default function EditProfileSheet2({
                     avatarStatus={avatarStatus}
                     isElite={isElite}
                   />
-                  <span className="absolute -bottom-0.5 -end-0.5 flex size-8 items-center justify-center rounded-full border-2 border-popover bg-brand text-brand-foreground">
+                  <span className="absolute -bottom-0.5 -inset-e-0.5 flex size-8 items-center justify-center rounded-full border-2 border-popover bg-brand text-brand-foreground">
                     <Camera className="h-3.5 w-3.5" />
                   </span>
                 </button>
@@ -704,7 +704,7 @@ export default function EditProfileSheet2({
                       @{username || 'username'}
                     </bdi>
                   </p>
-                  <p className="mt-1.5 wibe-caption leading-relaxed text-muted-foreground lg:max-w-[140px]">
+                  <p className="mt-1.5 wibe-caption leading-relaxed text-muted-foreground lg:max-w-35">
                     {avatarType === 'UPLOADED' && avatarStatus === 'PENDING'
                       ? 'در انتظار تأیید'
                       : 'آواتار مجموعه یا عکس شخصی'}

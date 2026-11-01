@@ -73,23 +73,23 @@ function DuplicateGroupCard({
 
   return (
     <article className="overflow-hidden rounded-2xl border border-amber-200/90 bg-white shadow-sm">
-      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-amber-100 bg-gradient-to-l from-amber-50/90 to-white px-4 py-3">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-amber-100 bg-linear-to-l from-amber-50/90 to-white px-4 py-3">
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-900">
               {group.catalogs.length.toLocaleString('fa-IR')} تکرار
             </span>
             {group.categorySlug && (
-              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-[var(--color-text-muted)]">
+              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-wibe-secondary">
                 {catalogCategoryLabel(group.categorySlug)}
               </span>
             )}
           </div>
-          <p className="truncate text-sm font-bold text-[var(--color-text)]" title={group.normalizedTitle}>
+          <p className="truncate text-sm font-bold text-(--color-text)" title={group.normalizedTitle}>
             {group.normalizedTitle}
           </p>
           {target && (
-            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+            <p className="mt-1 text-xs text-wibe-secondary">
               {sourceIds.length.toLocaleString('fa-IR')} مورد انتخاب‌شده در «{target.title}» ادغام
               می‌شود
             </p>
@@ -157,7 +157,7 @@ function DuplicateGroupCard({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <p className="truncate text-sm font-semibold text-[var(--color-text)]">{catalog.title}</p>
+                    <p className="truncate text-sm font-semibold text-(--color-text)">{catalog.title}</p>
                     {isTarget && (
                       <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold text-white">
                         مقصد
@@ -170,7 +170,7 @@ function DuplicateGroupCard({
                       </span>
                     )}
                     {!isTarget && !isSelectedSource && (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-[var(--color-text-muted)]">
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-wibe-secondary">
                         کنار گذاشته
                       </span>
                     )}
@@ -181,7 +181,7 @@ function DuplicateGroupCard({
                       </span>
                     )}
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-wibe-secondary">
                     <span>{catalog.listCount.toLocaleString('fa-IR')} لیست</span>
                     {rowExt && <span className="truncate text-violet-600/80">{rowExt}</span>}
                     <span className="font-mono text-[10px]" dir="ltr">
@@ -191,7 +191,7 @@ function DuplicateGroupCard({
                 </div>
                 <Link
                   href={`/admin/catalog/${catalog.id}/edit`}
-                  className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-bold text-[var(--color-text-muted)] hover:bg-white"
+                  className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-bold text-wibe-secondary hover:bg-white"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   ویرایش
@@ -203,7 +203,7 @@ function DuplicateGroupCard({
       </ul>
 
       {extHint && (
-        <footer className="border-t border-gray-100 bg-gray-50/80 px-4 py-2 text-[11px] text-[var(--color-text-muted)]">
+        <footer className="border-t border-gray-100 bg-gray-50/80 px-4 py-2 text-[11px] text-wibe-secondary">
           شناسه مقصد: {extHint}
         </footer>
       )}
@@ -260,13 +260,13 @@ export default function CatalogDuplicateMergeTab({
           className="flex w-full items-center justify-between gap-3 px-4 py-3 text-right hover:bg-gray-50/80"
         >
           <div>
-            <h3 className="text-sm font-bold text-[var(--color-text)]">جستجوی دستی مشابه</h3>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+            <h3 className="text-sm font-bold text-(--color-text)">جستجوی دستی مشابه</h3>
+            <p className="text-xs text-wibe-secondary mt-0.5">
               عنوان، IMDb، ISBN یا چسباندن شناسه‌ها — فقط موارد انتخاب‌شده ادغام می‌شوند
             </p>
           </div>
           <ChevronDown
-            className={`h-5 w-5 shrink-0 text-[var(--color-text-subtle)] transition-transform ${
+            className={`h-5 w-5 shrink-0 text-(--color-text-subtle) transition-transform ${
               manualSearchOpen ? 'rotate-180' : ''
             }`}
           />
@@ -281,7 +281,7 @@ export default function CatalogDuplicateMergeTab({
               }}
             >
               <div className="relative flex-1">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-subtle)]" />
+                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--color-text-subtle)" />
                 <input
                   value={similarQuery}
                   onChange={(e) => onSimilarQueryChange(e.target.value)}
@@ -299,7 +299,7 @@ export default function CatalogDuplicateMergeTab({
             </form>
 
             <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-3 space-y-2">
-              <label className="block text-xs font-semibold text-[var(--color-text-muted)]">
+              <label className="block text-xs font-semibold text-wibe-secondary">
                 ادغام با شناسه (اولی = مقصد)
               </label>
               <textarea
@@ -336,8 +336,8 @@ export default function CatalogDuplicateMergeTab({
       <section>
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h3 className="text-sm font-bold text-[var(--color-text)]">تکرارهای خودکار</h3>
-            <p className="mt-1 max-w-xl text-xs leading-relaxed text-[var(--color-text-muted)]">
+            <h3 className="text-sm font-bold text-(--color-text)">تکرارهای خودکار</h3>
+            <p className="mt-1 max-w-xl text-xs leading-relaxed text-wibe-secondary">
               عنوان یکسان یا عنوان اصلی مشابه (مثل نسخهٔ دوزبانه). با چک‌باکس انتخاب کنید کدام‌ها
               ادغام شوند؛ بقیه کنار گذاشته می‌شوند.
             </p>
@@ -347,7 +347,7 @@ export default function CatalogDuplicateMergeTab({
               <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-900">
                 {groups.length.toLocaleString('fa-IR')} گروه
               </span>
-              <span className="rounded-full bg-gray-100 px-3 py-1 text-[var(--color-text)]">
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-(--color-text)">
                 {duplicateEntryCount.toLocaleString('fa-IR')} مورد
               </span>
             </div>

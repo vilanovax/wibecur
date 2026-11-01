@@ -149,8 +149,8 @@ export default function ProfilePageClient({
           user.name?.trim() ? `${user.name.trim()} (پروفایل من)` : 'پروفایل من'
         }
       />
-      <h1 className="mb-3 hidden text-xl font-bold text-foreground lg:block">پروفایل</h1>
-      <Card className="mb-4 overflow-hidden bg-popover lg:mb-5">
+      <h1 className="mb-3 hidden wibe-h2 font-bold text-foreground lg:block">پروفایل</h1>
+      <Card className="mb-3 overflow-hidden border-border/80 bg-popover shadow-vibe-sm lg:mb-4">
         <ProfileHeader user={user} isOwner onUpdate={() => fetchProfile(true)} />
       </Card>
 

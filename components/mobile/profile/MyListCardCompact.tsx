@@ -62,14 +62,14 @@ export default function MyListCardCompact({
     visibility !== 'public' || (!hidePublicBadge && visibility === 'public');
 
   return (
-    <Card className="flex items-stretch gap-1 overflow-hidden bg-popover p-0">
+    <Card className="flex items-stretch overflow-hidden border-border/80 bg-popover p-0 shadow-none">
       <Link
         href={`/user-lists/${list.id}`}
         prefetch={false}
         onPointerDown={() => router.prefetch(`/user-lists/${list.id}`)}
-        className="flex min-h-20 min-w-0 flex-1 gap-2.5 p-2.5 transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/60"
+        className="flex min-h-20 min-w-0 flex-1 gap-3 p-3 transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/60"
       >
-        <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+        <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted aspect-square">
           <ListCoverImage
             coverImage={list.coverImage}
             title={list.title}
@@ -81,21 +81,19 @@ export default function MyListCardCompact({
             fallbackIcon={list.categories?.icon ?? '📋'}
             fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
           />
-          {showVisibilityOnCover ? (
-            <div className="absolute bottom-1 start-1">
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-0.5">
+          <div className="flex flex-wrap items-center gap-1">
+            {showVisibilityOnCover ? (
               <ListVisibilityBadge
                 variant={visibility}
                 size="sm"
                 hideWhenPublic={hidePublicBadge}
               />
-            </div>
-          ) : null}
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
-          <div className="mb-0.5 flex flex-wrap items-center gap-1">
+            ) : null}
             {isViral && (
               <span className="inline-flex items-center gap-0.5 rounded-md bg-warning/10 px-1.5 py-0.5 wibe-caption font-medium text-warning">
-                <Flame className="h-3 w-3" aria-hidden />
+                <Flame className="size-3" strokeWidth={2} aria-hidden />
                 وایرال
               </span>
             )}
@@ -110,7 +108,7 @@ export default function MyListCardCompact({
               </span>
             )}
             {isEmptyPublic && (
-              <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+              <span className="rounded-md bg-muted px-1.5 py-0.5 wibe-caption font-medium text-muted-foreground">
                 خالی
               </span>
             )}
@@ -119,12 +117,12 @@ export default function MyListCardCompact({
             {list.title}
           </h3>
           {list.categories?.name && (
-            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+            <p className="line-clamp-1 wibe-caption text-muted-foreground">
               {list.categories.icon ? `${list.categories.icon} ` : ''}
               {list.categories.name}
             </p>
           )}
-          <ListCardStats saves={saveCount} itemCount={itemCount} variant="compact" className="mt-1" />
+          <ListCardStats saves={saveCount} itemCount={itemCount} variant="compact" />
         </div>
       </Link>
       {!hideSettings && (
@@ -133,10 +131,10 @@ export default function MyListCardCompact({
           variant="ghost"
           size="icon"
           onClick={onSettingsClick}
-          className="me-1 size-11 shrink-0 self-center"
+          className="me-1 size-11 shrink-0 self-center text-muted-foreground"
           aria-label="مدیریت لیست"
         >
-          <Settings strokeWidth={1.75} aria-hidden />
+          <Settings className="size-4" strokeWidth={1.5} aria-hidden />
         </Button>
       )}
     </Card>

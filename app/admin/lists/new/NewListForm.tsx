@@ -44,7 +44,7 @@ type FormState = {
 };
 
 const sectionCard =
-  'rounded-xl border border-[var(--color-border-muted)] bg-[var(--color-surface)] shadow-[var(--shadow-card)] overflow-hidden';
+  'rounded-xl border border-(--color-border-muted) bg-(--color-surface) shadow-[var(--shadow-card)] overflow-hidden';
 
 export default function NewListForm({ categories: categoryList }: NewListFormProps) {
   const router = useRouter();
@@ -237,13 +237,13 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
         <div>
           <Link
             href="/admin/lists"
-            className="inline-flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--primary)] mb-2"
+            className="inline-flex items-center gap-1 text-xs text-wibe-secondary hover:text-primary mb-2"
           >
             <ChevronRight className="w-3.5 h-3.5" />
             بازگشت به لیست‌ها
           </Link>
-          <h1 className="text-xl font-bold text-[var(--color-text)]">لیست جدید</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-0.5">ایجاد لیست جدید در پلتفرم</p>
+          <h1 className="text-xl font-bold text-(--color-text)">لیست جدید</h1>
+          <p className="text-sm text-wibe-secondary mt-0.5">ایجاد لیست جدید در پلتفرم</p>
         </div>
       </header>
 
@@ -268,8 +268,8 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
 
           {step === 1 && (
             <section className={sectionCard}>
-              <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
-                <h2 className="text-sm font-semibold text-[var(--color-text)]">اطلاعات پایه</h2>
+              <div className="px-4 py-3 border-b border-(--color-border-muted) bg-(--color-bg)/50">
+                <h2 className="text-sm font-semibold text-(--color-text)">اطلاعات پایه</h2>
               </div>
               <div className="p-4">
                 <ListFormIdentity
@@ -302,9 +302,9 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
           {step === 2 && (
             <>
               <section className={sectionCard}>
-                <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
-                  <h2 className="text-sm font-semibold text-[var(--color-text)]">نمایش و وضعیت</h2>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                <div className="px-4 py-3 border-b border-(--color-border-muted) bg-(--color-bg)/50">
+                  <h2 className="text-sm font-semibold text-(--color-text)">نمایش و وضعیت</h2>
+                  <p className="text-xs text-wibe-secondary mt-0.5">
                     پیش‌فرض پیش‌نویس است (غیرفعال و خصوصی). بعد از کاور و آیتم‌ها، عمومی و فعال کنید.
                     Featured = اسلات صفحه اصلی · نشان = برچسب روی کارت
                   </p>
@@ -324,25 +324,25 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
               </section>
 
               <section className={sectionCard}>
-                <div className="px-4 py-3 border-b border-[var(--color-border-muted)] bg-[var(--color-bg)]/50">
-                  <h2 className="text-sm font-semibold text-[var(--color-text)]">ظاهر</h2>
+                <div className="px-4 py-3 border-b border-(--color-border-muted) bg-(--color-bg)/50">
+                  <h2 className="text-sm font-semibold text-(--color-text)">ظاهر</h2>
                 </div>
                 <div className="p-4 grid grid-cols-1 md:grid-cols-[140px_1fr] gap-4 items-start">
                   <div>
-                    <label className="block text-xs font-medium text-[var(--color-text-muted)] mb-1.5">
+                    <label className="block text-xs font-medium text-wibe-secondary mb-1.5">
                       نشان روی کارت
                     </label>
                     <select
                       value={formData.badge}
                       onChange={(e) => setFormData((p) => ({ ...p, badge: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-sm"
+                      className="w-full px-3 py-2 rounded-xl border border-(--color-border) bg-(--color-surface) text-sm"
                     >
                       <option value="">بدون نشان</option>
                       <option value="TRENDING">Trending</option>
                       <option value="NEW">New</option>
                       <option value="FEATURED">Featured badge</option>
                     </select>
-                    <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                    <p className="text-xs text-wibe-secondary mt-1">
                       جدا از Featured صفحه اصلی
                     </p>
                   </div>
@@ -357,13 +357,13 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
             </>
           )}
 
-          <div className="sticky bottom-0 z-20 -mx-1 px-1 py-3 bg-[var(--color-bg)]/95 backdrop-blur-md border-t border-[var(--color-border)] shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)]">
+          <div className="sticky bottom-0 z-20 -mx-1 px-1 py-3 bg-(--color-bg)/95 backdrop-blur-md border-t border-(--color-border) shadow-[0_-4px_24px_-8px_rgba(0,0,0,0.12)]">
             <div className="flex flex-wrap items-center gap-2">
               {step > 1 && (
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="inline-flex items-center gap-1 px-3 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                  className="inline-flex items-center gap-1 px-3 py-2.5 rounded-xl border border-(--color-border) text-sm font-medium text-(--color-text) hover:bg-(--color-surface)"
                 >
                   <ChevronRight className="w-4 h-4" />
                   قبلی
@@ -375,7 +375,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
                   type="button"
                   onClick={() => step1Valid && setStep(2)}
                   disabled={!step1Valid}
-                  className="inline-flex items-center gap-1 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
                 >
                   بعدی
                   <ChevronLeft className="w-4 h-4" />
@@ -384,7 +384,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
                 <button
                   type="submit"
                   disabled={loading || !slugReady || isSlugBlocked}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   {loading ? 'در حال ایجاد...' : 'ایجاد لیست'}
@@ -393,7 +393,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
 
               <Link
                 href="/admin/lists"
-                className="px-4 py-2.5 rounded-xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                className="px-4 py-2.5 rounded-xl border border-(--color-border) text-sm font-medium text-(--color-text) hover:bg-(--color-surface)"
               >
                 انصراف
               </Link>

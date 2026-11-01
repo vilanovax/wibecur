@@ -472,7 +472,7 @@ const PreviewBody = memo(function PreviewBody({
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4 lg:gap-6">
       <div className="relative mx-auto shrink-0 sm:mx-0">
         <div className="overflow-hidden rounded-xl bg-muted ring-1 ring-foreground/10">
-          <div className="aspect-[2/3] w-[7.5rem] sm:w-[8.5rem] lg:w-[11rem] xl:w-[12rem]">
+          <div className="aspect-2/3 w-30 sm:w-34 lg:w-44 xl:w-48">
             <PreviewPoster
               item={item}
               categorySlug={itemCategorySlug}
@@ -482,7 +482,7 @@ const PreviewBody = memo(function PreviewBody({
           </div>
         </div>
         {imdbRating ? (
-          <span className="absolute bottom-1.5 end-1.5 inline-flex items-center gap-0.5 rounded-full bg-foreground/80 px-1.5 py-0.5 text-xs font-bold text-background backdrop-blur-sm">
+          <span className="absolute bottom-1.5 inset-e-1.5 inline-flex items-center gap-0.5 rounded-full bg-foreground/80 px-1.5 py-0.5 text-xs font-bold text-background backdrop-blur-sm">
             <Star className="size-3 shrink-0 fill-warning text-warning" aria-hidden />
             <span className="tabular-nums">{imdbRating}</span>
           </span>

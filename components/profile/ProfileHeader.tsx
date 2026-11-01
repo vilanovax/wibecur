@@ -131,13 +131,18 @@ export default function ProfileHeader({
   const showOwnerStats = isOwner;
   const showPublicFollowers = !isOwner && followersCount != null;
 
+  const statClass = (n: number) =>
+    n > 0
+      ? 'wibe-body font-bold tabular-nums text-foreground'
+      : 'wibe-body font-semibold tabular-nums text-muted-foreground/70';
+
   return (
     <>
-      <div className="px-4 pb-4 pt-4 lg:px-5 lg:pb-5">
+      <div className="px-4 pb-3 pt-3 lg:px-5 lg:pb-4 lg:pt-4">
         <div className="flex items-start gap-3">
-          <div className="size-20 shrink-0 overflow-hidden rounded-full border border-border bg-muted lg:size-24">
+          <div className="size-16 shrink-0 overflow-hidden rounded-full border border-border bg-muted shadow-vibe-sm lg:size-20">
             {vibeAvatar ? (
-              <VibeAvatarDisplay avatar={vibeAvatar} size={96} className="h-full w-full" />
+              <VibeAvatarDisplay avatar={vibeAvatar} size={80} className="h-full w-full" />
             ) : showUploadedAvatar || user.image ? (
               <ImageWithFallback
                 src={user.image!}
@@ -154,19 +159,19 @@ export default function ProfileHeader({
             )}
           </div>
 
-          <div className="min-w-0 flex-1 pt-1 text-start">
-            <h1 className="truncate wibe-h2 font-bold leading-snug text-foreground">
+          <div className="min-w-0 flex-1 pt-0.5 text-start">
+            <h1 className="truncate wibe-h3 font-bold text-foreground">
               {user.name || 'کاربر بدون نام'}
             </h1>
-            <p className="mt-0.5 truncate text-start wibe-small font-medium text-muted-foreground">
+            <p className="mt-0.5 truncate text-start wibe-caption font-medium text-muted-foreground">
               <span dir="ltr">@{displayUsername}</span>
             </p>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 wibe-caption font-medium text-muted-foreground">
+              <span className="inline-flex items-center rounded-full bg-brand/10 px-2 py-0.5 wibe-caption font-medium text-brand">
                 سطح {levelShort}
               </span>
               {isElite && user.showBadge !== false && (
-                <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 wibe-caption font-medium text-muted-foreground">
+                <span className="inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 wibe-caption font-medium text-warning">
                   کیوریتور برتر
                 </span>
               )}
@@ -188,10 +193,10 @@ export default function ProfileHeader({
               <div className="relative" ref={menuRef}>
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="icon"
                 onClick={() => setMenuOpen((o) => !o)}
-                className="size-11 rounded-full"
+                className="size-11 rounded-full text-muted-foreground"
                 aria-label="منوی پروفایل"
                 aria-expanded={menuOpen}
                 aria-haspopup="menu"
@@ -201,7 +206,7 @@ export default function ProfileHeader({
               {menuOpen ? (
                 <Card
                   role="menu"
-                  className="absolute inset-e-0 top-12 z-30 min-w-44 overflow-hidden bg-popover py-1"
+                  className="absolute inset-e-0 top-12 z-30 min-w-44 overflow-hidden bg-popover py-1 shadow-vibe-floating"
                 >
                   <Button
                     type="button"
@@ -265,33 +270,31 @@ export default function ProfileHeader({
             {user.bio.trim()}
           </p>
         ) : isOwner ? (
-          <Button type="button" variant="ghost" size="sm" className="mt-3 h-11" onClick={openEdit}>
-            افزودن بیو کوتاه
-          </Button>
+          <button
+            type="button"
+            onClick={openEdit}
+            className="mt-3 flex h-11 w-full items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 px-3 text-start transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+          >
+            <span className="wibe-caption text-muted-foreground">افزودن بیو کوتاه…</span>
+          </button>
         ) : null}
 
           {showOwnerStats ? (
             <div
-              className="mt-3.5 grid grid-cols-3 gap-1 border-t border-border pt-3"
+              className="mt-3 grid grid-cols-3 gap-1 rounded-xl bg-muted/50 px-1 py-2.5"
               aria-label="آمار پروفایل"
             >
               <div className="text-center">
-                <p className="wibe-body font-bold tabular-nums text-foreground">
-                  {formatStat(listsCreated)}
-                </p>
+                <p className={statClass(listsCreated)}>{formatStat(listsCreated)}</p>
                 <p className="mt-0.5 wibe-caption text-muted-foreground">لیست</p>
               </div>
-              <div className="border-s border-e border-border text-center">
-                <p className="wibe-body font-bold tabular-nums text-foreground">
-                  {formatStat(savesReceived)}
-                </p>
-                <p className="mt-0.5 wibe-caption text-muted-foreground">ذخیرهٔ لیست</p>
+              <div className="border-s border-e border-border/70 text-center">
+                <p className={statClass(savesReceived)}>{formatStat(savesReceived)}</p>
+                <p className="mt-0.5 wibe-caption text-muted-foreground">ذخیره</p>
               </div>
               <div className="text-center">
-                <p className="wibe-body font-bold tabular-nums text-foreground">
-                  {formatStat(likesReceived)}
-                </p>
-                <p className="mt-0.5 wibe-caption text-muted-foreground">لایک لیست</p>
+                <p className={statClass(likesReceived)}>{formatStat(likesReceived)}</p>
+                <p className="mt-0.5 wibe-caption text-muted-foreground">لایک</p>
               </div>
             </div>
           ) : null}

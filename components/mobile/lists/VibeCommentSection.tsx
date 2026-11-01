@@ -216,7 +216,7 @@ function CommentMoreMenu({ onReport }: { onReport: () => void }) {
           onClick={handleReport}
           className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-start text-sm text-destructive hover:bg-destructive/10"
         >
-          <Flag className="w-4 h-4 flex-shrink-0" />
+          <Flag className="w-4 h-4 shrink-0" />
           گزارش نظر
         </button>
       </BottomSheet>
@@ -278,7 +278,7 @@ function VibeCommentItem({
       id={`comment-${comment.id}`}
       className="flex gap-3 bg-popover px-3 py-3.5"
     >
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         {profileUrl ? (
           <Link href={profileUrl} className="block">
             <CommentAvatar
@@ -329,7 +329,7 @@ function VibeCommentItem({
         </div>
         <div className="relative">
           <p
-            className={`text-foreground text-sm leading-relaxed break-words whitespace-pre-wrap ${
+            className={`text-foreground text-sm leading-relaxed wrap-break-word whitespace-pre-wrap ${
               !expanded && showReadMore ? 'line-clamp-3' : ''
             }`}
           >
@@ -337,7 +337,7 @@ function VibeCommentItem({
           </p>
           {!expanded && showReadMore && (
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-popover to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-t from-popover to-transparent"
               aria-hidden
             />
           )}
@@ -404,7 +404,7 @@ function VibeCommentItem({
               return (
               <div key={reply.id} className="flex gap-2">
                 {replyProfileUrl ? (
-                  <Link href={replyProfileUrl} className="block flex-shrink-0">
+                  <Link href={replyProfileUrl} className="block shrink-0">
                     <CommentAvatar
                       src={reply.users.image}
                       name={reply.users.name}

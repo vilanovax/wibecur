@@ -303,23 +303,30 @@ export default function MyListsTab({
 
   const visibilityChips =
     publicCount + personalCount + sharedCount > 0 ? (
-      <>
+      <div
+        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-0.5 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden"
+        role="group"
+        aria-label="فیلتر نمایش لیست"
+      >
         <Button
           type="button"
           size="sm"
           variant={visibilityFilter === null ? 'default' : 'outline'}
-          className="h-11 px-2"
+          className="h-11 shrink-0 gap-1.5 rounded-full px-3"
           aria-pressed={visibilityFilter === null}
           onClick={() => setVisibilityFilter(null)}
         >
           <span>همه</span>
-          <span className="tabular-nums">{(publicCount + personalCount).toLocaleString('fa-IR')}</span>
+          <span className="tabular-nums opacity-80">
+            {(publicCount + personalCount).toLocaleString('fa-IR')}
+          </span>
         </Button>
         <Button
           type="button"
           size="sm"
           variant={visibilityFilter === 'public' ? 'default' : 'outline'}
-          className="h-11 px-2"
+          className="h-11 shrink-0 gap-1.5 rounded-full px-3"
+          aria-pressed={visibilityFilter === 'public'}
           onClick={() => toggleVisibilityFilter('public')}
         >
           <span>عمومی</span>
@@ -329,7 +336,8 @@ export default function MyListsTab({
           type="button"
           size="sm"
           variant={visibilityFilter === 'private' ? 'default' : 'outline'}
-          className="h-11 px-2"
+          className="h-11 shrink-0 gap-1.5 rounded-full px-3"
+          aria-pressed={visibilityFilter === 'private'}
           onClick={() => toggleVisibilityFilter('private')}
         >
           <span>شخصی</span>
@@ -340,14 +348,15 @@ export default function MyListsTab({
             type="button"
             size="sm"
             variant={visibilityFilter === 'shared' ? 'default' : 'outline'}
-            className="h-11"
+            className="h-11 shrink-0 gap-1.5 rounded-full px-3"
+            aria-pressed={visibilityFilter === 'shared'}
             onClick={() => toggleVisibilityFilter('shared')}
           >
             <span>مشترک</span>
             <span className="tabular-nums">{sharedCount.toLocaleString('fa-IR')}</span>
           </Button>
         )}
-      </>
+      </div>
     ) : null;
 
   const openCreate = () => {
@@ -396,9 +405,9 @@ export default function MyListsTab({
       <Button
         type="button"
         variant="brand"
-        size="sm"
+        size="lg"
         onClick={openCreate}
-        className="h-11 shrink-0 rounded-xl px-2 lg:hidden"
+        className="h-11 w-full rounded-xl lg:hidden"
       >
         <Plus />
         ساخت لیست
@@ -470,11 +479,11 @@ export default function MyListsTab({
       content = (
         <>
           <div className="space-y-5 px-4 lg:px-0">
-            <div className="space-y-2.5">
-              <div className="flex flex-wrap items-center gap-1">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 lg:justify-between">
                 {createButton}
-                {visibilityChips}
               </div>
+              {visibilityChips}
               {searchField}
             </div>
 

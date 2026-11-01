@@ -54,7 +54,7 @@ export default function ProfileTabs({
         onValueChange={(value) => onTabChange(value as ProfileTabId)}
         variant="underline"
       >
-      <div className="sticky top-14 z-20 border-b border-border bg-popover/95 px-4 backdrop-blur-sm lg:rounded-t-xl lg:border lg:border-b-0 lg:bg-popover">
+      <div className="sticky top-14 z-20 border-b border-border bg-background/95 px-4 backdrop-blur-sm lg:rounded-t-xl lg:border lg:border-b-0 lg:bg-popover">
         <TabsList aria-label="بخش‌های پروفایل" className="w-full">
           {VISIBLE_TABS.map((tab) => {
             const Icon = tab.icon;
@@ -66,10 +66,10 @@ export default function ProfileTabs({
                   : null;
             return (
               <TabsTrigger key={tab.id} value={tab.id} className="inline-flex h-11 flex-1 items-center justify-center gap-1.5 lg:flex-none lg:px-6">
-                <Icon className="size-4" />
+                <Icon className="size-4" strokeWidth={1.5} aria-hidden />
                 {tab.label}
                 {badge ? (
-                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1 text-xs font-bold text-muted-foreground">
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 wibe-caption font-semibold tabular-nums text-muted-foreground">
                     {badge}
                   </span>
                 ) : null}
@@ -79,7 +79,7 @@ export default function ProfileTabs({
         </TabsList>
       </div>
 
-      <div className="px-0 pt-4 lg:rounded-b-xl lg:border lg:border-t-0 lg:bg-popover lg:px-4 lg:pb-4">
+      <div className="px-0 pt-3 lg:rounded-b-xl lg:border lg:border-t-0 lg:bg-popover lg:px-4 lg:pb-4 lg:pt-4">
         {visibleTab === 'my-lists' && (
           <MyListsTab
             userId={userId}
