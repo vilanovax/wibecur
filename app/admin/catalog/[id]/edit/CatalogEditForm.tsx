@@ -11,7 +11,7 @@ import MovieSearchModal from '@/components/admin/items/MovieSearchModal';
 import CatalogSearchProfilePanel from '@/components/admin/catalog/CatalogSearchProfilePanel';
 import CatalogVisibilityControl from '@/components/admin/catalog/CatalogVisibilityControl';
 import { catalogCategoryLabel } from '@/lib/catalog-display';
-import { ArrowRight, ChevronDown, ChevronUp, Link as LinkIcon, Search, Upload } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronUp, Link as LinkIcon, Search, Trash2, Upload } from 'lucide-react';
 
 type CategoryOption = { id: string; name: string; slug: string; icon: string };
 
@@ -211,6 +211,25 @@ export default function CatalogEditForm({
       setError(err instanceof Error ? err.message : 'خطا در تولید توضیحات');
     } finally {
       setGeneratingDesc(false);
+    }
+  };
+
+  const handleDeleteCompletely = async () => {
+    const typed = window.prompt(
+      `حذف کامل «${form.title || catalog.title}»؟\nجایگاه‌ها به زباله‌دان می‌روند.\nبرای تأیید بنویسید: حذف`
+    );
+    if (typed !== 'حذف') return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/catalog-items/${catalog.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'خطا در حذف');
+      router.push('/admin/lists?view=catalog');
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'خطا');
+      setLoading(false);
     }
   };
 
@@ -488,11 +507,28 @@ export default function CatalogEditForm({
         <button
           type="submit"
           disabled={loading || !form.categorySlug}
-          className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-bold text-sm disabled:opacity-50"
+          className="w-full min-h-11 py-2.5 rounded-xl bg-violet-600 text-white font-bold text-sm disabled:opacity-50"
         >
           {loading ? 'در حال ذخیره…' : 'ذخیره و همگام‌سازی همهٔ لیست‌ها'}
         </button>
       </form>
+
+      <div className="mt-6 rounded-2xl border border-red-200 bg-red-50/60 p-4 space-y-3">
+        <p className="text-sm font-semibold text-red-900">حذف کامل از کاتالوگ</p>
+        <p className="text-xs leading-relaxed text-red-800/90">
+          موجودیت از کاتالوگ پاک می‌شود و جایگاه‌هایش به زباله‌دان می‌روند. غیرفعال‌سازی فقط نمایش
+          عمومی را می‌بندد؛ برای پاک کردن کامل از این دکمه استفاده کنید.
+        </p>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => void handleDeleteCompletely()}
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-2.5 text-sm font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+        >
+          <Trash2 className="h-4 w-4" />
+          حذف کامل
+        </button>
+      </div>
 
       {showMovieModal && (
         <MovieSearchModal

@@ -44,6 +44,7 @@ export default function CatalogItemPicker({
   const [addingId, setAddingId] = useState<string | null>(null);
   const [pendingHit, setPendingHit] = useState<CatalogSearchHit | null>(null);
   const [pendingTip, setPendingTip] = useState('');
+  const [pendingPosition, setPendingPosition] = useState('');
   const [message, setMessage] = useState('');
 
   const loadRecent = useCallback(async () => {
@@ -100,12 +101,14 @@ export default function CatalogItemPicker({
     if (hit.alreadyInList) return;
     setPendingHit(hit);
     setPendingTip('');
+    setPendingPosition('');
     setMessage('');
   };
 
   const cancelPending = () => {
     setPendingHit(null);
     setPendingTip('');
+    setPendingPosition('');
   };
 
   const confirmAdd = async () => {
@@ -114,6 +117,17 @@ export default function CatalogItemPicker({
     setMessage('');
     try {
       const tipText = pendingTip.trim();
+      const positionNum = pendingPosition.trim()
+        ? Number(pendingPosition.trim())
+        : undefined;
+      if (
+        positionNum !== undefined &&
+        (!Number.isFinite(positionNum) || positionNum < 1)
+      ) {
+        setMessage('جایگاه باید عدد ۱ یا بیشتر باشد');
+        setAddingId(null);
+        return;
+      }
       const res = await fetch('/api/admin/items/add-to-list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -121,6 +135,7 @@ export default function CatalogItemPicker({
           catalogItemId: pendingHit.id,
           listId,
           ...(tipText ? { tip: tipText } : {}),
+          ...(positionNum !== undefined ? { position: positionNum } : {}),
         }),
       });
       const data = await res.json();
@@ -235,6 +250,21 @@ export default function CatalogItemPicker({
             <p className="text-sm text-[var(--color-text)]">
               افزودن «<span className="font-semibold">{pendingHit.title}</span>» به لیست
             </p>
+            <div>
+              <label className="block text-[10px] font-semibold text-[var(--color-text-muted)]">
+                جایگاه در لیست (اختیاری)
+              </label>
+              <input
+                type="number"
+                min={1}
+                inputMode="numeric"
+                dir="ltr"
+                value={pendingPosition}
+                onChange={(e) => setPendingPosition(e.target.value)}
+                placeholder="خالی = ته لیست · ۱ = اول"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+              />
+            </div>
             <ItemTipField value={pendingTip} onChange={setPendingTip} compact />
             <div className="flex gap-2">
               <button

@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import ItemDetailClient from './ItemDetailClient';
 import ItemLcpPreload from '@/components/mobile/items/ItemLcpPreload';
 import ItemPageBreadcrumb from '@/components/mobile/items/ItemPageBreadcrumb';
@@ -76,6 +76,10 @@ export default async function ItemDetailPage({
 
   if (item.item_moderation?.status === 'HIDDEN') {
     notFound();
+  }
+
+  if (item.lists.itemDetailEnabled === false && item.lists.slug) {
+    redirect(`/lists/${item.lists.slug}`);
   }
 
   const serialized = serializeItemDetail(item);

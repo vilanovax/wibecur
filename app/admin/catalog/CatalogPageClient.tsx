@@ -24,6 +24,7 @@ import {
   ImageIcon,
   Check,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import type { NewItemFormList } from '@/app/admin/items/new/NewItemForm';
 import CatalogBulkToolbar from '@/components/admin/catalog/CatalogBulkToolbar';
@@ -343,6 +344,33 @@ export default function CatalogPageClient({
     );
   }, [selectedDetail]);
 
+  const handleDeleteCatalog = async (catalogId: string, title: string) => {
+    const typed = window.prompt(
+      `حذف کامل «${title}» از کاتالوگ؟\nجایگاه‌ها به زباله‌دان می‌روند.\nبرای تأیید بنویسید: حذف`
+    );
+    if (typed !== 'حذف') return;
+    setMessage('');
+    try {
+      const res = await fetch(`/api/admin/catalog-items/${catalogId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'خطا در حذف');
+      setMessage(data.message ?? 'کاتالوگ حذف شد');
+      setRows((prev) => prev.filter((row) => row.id !== catalogId));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(catalogId);
+        return next;
+      });
+      if (selectedDetail === catalogId) {
+        setSelectedDetail(null);
+        setDetail(null);
+      }
+      router.refresh();
+    } catch (e: unknown) {
+      setMessage(e instanceof Error ? e.message : 'خطا در حذف');
+    }
+  };
+
   const openDetail = async (catalogId: string) => {
     setSelectedDetail(catalogId);
     setDetail(null);
@@ -443,15 +471,15 @@ export default function CatalogPageClient({
     }
   };
 
-  const handleMergeGroup = async (group: DuplicateCatalogGroup) => {
+  const handleMergeGroup = async (group: DuplicateCatalogGroup, sourceIds: string[]) => {
     const targetId = mergeTarget[group.groupKey] || pickSuggestedMergeTarget(group.catalogs);
     if (!targetId) return;
-    const sources = group.catalogs.map((c) => c.id).filter((id) => id !== targetId);
+    const sources = [...new Set(sourceIds.filter((id) => id && id !== targetId))];
     if (sources.length === 0) return;
     const targetTitle = group.catalogs.find((c) => c.id === targetId)?.title ?? '';
     if (
       !confirm(
-        `ادغام ${sources.length} مورد دیگر در «${targetTitle}»؟\nاین کار قابل بازگشت نیست.`
+        `ادغام ${sources.length.toLocaleString('fa-IR')} مورد انتخاب‌شده در «${targetTitle}»؟\nاین کار قابل بازگشت نیست.`
       )
     ) {
       return;
@@ -467,7 +495,18 @@ export default function CatalogPageClient({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setMessage(data.message ?? 'ادغام انجام شد');
-      setGroups((prev) => prev.filter((g) => g.groupKey !== group.groupKey));
+      setGroups((prev) =>
+        prev
+          .map((g) =>
+            g.groupKey === group.groupKey
+              ? {
+                  ...g,
+                  catalogs: g.catalogs.filter((c) => !sources.includes(c.id)),
+                }
+              : g
+          )
+          .filter((g) => g.catalogs.length >= 2)
+      );
       setDupCount((c) => Math.max(0, c - 1));
       if (tab === 'browse') void loadBrowse(page, query, category, listId, multiListOnly);
       router.refresh();
@@ -1165,7 +1204,7 @@ export default function CatalogPageClient({
                   <div className="flex flex-wrap gap-2 mt-4">
                     <Link
                       href={`/admin/catalog/${selectedDetail}/edit`}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700"
+                      className="inline-flex min-h-11 items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-violet-600 text-white hover:bg-violet-700"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       ویرایش کاتالوگ
@@ -1173,10 +1212,18 @@ export default function CatalogPageClient({
                     <button
                       type="button"
                       onClick={() => setAddModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg border border-violet-200 text-violet-700 hover:bg-violet-50"
+                      className="inline-flex min-h-11 items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg border border-violet-200 text-violet-700 hover:bg-violet-50"
                     >
                       <ListPlus className="w-3.5 h-3.5" />
                       افزودن به لیست
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteCatalog(selectedDetail, detail.title)}
+                      className="inline-flex min-h-11 items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      حذف کامل
                     </button>
                   </div>
                   <p className="text-xs font-semibold text-[var(--color-text)] mt-4 mb-2">جایگاه‌ها</p>

@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
       isFeatured,
       isActive,
       commentsEnabled,
+      itemDetailEnabled,
     } = body;
 
     // Validate required fields
@@ -78,6 +79,7 @@ export async function POST(request: NextRequest) {
         isFeatured: isFeatured !== undefined ? isFeatured : false,
         isActive: isActive !== undefined ? isActive : true,
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
+        itemDetailEnabled: itemDetailEnabled !== undefined ? itemDetailEnabled : true,
         updatedAt: new Date(),
       },
     });

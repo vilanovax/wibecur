@@ -36,6 +36,7 @@ export async function PUT(
       isFeatured,
       isActive,
       commentsEnabled,
+      itemDetailEnabled,
     } = body;
 
     // Validate required fields
@@ -95,6 +96,7 @@ export async function PUT(
         isFeatured: isFeatured !== undefined ? isFeatured : false,
         isActive: isActive !== undefined ? isActive : true,
         ...(commentsEnabled !== undefined && { commentsEnabled }),
+        ...(itemDetailEnabled !== undefined && { itemDetailEnabled }),
       },
     });
     const itemCount = await recountListItemCount(prisma, id);
@@ -141,7 +143,15 @@ export async function PATCH(
     if (userOrRes instanceof NextResponse) return userOrRes;
     const { id } = await params;
     const body = await request.json();
-    const { isFeatured, isActive, isPublic, commentsEnabled, description, title } = body;
+    const {
+      isFeatured,
+      isActive,
+      isPublic,
+      commentsEnabled,
+      itemDetailEnabled,
+      description,
+      title,
+    } = body;
 
     const existing = await prisma.lists.findUnique({ where: { id } });
     if (!existing) {
@@ -154,6 +164,7 @@ export async function PATCH(
       isActive?: boolean;
       isPublic?: boolean;
       commentsEnabled?: boolean;
+      itemDetailEnabled?: boolean;
       description?: string | null;
     } = {};
 
@@ -175,6 +186,7 @@ export async function PATCH(
     if (typeof isActive === 'boolean') data.isActive = isActive;
     if (typeof isPublic === 'boolean') data.isPublic = isPublic;
     if (typeof commentsEnabled === 'boolean') data.commentsEnabled = commentsEnabled;
+    if (typeof itemDetailEnabled === 'boolean') data.itemDetailEnabled = itemDetailEnabled;
     if (description === null || typeof description === 'string') {
       const next = description === null ? null : description.trim() || null;
       if (next && next.length > LIST_DESCRIPTION_MAX) {

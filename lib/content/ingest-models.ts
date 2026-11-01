@@ -43,6 +43,7 @@ const listSchema = z
     isFeatured: z.boolean().optional(),
     isActive: z.boolean().optional(),
     commentsEnabled: z.boolean().optional(),
+    itemDetailEnabled: z.boolean().optional(),
     tags: z.array(z.string().trim().min(1)).max(12).optional(),
   })
   .strict();

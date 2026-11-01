@@ -266,6 +266,66 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
     }
   };
 
+  const purgeOne = async (id: string, title: string) => {
+    const typed = window.prompt(
+      `حذف دائمی «${title}»؟ این کار قابل بازگشت نیست.\nبرای تأیید بنویسید: حذف دائم`
+    );
+    if (typed !== 'حذف دائم') return;
+    setActionId(id);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/admin/trash/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entity: tab, action: 'purge', ids: [id] }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'خطا در حذف دائمی');
+      setMessage({ text: data.message || `«${title}» برای همیشه حذف شد`, tone: 'success' });
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      await loadTab(tab);
+      await refreshCounts();
+      router.refresh();
+    } catch (err: unknown) {
+      setMessage({ text: err instanceof Error ? err.message : 'خطا', tone: 'error' });
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const purgeBulk = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    const typed = window.prompt(
+      `حذف دائمی ${ids.length.toLocaleString('fa-IR')} مورد؟ این کار قابل بازگشت نیست.\nبرای تأیید بنویسید: حذف دائم`
+    );
+    if (typed !== 'حذف دائم') return;
+    setBulkLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/admin/trash/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entity: tab, action: 'purge', ids }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'خطا در حذف دائمی گروهی');
+      setMessage({ text: data.message || 'حذف دائمی انجام شد', tone: 'success' });
+      setSelected(new Set());
+      await loadTab(tab);
+      await refreshCounts();
+      router.refresh();
+    } catch (err: unknown) {
+      setMessage({ text: err instanceof Error ? err.message : 'خطا', tone: 'error' });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   const tabLabel = TABS.find((t) => t.id === tab)?.label ?? '';
 
   return (
@@ -281,7 +341,7 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
               <div>
                 <h1 className="text-xl font-bold text-[var(--color-text)] dark:text-white">زباله‌دان</h1>
                 <p className="text-sm text-[var(--color-text-muted)] dark:text-[var(--color-text-subtle)] mt-0.5">
-                  بازگردانی تکی یا گروهی — حذف دائمی از اینجا انجام نمی‌شود
+                  بازگردانی یا حذف دائمی موارد زباله‌دان
                 </p>
               </div>
             </div>
@@ -453,7 +513,7 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
                         type="button"
                         disabled={actionId === row.id || bulkLoading}
                         onClick={() => restoreOne(row.id, title)}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60 transition-colors"
+                        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                       >
                         {actionId === row.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -461,6 +521,15 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
                           <ArchiveRestore className="h-3.5 w-3.5" />
                         )}
                         بازگردانی
+                      </button>
+                      <button
+                        type="button"
+                        disabled={actionId === row.id || bulkLoading}
+                        onClick={() => purgeOne(row.id, title)}
+                        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-60 transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        حذف دائم
                       </button>
                     </div>
                   </li>
@@ -474,6 +543,7 @@ export default function TrashPageClient({ initialTab, initialCounts, initialItem
       <TrashBulkBar
         selectedCount={selected.size}
         onRestore={restoreBulk}
+        onPurge={purgeBulk}
         onClear={() => setSelected(new Set())}
         loading={bulkLoading}
       />

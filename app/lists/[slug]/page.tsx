@@ -43,6 +43,7 @@ function loadListBySlug(slug: string) {
       isActive: true,
       isFeatured: true,
       commentsEnabled: true,
+      itemDetailEnabled: true,
       // فقط فیلدهای مصرف‌شده: کلاینت از slug/icon/name و سرور از isActive (برای notFound) استفاده می‌کند
       categories: {
         select: {
@@ -79,7 +80,7 @@ function loadListBySlug(slug: string) {
  * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنهٔ صفحه).
  */
 const getListBySlug = cache((slug: string) =>
-  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v5', slug], {
+  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v6', slug], {
     revalidate: 300,
     tags: [listDetailCacheTag(slug)],
   })()

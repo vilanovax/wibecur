@@ -18,6 +18,7 @@ export type AdminListQuickEditValues = {
   isPublic: boolean;
   isFeatured: boolean;
   commentsEnabled: boolean;
+  itemDetailEnabled: boolean;
 };
 
 type AdminListQuickEditSheetProps = {
@@ -28,7 +29,12 @@ type AdminListQuickEditSheetProps = {
   onError: (message: string) => void;
 };
 
-type ToggleKey = 'isActive' | 'isPublic' | 'isFeatured' | 'commentsEnabled';
+type ToggleKey =
+  | 'isActive'
+  | 'isPublic'
+  | 'isFeatured'
+  | 'commentsEnabled'
+  | 'itemDetailEnabled';
 
 const TOGGLES: { key: ToggleKey; label: string; hint: string }[] = [
   {
@@ -51,6 +57,11 @@ const TOGGLES: { key: ToggleKey; label: string; hint: string }[] = [
     label: 'نظرها',
     hint: 'کاربران می‌توانند برای این لیست نظر بگذارند.',
   },
+  {
+    key: 'itemDetailEnabled',
+    label: 'صفحهٔ جزئیات',
+    hint: 'دکمهٔ «مشاهده» در پیش‌نمایش آیتم را نشان بدهد.',
+  },
 ];
 
 export default function AdminListQuickEditSheet({
@@ -66,6 +77,7 @@ export default function AdminListQuickEditSheet({
   const [isPublic, setIsPublic] = useState(list.isPublic);
   const [isFeatured, setIsFeatured] = useState(list.isFeatured);
   const [commentsEnabled, setCommentsEnabled] = useState(list.commentsEnabled);
+  const [itemDetailEnabled, setItemDetailEnabled] = useState(list.itemDetailEnabled);
   const [saving, setSaving] = useState(false);
   const [titleError, setTitleError] = useState<string | null>(null);
 
@@ -77,6 +89,7 @@ export default function AdminListQuickEditSheet({
     setIsPublic(list.isPublic);
     setIsFeatured(list.isFeatured);
     setCommentsEnabled(list.commentsEnabled);
+    setItemDetailEnabled(list.itemDetailEnabled);
     setTitleError(null);
   }, [
     isOpen,
@@ -86,6 +99,7 @@ export default function AdminListQuickEditSheet({
     list.isPublic,
     list.isFeatured,
     list.commentsEnabled,
+    list.itemDetailEnabled,
   ]);
 
   const flags: Record<ToggleKey, boolean> = {
@@ -93,13 +107,15 @@ export default function AdminListQuickEditSheet({
     isPublic,
     isFeatured,
     commentsEnabled,
+    itemDetailEnabled,
   };
 
   const setFlag = (key: ToggleKey, value: boolean) => {
     if (key === 'isActive') setIsActive(value);
     else if (key === 'isPublic') setIsPublic(value);
     else if (key === 'isFeatured') setIsFeatured(value);
-    else setCommentsEnabled(value);
+    else if (key === 'commentsEnabled') setCommentsEnabled(value);
+    else setItemDetailEnabled(value);
   };
 
   const save = async () => {
@@ -125,6 +141,7 @@ export default function AdminListQuickEditSheet({
           isPublic,
           isFeatured,
           commentsEnabled,
+          itemDetailEnabled,
         }),
       });
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
@@ -140,6 +157,7 @@ export default function AdminListQuickEditSheet({
         isPublic,
         isFeatured,
         commentsEnabled,
+        itemDetailEnabled,
       });
     } catch {
       onError('ذخیرهٔ لیست انجام نشد');

@@ -447,6 +447,33 @@ export type AddToListOptions = {
   maxComments?: number | null;
 };
 
+/** جایگاه درج در لیست؛ در صورت نیاز آیتم‌های بعدی را جابه‌جا می‌کند */
+async function resolveInsertOrder(
+  prisma: PrismaClient,
+  listId: string,
+  requestedOrder: number | undefined
+): Promise<number> {
+  const maxOrder = await prisma.items.aggregate({
+    where: { listId, deletedAt: null },
+    _max: { order: true },
+  });
+  const nextAppend = (maxOrder._max.order ?? -1) + 1;
+  if (
+    requestedOrder === undefined ||
+    requestedOrder === null ||
+    Number.isNaN(Number(requestedOrder))
+  ) {
+    return nextAppend;
+  }
+  const desired = Math.max(0, Math.floor(Number(requestedOrder)));
+  if (desired >= nextAppend) return nextAppend;
+  await prisma.items.updateMany({
+    where: { listId, deletedAt: null, order: { gte: desired } },
+    data: { order: { increment: 1 } },
+  });
+  return desired;
+}
+
 /** عضویت کاتالوگ در یک لیست — بدون کپی محتوا */
 export async function addCatalogItemToList(
   prisma: PrismaClient,
@@ -473,14 +500,7 @@ export async function addCatalogItemToList(
     throw new Error('این آیتم قبلاً در این لیست وجود دارد');
   }
 
-  let order = opts.order;
-  if (order === undefined) {
-    const maxOrder = await prisma.items.aggregate({
-      where: { listId, deletedAt: null },
-      _max: { order: true },
-    });
-    order = (maxOrder._max.order ?? -1) + 1;
-  }
+  const order = await resolveInsertOrder(prisma, listId, opts.order);
 
   const denorm = denormalizedItemFieldsFromCatalog(catalog);
   const placementMetadata = catalogRefMetadata(catalog, denorm.metadata);
@@ -1406,6 +1426,64 @@ export async function findSimilarCatalogItems(
   };
 }
 
+type DuplicateCatalogMember = DuplicateCatalogGroup['catalogs'][number];
+
+function toDuplicateMember(row: {
+  id: string;
+  title: string;
+  externalKey: string | null;
+  imageUrl: string | null;
+  _count: { items: number };
+}): DuplicateCatalogMember {
+  return {
+    id: row.id,
+    title: row.title,
+    externalKey: row.externalKey,
+    imageUrl: row.imageUrl,
+    listCount: row._count.items,
+  };
+}
+
+/** خوشه‌بندی با اتحاد عناوینی که catalogTitlesMatch می‌شوند */
+function clusterByTitleMatch<T extends { id: string; title: string }>(
+  candidates: T[]
+): T[][] {
+  if (candidates.length < 2) return [];
+  const parent = new Map<string, string>();
+  for (const c of candidates) parent.set(c.id, c.id);
+  const find = (id: string): string => {
+    const p = parent.get(id) ?? id;
+    if (p !== id) {
+      const root = find(p);
+      parent.set(id, root);
+      return root;
+    }
+    return p;
+  };
+  const union = (a: string, b: string) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent.set(ra, rb);
+  };
+
+  for (let i = 0; i < candidates.length; i++) {
+    for (let j = i + 1; j < candidates.length; j++) {
+      if (catalogTitlesMatch(candidates[i]!.title, candidates[j]!.title)) {
+        union(candidates[i]!.id, candidates[j]!.id);
+      }
+    }
+  }
+
+  const clusters = new Map<string, T[]>();
+  for (const c of candidates) {
+    const root = find(c.id);
+    const list = clusters.get(root) ?? [];
+    list.push(c);
+    clusters.set(root, list);
+  }
+  return [...clusters.values()].filter((list) => list.length >= 2);
+}
+
 export async function findDuplicateCatalogGroups(
   prisma: PrismaClient,
   options?: { limit?: number }
@@ -1424,33 +1502,61 @@ export async function findDuplicateCatalogGroups(
     take: 8000,
   });
 
-  const byKey = new Map<string, DuplicateCatalogGroup['catalogs']>();
+  const groups: DuplicateCatalogGroup[] = [];
+  const covered = new Set<string>();
 
+  const byExact = new Map<string, typeof rows>();
   for (const row of rows) {
     const norm = normalizeSuggestionTitle(row.title);
     if (!norm) continue;
-    const key = `${row.categorySlug ?? ''}::${norm}`;
-    const list = byKey.get(key) ?? [];
-    list.push({
-      id: row.id,
-      title: row.title,
-      externalKey: row.externalKey,
-      imageUrl: row.imageUrl,
-      listCount: row._count.items,
-    });
-    byKey.set(key, list);
+    const key = `${row.categorySlug ?? ''}::exact::${norm}`;
+    const list = byExact.get(key) ?? [];
+    list.push(row);
+    byExact.set(key, list);
   }
 
-  return [...byKey.entries()]
-    .filter(([, catalogs]) => catalogs.length >= 2)
-    .sort((a, b) => b[1].length - a[1].length)
-    .slice(0, limit)
-    .map(([groupKey, catalogs]) => {
-      const sep = groupKey.indexOf('::');
+  for (const [groupKey, groupRows] of byExact) {
+    if (groupRows.length < 2) continue;
+    const catalogs = sortCatalogsForMerge(groupRows.map(toDuplicateMember));
+    for (const c of catalogs) covered.add(c.id);
+    const sep = groupKey.indexOf('::exact::');
+    const categorySlug = sep > 0 ? groupKey.slice(0, sep) || null : null;
+    const normalizedTitle = sep >= 0 ? groupKey.slice(sep + '::exact::'.length) : groupKey;
+    groups.push({ groupKey, categorySlug, normalizedTitle, catalogs });
+  }
+
+  const byPrimary = new Map<string, typeof rows>();
+  for (const row of rows) {
+    if (covered.has(row.id)) continue;
+    const primary = primarySuggestionTitle(row.title);
+    if (primary.length < 3) continue;
+    const key = `${row.categorySlug ?? ''}::primary::${primary}`;
+    const list = byPrimary.get(key) ?? [];
+    list.push(row);
+    byPrimary.set(key, list);
+  }
+
+  for (const [groupKey, groupRows] of byPrimary) {
+    const available = groupRows.filter((r) => !covered.has(r.id));
+    if (available.length < 2) continue;
+    for (const cluster of clusterByTitleMatch(available)) {
+      const catalogs = sortCatalogsForMerge(cluster.map(toDuplicateMember));
+      for (const c of catalogs) covered.add(c.id);
+      const sep = groupKey.indexOf('::primary::');
       const categorySlug = sep > 0 ? groupKey.slice(0, sep) || null : null;
-      const normalizedTitle = sep > 0 ? groupKey.slice(sep + 2) : groupKey;
-      return { groupKey, categorySlug, normalizedTitle, catalogs: sortCatalogsForMerge(catalogs) };
-    });
+      const primaryLabel = sep >= 0 ? groupKey.slice(sep + '::primary::'.length) : groupKey;
+      groups.push({
+        groupKey: `${groupKey}::${catalogs.map((c) => c.id).sort().join('+')}`,
+        categorySlug,
+        normalizedTitle: primaryLabel,
+        catalogs,
+      });
+    }
+  }
+
+  return groups
+    .sort((a, b) => b.catalogs.length - a.catalogs.length)
+    .slice(0, limit);
 }
 
 /** مقصد پیشنهادی اول — بیشترین جایگاه در لیست */
@@ -1469,6 +1575,33 @@ export type MergeCatalogResult = {
   removedDuplicatePlacements: number;
   deletedCatalogs: number;
 };
+
+/** حذف کامل موجودیت کاتالوگ و انتقال جایگاه‌ها به زباله‌دان */
+export async function deleteCatalogItemCompletely(
+  prisma: PrismaClient,
+  catalogId: string,
+  deletedById?: string | null
+): Promise<{ softDeletedPlacements: number; deletedCatalog: boolean }> {
+  const catalog = await catalogDb(prisma).findUnique({
+    where: { id: catalogId },
+    select: { id: true },
+  });
+  if (!catalog) throw new Error('آیتم کاتالوگ یافت نشد');
+
+  const { softDeleteItems } = await import('@/lib/admin/item-trash');
+  const placements = await prisma.items.findMany({
+    where: { catalogItemId: catalogId, deletedAt: null },
+    select: { id: true },
+  });
+  const softDeletedPlacements = await softDeleteItems(
+    prisma,
+    placements.map((p) => p.id),
+    deletedById,
+    'حذف کامل کاتالوگ'
+  );
+  await prisma.catalog_items.delete({ where: { id: catalogId } });
+  return { softDeletedPlacements, deletedCatalog: true };
+}
 
 /** ادغام چند کاتالوگ در یک مقصد */
 export async function mergeCatalogItems(

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { GitMerge, Loader2, Pencil } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
@@ -28,29 +28,54 @@ export default function CatalogSimilarMergePanel({
   emptyMessage = 'مورد مشابهی یافت نشد',
 }: Props) {
   const [mergeTargetId, setMergeTargetId] = useState('');
+  const [selectedSourceIds, setSelectedSourceIds] = useState<Set<string>>(new Set());
+
+  const displayItems = useMemo(
+    () => (fixedTargetId ? items.filter((item) => item.id !== fixedTargetId) : items),
+    [items, fixedTargetId]
+  );
+
+  const targetId = fixedTargetId ?? mergeTargetId;
 
   useEffect(() => {
     if (fixedTargetId) return;
     setMergeTargetId(items[0]?.id ?? '');
   }, [items, fixedTargetId]);
 
-  const displayItems = fixedTargetId ? items.filter((item) => item.id !== fixedTargetId) : items;
-  const targetId = fixedTargetId ?? mergeTargetId;
+  useEffect(() => {
+    const next = new Set(
+      displayItems.map((item) => item.id).filter((id) => id !== targetId)
+    );
+    setSelectedSourceIds(next);
+  }, [displayItems, targetId]);
+
   const targetTitle =
     fixedTargetTitle ??
     items.find((item) => item.id === mergeTargetId)?.title ??
     '';
 
-  const handleMergeSources = async (sourceIds: string[]) => {
-    if (!targetId || sourceIds.length === 0) return;
+  const sourceIds = [...selectedSourceIds].filter((id) => id !== targetId);
+
+  const toggleSource = (id: string) => {
+    if (id === targetId) return;
+    setSelectedSourceIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleMergeSources = async (ids: string[]) => {
+    if (!targetId || ids.length === 0) return;
     if (
       !confirm(
-        `ادغام ${sourceIds.length.toLocaleString('fa-IR')} مورد در «${targetTitle}»؟\nاین کار قابل بازگشت نیست.`
+        `ادغام ${ids.length.toLocaleString('fa-IR')} مورد در «${targetTitle}»؟\nاین کار قابل بازگشت نیست.`
       )
     ) {
       return;
     }
-    await onMerge(targetId, sourceIds);
+    await onMerge(targetId, ids);
   };
 
   if (loading) {
@@ -71,8 +96,6 @@ export default function CatalogSimilarMergePanel({
     );
   }
 
-  const sourceIds = displayItems.map((item) => item.id).filter((id) => id !== targetId);
-
   return (
     <div className="space-y-3">
       {fixedTargetId && fixedTargetTitle && (
@@ -83,18 +106,30 @@ export default function CatalogSimilarMergePanel({
 
       {!fixedTargetId && displayItems.length >= 2 && (
         <p className="text-xs text-[var(--color-text-muted)]">
-          یکی را به‌عنوان <strong>مقصد</strong> انتخاب کنید؛ بقیه در آن ادغام می‌شوند.
+          مقصد را با رادیو انتخاب کنید و با چک‌باکس مشخص کنید کدام موارد ادغام شوند. موارد بدون تیک
+          کنار گذاشته می‌شوند.
+        </p>
+      )}
+
+      {fixedTargetId && (
+        <p className="text-xs text-[var(--color-text-muted)]">
+          فقط موارد تیک‌خورده در مقصد ادغام می‌شوند.
         </p>
       )}
 
       <ul className="space-y-2" role={fixedTargetId ? undefined : 'radiogroup'}>
         {displayItems.map((item) => {
           const isTarget = !fixedTargetId && item.id === mergeTargetId;
+          const isSelectedSource = selectedSourceIds.has(item.id) && item.id !== targetId;
           return (
             <li
               key={item.id}
               className={`flex flex-col gap-2 rounded-xl border p-3 sm:flex-row sm:items-center ${
-                isTarget ? 'border-violet-400 bg-violet-50/40' : 'border-gray-200 bg-white'
+                isTarget
+                  ? 'border-violet-400 bg-violet-50/40'
+                  : isSelectedSource
+                    ? 'border-amber-200 bg-amber-50/30'
+                    : 'border-gray-200 bg-white opacity-70'
               }`}
             >
               <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -106,6 +141,15 @@ export default function CatalogSimilarMergePanel({
                     onChange={() => setMergeTargetId(item.id)}
                     className="shrink-0 text-violet-600 focus:ring-violet-500"
                     aria-label={`مقصد: ${item.title}`}
+                  />
+                )}
+                {item.id !== targetId && (
+                  <input
+                    type="checkbox"
+                    checked={isSelectedSource}
+                    onChange={() => toggleSource(item.id)}
+                    className="shrink-0 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    aria-label={`ادغام ${item.title}`}
                   />
                 )}
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-black/5">
@@ -120,6 +164,9 @@ export default function CatalogSimilarMergePanel({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-[var(--color-text)]">{item.title}</p>
+                  <p className="mt-0.5 font-mono text-[10px] text-[var(--color-text-subtle)]" dir="ltr">
+                    {item.id}
+                  </p>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)]">
                       {catalogCategoryLabel(item.categorySlug)}
@@ -136,17 +183,17 @@ export default function CatalogSimilarMergePanel({
               <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end">
                 <Link
                   href={`/admin/catalog/${item.id}/edit`}
-                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-[var(--color-text)] hover:bg-gray-50"
+                  className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-[var(--color-text)] hover:bg-gray-50"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   ویرایش
                 </Link>
-                {fixedTargetId && (
+                {fixedTargetId && item.id !== targetId && (
                   <button
                     type="button"
-                    disabled={mergeLoading}
+                    disabled={mergeLoading || !isSelectedSource}
                     onClick={() => void handleMergeSources([item.id])}
-                    className="inline-flex items-center gap-1 rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-50"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-50"
                   >
                     {mergeLoading ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -162,14 +209,16 @@ export default function CatalogSimilarMergePanel({
         })}
       </ul>
 
-      {!fixedTargetId && sourceIds.length > 0 && (
+      {sourceIds.length > 0 && (
         <button
           type="button"
           disabled={mergeLoading || !targetId}
           onClick={() => void handleMergeSources(sourceIds)}
-          className="w-full rounded-xl bg-violet-600 py-2.5 text-sm font-bold text-white hover:bg-violet-700 disabled:opacity-50"
+          className="w-full min-h-11 rounded-xl bg-violet-600 py-2.5 text-sm font-bold text-white hover:bg-violet-700 disabled:opacity-50"
         >
-          {mergeLoading ? 'در حال ادغام…' : `ادغام ${sourceIds.length.toLocaleString('fa-IR')} مورد در مقصد`}
+          {mergeLoading
+            ? 'در حال ادغام…'
+            : `ادغام ${sourceIds.length.toLocaleString('fa-IR')} مورد انتخاب‌شده در مقصد`}
         </button>
       )}
     </div>

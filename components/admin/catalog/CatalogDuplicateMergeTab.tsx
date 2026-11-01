@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   ChevronDown,
@@ -26,7 +26,7 @@ type Props = {
   mergeLoadingKey: string | null;
   mergeTarget: Record<string, string>;
   onMergeTargetChange: (groupKey: string, catalogId: string) => void;
-  onMergeGroup: (group: DuplicateCatalogGroup) => void;
+  onMergeGroup: (group: DuplicateCatalogGroup, sourceIds: string[]) => void;
   similarQuery: string;
   onSimilarQueryChange: (value: string) => void;
   onSimilarSearch: () => void;
@@ -47,11 +47,29 @@ function DuplicateGroupCard({
   targetId: string;
   mergeLoading: boolean;
   onTargetChange: (catalogId: string) => void;
-  onMerge: () => void;
+  onMerge: (sourceIds: string[]) => void;
 }) {
+  const [selectedSources, setSelectedSources] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setSelectedSources(
+      new Set(group.catalogs.map((c) => c.id).filter((id) => id !== targetId))
+    );
+  }, [group.groupKey, group.catalogs, targetId]);
+
   const target = group.catalogs.find((c) => c.id === targetId) ?? group.catalogs[0];
-  const sources = group.catalogs.filter((c) => c.id !== targetId);
+  const sourceIds = [...selectedSources].filter((id) => id !== targetId);
   const extHint = target ? formatExternalKeyHint(target.externalKey) : null;
+
+  const toggleSource = (id: string) => {
+    if (id === targetId) return;
+    setSelectedSources((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   return (
     <article className="overflow-hidden rounded-2xl border border-amber-200/90 bg-white shadow-sm">
@@ -70,40 +88,44 @@ function DuplicateGroupCard({
           <p className="truncate text-sm font-bold text-[var(--color-text)]" title={group.normalizedTitle}>
             {group.normalizedTitle}
           </p>
-          {target && sources.length > 0 && (
+          {target && (
             <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-              {sources.length.toLocaleString('fa-IR')} مورد در «{target.title}» ادغام می‌شود
+              {sourceIds.length.toLocaleString('fa-IR')} مورد انتخاب‌شده در «{target.title}» ادغام
+              می‌شود
             </p>
           )}
         </div>
         <button
           type="button"
-          disabled={mergeLoading || !targetId || sources.length === 0}
-          onClick={onMerge}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-50"
+          disabled={mergeLoading || !targetId || sourceIds.length === 0}
+          onClick={() => onMerge(sourceIds)}
+          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-bold text-white hover:bg-violet-700 disabled:opacity-50"
         >
           {mergeLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <GitMerge className="h-4 w-4" />
           )}
-          ادغام
+          ادغام انتخاب‌شده
         </button>
       </header>
 
-      <ul className="divide-y divide-gray-100 p-2" role="radiogroup" aria-label="انتخاب مقصد ادغام">
+      <ul className="divide-y divide-gray-100 p-2">
         {group.catalogs.map((catalog, index) => {
           const isTarget = catalog.id === targetId;
+          const isSelectedSource = selectedSources.has(catalog.id) && !isTarget;
           const isSuggested = index === 0 && catalog.id === pickSuggestedMergeTarget(group.catalogs);
           const rowExt = formatExternalKeyHint(catalog.externalKey);
 
           return (
             <li key={catalog.id}>
-              <label
-                className={`flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2.5 transition-colors ${
+              <div
+                className={`flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors ${
                   isTarget
                     ? 'bg-violet-50 ring-1 ring-violet-200'
-                    : 'hover:bg-gray-50'
+                    : isSelectedSource
+                      ? 'bg-amber-50/40'
+                      : 'opacity-60 hover:bg-gray-50'
                 }`}
               >
                 <input
@@ -112,7 +134,17 @@ function DuplicateGroupCard({
                   checked={isTarget}
                   onChange={() => onTargetChange(catalog.id)}
                   className="shrink-0 text-violet-600 focus:ring-violet-500"
+                  aria-label={`مقصد: ${catalog.title}`}
                 />
+                {!isTarget && (
+                  <input
+                    type="checkbox"
+                    checked={isSelectedSource}
+                    onChange={() => toggleSource(catalog.id)}
+                    className="shrink-0 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    aria-label={`انتخاب برای ادغام: ${catalog.title}`}
+                  />
+                )}
                 <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-black/5">
                   <ImageWithFallback
                     src={catalog.imageUrl ?? ''}
@@ -131,10 +163,15 @@ function DuplicateGroupCard({
                         مقصد
                       </span>
                     )}
-                    {!isTarget && (
+                    {isSelectedSource && (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700">
                         <Trash2 className="h-2.5 w-2.5" />
-                        حذف
+                        ادغام/حذف
+                      </span>
+                    )}
+                    {!isTarget && !isSelectedSource && (
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-[var(--color-text-muted)]">
+                        کنار گذاشته
                       </span>
                     )}
                     {isSuggested && isTarget && (
@@ -147,17 +184,19 @@ function DuplicateGroupCard({
                   <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-text-muted)]">
                     <span>{catalog.listCount.toLocaleString('fa-IR')} لیست</span>
                     {rowExt && <span className="truncate text-violet-600/80">{rowExt}</span>}
+                    <span className="font-mono text-[10px]" dir="ltr">
+                      {catalog.id}
+                    </span>
                   </div>
                 </div>
                 <Link
                   href={`/admin/catalog/${catalog.id}/edit`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-bold text-[var(--color-text-muted)] hover:bg-white"
+                  className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-[11px] font-bold text-[var(--color-text-muted)] hover:bg-white"
                 >
                   <Pencil className="h-3.5 w-3.5" />
                   ویرایش
                 </Link>
-              </label>
+              </div>
             </li>
           );
         })}
@@ -188,15 +227,32 @@ export default function CatalogDuplicateMergeTab({
   onSimilarMerge,
 }: Props) {
   const [manualSearchOpen, setManualSearchOpen] = useState(false);
+  const [manualIdsText, setManualIdsText] = useState('');
 
   const duplicateEntryCount = useMemo(
     () => groups.reduce((sum, g) => sum + g.catalogs.length, 0),
     [groups]
   );
 
+  const handleManualIdsMerge = async () => {
+    const ids = [
+      ...new Set(
+        manualIdsText
+          .split(/[\s,،\n]+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+      ),
+    ];
+    if (ids.length < 2) {
+      window.alert('حداقل دو شناسه کاتالوگ لازم است (اولی مقصد، بقیه مبدأ).');
+      return;
+    }
+    const [targetId, ...sourceIds] = ids;
+    await onSimilarMerge(targetId!, sourceIds);
+  };
+
   return (
     <div className="space-y-5">
-      {/* جستجوی دستی — جمع‌شونده */}
       <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <button
           type="button"
@@ -205,7 +261,9 @@ export default function CatalogDuplicateMergeTab({
         >
           <div>
             <h3 className="text-sm font-bold text-[var(--color-text)]">جستجوی دستی مشابه</h3>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">عنوان، IMDb، ISBN — برای ادغام دستی</p>
+            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+              عنوان، IMDb، ISBN یا چسباندن شناسه‌ها — فقط موارد انتخاب‌شده ادغام می‌شوند
+            </p>
           </div>
           <ChevronDown
             className={`h-5 w-5 shrink-0 text-[var(--color-text-subtle)] transition-transform ${
@@ -228,17 +286,40 @@ export default function CatalogDuplicateMergeTab({
                   value={similarQuery}
                   onChange={(e) => onSimilarQueryChange(e.target.value)}
                   placeholder="Fight Club، tt0137523، جان ویک…"
-                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-4 pr-10 text-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 ps-4 pe-10 text-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
                 />
               </div>
               <button
                 type="submit"
                 disabled={similarLoading || similarQuery.trim().length < 2}
-                className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-violet-700 disabled:opacity-50"
+                className="min-h-11 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-violet-700 disabled:opacity-50"
               >
                 {similarLoading ? '…' : 'جستجو'}
               </button>
             </form>
+
+            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/60 p-3 space-y-2">
+              <label className="block text-xs font-semibold text-[var(--color-text-muted)]">
+                ادغام با شناسه (اولی = مقصد)
+              </label>
+              <textarea
+                value={manualIdsText}
+                onChange={(e) => setManualIdsText(e.target.value)}
+                rows={2}
+                dir="ltr"
+                placeholder="catalogId-target&#10;catalogId-source-1&#10;catalogId-source-2"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-mono"
+              />
+              <button
+                type="button"
+                disabled={similarMergeLoading || manualIdsText.trim().length < 2}
+                onClick={() => void handleManualIdsMerge()}
+                className="min-h-11 rounded-lg bg-amber-600 px-4 py-2 text-xs font-bold text-white hover:bg-amber-700 disabled:opacity-50"
+              >
+                ادغام با شناسه‌ها
+              </button>
+            </div>
+
             {(similarLoading || similarItems.length > 0 || similarQuery.trim().length >= 2) && (
               <CatalogSimilarMergePanel
                 items={similarItems}
@@ -252,14 +333,13 @@ export default function CatalogDuplicateMergeTab({
         )}
       </section>
 
-      {/* تکرارهای خودکار */}
       <section>
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-[var(--color-text)]">تکرارهای خودکار</h3>
             <p className="mt-1 max-w-xl text-xs leading-relaxed text-[var(--color-text-muted)]">
-              گروه‌های با عنوان یکسان. مقصد پیشنهادی = بیشترین جایگاه در لیست. موارد «حذف» بعد از
-              ادغام از کاتالوگ پاک می‌شوند.
+              عنوان یکسان یا عنوان اصلی مشابه (مثل نسخهٔ دوزبانه). با چک‌باکس انتخاب کنید کدام‌ها
+              ادغام شوند؛ بقیه کنار گذاشته می‌شوند.
             </p>
           </div>
           {groups.length > 0 && (
@@ -297,7 +377,7 @@ export default function CatalogDuplicateMergeTab({
                   targetId={targetId}
                   mergeLoading={mergeLoadingKey === group.groupKey}
                   onTargetChange={(id) => onMergeTargetChange(group.groupKey, id)}
-                  onMerge={() => onMergeGroup(group)}
+                  onMerge={(sourceIds) => onMergeGroup(group, sourceIds)}
                 />
               );
             })}

@@ -44,6 +44,7 @@ export const itemDetailSelect = {
       saveCount: true,
       categoryId: true,
       tags: true,
+      itemDetailEnabled: true,
       categories: {
         select: {
           id: true,
@@ -74,7 +75,7 @@ function loadItemById(id: string) {
  * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنه)
  */
 export const getItemById = cache((id: string) =>
-  unstable_cache(() => loadItemById(id), ['item-by-id-v2', id], {
+  unstable_cache(() => loadItemById(id), ['item-by-id-v3', id], {
     revalidate: 60,
     tags: [itemDetailCacheTag(id)],
   })()

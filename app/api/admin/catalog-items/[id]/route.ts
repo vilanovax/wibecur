@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { getCatalogItemDetail, updateCatalogItem } from '@/lib/catalog-items';
+import {
+  deleteCatalogItemCompletely,
+  getCatalogItemDetail,
+  updateCatalogItem,
+} from '@/lib/catalog-items';
 import { ensureImageInLiara } from '@/lib/object-storage';
 
 /** GET /api/admin/catalog-items/[id] */
@@ -90,5 +94,30 @@ export async function PATCH(
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'خطا';
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+/** DELETE /api/admin/catalog-items/[id] — حذف کامل کاتالوگ */
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await requireAdmin();
+    const { id } = await params;
+    const result = await deleteCatalogItemCompletely(
+      prisma,
+      id,
+      session.user?.id ?? null
+    );
+    return NextResponse.json({
+      success: true,
+      ...result,
+      message: `کاتالوگ حذف شد · ${result.softDeletedPlacements.toLocaleString('fa-IR')} جایگاه به زباله‌دان رفت`,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'خطا';
+    const status = message.includes('یافت نشد') ? 404 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

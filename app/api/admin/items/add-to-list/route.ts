@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
       catalogItemId,
       listId,
       order,
+      position,
       listNote,
       tip,
       commentsEnabled,
@@ -23,6 +24,8 @@ export async function POST(request: NextRequest) {
       catalogItemId?: string;
       listId?: string;
       order?: number;
+      /** جایگاه ۱‌پایه در لیست (۱ = اول). اگر نباشد، ته لیست. */
+      position?: number;
       listNote?: string;
       tip?: string | null;
       commentsEnabled?: boolean;
@@ -36,10 +39,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let resolvedOrder = order;
+    if (
+      resolvedOrder === undefined &&
+      typeof position === 'number' &&
+      Number.isFinite(position)
+    ) {
+      resolvedOrder = Math.max(0, Math.floor(position) - 1);
+    }
+
     const item = await addCatalogItemToList(prisma, {
       catalogItemId,
       listId,
-      order,
+      order: resolvedOrder,
       listNote,
       commentsEnabled,
       maxComments,

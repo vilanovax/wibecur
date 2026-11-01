@@ -338,7 +338,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
           title,
           description,
           metadata: (() => {
-            const meta = {
+            const meta: Record<string, unknown> = {
               ...(formData.metadata as Record<string, unknown>),
               ...(isMixedList && !hasCatalog ? { entryKind } : {}),
             };

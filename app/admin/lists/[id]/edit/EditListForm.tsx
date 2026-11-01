@@ -43,6 +43,7 @@ type ListEdit = {
   isFeatured: boolean;
   isActive: boolean;
   commentsEnabled: boolean;
+  itemDetailEnabled: boolean;
   saveCount: number;
   viewCount: number;
   itemCount: number;
@@ -64,6 +65,7 @@ type FormState = {
   isFeatured: boolean;
   isActive: boolean;
   commentsEnabled: boolean;
+  itemDetailEnabled: boolean;
 };
 
 function buildInitialForm(list: ListEdit): FormState {
@@ -79,6 +81,7 @@ function buildInitialForm(list: ListEdit): FormState {
     isFeatured: list.isFeatured,
     isActive: list.isActive,
     commentsEnabled: list.commentsEnabled ?? true,
+    itemDetailEnabled: list.itemDetailEnabled ?? true,
   };
 }
 
@@ -453,6 +456,7 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
                       isFeatured: formData.isFeatured,
                       isActive: formData.isActive,
                       commentsEnabled: formData.commentsEnabled,
+                      itemDetailEnabled: formData.itemDetailEnabled,
                     }}
                     onChange={(key, value) => setFormData((p) => ({ ...p, [key]: value }))}
                   />

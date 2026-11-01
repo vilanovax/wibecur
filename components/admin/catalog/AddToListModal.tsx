@@ -27,6 +27,7 @@ export default function AddToListModal({
 }: AddToListModalProps) {
   const [listId, setListId] = useState('');
   const [tip, setTip] = useState('');
+  const [position, setPosition] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,6 +38,7 @@ export default function AddToListModal({
   const handleClose = () => {
     setListId('');
     setTip('');
+    setPosition('');
     setError('');
     onClose();
   };
@@ -51,6 +53,12 @@ export default function AddToListModal({
     setError('');
     try {
       const tipText = tip.trim();
+      const positionNum = position.trim() ? Number(position.trim()) : undefined;
+      if (positionNum !== undefined && (!Number.isFinite(positionNum) || positionNum < 1)) {
+        setError('جایگاه باید عدد ۱ یا بیشتر باشد');
+        setLoading(false);
+        return;
+      }
       const res = await fetch('/api/admin/items/add-to-list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,6 +66,7 @@ export default function AddToListModal({
           catalogItemId: catalogId,
           listId,
           ...(tipText ? { tip: tipText } : {}),
+          ...(positionNum !== undefined ? { position: positionNum } : {}),
         }),
       });
       const data = await res.json();
@@ -112,6 +121,21 @@ export default function AddToListModal({
                   </option>
                 ))}
               </select>
+              <div>
+                <label className="block text-xs font-semibold text-[var(--color-text-muted)] mb-1">
+                  جایگاه در لیست (اختیاری)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  inputMode="numeric"
+                  dir="ltr"
+                  value={position}
+                  onChange={(e) => setPosition(e.target.value)}
+                  placeholder="خالی = ته لیست · ۱ = اول"
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:ring-2 focus:ring-violet-500/25"
+                />
+              </div>
               <ItemTipField value={tip} onChange={setTip} compact />
             </>
           )}
@@ -120,14 +144,14 @@ export default function AddToListModal({
             <button
               type="submit"
               disabled={loading || available.length === 0}
-              className="flex-1 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold disabled:opacity-50"
+              className="flex-1 min-h-11 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-bold disabled:opacity-50"
             >
               {loading ? '…' : 'افزودن'}
             </button>
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
+              className="min-h-11 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"
             >
               انصراف
             </button>

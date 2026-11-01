@@ -40,6 +40,7 @@ type FormState = {
   isFeatured: boolean;
   isActive: boolean;
   commentsEnabled: boolean;
+  itemDetailEnabled: boolean;
 };
 
 const sectionCard =
@@ -68,6 +69,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
     isFeatured: false,
     isActive: false,
     commentsEnabled: true,
+    itemDetailEnabled: true,
   });
 
   const finalizedSlug = useMemo(() => finalizeListSlug(formData.slug), [formData.slug]);
@@ -314,6 +316,7 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
                       isFeatured: formData.isFeatured,
                       isActive: formData.isActive,
                       commentsEnabled: formData.commentsEnabled,
+                      itemDetailEnabled: formData.itemDetailEnabled,
                     }}
                     onChange={(key, value) => setFormData((p) => ({ ...p, [key]: value }))}
                   />

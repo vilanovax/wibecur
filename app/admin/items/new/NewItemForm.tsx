@@ -262,7 +262,7 @@ export default function NewItemForm({
         return;
       }
 
-      const metadata = {
+      const metadata: Record<string, unknown> = {
         ...(formData.metadata as Record<string, unknown>),
         ...(isMixedList ? { entryKind } : {}),
       };

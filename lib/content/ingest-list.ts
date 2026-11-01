@@ -145,6 +145,7 @@ function listPatch(list: IngestListInput, categoryId: string): Prisma.listsUpdat
   if (list.isFeatured !== undefined) data.isFeatured = list.isFeatured;
   if (list.isActive !== undefined) data.isActive = list.isActive;
   if (list.commentsEnabled !== undefined) data.commentsEnabled = list.commentsEnabled;
+  if (list.itemDetailEnabled !== undefined) data.itemDetailEnabled = list.itemDetailEnabled;
   if (list.tags !== undefined) data.tags = list.tags;
   return data;
 }
@@ -280,6 +281,7 @@ export async function ingestListDocument(
         isFeatured: document.list.isFeatured ?? false,
         isActive: document.list.isActive ?? true,
         commentsEnabled: document.list.commentsEnabled ?? true,
+        itemDetailEnabled: document.list.itemDetailEnabled ?? true,
         tags: document.list.tags ?? [],
       },
     });

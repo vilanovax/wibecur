@@ -336,6 +336,8 @@ model lists {
   saveCount            Int                   @default(0)
   itemCount            Int                   @default(0)
   commentsEnabled      Boolean               @default(true)
+  /// دکمهٔ «مشاهده» و صفحهٔ جزئیات آیتم برای این لیست
+  itemDetailEnabled    Boolean               @default(true)
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   isActive             Boolean               @default(true)

@@ -65,6 +65,8 @@ interface ItemPreviewSheetProps {
   categoryIcon?: string | null;
   categoryName?: string | null;
   listSlug?: string;
+  /** اگر false، دکمهٔ «مشاهده» و لینک صفحهٔ جزئیات مخفی می‌شود */
+  itemDetailEnabled?: boolean;
   onPrev?: () => void;
   onNext?: () => void;
   /** Preload adjacent posters while current item is shown */
@@ -216,6 +218,7 @@ const PreviewActions = memo(function PreviewActions({
   layout = 'stacked',
   externalUrl,
   categorySlug,
+  itemDetailEnabled = true,
 }: {
   item: ItemPreviewData;
   onClose: () => void;
@@ -223,6 +226,7 @@ const PreviewActions = memo(function PreviewActions({
   layout?: 'stacked' | 'inline';
   externalUrl?: string | null;
   categorySlug?: string | null;
+  itemDetailEnabled?: boolean;
 }) {
   const router = useRouter();
   const quickActions = useMemo(
@@ -251,7 +255,7 @@ const PreviewActions = memo(function PreviewActions({
     </>
   );
 
-  const fullPageLink = (
+  const fullPageLink = itemDetailEnabled ? (
     <Link
       href={`/items/${item.id}`}
       prefetch={false}
@@ -263,7 +267,7 @@ const PreviewActions = memo(function PreviewActions({
     >
       مشاهده
     </Link>
-  );
+  ) : null;
 
   const externalLink = externalUrl?.trim() ? (
     <a
@@ -298,10 +302,12 @@ const PreviewActions = memo(function PreviewActions({
       <div className="flex items-center gap-2" aria-label="ذخیره و پسندیدن">
         {reactionButtons}
       </div>
-      <div className="flex gap-2">
-        {fullPageLink}
-        {externalLink}
-      </div>
+      {(fullPageLink || externalLink) && (
+        <div className="flex gap-2">
+          {fullPageLink}
+          {externalLink}
+        </div>
+      )}
     </div>
   );
 });
@@ -379,6 +385,7 @@ const PreviewBody = memo(function PreviewBody({
   onClose,
   posterPriority,
   personHrefs,
+  itemDetailEnabled = true,
 }: {
   item: ItemPreviewData;
   categorySlug?: string | null;
@@ -386,6 +393,7 @@ const PreviewBody = memo(function PreviewBody({
   onClose: () => void;
   posterPriority: boolean;
   personHrefs?: Record<string, string>;
+  itemDetailEnabled?: boolean;
 }) {
   const derived = useMemo(
     () => derivePreviewContent(item, categorySlug, personHrefs),
@@ -412,6 +420,7 @@ const PreviewBody = memo(function PreviewBody({
       onClose={onClose}
       externalUrl={item.externalUrl}
       categorySlug={itemCategorySlug}
+      itemDetailEnabled={itemDetailEnabled}
     />
   );
 
@@ -519,6 +528,7 @@ export default function ItemPreviewSheet({
   categorySlug,
   categoryIcon,
   listSlug,
+  itemDetailEnabled = true,
   onPrev,
   onNext,
   adjacentImageUrls,
@@ -646,6 +656,7 @@ export default function ItemPreviewSheet({
           layout="inline"
           externalUrl={item.externalUrl}
           categorySlug={itemCategorySlug}
+          itemDetailEnabled={itemDetailEnabled}
         />
       </div>
     ) : null;
@@ -670,6 +681,7 @@ export default function ItemPreviewSheet({
           onClose={onClose}
           posterPriority={posterPriority}
           personHrefs={personHrefs}
+          itemDetailEnabled={itemDetailEnabled}
         />
       </div>
     </BottomSheet>

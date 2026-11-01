@@ -1,8 +1,13 @@
 'use client';
 
-import { Globe, Star, Power, MessageSquare } from 'lucide-react';
+import { Eye, Globe, Star, Power, MessageSquare } from 'lucide-react';
 
-type ToggleKey = 'isPublic' | 'isFeatured' | 'isActive' | 'commentsEnabled';
+type ToggleKey =
+  | 'isPublic'
+  | 'isFeatured'
+  | 'isActive'
+  | 'commentsEnabled'
+  | 'itemDetailEnabled';
 
 const TOGGLES: Array<{
   key: ToggleKey;
@@ -39,6 +44,13 @@ const TOGGLES: Array<{
     icon: MessageSquare,
     onClass: 'border-indigo-400 bg-indigo-50/80 ring-1 ring-indigo-400/40',
   },
+  {
+    key: 'itemDetailEnabled',
+    label: 'صفحهٔ جزئیات',
+    hint: 'دکمهٔ مشاهده در پیش‌نمایش آیتم',
+    icon: Eye,
+    onClass: 'border-sky-400 bg-sky-50/80 ring-1 ring-sky-400/40',
+  },
 ];
 
 interface ListEditStatusTogglesProps {
@@ -48,7 +60,7 @@ interface ListEditStatusTogglesProps {
 
 export default function ListEditStatusToggles({ values, onChange }: ListEditStatusTogglesProps) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2" dir="rtl">
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-2" dir="rtl">
       {TOGGLES.map(({ key, label, hint, icon: Icon, onClass }) => {
         const on = values[key];
         return (
@@ -56,7 +68,7 @@ export default function ListEditStatusToggles({ values, onChange }: ListEditStat
             key={key}
             type="button"
             onClick={() => onChange(key, !on)}
-            className={`rounded-xl border p-3 text-right transition-all ${
+            className={`min-h-11 rounded-xl border p-3 text-right transition-all ${
               on ? onClass : 'border-[var(--color-border-muted)] hover:border-[var(--color-border)] hover:bg-[var(--color-bg)]/60'
             }`}
           >

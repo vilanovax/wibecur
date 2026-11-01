@@ -97,6 +97,7 @@ type ListDetail = {
   isPublic?: boolean;
   isFeatured?: boolean;
   commentsEnabled?: boolean;
+  itemDetailEnabled?: boolean;
   categories: Category;
   items: Item[];
   users: User;
@@ -738,6 +739,7 @@ export default function ListDetailClient({
     isPublic: listDraft?.isPublic ?? list.isPublic ?? true,
     isFeatured: listDraft?.isFeatured ?? list.isFeatured ?? false,
     commentsEnabled: listDraft?.commentsEnabled ?? list.commentsEnabled ?? true,
+    itemDetailEnabled: listDraft?.itemDetailEnabled ?? list.itemDetailEnabled ?? true,
   };
 
   const openListEditor = () => {
@@ -1459,6 +1461,9 @@ export default function ListDetailClient({
           categoryIcon={categoryIcon}
           categoryName={list.categories?.name}
           listSlug={list.slug}
+          itemDetailEnabled={
+            (listDraft?.itemDetailEnabled ?? list.itemDetailEnabled) !== false
+          }
           personHrefs={personHrefs}
           onPrev={canPreviewPrev ? goPreviewPrev : undefined}
           onNext={canPreviewNext ? goPreviewNext : undefined}
