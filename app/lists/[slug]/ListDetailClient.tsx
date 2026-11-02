@@ -37,6 +37,7 @@ import { buildItemSearchHaystack } from '@/lib/search-keywords';
 import { isLocationCategorySlug } from '@/lib/category-layout';
 import { itemHasMapLocation } from '@/lib/list-item-quick-actions';
 import { normalizeSearchQuery } from '@/lib/list-search';
+import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
 import { SponsoredPlacementStack } from '@/components/shared/SponsoredTextBanner';
 import type { ListPagePlacements } from '@/lib/sponsored-placements';
 import { isLifestyleCategory, sourceCategorySlugFromItem } from '@/lib/list-entry';
@@ -67,6 +68,7 @@ type Category = {
   name: string;
   slug: string;
   icon: string;
+  coverDisplayMode?: string | null;
 } | null;
 
 type User = {
@@ -1056,6 +1058,11 @@ export default function ListDetailClient({
   };
 
   const heroImage = list.bannerImage ?? list.horizontalImage ?? list.coverImage ?? '';
+  const coverMode = normalizeCoverDisplayMode(list.categories?.coverDisplayMode);
+  /** ui: روی کاور | baked: داخل تصویر (+ هدر) | photo: زیر عکس */
+  const showHeroOverlayCopy = coverMode === 'ui';
+  const showHeavyHeroScrim = coverMode === 'ui';
+  const showTitleBelowHero = coverMode === 'photo';
 
   const listHeroChips = (
     <>
@@ -1145,7 +1152,11 @@ export default function ListDetailClient({
             listTitle={list.title}
             priority
           />
-          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/35 to-black/10" />
+          {showHeavyHeroScrim ? (
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/35 to-black/10" />
+          ) : (
+            <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-black/10" />
+          )}
           <div className="absolute inset-s-4 top-4 z-10">
             <Button
               type="button"
@@ -1165,28 +1176,44 @@ export default function ListDetailClient({
               </span>
             </div>
           )}
-          <div className="absolute inset-x-0 bottom-0 z-10 p-4 pb-4 text-start">
-            <h1 className="text-h1 font-bold leading-tight text-background line-clamp-2">{displayTitle}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-              {list.categories && (
-                <Link
-                  href={`/categories/${list.categories.slug}`}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md wibe-caption font-medium bg-background/15 backdrop-blur text-background/95"
-                >
-                  {list.categories.icon} {list.categories.name}
-                </Link>
-              )}
-              {badgeLabel && (
-                <span className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeClass ?? 'bg-background/20 text-background'}`}>
-                  {badgeLabel}
-                </span>
-              )}
+          {showHeroOverlayCopy ? (
+            <div className="absolute inset-x-0 bottom-0 z-10 p-4 pb-4 text-start">
+              <h1 className="text-h1 font-bold leading-tight text-background line-clamp-2">
+                {displayTitle}
+              </h1>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {list.categories && (
+                  <Link
+                    href={`/categories/${list.categories.slug}`}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md wibe-caption font-medium bg-background/15 backdrop-blur text-background/95"
+                  >
+                    {list.categories.icon} {list.categories.name}
+                  </Link>
+                )}
+                {badgeLabel && (
+                  <span
+                    className={`inline-flex px-2.5 py-0.5 rounded-pill wibe-caption font-semibold ${badgeClass ?? 'bg-background/20 text-background'}`}
+                  >
+                    {badgeLabel}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <span className="sr-only">{displayTitle}</span>
+          )}
         </div>
       </section>
 
       <div className="relative z-20 space-y-2 px-4 pt-3 lg:hidden">
+        {showTitleBelowHero ? (
+          <div className="text-start">
+            <h1 className="text-h1 font-bold leading-snug text-foreground line-clamp-2">
+              {displayTitle}
+            </h1>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">{listHeroChips}</div>
+          </div>
+        ) : null}
         <ListConsumeActionBar
           isOwner={isOwner}
           isBookmarked={isBookmarked}

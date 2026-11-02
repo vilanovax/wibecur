@@ -66,6 +66,8 @@ function listToPreview(l: ListOption): PreviewList {
     saveCount: l.saveCount,
     itemCount: l.itemCount,
     badge: l.badge,
+    coverDisplayMode: l.categories?.coverDisplayMode ?? null,
+    categorySlug: l.categories?.slug ?? null,
   };
 }
 
@@ -436,9 +438,8 @@ function FeaturedManagementInner({
   }
 
   return (
-    <div className="space-y-6 pb-8" dir="rtl">
+    <div className="space-y-4 pb-8" dir="rtl">
       <FeaturedHeroHeader
-        hasActiveSlot={!!data.current}
         upcomingCount={data.upcoming.length}
         onRefresh={fetchData}
         refreshing={loading}

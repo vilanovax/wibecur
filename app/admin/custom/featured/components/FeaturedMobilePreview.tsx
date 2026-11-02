@@ -2,6 +2,11 @@
 
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { Smartphone } from 'lucide-react';
+import {
+  COVER_DISPLAY_MODE_OPTIONS,
+  normalizeCoverDisplayMode,
+  type CoverDisplayMode,
+} from '@/lib/admin/category-form-constants';
 
 export type PreviewList = {
   title: string;
@@ -10,6 +15,8 @@ export type PreviewList = {
   saveCount: number;
   itemCount?: number;
   badge?: string | null;
+  coverDisplayMode?: string | null;
+  categorySlug?: string | null;
 };
 
 type Props = {
@@ -38,16 +45,23 @@ export default function FeaturedMobilePreview({ list, mode, label }: Props) {
           ? 'پیش‌نمایش انتخاب'
           : 'پیش‌نمایش');
 
+  const coverMode: CoverDisplayMode = normalizeCoverDisplayMode(list?.coverDisplayMode);
+  const coverModeLabel =
+    COVER_DISPLAY_MODE_OPTIONS.find((o) => o.value === coverMode)?.label ?? 'عنوان روی کاور';
+  const showCoverScrim = coverMode === 'ui';
+  const showCoverTitle = coverMode !== 'baked';
+  const showTitleBelow = coverMode === 'baked' || coverMode === 'photo';
+
   return (
     <div className="sticky top-4" dir="rtl">
-      <div className="flex items-center gap-2 mb-3 text-xs font-medium text-wibe-secondary">
-        <Smartphone className="w-4 h-4" />
+      <div className="mb-3 flex items-center gap-2 text-xs font-medium text-wibe-secondary">
+        <Smartphone className="size-4" aria-hidden />
         {modeLabel}
       </div>
       <div className="mx-auto max-w-70 rounded-[2rem] border-[6px] border-gray-800 bg-gray-900 p-2 shadow-xl">
-        <div className="rounded-[1.4rem] overflow-hidden bg-white dark:bg-gray-800">
+        <div className="overflow-hidden rounded-[1.4rem] bg-white dark:bg-gray-800">
           {!list ? (
-            <div className="h-52 flex items-center justify-center bg-(--color-bg) text-sm text-wibe-secondary p-4 text-center">
+            <div className="flex h-52 items-center justify-center bg-(--color-bg) p-4 text-center text-sm text-wibe-secondary">
               لیستی برای پیش‌نمایش انتخاب نشده
             </div>
           ) : (
@@ -56,34 +70,55 @@ export default function FeaturedMobilePreview({ list, mode, label }: Props) {
                 <ImageWithFallback
                   src={list.coverImage ?? ''}
                   alt={list.title}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                   fallbackIcon="🎬"
-                  fallbackClassName="w-full h-full"
+                  fallbackClassName="h-full w-full"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-transparent" />
-                <div className="absolute top-2 right-2">
-                  <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {showCoverScrim ? (
+                  <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-transparent" />
+                ) : (
+                  <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-black/10" />
+                )}
+                <div className="absolute inset-e-2 top-2">
+                  <span className="rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
                     {badgeLabels[list.badge ?? 'featured'] ?? '⭐ ویژه'}
                   </span>
                 </div>
-                <div className="absolute bottom-2 right-3 left-3">
-                  <h3 className="text-white text-sm font-bold line-clamp-2">{list.title}</h3>
-                  {list.description && (
-                    <p className="text-white/85 text-[10px] mt-0.5 line-clamp-1">
-                      {list.description}
+                {showCoverTitle && coverMode === 'ui' ? (
+                  <div className="absolute inset-x-3 bottom-2 text-start">
+                    <h3 className="line-clamp-2 text-sm font-bold text-white">{list.title}</h3>
+                    {list.description ? (
+                      <p className="mt-0.5 line-clamp-1 text-[10px] text-white/85">
+                        {list.description}
+                      </p>
+                    ) : null}
+                    <p className="mt-1 text-[10px] text-white/80">
+                      ⭐ {list.saveCount.toLocaleString('fa-IR')} ·{' '}
+                      {(list.itemCount ?? 0).toLocaleString('fa-IR')} آیتم
                     </p>
-                  )}
-                  <p className="text-white/80 text-[10px] mt-1">
-                    ⭐ {list.saveCount.toLocaleString('fa-IR')} ·{' '}
-                    {(list.itemCount ?? 0).toLocaleString('fa-IR')} آیتم
+                  </div>
+                ) : null}
+              </div>
+              {showTitleBelow ? (
+                <div className="border-t border-gray-100 px-3 py-2 text-start dark:border-gray-700">
+                  <h3 className="line-clamp-2 text-xs font-bold text-(--color-text)">
+                    {list.title}
+                  </h3>
+                  <p className="mt-0.5 text-[10px] text-wibe-secondary">
+                    حالت کاور دسته: {coverModeLabel}
                   </p>
                 </div>
-              </div>
-              <div className="p-2 flex gap-1.5 bg-white dark:bg-gray-800">
-                <div className="flex-1 py-2 rounded-lg bg-primary text-white text-[10px] font-medium text-center">
+              ) : (
+                <p className="border-t border-gray-100 px-3 py-1.5 text-[10px] text-wibe-secondary dark:border-gray-700">
+                  حالت کاور دسته: {coverModeLabel}
+                  {list.categorySlug ? ` · /${list.categorySlug}` : ''}
+                </p>
+              )}
+              <div className="flex gap-1.5 bg-white p-2 dark:bg-gray-800">
+                <div className="flex-1 rounded-lg bg-primary py-2 text-center text-[10px] font-medium text-white">
                   ذخیره کن ⭐
                 </div>
-                <div className="flex-1 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-wibe-secondary dark:text-(--color-text-subtle) text-[10px] font-medium text-center">
+                <div className="flex-1 rounded-lg border border-gray-200 py-2 text-center text-[10px] font-medium text-wibe-secondary dark:border-gray-700 dark:text-(--color-text-subtle)">
                   مشاهده لیست
                 </div>
               </div>
@@ -91,6 +126,12 @@ export default function FeaturedMobilePreview({ list, mode, label }: Props) {
           )}
         </div>
       </div>
+      <p className="mt-2 text-center wibe-caption text-wibe-secondary">
+        تنظیم حالت متن/تصویر از{' '}
+        <a href="/admin/categories" className="text-primary hover:underline">
+          دسته‌بندی‌ها
+        </a>
+      </p>
     </div>
   );
 }

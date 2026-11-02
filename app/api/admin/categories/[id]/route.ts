@@ -8,6 +8,7 @@ import { minimalCategory } from '@/lib/audit/snapshots';
 import type { UserRole } from '@prisma/client';
 import {
   normalizeCategoryLayoutType,
+  normalizeCoverDisplayMode,
   normalizeOptionalHexColor,
   normalizeOptionalUrl,
 } from '@/lib/admin/category-form-constants';
@@ -50,6 +51,7 @@ export async function PUT(
       trendingWeight,
       heroImage,
       layoutType,
+      coverDisplayMode,
     } = body;
 
     // Validate required fields
@@ -115,6 +117,7 @@ export async function PUT(
         description,
         ...(finalHeroImage !== undefined && { heroImage: finalHeroImage }),
         layoutType: normalizeCategoryLayoutType(layoutType),
+        coverDisplayMode: normalizeCoverDisplayMode(coverDisplayMode),
         order: order || 0,
         isActive: isActive !== undefined ? isActive : true,
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,

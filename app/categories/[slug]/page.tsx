@@ -127,7 +127,11 @@ export default async function CategoryPage({
           }
           viralSpotlightSection={
             featuredSpotlight ? (
-              <CategoryViralSpotlightSectionServer inset list={featuredSpotlight} />
+              <CategoryViralSpotlightSectionServer
+                inset
+                list={featuredSpotlight}
+                coverDisplayMode={pageData.category.coverDisplayMode}
+              />
             ) : null
           }
           mostSavedItemsSection={

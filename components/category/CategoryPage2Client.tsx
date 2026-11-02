@@ -135,7 +135,12 @@ export default function CategoryPage2Client({
   );
 
   const viralSpotlightClient = featuredSpotlight ? (
-    <ViralSpotlightSectionLazy list={featuredSpotlight} accentColor={accentColor} inset />
+    <ViralSpotlightSectionLazy
+      list={featuredSpotlight}
+      accentColor={accentColor}
+      inset
+      coverDisplayMode={category.coverDisplayMode}
+    />
   ) : null;
 
   const itemLayout = isPortraitCoverCategory(category.slug) ? 'poster' : 'tile';

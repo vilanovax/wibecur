@@ -20,7 +20,13 @@ export interface HomeListData {
   itemCount: number;
   likes: number;
   badge?: 'trending' | 'new' | 'featured';
-  categories?: { id: string; name: string; slug: string; icon: string } | null;
+  categories?: {
+    id: string;
+    name: string;
+    slug: string;
+    icon: string;
+    coverDisplayMode?: string | null;
+  } | null;
   creator?: HomeListCreator | null;
   /** ذخیره در ۷ روز اخیر — برای social proof */
   weeklySaves?: number;

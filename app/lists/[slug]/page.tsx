@@ -19,6 +19,7 @@ import {
 import { collectPersonLinkTargets } from '@/lib/item-metadata-display';
 import { resolvePublicPersonHrefs } from '@/lib/people-server';
 import { displayedItemCount } from '@/lib/list-item-count';
+import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
 
 export const revalidate = 120; // ISR: ۲ دقیقه (viewCount ممکن است کمی تأخیر داشته باشد)
 
@@ -52,6 +53,7 @@ function loadListBySlug(slug: string) {
           slug: true,
           icon: true,
           isActive: true,
+          coverDisplayMode: true,
         },
       },
       users: { select: { id: true, name: true, image: true, username: true, curatorLevel: true, role: true, viralListsCount: true, totalLikesReceived: true } },
@@ -80,7 +82,7 @@ function loadListBySlug(slug: string) {
  * - `cache()` React: dedupe داخل یک request (generateMetadata + بدنهٔ صفحه).
  */
 const getListBySlug = cache((slug: string) =>
-  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v6', slug], {
+  unstable_cache(() => loadListBySlug(slug), ['list-by-slug-v7', slug], {
     revalidate: 300,
     tags: [listDetailCacheTag(slug)],
   })()
@@ -174,10 +176,16 @@ export default async function ListDetailPage({
     listWithCreator.coverImage ||
     '';
 
+  /** در حالت ui عنوان روی هیرو است — هدر موبایل تکرار نکند */
+  const coverMode = normalizeCoverDisplayMode(
+    (list.categories as { coverDisplayMode?: string | null } | null)?.coverDisplayMode
+  );
+  const headerTitle = coverMode === 'ui' ? undefined : list.title;
+
   return (
     <div className="bg-background lg:pt-1">
       <HomeLcpPreload href={heroLcpImage} />
-      <Header title={list.title} showBack hideTitleOnDesktop showDesktopSearch={false} />
+      <Header title={headerTitle} showBack hideTitleOnDesktop showDesktopSearch={false} />
       <ListDetailClient
         list={listWithCreator}
         sponsoredPlacements={sponsoredPlacements}

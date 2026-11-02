@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles, AlertCircle, Plus, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { AlertCircle, Plus, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import type { SlotItem } from '../FeaturedManagementClient';
 
 type Props = {
@@ -32,55 +32,49 @@ export default function FeaturedStatusStrip({
 
     return (
       <article
-        className="rounded-2xl border border-emerald-200/80 dark:border-emerald-800/60 bg-linear-to-l from-emerald-50/90 to-(--color-surface) p-5 shadow-sm"
+        className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4"
         dir="rtl"
       >
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex gap-4 min-w-0 flex-1">
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-              <Sparkles className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300 mb-1">الان در هوم اپ</p>
-              <h2 className="text-lg font-bold leading-snug text-(--color-text)">
-                {current.list.title}
-              </h2>
-              <div className="flex flex-wrap gap-2 mt-1 text-sm text-wibe-secondary">
-                {catName && (
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 text-xs">
-                    {catName}
-                  </span>
-                )}
-                <span>
-                  {formatDate(current.startAt)}
-                  {current.endAt ? ` → ${formatDate(current.endAt)}` : ' → نامحدود'}
-                </span>
-                {remainingText && (
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">· {remainingText}</span>
-                )}
-              </div>
-              <p className="text-xs text-(--color-text-subtle) mt-1">
-                {current.viewListCount.toLocaleString('fa-IR')} مشاهده ·{' '}
-                {current.quickSaveCount.toLocaleString('fa-IR')} ذخیره سریع
-              </p>
-            </div>
+        <div className="flex flex-col gap-3">
+          <div className="min-w-0">
+            <p className="mb-1 text-sm font-medium text-emerald-800">
+              الان در هوم اپ
+            </p>
+            <h2 className="text-lg font-bold leading-snug text-(--color-text)">
+              {current.list.title}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-wibe-secondary">
+              {[
+                catName,
+                current.endAt
+                  ? `${formatDate(current.startAt)} → ${formatDate(current.endAt)}`
+                  : formatDate(current.startAt),
+                remainingText && remainingText !== 'نامحدود'
+                  ? remainingText
+                  : !current.endAt
+                    ? 'نامحدود'
+                    : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
           </div>
-          <div className="flex flex-wrap gap-2 shrink-0">
+          <div className="flex flex-wrap gap-2">
             <a
               href={`/lists/${current.list.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) px-3 text-sm hover:bg-(--color-bg)"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm hover:bg-(--color-bg)"
             >
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="size-4" strokeWidth={1.5} />
               لیست
             </a>
             <button
               type="button"
               onClick={onEdit}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) px-3 text-sm hover:bg-(--color-bg)"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm hover:bg-(--color-bg)"
             >
-              <Pencil className="w-4 h-4" />
+              <Pencil className="size-4" strokeWidth={1.5} />
               زمان
             </button>
             <button
@@ -88,7 +82,7 @@ export default function FeaturedStatusStrip({
               onClick={onRemove}
               className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm text-red-700 hover:bg-red-50"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="size-4" strokeWidth={1.5} />
               حذف
             </button>
           </div>
@@ -122,9 +116,9 @@ export default function FeaturedStatusStrip({
       <button
         type="button"
         onClick={onAddClick}
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:opacity-90 shrink-0"
+        className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-white hover:opacity-90"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="size-4" strokeWidth={2} />
         زمان‌بندی منتخب
       </button>
     </div>

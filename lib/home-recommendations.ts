@@ -29,7 +29,14 @@ export type HomeRecommendationItem = {
   saveCount: number;
   itemCount: number;
   likes: number;
-  categories: { id: string; name: string; slug: string; icon: string; isActive?: boolean } | null;
+  categories: {
+    id: string;
+    name: string;
+    slug: string;
+    icon: string;
+    isActive?: boolean;
+    coverDisplayMode?: string | null;
+  } | null;
   reasonType: 'similar' | 'category' | 'popular';
   creator?: {
     id: string;
@@ -55,7 +62,16 @@ const listSelect = {
   itemCount: true,
   likeCount: true,
   categoryId: true,
-  categories: { select: { id: true, name: true, slug: true, icon: true, isActive: true } },
+  categories: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      icon: true,
+      isActive: true,
+      coverDisplayMode: true,
+    },
+  },
   users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
 } as const;
 

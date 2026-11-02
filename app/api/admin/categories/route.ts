@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth';
 import { nanoid } from 'nanoid';
 import {
   normalizeCategoryLayoutType,
+  normalizeCoverDisplayMode,
   normalizeOptionalHexColor,
 } from '@/lib/admin/category-form-constants';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
       trendingWeight,
       heroImage,
       layoutType,
+      coverDisplayMode,
     } = body;
 
     // Validate required fields
@@ -76,6 +78,7 @@ export async function POST(request: NextRequest) {
         description,
         heroImage: finalHeroImage,
         layoutType: normalizeCategoryLayoutType(layoutType),
+        coverDisplayMode: normalizeCoverDisplayMode(coverDisplayMode),
         order: order || 0,
         isActive: isActive !== undefined ? isActive : false,
         trendingWeight: weight,

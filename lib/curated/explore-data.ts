@@ -39,7 +39,14 @@ const exploreListSelect = {
   itemCount: true,
   createdAt: true,
   categories: {
-    select: { id: true, name: true, slug: true, icon: true, isActive: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      icon: true,
+      isActive: true,
+      coverDisplayMode: true,
+    },
   },
   users: {
     select: {
@@ -199,6 +206,8 @@ function mapCategoryMeta(
     name: categories.name,
     icon: categories.icon,
     slug: categories.slug,
+    coverDisplayMode:
+      (categories as { coverDisplayMode?: string | null }).coverDisplayMode ?? null,
   };
 }
 
@@ -255,6 +264,13 @@ function mapTrendingToCurated(t: TrendingListResult, rising = false): CuratedLis
     title: t.title,
     subtitle: t.description ?? null,
     categoryId: t.categoryId ?? 'unknown',
+    category: t.categorySlug
+      ? {
+          name: '',
+          slug: t.categorySlug,
+          coverDisplayMode: t.coverDisplayMode ?? null,
+        }
+      : null,
     coverUrl: resolveListCover({
       coverImage: t.coverImage,
       horizontalImage: t.horizontalImage,

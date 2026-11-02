@@ -58,6 +58,7 @@ async function computeHomePageData(): Promise<HomeData> {
               slug: true,
               icon: true,
               isActive: true,
+              coverDisplayMode: true,
             },
           },
           users: {
@@ -128,6 +129,7 @@ async function computeHomePageData(): Promise<HomeData> {
       slug: string;
       icon: string;
       isActive?: boolean;
+      coverDisplayMode?: string | null;
     } | null;
     users?: {
       id: string;
@@ -169,6 +171,7 @@ async function computeHomePageData(): Promise<HomeData> {
             name: l.categories.name,
             slug: l.categories.slug,
             icon: l.categories.icon,
+            coverDisplayMode: l.categories.coverDisplayMode ?? null,
           }
         : null,
       creator: l.users
@@ -208,7 +211,13 @@ async function computeHomePageData(): Promise<HomeData> {
           ? 'trending'
           : undefined) as 'trending' | 'new' | 'featured' | undefined,
       categories: t.categorySlug
-        ? { slug: t.categorySlug, name: '', id: '', icon: '' }
+        ? {
+            slug: t.categorySlug,
+            name: '',
+            id: '',
+            icon: '',
+            coverDisplayMode: t.coverDisplayMode ?? null,
+          }
         : undefined,
       creator: t.creator
         ? {
@@ -244,7 +253,13 @@ async function computeHomePageData(): Promise<HomeData> {
       weeklySaves: r.weeklySaves,
       isFastRising: r.isFastRising ?? false,
       categories: r.categorySlug
-        ? { slug: r.categorySlug, name: '', id: '', icon: '' }
+        ? {
+            slug: r.categorySlug,
+            name: '',
+            id: '',
+            icon: '',
+            coverDisplayMode: r.coverDisplayMode ?? null,
+          }
         : undefined,
       creator: r.creator
         ? {

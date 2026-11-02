@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, CalendarDays } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import FeaturedStatusStrip from './FeaturedStatusStrip';
 import FeaturedMobilePreview, { type PreviewList } from './FeaturedMobilePreview';
 import UpcomingSlotsGrid from './UpcomingSlotsGrid';
@@ -46,23 +46,9 @@ export default function FeaturedSchedulerTab({
   initialPerformance = null,
   initialRecommendations = [],
 }: Props) {
-  const totalScheduled = (current ? 1 : 0) + upcoming.length;
-
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_300px]" dir="rtl">
-      <div className="space-y-5 min-w-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-wibe-secondary">
-          <span className="inline-flex items-center gap-2">
-            <CalendarDays className="w-4 h-4" />
-            {totalScheduled.toLocaleString('fa-IR')} اسلات برنامه‌ریزی‌شده
-            {upcoming.length > 0 && (
-              <span className="text-(--color-text-subtle)">
-                · {upcoming.length.toLocaleString('fa-IR')} در صف
-              </span>
-            )}
-          </span>
-        </div>
-
+    <div className="grid gap-4 lg:grid-cols-[1fr_280px]" dir="rtl">
+      <div className="min-w-0 space-y-4">
         <FeaturedStatusStrip
           current={current}
           fallbackList={fallbackList}
@@ -77,20 +63,21 @@ export default function FeaturedSchedulerTab({
           <FeaturedMobilePreview list={previewList} mode={previewMode} />
         </div>
 
-        <button
-          type="button"
-          onClick={onAddSlot}
-          className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-(--color-border) text-wibe-secondary hover:border-(--primary) hover:text-primary hover:bg-(--color-bg) transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          <span className="font-medium">افزودن اسلات زمان‌بندی‌شده</span>
-        </button>
-
-        {upcoming.length > 0 && (
+        {upcoming.length > 0 ? (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold text-(--color-text)">
-              برنامهٔ بعدی ({upcoming.length.toLocaleString('fa-IR')})
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold leading-snug text-(--color-text)">
+                برنامهٔ بعدی ({upcoming.length.toLocaleString('fa-IR')})
+              </h2>
+              <button
+                type="button"
+                onClick={onAddSlot}
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) px-3 text-sm text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text)"
+              >
+                <Plus className="size-4" strokeWidth={1.5} />
+                افزودن به صف
+              </button>
+            </div>
             <UpcomingSlotsGrid
               slots={upcoming}
               formatDate={formatDate}
@@ -99,7 +86,16 @@ export default function FeaturedSchedulerTab({
               onDelete={onDeleteSlot}
             />
           </section>
-        )}
+        ) : current ? (
+          <button
+            type="button"
+            onClick={onAddSlot}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-(--color-border) px-3 text-sm text-wibe-secondary hover:border-primary hover:text-primary"
+          >
+            <Plus className="size-4" strokeWidth={1.5} />
+            زمان‌بندی اسلات بعدی
+          </button>
+        ) : null}
 
         {current && (
           <FeaturedPerformanceSection

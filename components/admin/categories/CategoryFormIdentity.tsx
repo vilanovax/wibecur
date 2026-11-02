@@ -108,29 +108,29 @@ export default function CategoryFormIdentity({
             readOnly={slugAutoMode && !!onSlugChange}
             dir="ltr"
             className={`${inputClass} ${
-              values.slug.length === 0
+              values.slug.length === 0 || !slugCheck
                 ? ''
-                : slugValid && slugCheck?.status !== 'taken'
+                : slugValid && slugCheck.status === 'available'
                   ? 'border-emerald-500 ring-1 ring-emerald-500/20'
-                  : slugCheck?.status === 'taken' || (values.slug.length > 0 && !slugValid)
+                  : slugCheck.status === 'taken' || (values.slug.length > 0 && !slugValid)
                     ? 'border-red-400 ring-1 ring-red-400/20'
                     : ''
-            } ${slugAutoMode && onSlugChange ? 'bg-(--color-bg) cursor-default' : ''}`}
+            } ${slugAutoMode && onSlugChange ? 'cursor-default bg-(--color-bg)' : ''}`}
             placeholder="movies"
           />
-          <p className="text-xs text-wibe-secondary mt-1">
+          <p className="mt-1 text-xs text-wibe-secondary">
             {slugAutoMode
               ? 'از نام دسته ساخته می‌شود — برای slug سفارشی «ویرایش دستی» را بزنید'
               : 'حروف انگلیسی کوچک، اعداد و خط تیره'}
           </p>
           {values.slug.length > 0 && slugCheck?.status === 'checking' && (
-            <p className="text-xs mt-1 text-wibe-secondary inline-flex items-center gap-1">
-              <Loader2 className="w-3 h-3 animate-spin" />
+            <p className="mt-1 inline-flex items-center gap-1 text-xs text-wibe-secondary">
+              <Loader2 className="size-3 animate-spin" />
               در حال بررسی…
             </p>
           )}
           {values.slug.length > 0 && slugValid && slugCheck?.status === 'available' && (
-            <p className="text-xs mt-1 text-emerald-600">✓ slug آزاد است</p>
+            <p className="mt-1 text-xs text-emerald-600">نامک آزاد است و می‌توان ذخیره کرد</p>
           )}
           {slugCheck?.status === 'taken' && (
             <div className="mt-1 text-xs text-red-600 space-y-1">

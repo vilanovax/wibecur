@@ -13,6 +13,8 @@ if (!existsSync(serverEntry)) {
 const copies = [
   { from: join(root, '.next/static'), to: join(standaloneDir, '.next/static') },
   { from: join(root, 'public'), to: join(standaloneDir, 'public') },
+  // runtime env for CSRF / auth hosts (standalone does not inherit root .env)
+  { from: join(root, '.env'), to: join(standaloneDir, '.env') },
 ];
 
 for (const { from, to } of copies) {

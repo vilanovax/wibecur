@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
+import ListCoverTitleOverlay from '@/components/shared/ListCoverTitleOverlay';
+import { getCoverDisplayFlags } from '@/lib/admin/category-form-constants';
 
 export type FeaturedListItem = {
   id: string;
@@ -15,7 +17,12 @@ export type FeaturedListItem = {
   horizontalImage?: string | null;
   bannerImage?: string | null;
   saveCount?: number;
-  categories?: { slug?: string | null; icon?: string | null; name?: string | null } | null;
+  categories?: {
+    slug?: string | null;
+    icon?: string | null;
+    name?: string | null;
+    coverDisplayMode?: string | null;
+  } | null;
 };
 
 interface ListsFeaturedCarouselProps {
@@ -107,6 +114,8 @@ function FeaturedSlide({
 }) {
   const router = useRouter();
   const categorySlug = list.categories?.slug ?? null;
+  const coverMode = list.categories?.coverDisplayMode;
+  const { showTitleOnCover, showTitleBelow } = getCoverDisplayFlags(coverMode);
   const categoryLabel = list.categories?.name
     ? `${list.categories.icon ? `${list.categories.icon} ` : ''}${list.categories.name}`
     : null;
@@ -116,33 +125,43 @@ function FeaturedSlide({
       href={`/lists/${list.slug}`}
       prefetch={false}
       onPointerDown={() => router.prefetch(`/lists/${list.slug}`)}
-      className={`group relative block aspect-5/2 min-h-20 overflow-hidden rounded-surface border border-border bg-muted shadow-surface transition-[colors,transform] active:scale-95 sm:aspect-5/3 sm:min-h-28 lg:aspect-3/2 lg:min-h-44 lg:hover:border-brand/30 xl:min-h-52 ${className}`}
+      className={`group relative block overflow-hidden rounded-surface border border-border bg-muted shadow-surface transition-[colors,transform] active:scale-95 lg:hover:border-brand/30 ${className}`}
     >
-      <ListCoverImage
-        coverImage={list.coverImage}
-        horizontalImage={list.horizontalImage}
-        bannerImage={list.bannerImage}
-        title={list.title}
-        slug={list.slug}
-        categorySlug={categorySlug}
-        variant="banner"
-        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
-        fallbackIcon={list.categories?.icon ?? '📋'}
-        fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-3xl lg:text-4xl"
-        priority={priority}
-        fetchPriority={priority ? 'high' : 'low'}
-      />
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-l from-foreground/85 via-foreground/45 to-foreground/15" />
-      {categoryLabel && (
-        <span className="absolute inset-e-1.5 top-1.5 rounded-md bg-foreground/45 px-1.5 py-0.5 wibe-caption text-background/95 backdrop-blur-sm lg:inset-e-2.5 lg:top-2.5 lg:px-2">
-          {categoryLabel}
-        </span>
-      )}
-      <div className="absolute inset-0 flex flex-col justify-end p-2 text-start lg:p-4">
-        <h3 className="line-clamp-2 wibe-small font-bold text-background">
-          {list.title}
-        </h3>
+      <div className="relative aspect-5/2 min-h-20 overflow-hidden sm:aspect-5/3 sm:min-h-28 lg:aspect-3/2 lg:min-h-44 xl:min-h-52">
+        <ListCoverImage
+          coverImage={list.coverImage}
+          horizontalImage={list.horizontalImage}
+          bannerImage={list.bannerImage}
+          title={list.title}
+          slug={list.slug}
+          categorySlug={categorySlug}
+          variant="banner"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 lg:group-hover:scale-105"
+          fallbackIcon={list.categories?.icon ?? '📋'}
+          fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-3xl lg:text-4xl"
+          priority={priority}
+          fetchPriority={priority ? 'high' : 'low'}
+        />
+        {categoryLabel && (
+          <span className="absolute inset-e-1.5 top-1.5 z-10 rounded-md bg-foreground/45 px-1.5 py-0.5 wibe-caption text-background/95 backdrop-blur-sm lg:inset-e-2.5 lg:top-2.5 lg:px-2">
+            {categoryLabel}
+          </span>
+        )}
+        <ListCoverTitleOverlay
+          coverDisplayMode={coverMode}
+          title={list.title}
+          scrimDirection="l"
+          titleClassName="line-clamp-2 wibe-small font-bold text-background"
+        />
+        {!showTitleOnCover && !showTitleBelow ? (
+          <span className="sr-only">{list.title}</span>
+        ) : null}
       </div>
+      {showTitleBelow ? (
+        <div className="border-t border-border px-2.5 py-2 text-start">
+          <h3 className="line-clamp-2 wibe-small font-bold text-foreground">{list.title}</h3>
+        </div>
+      ) : null}
     </Link>
   );
 }

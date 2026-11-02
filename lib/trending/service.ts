@@ -22,6 +22,8 @@ export interface TrendingListResult {
   isFastRising?: boolean;
   categoryId?: string | null;
   categorySlug?: string | null;
+  /** ui | baked | photo — از تنظیمات دسته */
+  coverDisplayMode?: string | null;
   creatorId?: string;
   creator?: { id: string; name: string | null; username: string | null; image: string | null; curatorLevel?: string };
   coverImage?: string | null;
@@ -32,6 +34,11 @@ export interface TrendingListResult {
   itemCount: number;
   weeklySaves?: number;
 }
+
+const TRENDING_CATEGORY_SELECT = {
+  slug: true,
+  coverDisplayMode: true,
+} as const;
 
 function ms(days: number): number {
   return days * 24 * 60 * 60 * 1000;
@@ -169,7 +176,7 @@ export async function getTrendingByCategory(
         itemCount: true,
         userId: true,
         categoryId: true,
-        categories: { select: { slug: true } },
+        categories: { select: TRENDING_CATEGORY_SELECT },
         users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
       },
       // نامزدها را با ایندکس [categoryId,isActive,isPublic,saveCount desc] بگیر تا
@@ -197,6 +204,7 @@ export async function getTrendingByCategory(
         badge,
         categoryId: l.categoryId,
         categorySlug: l.categories?.slug ?? null,
+        coverDisplayMode: l.categories?.coverDisplayMode ?? null,
         creatorId: l.userId,
         creator: l.users ? { id: l.users.id, name: l.users.name, username: l.users.username, image: l.users.image, curatorLevel: l.users.curatorLevel } : undefined,
         coverImage: l.coverImage,
@@ -300,7 +308,7 @@ export async function getFastRising(
         itemCount: true,
         userId: true,
         categoryId: true,
-        categories: { select: { slug: true } },
+        categories: { select: TRENDING_CATEGORY_SELECT },
         users: { select: { id: true, name: true, username: true, image: true, curatorLevel: true } },
       },
       take: 80,
@@ -329,6 +337,7 @@ export async function getFastRising(
         isFastRising: S1 >= 5,
         categoryId: l.categoryId,
         categorySlug: l.categories?.slug ?? null,
+        coverDisplayMode: l.categories?.coverDisplayMode ?? null,
         creatorId: l.userId,
         creator: l.users
           ? {
@@ -375,7 +384,7 @@ export async function getMonthlyPopular(
         itemCount: true,
         userId: true,
         categoryId: true,
-        categories: { select: { slug: true } },
+        categories: { select: TRENDING_CATEGORY_SELECT },
       },
       orderBy: { saveCount: 'desc' },
       take: 100,
@@ -402,6 +411,7 @@ export async function getMonthlyPopular(
         badge: getTrendingBadge(score),
         categoryId: l.categoryId,
         categorySlug: l.categories?.slug ?? null,
+        coverDisplayMode: l.categories?.coverDisplayMode ?? null,
         creatorId: l.userId,
         coverImage: l.coverImage,
         horizontalImage: l.horizontalImage,

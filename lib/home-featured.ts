@@ -21,7 +21,14 @@ export type FeaturedSlotResult = {
     saveCount: number;
     itemCount: number;
     likeCount: number;
-    categories: { id: string; name: string; slug: string; icon: string; isActive: boolean } | null;
+    categories: {
+      id: string;
+      name: string;
+      slug: string;
+      icon: string;
+      isActive: boolean;
+      coverDisplayMode?: string | null;
+    } | null;
     users: { id: string; name: string | null; username: string | null } | null;
   };
   startAt: Date;
@@ -39,7 +46,14 @@ const featuredListSelect = {
   itemCount: true,
   likeCount: true,
   categories: {
-    select: { id: true, name: true, slug: true, icon: true, isActive: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      icon: true,
+      isActive: true,
+      coverDisplayMode: true,
+    },
   },
   users: { select: { id: true, name: true, username: true } },
 } as const;

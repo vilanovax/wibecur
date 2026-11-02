@@ -9,7 +9,11 @@ export type HomeBookmarkList = {
   slug: string;
   coverImage: string | null;
   saveCount?: number;
-  categories?: { slug?: string; icon?: string | null } | null;
+  categories?: {
+    slug?: string;
+    icon?: string | null;
+    coverDisplayMode?: string | null;
+  } | null;
 };
 
 export function homeBookmarksQueryKey(userId?: string | null) {

@@ -131,6 +131,7 @@ function toCategoryInfo(c: {
   description?: string | null;
   heroImage?: string | null;
   layoutType?: string | null;
+  coverDisplayMode?: string | null;
 }): CategoryInfo {
   return {
     id: c.id,
@@ -142,6 +143,7 @@ function toCategoryInfo(c: {
     description: c.description,
     heroImage: c.heroImage,
     layoutType: c.layoutType as CategoryInfo['layoutType'],
+    coverDisplayMode: c.coverDisplayMode ?? null,
   };
 }
 
@@ -169,6 +171,7 @@ async function getCategoryAndMetrics(
         description: true,
         heroImage: true,
         layoutType: true,
+        coverDisplayMode: true,
       },
     }),
     prisma.lists.count({

@@ -12,6 +12,7 @@ import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import SearchHighlight from '@/components/mobile/search/SearchHighlight';
 import { trackSearchResultClick } from '@/lib/analytics';
+import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
 
 type ListWithCreator = {
   id: string;
@@ -25,7 +26,12 @@ type ListWithCreator = {
   badge?: string | null;
   isFeatured?: boolean;
   createdAt?: string | Date;
-  categories?: { name: string; icon: string | null; slug?: string | null } | null;
+  categories?: {
+    name: string;
+    icon: string | null;
+    slug?: string | null;
+    coverDisplayMode?: string | null;
+  } | null;
   users?: { name: string | null; username: string | null; image: string | null } | null;
   _count?: { items: number; list_likes: number };
 };
@@ -192,6 +198,10 @@ function ListCardCompact({
   const router = useRouter();
   const saveCount = list.saveCount ?? 0;
   const categorySlug = list.categories?.slug ?? null;
+  const coverMode = normalizeCoverDisplayMode(list.categories?.coverDisplayMode);
+  const showCoverScrim = coverMode === 'ui';
+  const showCoverTitle = coverMode === 'ui';
+  const showTitleBelow = coverMode === 'photo';
   const badges = getListBadges(list);
   const href = `/lists/${list.slug}`;
   const prefetchList = () => {
@@ -352,8 +362,12 @@ function ListCardCompact({
       <div
         className={
           fillHeight
-            ? 'pointer-events-none relative z-1 h-full min-h-60 w-full overflow-hidden bg-muted lg:min-h-72'
-            : 'pointer-events-none relative z-1 aspect-5/4 w-full overflow-hidden bg-muted max-lg:min-h-32 sm:aspect-4/3 lg:aspect-16/10 lg:max-h-52 xl:aspect-5/3 xl:max-h-56'
+            ? `pointer-events-none relative z-1 w-full overflow-hidden bg-muted ${showTitleBelow ? 'min-h-48 lg:min-h-56' : 'h-full min-h-60 lg:min-h-72'}`
+            : `pointer-events-none relative z-1 w-full overflow-hidden bg-muted max-lg:min-h-32 ${
+                showTitleBelow
+                  ? 'aspect-4/3 sm:aspect-16/10 lg:aspect-16/10 lg:max-h-48'
+                  : 'aspect-5/4 sm:aspect-4/3 lg:aspect-16/10 lg:max-h-52 xl:aspect-5/3 xl:max-h-56'
+              }`
         }
       >
         <ListCoverImage
@@ -380,7 +394,9 @@ function ListCardCompact({
             ))}
           </div>
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-foreground/95 via-foreground/55 to-foreground/10 transition-opacity duration-300 max-lg:via-foreground/60 lg:group-hover:from-foreground/90" />
+        {showCoverScrim ? (
+          <div className="absolute inset-0 bg-linear-to-t from-foreground/95 via-foreground/55 to-foreground/10 transition-opacity duration-300 max-lg:via-foreground/60 lg:group-hover:from-foreground/90" />
+        ) : null}
         <div
           className="absolute inset-0 hidden items-center justify-center bg-foreground/25 opacity-0 transition-opacity duration-300 lg:flex lg:group-hover:opacity-100"
           aria-hidden
@@ -389,12 +405,23 @@ function ListCardCompact({
             مشاهده لیست
           </span>
         </div>
-        <div className={`absolute inset-x-0 bottom-0 p-2.5 text-start max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-14 lg:pe-12' : ''}`}>
-          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-background lg:text-base lg:font-bold">
+        {showCoverTitle ? (
+          <div
+            className={`absolute inset-x-0 bottom-0 p-2.5 text-start max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-14 lg:pe-12' : ''}`}
+          >
+            <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-background lg:text-base lg:font-bold">
+              {renderTitle('')}
+            </h3>
+          </div>
+        ) : null}
+      </div>
+      {showTitleBelow ? (
+        <div className={`pointer-events-none relative z-1 px-2.5 py-2 text-start ${showBookmark ? 'pe-12' : ''}`}>
+          <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground lg:text-base">
             {renderTitle('')}
           </h3>
         </div>
-      </div>
+      ) : null}
       {showBookmark ? (
         <InlineBookmark
           listId={list.id}
@@ -405,7 +432,9 @@ function ListCardCompact({
           onToggle={onBookmarkToggle}
           isLoggedIn={isLoggedIn}
           size="xs"
-          className="pointer-events-auto absolute bottom-2 inset-e-2 z-2 lg:bottom-2.5 lg:inset-e-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100"
+          className={`pointer-events-auto absolute inset-e-2 z-2 lg:inset-e-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100 ${
+            showTitleBelow ? 'bottom-2 lg:bottom-2.5' : 'bottom-2 lg:bottom-2.5'
+          }`}
         />
       ) : null}
     </Card>

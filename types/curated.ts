@@ -31,6 +31,7 @@ export interface CuratedList {
     name: string;
     icon?: string | null;
     slug?: string | null;
+    coverDisplayMode?: string | null;
   } | null;
   coverUrl: string | null;
   itemsCount: number;

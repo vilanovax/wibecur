@@ -14,6 +14,7 @@ export interface CategoryInfo {
   description?: string | null;
   heroImage?: string | null;
   layoutType?: CategoryLayoutType | null;
+  coverDisplayMode?: string | null;
 }
 
 export interface CategoryMetrics {

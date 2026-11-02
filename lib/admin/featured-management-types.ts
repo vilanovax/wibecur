@@ -15,7 +15,7 @@ export type FeaturedListOption = {
   isActive?: boolean;
   deletedAt?: string | null;
   isFeatured?: boolean;
-  categories: { name: string; slug: string } | null;
+  categories: { name: string; slug: string; coverDisplayMode?: string | null } | null;
 };
 
 export type FeaturedSlotItem = {

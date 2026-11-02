@@ -34,6 +34,8 @@ export type ListsBrowseList = {
     name: string;
     slug: string | null;
     icon: string | null;
+    /** ui | baked | photo — نحوهٔ عنوان/سایه روی کاور */
+    coverDisplayMode?: string | null;
   } | null;
 };
 

@@ -49,6 +49,7 @@ export const listsBrowseSelect = {
       name: true,
       slug: true,
       icon: true,
+      coverDisplayMode: true,
     },
   },
 } satisfies Prisma.listsSelect;

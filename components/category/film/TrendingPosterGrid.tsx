@@ -4,6 +4,7 @@ import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import CategorySectionTitle from '../CategorySectionTitle';
+import { getCoverDisplayFlags } from '@/lib/admin/category-form-constants';
 import type { CategoryListCard } from '@/types/category-page';
 import { FILM_SECTION } from './film-layout';
 
@@ -12,10 +13,19 @@ const DISPLAY_LIMIT = 12;
 interface TrendingPosterGridProps {
   lists: CategoryListCard[];
   categorySlug: string;
+  coverDisplayMode?: string | null;
 }
 
-function TrendingPosterCard({ list }: { list: CategoryListCard }) {
+function TrendingPosterCard({
+  list,
+  coverDisplayMode,
+}: {
+  list: CategoryListCard;
+  coverDisplayMode?: string | null;
+}) {
   const weeklySaves = list.saves7d ?? list.saves24h;
+  const { showScrim, showTitleOnCover, showTitleBelow } =
+    getCoverDisplayFlags(coverDisplayMode);
 
   return (
     <Link
@@ -37,31 +47,49 @@ function TrendingPosterCard({ list }: { list: CategoryListCard }) {
               🎬
             </div>
           )}
-          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/10 to-transparent lg:from-black/80" />
+          {showScrim ? (
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/10 to-transparent lg:from-black/80" />
+          ) : null}
           {(list.badge === 'viral' || list.badge === 'hot') && (
-            <span className="absolute right-2 top-2 rounded-pill bg-warning px-2 py-0.5 wibe-caption font-semibold text-white">
+            <span className="absolute inset-e-2 top-2 z-10 rounded-pill bg-warning px-2 py-0.5 wibe-caption font-semibold text-white">
               ترند
             </span>
           )}
           {weeklySaves != null && weeklySaves > 0 && (
-            <span className="absolute left-2 top-2 rounded-lg bg-orange-500/90 px-2 py-0.5 wibe-caption font-bold text-white shadow-sm">
+            <span className="absolute inset-s-2 top-2 z-10 rounded-lg bg-orange-500/90 px-2 py-0.5 wibe-caption font-bold text-white shadow-sm">
               +{weeklySaves.toLocaleString('fa-IR')}
             </span>
           )}
-          <div className="absolute bottom-2 left-2 right-2 lg:bottom-3 lg:left-3 lg:right-3">
-            <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:wibe-body lg:leading-snug">
-              {list.title}
-            </h3>
+          {showTitleOnCover ? (
+            <div className="absolute inset-x-2 bottom-2 lg:inset-x-3 lg:bottom-3">
+              <h3 className="line-clamp-2 wibe-small font-semibold text-white lg:wibe-body lg:leading-snug">
+                {list.title}
+              </h3>
+              <ListCardStats
+                saves={list.saveCount}
+                itemCount={list.itemCount}
+                periodSaves={weeklySaves}
+                periodLabel={list.saves7d != null ? 'این هفته' : '۲۴ساعت'}
+                variant="overlay"
+                className="mt-1"
+              />
+            </div>
+          ) : (
+            <span className="sr-only">{list.title}</span>
+          )}
+        </div>
+        {showTitleBelow || !showTitleOnCover ? (
+          <div className="space-y-1 px-2.5 py-2 text-start">
+            <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
             <ListCardStats
               saves={list.saveCount}
               itemCount={list.itemCount}
               periodSaves={weeklySaves}
               periodLabel={list.saves7d != null ? 'این هفته' : '۲۴ساعت'}
-              variant="overlay"
-              className="mt-1"
+              variant="compact"
             />
           </div>
-        </div>
+        ) : null}
       </div>
     </Link>
   );
@@ -70,6 +98,7 @@ function TrendingPosterCard({ list }: { list: CategoryListCard }) {
 export default function TrendingPosterGrid({
   lists,
   categorySlug,
+  coverDisplayMode,
 }: TrendingPosterGridProps) {
   if (lists.length === 0) return null;
 
@@ -99,7 +128,7 @@ export default function TrendingPosterGrid({
       >
         {visible.map((list) => (
           <div key={list.id} className="w-[42vw] max-w-42 min-w-33">
-            <TrendingPosterCard list={list} />
+            <TrendingPosterCard list={list} coverDisplayMode={coverDisplayMode} />
           </div>
         ))}
       </div>
@@ -107,7 +136,11 @@ export default function TrendingPosterGrid({
       {/* دسکتاپ: گرید ۴ ستونه */}
       <div className="hidden gap-4 lg:grid lg:grid-cols-4">
         {visible.map((list) => (
-          <TrendingPosterCard key={list.id} list={list} />
+          <TrendingPosterCard
+            key={list.id}
+            list={list}
+            coverDisplayMode={coverDisplayMode}
+          />
         ))}
       </div>
     </section>

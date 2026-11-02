@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLazyInView } from '@/hooks/useLazyInView';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCoverTitleOverlay from '@/components/shared/ListCoverTitleOverlay';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import { fetchListSimilar, type SimilarListClient } from '@/lib/list-similar-client';
+import { getCoverDisplayFlags } from '@/lib/admin/category-form-constants';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -19,6 +21,8 @@ function SimilarListCard({ rel }: { rel: SimilarList }) {
     slug: rel.slug,
     categorySlug: rel.categories?.slug,
   });
+  const coverMode = rel.categories?.coverDisplayMode;
+  const { showTitleOnCover, showTitleBelow } = getCoverDisplayFlags(coverMode);
 
   return (
     <Link
@@ -37,12 +41,19 @@ function SimilarListCard({ rel }: { rel: SimilarList }) {
           listSlug={rel.slug}
           listTitle={rel.title}
         />
-        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-2 text-start lg:p-2.5">
-          <h3 className="line-clamp-2 wibe-small font-semibold text-background lg:hidden">{title}</h3>
-        </div>
+        <ListCoverTitleOverlay
+          coverDisplayMode={coverMode}
+          title={title}
+          titleClassName="line-clamp-2 wibe-small font-semibold text-background lg:hidden"
+          onCoverClassName="absolute inset-x-0 bottom-0 p-2 text-start lg:p-2.5"
+        />
+        {!showTitleOnCover ? <span className="sr-only">{title}</span> : null}
       </div>
-      <div className="hidden min-w-0 p-2 lg:block">
+      <div
+        className={`min-w-0 p-2 ${
+          showTitleBelow || !showTitleOnCover ? 'block' : 'hidden lg:block'
+        }`}
+      >
         <h3 className="line-clamp-2 wibe-caption font-semibold text-foreground">{title}</h3>
       </div>
       </Card>

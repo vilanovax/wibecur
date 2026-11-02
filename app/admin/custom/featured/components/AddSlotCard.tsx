@@ -18,7 +18,7 @@ export type ListOption = {
   isFeatured?: boolean;
   isActive?: boolean;
   deletedAt?: string | null;
-  categories: { name: string; slug: string } | null;
+  categories: { name: string; slug: string; coverDisplayMode?: string | null } | null;
 };
 
 export type ConflictResult = {

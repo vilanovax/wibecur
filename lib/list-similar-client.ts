@@ -5,7 +5,13 @@ export type SimilarListClient = {
   coverImage: string | null;
   saveCount: number;
   itemCount: number;
-  categories: { id: string; name: string; slug: string; icon: string } | null;
+  categories: {
+    id: string;
+    name: string;
+    slug: string;
+    icon: string;
+    coverDisplayMode?: string | null;
+  } | null;
 };
 
 const inflight = new Map<string, Promise<SimilarListClient[]>>();

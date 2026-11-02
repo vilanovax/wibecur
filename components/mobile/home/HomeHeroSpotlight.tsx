@@ -6,6 +6,7 @@ import ListCoverImage from '@/components/shared/ListCoverImage';
 import HomeHeroBannerLink from '@/components/mobile/home/HomeHeroBannerLink';
 import HomeHeroSaveButton from '@/components/mobile/home/HomeHeroSaveButton';
 import { useHomeData } from '@/contexts/HomeDataContext';
+import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
 
 function trackFeaturedImpressionOnce(slotId: string) {
   try {
@@ -50,6 +51,10 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
   }
 
   const categorySlug = list.categories?.slug ?? null;
+  const coverMode = normalizeCoverDisplayMode(list.categories?.coverDisplayMode);
+  const showOverlayCopy = coverMode === 'ui';
+  const showTitleBelow = coverMode === 'photo';
+  const showHeavyScrim = coverMode === 'ui';
   const description = list.description?.trim() ?? '';
   const metaParts = [
     list.itemCount > 0 ? `${list.itemCount.toLocaleString('fa-IR')} آیتم` : null,
@@ -93,40 +98,55 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
           }
         />
 
-        <div
-          className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground via-foreground/55 to-foreground/10 lg:bg-linear-to-l lg:from-foreground lg:via-foreground/75 lg:via-42% lg:to-transparent"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-foreground/35 to-transparent"
-          aria-hidden
-        />
+        {showHeavyScrim ? (
+          <>
+            <div
+              className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground via-foreground/55 to-foreground/10 lg:bg-linear-to-l lg:from-foreground lg:via-foreground/75 lg:via-42% lg:to-transparent"
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-foreground/35 to-transparent"
+              aria-hidden
+            />
+          </>
+        ) : (
+          <div
+            className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/50 via-transparent to-foreground/15"
+            aria-hidden
+          />
+        )}
         <div className="relative z-10 flex h-full flex-col justify-end p-4 sm:p-5 lg:max-w-xl lg:p-8 lg:pb-8 xl:max-w-2xl">
           <span className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-background/40 bg-background/10 px-3 py-1 text-xs font-semibold text-background backdrop-blur-md">
             <Sparkles className="size-4" aria-hidden />
             منتخب هفته
           </span>
 
-          <h2 className="line-clamp-2 text-balance text-h1 font-bold leading-tight text-background">
-            {list.title}
-          </h2>
+          {showOverlayCopy ? (
+            <>
+              <h2 className="line-clamp-2 text-balance text-h1 font-bold leading-tight text-background">
+                {list.title}
+              </h2>
 
-          {description ? (
-            <p className="mt-1.5 line-clamp-2 text-pretty wibe-small leading-relaxed text-background/90 lg:mt-2.5 lg:text-base">
-              {description}
-            </p>
-          ) : null}
+              {description ? (
+                <p className="mt-1.5 line-clamp-2 text-pretty wibe-small leading-relaxed text-background/90 lg:mt-2.5 lg:text-base">
+                  {description}
+                </p>
+              ) : null}
 
-          {metaParts.length > 0 ? (
-            <p className="mt-2 hidden flex-wrap items-center gap-x-2 gap-y-1 wibe-caption text-background/80 tabular-nums sm:flex lg:mt-3 lg:text-sm">
-              {metaParts.map((part, i) => (
-                <span key={part} className="inline-flex items-center gap-2">
-                  {i > 0 ? <span aria-hidden className="text-background/45">·</span> : null}
-                  {part}
-                </span>
-              ))}
-            </p>
-          ) : null}
+              {metaParts.length > 0 ? (
+                <p className="mt-2 hidden flex-wrap items-center gap-x-2 gap-y-1 wibe-caption text-background/80 tabular-nums sm:flex lg:mt-3 lg:text-sm">
+                  {metaParts.map((part, i) => (
+                    <span key={part} className="inline-flex items-center gap-2">
+                      {i > 0 ? <span aria-hidden className="text-background/45">·</span> : null}
+                      {part}
+                    </span>
+                  ))}
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <span className="sr-only">{list.title}</span>
+          )}
 
           <span className="mt-3 inline-flex h-11 w-fit items-center gap-1 rounded-full bg-background/15 px-4 text-sm font-semibold text-background backdrop-blur-sm transition-colors group-hover:bg-background/25">
             مشاهده لیست
@@ -134,6 +154,18 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
           </span>
         </div>
       </HomeHeroBannerLink>
+      {showTitleBelow ? (
+        <div className="mt-2 px-0.5 text-start lg:mt-3">
+          <h2 className="line-clamp-2 wibe-h3 font-bold text-foreground">{list.title}</h2>
+          {description ? (
+            <p className="mt-1 line-clamp-2 wibe-small text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
+      ) : coverMode === 'baked' && description ? (
+        <p className="mt-2 line-clamp-2 px-0.5 text-start wibe-small text-muted-foreground lg:mt-3">
+          {description}
+        </p>
+      ) : null}
       <HomeHeroSaveButton
         listId={list.id}
         listSlug={list.slug}

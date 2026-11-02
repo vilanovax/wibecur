@@ -32,7 +32,7 @@ const listSelect = {
   saveCount: true,
   itemCount: true,
   badge: true,
-  categories: { select: { name: true, slug: true } },
+  categories: { select: { name: true, slug: true, coverDisplayMode: true } },
 } as const;
 
 const slotSelect = {
@@ -54,7 +54,7 @@ const pastListSelect = {
   id: true,
   title: true,
   slug: true,
-  categories: { select: { name: true, slug: true } },
+  categories: { select: { name: true, slug: true, coverDisplayMode: true } },
 } as const;
 
 const pastSlotSelect = {
@@ -77,7 +77,7 @@ type ListRow = {
   saveCount: number;
   itemCount: number;
   badge: string | null;
-  categories: { name: string; slug: string } | null;
+  categories: { name: string; slug: string; coverDisplayMode?: string | null } | null;
 };
 
 type SlotRow = {
@@ -151,7 +151,7 @@ function toPastList(l: {
   id: string;
   title: string;
   slug: string;
-  categories: { name: string; slug: string } | null;
+  categories: { name: string; slug: string; coverDisplayMode?: string | null } | null;
 }): FeaturedListOption {
   return {
     id: l.id,
@@ -257,7 +257,7 @@ export async function getFeaturedManagementData(options?: {
           id: string;
           title: string;
           slug: string;
-          categories: { name: string; slug: string } | null;
+          categories: { name: string; slug: string; coverDisplayMode?: string | null } | null;
         } | null;
       }[]
     >,

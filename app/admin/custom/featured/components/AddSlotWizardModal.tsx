@@ -49,6 +49,8 @@ function toPreviewList(l: ListOption): PreviewList {
     saveCount: l.saveCount,
     itemCount: l.itemCount,
     badge: l.badge,
+    coverDisplayMode: l.categories?.coverDisplayMode ?? null,
+    categorySlug: l.categories?.slug ?? null,
   };
 }
 

@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListCardStats from '@/components/shared/ListCardStats';
 import { LIST_BADGE_LABELS, listBadgeSolidStyles } from '@/lib/list-badge-styles';
+import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
 
 export interface ListCardProps {
   id: string;
@@ -21,6 +22,8 @@ export interface ListCardProps {
   categorySlug?: string | null;
   listSlug?: string | null;
   listTitle?: string | null;
+  /** ui | baked | photo — از تنظیمات دسته */
+  coverDisplayMode?: string | null;
 }
 
 const badgeStyles = listBadgeSolidStyles;
@@ -40,9 +43,14 @@ export default function ListCard({
   categorySlug,
   listSlug,
   listTitle,
+  coverDisplayMode,
 }: ListCardProps) {
   const listHref = `/lists/${slug ?? id}`;
   const resolvedListSlug = listSlug ?? slug;
+  const coverMode = normalizeCoverDisplayMode(coverDisplayMode);
+  const showCoverScrim = coverMode === 'ui';
+  const showCoverTitle = coverMode === 'ui';
+  const showTitleBelow = coverMode === 'photo';
 
   if (variant === 'compact') {
     return (
@@ -77,20 +85,22 @@ export default function ListCard({
   return (
     <Link href={listHref} className="block active:scale-[0.99] transition-transform">
       <Card className="overflow-hidden bg-popover p-0 shadow-sm">
-        <div className="relative h-40 bg-wibe-surface overflow-hidden">
+        <div className="relative h-40 overflow-hidden bg-muted">
           <ImageWithFallback
             src={coverImage}
             alt={title}
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover"
             fallbackIcon="📋"
-            fallbackClassName="w-full h-full bg-wibe-surface"
+            fallbackClassName="h-full w-full bg-muted"
             priority={priority}
             categorySlug={categorySlug}
             listSlug={resolvedListSlug}
             listTitle={listTitle ?? title}
             sizes="(min-width: 1024px) 50vw, 100vw"
           />
-          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+          {showCoverScrim ? (
+            <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
+          ) : null}
           {badge && (
             <span
               className={`absolute inset-e-2 top-2 rounded-full px-2 py-0.5 text-sm font-semibold ${badgeStyles[badge]}`}
@@ -98,16 +108,26 @@ export default function ListCard({
               {badgeLabels[badge]}
             </span>
           )}
-          <div className="absolute bottom-0 left-0 right-0 p-3">
-            <h3 className="wibe-small font-semibold text-white line-clamp-2">{title}</h3>
-            <ListCardStats saves={saves} itemCount={itemCount} variant="overlay" className="mt-1" />
-          </div>
+          {showCoverTitle ? (
+            <div className="absolute inset-x-0 bottom-0 p-3 text-start">
+              <h3 className="line-clamp-2 wibe-small font-semibold text-background">{title}</h3>
+              <ListCardStats saves={saves} itemCount={itemCount} variant="overlay" className="mt-1" />
+            </div>
+          ) : null}
         </div>
-        {description && (
-          <div className="p-3 pt-2">
-            <p className="wibe-small text-wibe-secondary line-clamp-2">{description}</p>
+        {showTitleBelow ? (
+          <div className="space-y-1 p-3 text-start">
+            <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{title}</h3>
+            <ListCardStats saves={saves} itemCount={itemCount} variant="compact" />
+            {description ? (
+              <p className="line-clamp-2 wibe-caption text-muted-foreground">{description}</p>
+            ) : null}
           </div>
-        )}
+        ) : description ? (
+          <div className="p-3 pt-2 text-start">
+            <p className="line-clamp-2 wibe-small text-muted-foreground">{description}</p>
+          </div>
+        ) : null}
       </Card>
     </Link>
   );

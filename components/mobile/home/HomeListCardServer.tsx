@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { HomeListData } from '@/types/home-data';
 import { Card } from '@/components/ui/card';
+import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
 
 type HomeListCardServerProps = {
   list: Pick<HomeListData, 'id' | 'title' | 'slug' | 'coverImage' | 'categories'>;
@@ -18,15 +19,26 @@ export default function HomeListCardServer({
   priority = false,
 }: HomeListCardServerProps) {
   const cover = list.coverImage ? resolveNextImageSrc(list.coverImage) : null;
+  const coverMode = normalizeCoverDisplayMode(list.categories?.coverDisplayMode);
+  const showCoverScrim = coverMode === 'ui';
+  const showCoverTitle = coverMode === 'ui';
+  const showTitleBelow = coverMode === 'photo';
 
   return (
     <Link
       href={`/lists/${list.slug}`}
       prefetch={false}
       className="group block w-40 shrink-0 snap-start lg:w-full lg:shrink"
+      aria-label={list.title}
     >
       <Card className="overflow-hidden bg-popover p-0 shadow-sm transition-[colors,transform] active:scale-95 lg:hover:border-brand/20 lg:hover:shadow-md">
-        <div className="relative aspect-5/4 w-full bg-muted sm:aspect-4/3 lg:aspect-16/10 lg:max-h-44">
+        <div
+          className={`relative w-full bg-muted ${
+            showTitleBelow
+              ? 'aspect-4/3 sm:aspect-16/10 lg:aspect-16/10 lg:max-h-40'
+              : 'aspect-5/4 sm:aspect-4/3 lg:aspect-16/10 lg:max-h-44'
+          }`}
+        >
           {badge ? (
             <span
               className={`absolute inset-e-2 top-2 z-10 rounded-full px-2 py-0.5 text-sm font-semibold shadow-sm ${badgeClassName}`}
@@ -50,16 +62,27 @@ export default function HomeListCardServer({
               {list.categories?.icon ?? '📋'}
             </div>
           )}
-          <div
-            className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/90 via-foreground/35 to-foreground/5 lg:via-foreground/25"
-            aria-hidden
-          />
-          <div className="absolute inset-x-0 bottom-0 p-2.5 text-start lg:p-3">
-            <h3 className="line-clamp-2 wibe-small font-semibold text-background drop-shadow-sm lg:leading-snug">
+          {showCoverScrim ? (
+            <div
+              className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/90 via-foreground/35 to-foreground/5 lg:via-foreground/25"
+              aria-hidden
+            />
+          ) : null}
+          {showCoverTitle ? (
+            <div className="absolute inset-x-0 bottom-0 p-2.5 text-start lg:p-3">
+              <h3 className="line-clamp-2 wibe-small font-semibold text-background drop-shadow-sm lg:leading-snug">
+                {list.title}
+              </h3>
+            </div>
+          ) : null}
+        </div>
+        {showTitleBelow ? (
+          <div className="px-2.5 py-2 text-start">
+            <h3 className="line-clamp-2 wibe-small font-semibold text-foreground lg:leading-snug">
               {list.title}
             </h3>
           </div>
-        </div>
+        ) : null}
       </Card>
     </Link>
   );

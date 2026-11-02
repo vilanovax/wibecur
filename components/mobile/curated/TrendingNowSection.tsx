@@ -1,9 +1,11 @@
 'use client';
 
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCoverTitleOverlay from '@/components/shared/ListCoverTitleOverlay';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import ExploreTrendingPrefetchLink from './ExploreTrendingPrefetchLink';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
+import { getCoverDisplayFlags } from '@/lib/admin/category-form-constants';
 import type { CuratedList } from '@/types/curated';
 import { Card } from '@/components/ui/card';
 
@@ -51,6 +53,8 @@ function TrendingCard({
   showBadge?: boolean;
 }) {
   const href = `/lists/${list.slug}`;
+  const coverMode = list.category?.coverDisplayMode;
+  const { showTitleOnCover, showTitleBelow } = getCoverDisplayFlags(coverMode);
   const trustedCover = resolveCoverImage({
     coverImage: list.coverUrl,
     categorySlug: list.category?.slug,
@@ -79,17 +83,23 @@ function TrendingCard({
             listTitle={list.title}
           />
           {showBadge ? (
-            <span className="absolute inset-e-2 top-2 rounded-md bg-foreground/50 px-1.5 py-0.5 text-xs font-medium text-background backdrop-blur-sm">
+            <span className="absolute inset-e-2 top-2 z-10 rounded-md bg-foreground/50 px-1.5 py-0.5 text-xs font-medium text-background backdrop-blur-sm">
               داغ
             </span>
           ) : null}
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/75 via-transparent to-transparent lg:from-foreground/80" />
-          <div className="absolute inset-x-0 bottom-0 p-3 text-start lg:p-3">
-            <h3 className="line-clamp-2 wibe-small font-semibold text-background lg:text-base lg:font-bold lg:leading-snug">
-              {list.title}
-            </h3>
-          </div>
+          <ListCoverTitleOverlay
+            coverDisplayMode={coverMode}
+            title={list.title}
+            titleClassName="line-clamp-2 wibe-small font-semibold text-background lg:text-base lg:font-bold lg:leading-snug"
+            onCoverClassName="absolute inset-x-0 bottom-0 p-3 text-start"
+          />
+          {!showTitleOnCover ? <span className="sr-only">{list.title}</span> : null}
         </div>
+        {showTitleBelow ? (
+          <div className="px-3 py-2 text-start">
+            <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
+          </div>
+        ) : null}
       </Card>
     </ExploreTrendingPrefetchLink>
   );

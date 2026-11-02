@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, Save, TrendingUp, Lightbulb } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import { fa, faNumber } from '@/lib/utils';
 import type { FeaturedSlotPerformance } from '@/lib/admin/featured-management-types';
 
@@ -24,17 +24,10 @@ function formatPct(n: number): string {
   return `${fa(n.toFixed(1).replace('.', '٫'))}٪`;
 }
 
-function ctrColor(ctr: number): string {
-  if (ctr >= 0.18) return 'text-emerald-600 dark:text-emerald-400';
-  if (ctr >= 0.05) return 'text-amber-600 dark:text-amber-400';
-  return 'text-red-600 dark:text-red-400';
-}
-
-function liftColor(lift: number | null): string {
-  if (lift == null) return 'text-gray-500';
-  if (lift >= 200) return 'text-emerald-600 dark:text-emerald-400';
-  if (lift >= 50) return 'text-amber-600 dark:text-amber-400';
-  return 'text-red-600 dark:text-red-400';
+function ctrTone(ctr: number): string {
+  if (ctr >= 0.18) return 'text-emerald-700';
+  if (ctr >= 0.05) return 'text-amber-700';
+  return 'text-red-700';
 }
 
 export default function FeaturedPerformanceSection({
@@ -106,9 +99,7 @@ export default function FeaturedPerformanceSection({
         dir="rtl"
       >
         <h2 className="mb-2 text-sm font-semibold text-(--color-text)">عملکرد همین اسلات</h2>
-        <p className="text-sm text-red-700">
-          {error || 'داده‌ای یافت نشد'}
-        </p>
+        <p className="text-sm text-red-700">{error || 'داده‌ای یافت نشد'}</p>
       </section>
     );
   }
@@ -120,61 +111,61 @@ export default function FeaturedPerformanceSection({
     saveLiftPercent == null &&
     scoreLiftPercent == null;
 
+  const metrics = quiet
+    ? []
+    : [
+        { label: 'نمایش', value: formatNum(performance.impressions) },
+        { label: 'کلیک', value: formatNum(performance.clicks) },
+        {
+          label: 'نرخ کلیک',
+          value: formatPct(ctr * 100),
+          className: ctrTone(ctr),
+        },
+        { label: 'ذخیره', value: formatNum(performance.savesDuring) },
+        ...(saveLiftPercent != null
+          ? [{ label: 'رشد ذخیره', value: formatPct(saveLiftPercent) }]
+          : []),
+        ...(scoreLiftPercent != null
+          ? [{ label: 'تأثیر ترند', value: formatPct(scoreLiftPercent) }]
+          : []),
+      ];
+
   return (
-    <section className="space-y-4" dir="rtl">
-      <h2 className="text-lg font-semibold leading-snug text-(--color-text)">عملکرد همین اسلات</h2>
+    <section className="space-y-3" dir="rtl">
+      <h2 className="text-sm font-semibold leading-snug text-(--color-text)">
+        عملکرد همین اسلات
+      </h2>
       {quiet ? (
-        <p className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4 text-sm leading-relaxed text-wibe-secondary">
+        <p className="text-sm leading-relaxed text-wibe-secondary">
           هنوز نمایش یا کلیکی برای این اسلات ثبت نشده.
         </p>
       ) : (
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm text-wibe-secondary">
-            <BarChart3 className="size-4" strokeWidth={1.5} />
-            <span>تعامل</span>
-          </div>
-          <p className="text-lg font-bold text-(--color-text)">{formatNum(performance.impressions)}</p>
-          <p className="mt-1 text-sm text-wibe-secondary">نمایش</p>
-          <p className="mt-2 text-lg font-bold text-(--color-text)">{formatNum(performance.clicks)}</p>
-          <p className="mt-1 text-sm text-wibe-secondary">کلیک</p>
-          <p className={`mt-2 text-sm font-semibold ${ctrColor(ctr)}`}>نرخ کلیک {formatPct(ctr * 100)}</p>
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-(--color-border) bg-(--color-border) sm:grid-cols-3 lg:grid-cols-4">
+          {metrics.map((metric) => (
+            <div
+              key={metric.label}
+              className="bg-(--color-surface) px-4 py-3"
+            >
+              <p className="text-sm text-wibe-secondary">{metric.label}</p>
+              <p
+                className={`mt-1 text-lg font-bold leading-snug ${
+                  metric.className ?? 'text-(--color-text)'
+                }`}
+              >
+                {metric.value}
+              </p>
+            </div>
+          ))}
         </div>
-
-        <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm text-wibe-secondary">
-            <Save className="size-4" strokeWidth={1.5} />
-            <span>رشد ذخیره</span>
-          </div>
-          <p className="text-lg font-bold text-(--color-text)">{formatNum(performance.savesDuring)}</p>
-          <p className="mt-1 text-sm text-wibe-secondary">ذخیره در بازه اسلات</p>
-          <p className="mt-1 text-sm text-wibe-secondary">پایه {formatNum(performance.baselineSaves)}</p>
-          <p className={`mt-2 text-sm font-semibold ${liftColor(saveLiftPercent)}`}>
-            {saveLiftPercent != null ? formatPct(saveLiftPercent) : 'هنوز نیست'}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-(--color-border) bg-(--color-surface) p-4">
-          <div className="mb-3 flex items-center gap-2 text-sm text-wibe-secondary">
-            <TrendingUp className="size-4" strokeWidth={1.5} />
-            <span>تأثیر ترند</span>
-          </div>
-          <p className="text-sm text-wibe-secondary">پایه {formatNum(performance.baselineScore)}</p>
-          <p className="mt-1 text-sm text-wibe-secondary">اوج {formatNum(performance.peakScore)}</p>
-          <p className={`mt-2 text-sm font-semibold ${liftColor(scoreLiftPercent)}`}>
-            {scoreLiftPercent != null ? formatPct(scoreLiftPercent) : 'هنوز نیست'}
-          </p>
-        </div>
-      </div>
       )}
 
       {recommendations.length > 0 && (
-        <div className="rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-900/20 p-4">
-          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200 mb-2">
-            <Lightbulb className="w-5 h-5" />
-            <span className="font-medium">پیشنهادات سیستم</span>
+        <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4">
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-amber-900">
+            <Lightbulb className="size-4" strokeWidth={1.5} />
+            پیشنهاد سیستم
           </div>
-          <ul className="list-disc list-inside space-y-1 text-sm text-amber-800 dark:text-amber-200">
+          <ul className="space-y-1 text-sm leading-relaxed text-amber-900">
             {recommendations.map((text, i) => (
               <li key={i}>{text}</li>
             ))}

@@ -20,7 +20,13 @@ export type CandidateRow = ListForSimilarity & {
   slug: string;
   coverImage: string | null;
   itemCount: number;
-  categories: { id: string; name: string; slug: string; icon: string } | null;
+  categories: {
+    id: string;
+    name: string;
+    slug: string;
+    icon: string;
+    coverDisplayMode?: string | null;
+  } | null;
 };
 
 // خروجی نهایی همان شکل relatedLists فعلی
@@ -31,7 +37,13 @@ export type SimilarListOutput = {
   coverImage: string | null;
   saveCount: number;
   itemCount: number;
-  categories: { id: string; name: string; slug: string; icon: string } | null;
+  categories: {
+    id: string;
+    name: string;
+    slug: string;
+    icon: string;
+    coverDisplayMode?: string | null;
+  } | null;
 };
 
 // رفتار Save: لیست‌هایی که کاربرانِ «ذخیره‌کننده این لیست» آنها را هم ذخیره کرده‌اند
@@ -224,7 +236,7 @@ export async function fetchCandidates(
         itemCount: true,
         categoryId: true,
         tags: true,
-        categories: { select: { id: true, name: true, slug: true, icon: true } },
+        categories: { select: { id: true, name: true, slug: true, icon: true, coverDisplayMode: true } },
         items: { select: { title: true }, take: CANDIDATE_ITEM_TITLE_LIMIT },
       },
       take: CANDIDATES_LIMIT,
@@ -251,7 +263,7 @@ export async function fetchCandidates(
       itemCount: true,
       categoryId: true,
       tags: true,
-      categories: { select: { id: true, name: true, slug: true, icon: true } },
+      categories: { select: { id: true, name: true, slug: true, icon: true, coverDisplayMode: true } },
       items: { select: { title: true }, take: CANDIDATE_ITEM_TITLE_LIMIT },
     },
     take: CANDIDATES_LIMIT,
@@ -305,7 +317,7 @@ async function fetchFallbackByCategory(
       coverImage: true,
       saveCount: true,
       itemCount: true,
-      categories: { select: { id: true, name: true, slug: true, icon: true } },
+      categories: { select: { id: true, name: true, slug: true, icon: true, coverDisplayMode: true } },
     },
     orderBy: { saveCount: 'desc' },
     take,
@@ -333,7 +345,7 @@ async function fetchFallbackGlobal(
       coverImage: true,
       saveCount: true,
       itemCount: true,
-      categories: { select: { id: true, name: true, slug: true, icon: true } },
+      categories: { select: { id: true, name: true, slug: true, icon: true, coverDisplayMode: true } },
     },
     orderBy: { saveCount: 'desc' },
     take,
@@ -389,7 +401,7 @@ export async function getTopSimilarLists(
         itemCount: true,
         categoryId: true,
         tags: true,
-        categories: { select: { id: true, name: true, slug: true, icon: true } },
+        categories: { select: { id: true, name: true, slug: true, icon: true, coverDisplayMode: true } },
         items: { select: { title: true }, take: CANDIDATE_ITEM_TITLE_LIMIT },
       },
     });

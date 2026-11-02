@@ -27,6 +27,7 @@ function slimCategory(category: CategoryInfo): CategoryInfo {
     color: category.color,
     accentColor: category.accentColor ?? null,
     layoutType: category.layoutType ?? null,
+    coverDisplayMode: category.coverDisplayMode ?? null,
   };
 }
 

@@ -19,6 +19,10 @@ import CategoryPageAppearanceFields from '@/components/admin/categories/Category
 import { useCategorySlugCheck } from '@/hooks/useCategorySlugCheck';
 import Toast, { type ToastType } from '@/components/shared/Toast';
 import type { CategoryLayoutType } from '@/types/category-page';
+import {
+  normalizeCoverDisplayMode,
+  type CoverDisplayMode,
+} from '@/lib/admin/category-form-constants';
 
 function toWeightValue(n: number | null | undefined): WeightValue {
   if (n == null || !Number.isFinite(n)) return 1.0;
@@ -44,6 +48,7 @@ type FormState = {
   accentColor: string;
   heroImage: string;
   layoutType: CategoryLayoutType | '';
+  coverDisplayMode: CoverDisplayMode;
   description: string;
   order: number;
   isActive: boolean;
@@ -60,6 +65,9 @@ function buildInitialForm(category: categories): FormState {
     accentColor: category.accentColor || '',
     heroImage: category.heroImage || '',
     layoutType: (category.layoutType as CategoryLayoutType) || '',
+    coverDisplayMode: normalizeCoverDisplayMode(
+      (category as { coverDisplayMode?: string | null }).coverDisplayMode
+    ),
     description: category.description || '',
     order: category.order,
     isActive: category.isActive,
@@ -152,6 +160,7 @@ export default function CategoryEditForm({
           accentColor: formData.accentColor || null,
           heroImage: formData.heroImage || null,
           layoutType: formData.layoutType || null,
+          coverDisplayMode: formData.coverDisplayMode,
           description: formData.description,
           order: formData.order,
           isActive: formData.isActive,
@@ -267,12 +276,15 @@ export default function CategoryEditForm({
         <form id="category-edit-form" onSubmit={handleSubmit} className="space-y-6 min-w-0">
           {/* پیش‌نمایش موبایل */}
           <div className="lg:hidden">
-            <CategoryFormStickyPreview step={3} values={formData} />
+            <CategoryFormStickyPreview step={3} values={formData} mode="edit" />
           </div>
 
           <section className={sectionCard}>
-            <div className="px-5 py-4 border-b border-(--color-border) bg-(--color-bg)">
+            <div className="border-b border-(--color-border) bg-(--color-bg) px-5 py-4">
               <h2 className="font-semibold text-(--color-text)">هویت</h2>
+              <p className="mt-0.5 wibe-caption text-wibe-secondary">
+                نام، نامک، آیکون و توضیح کوتاه برای اپ
+              </p>
             </div>
             <div className="p-5">
               <CategoryFormIdentity
@@ -287,7 +299,7 @@ export default function CategoryEditForm({
                 }}
                 onChange={(patch) => setFormData((p) => ({ ...p, ...patch }))}
                 onSlugChange={handleSlugChange}
-                slugCheck={slugChanged ? slugCheck : { status: 'available', slug: formData.slug }}
+                slugCheck={slugChanged ? slugCheck : undefined}
                 onApplySlugSuggestion={handleApplySuggestion}
                 showInlinePreview={false}
                 showHeroImage={false}
@@ -315,8 +327,11 @@ export default function CategoryEditForm({
           </section>
 
           <section className={sectionCard}>
-            <div className="px-5 py-4 border-b border-(--color-border) bg-(--color-bg)">
-              <h2 className="font-semibold text-(--color-text)">ظاهر صفحه دسته در اپ</h2>
+            <div className="border-b border-(--color-border) bg-(--color-bg) px-5 py-4">
+              <h2 className="font-semibold text-(--color-text)">ظاهر در اپ</h2>
+              <p className="mt-0.5 wibe-caption text-wibe-secondary">
+                کاور لیست‌ها، رنگ تاکید، چیدمان صفحه دسته و تصویر هیرو
+              </p>
             </div>
             <div className="p-5">
               <CategoryPageAppearanceFields
@@ -324,9 +339,11 @@ export default function CategoryEditForm({
                   accentColor: formData.accentColor,
                   layoutType: formData.layoutType,
                   heroImage: formData.heroImage,
+                  coverDisplayMode: formData.coverDisplayMode,
                 }}
                 onChange={(patch) => setFormData((p) => ({ ...p, ...patch }))}
                 primaryColor={formData.color}
+                compactPreview
               />
               {!formData.accentColor && (
                 <button
@@ -341,10 +358,10 @@ export default function CategoryEditForm({
           </section>
 
           <section className={sectionCard}>
-            <div className="px-5 py-4 border-b border-(--color-border) bg-(--color-bg)">
-              <h2 className="font-semibold text-(--color-text)">رتبه‌بندی، نمایش و تعامل</h2>
-              <p className="text-xs text-wibe-secondary mt-0.5">
-                ترتیب، وضعیت انتشار، کامنت‌ها و وزن الگوریتم
+            <div className="border-b border-(--color-border) bg-(--color-bg) px-5 py-4">
+              <h2 className="font-semibold text-(--color-text)">انتشار و رفتار</h2>
+              <p className="mt-0.5 wibe-caption text-wibe-secondary">
+                وضعیت فعال، ترتیب نمایش، کامنت‌ها و وزن الگوریتم
               </p>
             </div>
             <div className="p-5 space-y-5">
@@ -509,7 +526,12 @@ export default function CategoryEditForm({
 
         <aside className="hidden lg:block">
           <div className="sticky top-24 space-y-4">
-            <CategoryFormStickyPreview step={3} values={formData} />
+            <CategoryFormStickyPreview step={3} values={formData} mode="edit" />
+            {dirty ? (
+              <p className="rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-center wibe-caption text-amber-900 dark:border-amber-800/50 dark:bg-amber-900/20 dark:text-amber-100">
+                تغییرات ذخیره نشده — پایین صفحه ذخیره کن
+              </p>
+            ) : null}
           </div>
         </aside>
       </div>

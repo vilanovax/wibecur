@@ -13,6 +13,9 @@ import CategoryFormStepper, {
 } from '@/components/admin/categories/CategoryFormStepper';
 import CategoryFormStickyPreview from '@/components/admin/categories/CategoryFormStickyPreview';
 import type { CategoryLayoutType } from '@/types/category-page';
+import {
+  type CoverDisplayMode,
+} from '@/lib/admin/category-form-constants';
 import { isValidCategorySlug } from '@/lib/admin/category-intelligence-shared';
 import { slugifyCategoryName } from '@/lib/admin/category-slug';
 import { useCategorySlugCheck } from '@/hooks/useCategorySlugCheck';
@@ -35,6 +38,7 @@ export default function NewCategoryPage() {
     accentColor: '',
     heroImage: '',
     layoutType: '' as CategoryLayoutType | '',
+    coverDisplayMode: 'ui' as CoverDisplayMode,
     description: '',
     order: 0,
     isActive: false,
@@ -273,9 +277,11 @@ export default function NewCategoryPage() {
                     accentColor: formData.accentColor,
                     layoutType: formData.layoutType,
                     heroImage: formData.heroImage,
+                    coverDisplayMode: formData.coverDisplayMode,
                   }}
                   onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
                   primaryColor={formData.color}
+                  compactPreview
                 />
                 {!formData.accentColor && (
                   <button

@@ -3,7 +3,6 @@
 import { RefreshCw, Plus } from 'lucide-react';
 
 type Props = {
-  hasActiveSlot: boolean;
   upcomingCount: number;
   onRefresh: () => void;
   refreshing: boolean;
@@ -11,19 +10,18 @@ type Props = {
 };
 
 export default function FeaturedHeroHeader({
-  hasActiveSlot,
   upcomingCount,
   onRefresh,
   refreshing,
   onAddSlot,
 }: Props) {
   return (
-    <header className="flex flex-wrap items-center justify-between gap-4" dir="rtl">
-      <div>
-        <h1 className="text-xl font-bold text-(--color-text)">
+    <header className="flex flex-wrap items-center justify-between gap-3" dir="rtl">
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold leading-snug text-(--color-text)">
           منتخب هوم
         </h1>
-        <p className="mt-1 text-sm leading-normal text-wibe-secondary">
+        <p className="mt-1 text-sm leading-relaxed text-wibe-secondary">
           بنر اول اپ را برای این هفته و هفته‌های بعد بچینید.
           {upcomingCount > 0
             ? ` ${upcomingCount.toLocaleString('fa-IR')} اسلات در صف است.`
@@ -31,25 +29,13 @@ export default function FeaturedHeroHeader({
         </p>
       </div>
       <div className="flex items-center gap-2">
-        <span
-          className={`inline-flex min-h-11 items-center gap-2 rounded-full px-3 text-sm font-medium ${
-            hasActiveSlot
-              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300'
-              : 'bg-(--color-bg) text-wibe-secondary border border-(--color-border)'
-          }`}
-        >
-          <span
-            className={`w-2 h-2 rounded-full ${hasActiveSlot ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}
-          />
-          {hasActiveSlot ? 'اسلات فعال' : 'بدون اسلات فعال'}
-        </span>
         {onAddSlot && (
           <button
             type="button"
             onClick={onAddSlot}
             className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-3 text-sm font-medium text-white hover:opacity-90"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="size-4" strokeWidth={2} />
             اسلات جدید
           </button>
         )}
@@ -57,10 +43,13 @@ export default function FeaturedHeroHeader({
           type="button"
           onClick={onRefresh}
           disabled={refreshing}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) px-3 text-sm hover:bg-(--color-bg) disabled:opacity-50"
+          className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-(--color-border) hover:bg-(--color-bg) disabled:opacity-50"
+          aria-label="بروزرسانی"
         >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          بروزرسانی
+          <RefreshCw
+            className={`size-4 ${refreshing ? 'animate-spin' : ''}`}
+            strokeWidth={1.5}
+          />
         </button>
       </div>
     </header>

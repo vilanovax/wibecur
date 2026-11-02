@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCoverTitleOverlay from '@/components/shared/ListCoverTitleOverlay';
 import ExploreSectionTitle from './ExploreSectionTitle';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
 import { resolveCoverImage } from '@/lib/resolve-cover-image';
+import { getCoverDisplayFlags } from '@/lib/admin/category-form-constants';
 import type { CuratedList } from '@/types/curated';
 import { Card } from '@/components/ui/card';
 
@@ -60,6 +62,8 @@ export default function ForYouSection({
           const categoryLabel = list.category?.name
             ? `${list.category.icon ? `${list.category.icon} ` : ''}${list.category.name}`
             : getListCardSubtitle(list);
+          const coverMode = list.category?.coverDisplayMode;
+          const { showTitleOnCover, showTitleBelow } = getCoverDisplayFlags(coverMode);
           const trustedCover = resolveCoverImage({
             coverImage: list.coverUrl,
             categorySlug: list.category?.slug,
@@ -87,16 +91,19 @@ export default function ForYouSection({
                     listSlug={list.slug}
                     listTitle={list.title}
                   />
-                  <div
-                    className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/75 to-transparent"
-                    aria-hidden
+                  <ListCoverTitleOverlay
+                    coverDisplayMode={coverMode}
+                    title={list.title}
                   />
-                  <div className="absolute inset-x-0 bottom-0 p-2.5 text-start">
-                    <h3 className="line-clamp-2 wibe-small font-semibold text-background">
+                  {!showTitleOnCover ? <span className="sr-only">{list.title}</span> : null}
+                </div>
+                {showTitleBelow ? (
+                  <div className="px-2.5 py-2 text-start">
+                    <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
                       {list.title}
                     </h3>
                   </div>
-                </div>
+                ) : null}
               </Card>
               {categoryLabel ? (
                 <p className="mt-1.5 line-clamp-1 wibe-caption text-muted-foreground">

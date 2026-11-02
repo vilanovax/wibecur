@@ -8,6 +8,7 @@ import HomeListSaveControl from '@/components/mobile/home/HomeListSaveControl';
 import type { HomeListCreator } from '@/types/home-data';
 import { trackHomeSectionClick, type HomeSectionId } from '@/lib/analytics';
 import { Card } from '@/components/ui/card';
+import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
 
 /** نشانگر ذخیره‌شده — وضعیت اولیهٔ کنترل ذخیره */
 export const SAVED_LIST_BADGE = '__saved_list_bookmark__';
@@ -19,7 +20,11 @@ export interface HomeGridListCardList {
   coverImage: string;
   saveCount: number;
   weeklySaves?: number;
-  categories?: { slug?: string; icon?: string | null } | null;
+  categories?: {
+    slug?: string;
+    icon?: string | null;
+    coverDisplayMode?: string | null;
+  } | null;
   creator?: HomeListCreator | null;
 }
 
@@ -50,6 +55,10 @@ export default function HomeGridListCard({
   const isSavedBadge = badge === SAVED_LIST_BADGE;
   const textBadge = badge && !isSavedBadge ? badge : null;
   const resolvedFetchPriority = priority ? 'high' : (fetchPriority ?? 'low');
+  const coverMode = normalizeCoverDisplayMode(list.categories?.coverDisplayMode);
+  const showCoverScrim = coverMode === 'ui';
+  const showCoverTitle = coverMode === 'ui';
+  const showTitleBelow = coverMode === 'photo';
 
   return (
     <div className="group relative w-40 shrink-0 snap-start lg:w-full lg:shrink">
@@ -67,9 +76,16 @@ export default function HomeGridListCard({
           }
         }}
         className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
+        aria-label={list.title}
       >
         <Card className="overflow-hidden bg-popover p-0 shadow-sm transition-[colors,transform] active:scale-95 lg:group-hover:border-brand/30 lg:group-hover:shadow-md">
-          <div className="relative aspect-5/4 w-full bg-muted sm:aspect-4/3 lg:aspect-16/10 lg:max-h-44">
+          <div
+            className={`relative w-full bg-muted ${
+              showTitleBelow
+                ? 'aspect-4/3 sm:aspect-16/10 lg:aspect-16/10 lg:max-h-40'
+                : 'aspect-5/4 sm:aspect-4/3 lg:aspect-16/10 lg:max-h-44'
+            }`}
+          >
             {!showSave && isSavedBadge ? (
               <span
                 className="absolute inset-s-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm"
@@ -98,16 +114,27 @@ export default function HomeGridListCard({
               priority={priority}
               fetchPriority={resolvedFetchPriority}
             />
-            <div
-              className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/90 via-foreground/35 to-foreground/5 lg:via-foreground/25"
-              aria-hidden
-            />
-            <div className="absolute inset-x-0 bottom-0 p-2.5 text-start lg:p-3">
-              <h3 className="line-clamp-2 wibe-small font-semibold text-background drop-shadow-sm lg:leading-snug">
+            {showCoverScrim ? (
+              <div
+                className="pointer-events-none absolute inset-0 bg-linear-to-t from-foreground/90 via-foreground/35 to-foreground/5 lg:via-foreground/25"
+                aria-hidden
+              />
+            ) : null}
+            {showCoverTitle ? (
+              <div className="absolute inset-x-0 bottom-0 p-2.5 text-start lg:p-3">
+                <h3 className="line-clamp-2 wibe-small font-semibold text-background drop-shadow-sm lg:leading-snug">
+                  {list.title}
+                </h3>
+              </div>
+            ) : null}
+          </div>
+          {showTitleBelow ? (
+            <div className="px-2.5 py-2 text-start">
+              <h3 className="line-clamp-2 wibe-small font-semibold text-foreground lg:leading-snug">
                 {list.title}
               </h3>
             </div>
-          </div>
+          ) : null}
         </Card>
       </Link>
       {showSave ? (

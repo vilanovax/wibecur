@@ -1,5 +1,55 @@
 import type { CategoryLayoutType } from '@/types/category-page';
 
+/** نحوهٔ نمایش عنوان و سایه روی کارت کاور لیست در اپ */
+export type CoverDisplayMode = 'ui' | 'baked' | 'photo';
+
+export const COVER_DISPLAY_MODE_OPTIONS: {
+  value: CoverDisplayMode;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: 'ui',
+    label: 'عنوان روی کاور',
+    description: 'عکس تمیز + لایهٔ تیره + عنوان UI (پیش‌فرض)',
+  },
+  {
+    value: 'baked',
+    label: 'پوستر طراحی‌شده',
+    description: 'عنوان داخل تصویر است — بدون متن و سایهٔ UI',
+  },
+  {
+    value: 'photo',
+    label: 'عنوان زیر عکس',
+    description: 'کاور بدون لایه؛ عنوان زیر تصویر نمایش داده می‌شود',
+  },
+];
+
+const COVER_MODE_SET = new Set<string>(COVER_DISPLAY_MODE_OPTIONS.map((o) => o.value));
+
+export function normalizeCoverDisplayMode(value: unknown): CoverDisplayMode {
+  if (typeof value === 'string' && COVER_MODE_SET.has(value)) {
+    return value as CoverDisplayMode;
+  }
+  return 'ui';
+}
+
+/** پرچم‌های نمایش کاور لیست بر اساس تنظیمات دسته */
+export function getCoverDisplayFlags(value: unknown): {
+  mode: CoverDisplayMode;
+  showScrim: boolean;
+  showTitleOnCover: boolean;
+  showTitleBelow: boolean;
+} {
+  const mode = normalizeCoverDisplayMode(value);
+  return {
+    mode,
+    showScrim: mode === 'ui',
+    showTitleOnCover: mode === 'ui',
+    showTitleBelow: mode === 'photo',
+  };
+}
+
 export const CATEGORY_LAYOUT_OPTIONS: {
   value: CategoryLayoutType;
   label: string;

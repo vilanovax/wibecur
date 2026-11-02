@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import ListCoverImage from '@/components/shared/ListCoverImage';
+import ListCoverTitleOverlay from '@/components/shared/ListCoverTitleOverlay';
 import ListCardStats from '@/components/shared/ListCardStats';
 import { getListCardSubtitle } from '@/lib/lists-card-utils';
 import { LIST_BADGE_LABELS, listBadgeSolidStyles } from '@/lib/list-badge-styles';
 import { CURATED_CATEGORY_SLUGS } from '@/lib/category-cover-images';
+import { getCoverDisplayFlags } from '@/lib/admin/category-form-constants';
 import type { CuratedList } from '@/types/curated';
 
 const BADGE_STYLES = listBadgeSolidStyles;
@@ -17,7 +19,9 @@ interface CuratedGridCardProps {
 
 export default function CuratedGridCard({ list }: CuratedGridCardProps) {
   const topBadge = list.badges[0];
-  const categorySlug = CURATED_CATEGORY_SLUGS[list.categoryId];
+  const categorySlug = list.category?.slug ?? CURATED_CATEGORY_SLUGS[list.categoryId];
+  const coverMode = list.category?.coverDisplayMode;
+  const { showTitleOnCover, showTitleBelow } = getCoverDisplayFlags(coverMode);
   const subtitle = getListCardSubtitle(list);
 
   return (
@@ -37,27 +41,35 @@ export default function CuratedGridCard({ list }: CuratedGridCardProps) {
         />
         {topBadge && (
           <span
-            className={`absolute right-2 top-2 rounded-pill px-2 py-0.5 wibe-caption font-semibold ${BADGE_STYLES[topBadge] ?? 'bg-black/75 text-white'}`}
+            className={`absolute inset-e-2 top-2 z-10 rounded-pill px-2 py-0.5 wibe-caption font-semibold ${BADGE_STYLES[topBadge] ?? 'bg-black/75 text-white'}`}
           >
             {BADGE_LABELS[topBadge] ?? topBadge}
           </span>
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-black/75 via-transparent to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-2.5 text-right lg:p-3">
-          <h3 className="mb-1 line-clamp-2 wibe-small font-semibold text-white lg:text-base lg:font-bold">
-            {list.title}
-          </h3>
-          <ListCardStats
-            saves={list.savesCount}
-            itemCount={list.itemsCount}
-            variant="overlay"
-            className="lg:text-sm"
-          />
-        </div>
+        <ListCoverTitleOverlay
+          coverDisplayMode={coverMode}
+          title={list.title}
+          titleClassName="mb-1 line-clamp-2 wibe-small font-semibold text-white lg:text-base lg:font-bold"
+          onCoverExtra={
+            <ListCardStats
+              saves={list.savesCount}
+              itemCount={list.itemsCount}
+              variant="overlay"
+              className="lg:text-sm"
+            />
+          }
+        />
+        {!showTitleOnCover ? <span className="sr-only">{list.title}</span> : null}
       </div>
-      {subtitle && (
+      {showTitleBelow ? (
+        <div className="space-y-1 px-2.5 py-2 text-start">
+          <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">{list.title}</h3>
+          <ListCardStats saves={list.savesCount} itemCount={list.itemsCount} variant="compact" />
+        </div>
+      ) : null}
+      {!showTitleBelow && subtitle ? (
         <p className="line-clamp-1 px-2.5 py-2 wibe-caption text-wibe-secondary lg:hidden">{subtitle}</p>
-      )}
+      ) : null}
     </Link>
   );
 }

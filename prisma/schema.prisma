@@ -40,6 +40,8 @@ model categories {
   description          String?
   heroImage            String? // تصویر هیرو صفحه دسته
   layoutType           String? // cinematic | locationBased | editorial | minimal
+  /// ui = عنوان+سایه روی کاور | baked = پوستر طراحی‌شده بدون لایه UI | photo = عنوان زیر تصویر
+  coverDisplayMode     String                @default("ui")
   order                Int                   @default(0)
   isActive             Boolean               @default(true)
   commentsEnabled      Boolean               @default(true) // فعال/غیرفعال کردن کامنت برای دسته

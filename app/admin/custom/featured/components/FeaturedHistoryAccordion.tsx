@@ -31,7 +31,7 @@ export default function FeaturedHistoryAccordion({ past, formatDate }: Props) {
       </button>
       {open && (
         <div className="border-t border-(--color-border) overflow-x-auto">
-          <table className="w-full text-sm text-right">
+          <table className="w-full text-sm text-start">
             <thead className="bg-(--color-bg)">
               <tr>
                 <th className="p-3 font-medium text-wibe-secondary">لیست</th>
