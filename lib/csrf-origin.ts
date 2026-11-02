@@ -1,6 +1,9 @@
 /**
  * دفاع CSRF برای APIهای cookie-auth:
  * درخواست‌های mutating باید Origin یا Referer هم‌منبع با اپ داشته باشند.
+ *
+ * Allowlist فقط از env ساخته می‌شود — Host / X-Forwarded-Host درخواست
+ * قابل جعل‌اند و هرگز به لیست مجاز اضافه نمی‌شوند.
  */
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -14,14 +17,15 @@ function hostFromUrl(raw: string | null | undefined): string | null {
   }
 }
 
-/** هاست‌های مجاز از env + Host همان درخواست */
-export function getAllowedApiHosts(request: Request): Set<string> {
-  const allowed = new Set<string>();
+function hostFromEnvPart(part: string): string | null {
+  const trimmed = part.trim();
+  if (!trimmed) return null;
+  return hostFromUrl(trimmed) ?? (trimmed.includes('://') ? null : trimmed.toLowerCase());
+}
 
-  const requestHost = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
-  if (requestHost) {
-    allowed.add(requestHost.split(',')[0]!.trim().toLowerCase());
-  }
+/** هاست‌های مجاز فقط از پیکربندی سرور (نه هدر درخواست) */
+export function getAllowedApiHosts(): Set<string> {
+  const allowed = new Set<string>();
 
   for (const raw of [
     process.env.NEXTAUTH_URL,
@@ -30,7 +34,7 @@ export function getAllowedApiHosts(request: Request): Set<string> {
   ]) {
     if (!raw) continue;
     for (const part of raw.split(',')) {
-      const host = hostFromUrl(part.trim()) ?? (part.includes('://') ? null : part.trim().toLowerCase());
+      const host = hostFromEnvPart(part);
       if (host) allowed.add(host);
     }
   }
@@ -62,19 +66,32 @@ export function rejectIfCsrfOriginInvalid(
   const auth = request.headers.get('authorization') ?? '';
   if (/^Bearer\s+\S+/i.test(auth)) return null;
 
-  const allowed = getAllowedApiHosts(request);
+  const allowed = getAllowedApiHosts();
   const originHost = hostFromUrl(request.headers.get('origin'));
   const refererHost = hostFromUrl(request.headers.get('referer'));
   const candidate = originHost ?? refererHost;
+  const isProduction = process.env.NODE_ENV === 'production';
 
   if (!candidate) {
     // بدون Origin/Referer: در production رد؛ در dev برای curl/تست باز
-    if (process.env.NODE_ENV === 'production') {
+    if (isProduction) {
       return Response.json(
         { error: 'درخواست نامعتبر است.' },
         { status: 403 }
       );
     }
+    return null;
+  }
+
+  // production بدون allowlist پیکربندی‌شده → fail-closed
+  if (allowed.size === 0) {
+    if (isProduction) {
+      return Response.json(
+        { error: 'درخواست از مبدأ غیرمجاز رد شد.' },
+        { status: 403 }
+      );
+    }
+    // لوکال بدون NEXTAUTH_URL: چک Origin را رد نکن تا DX نشکند
     return null;
   }
 

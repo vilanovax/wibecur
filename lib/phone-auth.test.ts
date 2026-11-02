@@ -6,6 +6,7 @@ import {
   formatPhoneDigitsForDisplay,
   normalizeIranPhone,
   phoneToAuthEmail,
+  validateAuthPassword,
   validatePhoneInput,
 } from './phone-auth';
 
@@ -44,6 +45,16 @@ describe('formatIranPhoneDisplay', () => {
 describe('validatePhoneInput', () => {
   it('passes for Persian mobile input', () => {
     expect(validatePhoneInput('۰۹۱۲۱۲۳۴۵۶۷')).toBeNull();
+  });
+});
+
+describe('validateAuthPassword', () => {
+  it('rejects passwords shorter than 8 characters', () => {
+    expect(validateAuthPassword('1234567')).toMatch(/۸/);
+  });
+
+  it('accepts passwords with at least 8 characters', () => {
+    expect(validateAuthPassword('12345678')).toBeNull();
   });
 });
 

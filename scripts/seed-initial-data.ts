@@ -432,7 +432,7 @@ async function main() {
   console.log('\n🎉 Seed completed successfully!');
   console.log('\n📝 Admin Login:');
   console.log('   Phone: 09121941532');
-  console.log('   Password: 123456');
+  console.log('   Password: (seed default — change immediately; never use in production)');
 }
 
 main()
