@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Loader2, Plus, Search, X } from 'lucide-react';
+import { parseAdminListsResponse } from '@/lib/admin/parse-admin-lists-response';
 
 export type SeedTargetKind = 'item' | 'list' | 'category';
 
@@ -104,12 +105,17 @@ export default function CommentSeedTargetPicker({
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ includeInactive: 'true' });
+      const params = new URLSearchParams({
+        includeInactive: 'true',
+        page: '1',
+        pageSize: '50',
+      });
       if (filterCategoryId) params.set('categoryId', filterCategoryId);
+      if (query.trim().length >= 2) params.set('q', query.trim());
       const res = await fetch(`/api/admin/lists?${params}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'خطا در دریافت لیست‌ها');
-      const rows: ListRow[] = Array.isArray(data) ? data : [];
+      const rows = parseAdminListsResponse<ListRow>(data).items;
       setLists(rows);
       mergeLabels(
         rows.map((l) => ({
@@ -124,7 +130,7 @@ export default function CommentSeedTargetPicker({
     } finally {
       setLoading(false);
     }
-  }, [filterCategoryId, mergeLabels]);
+  }, [filterCategoryId, mergeLabels, query]);
 
   const loadItems = useCallback(async () => {
     if (!filterListId) {

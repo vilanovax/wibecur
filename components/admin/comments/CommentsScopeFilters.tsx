@@ -6,6 +6,7 @@ import {
   COMMENT_ORIGIN_OPTIONS,
   type CommentOriginKind,
 } from '@/lib/admin/comments-scope-utils';
+import { parseAdminListsResponse } from '@/lib/admin/parse-admin-lists-response';
 
 type CategoryRow = { id: string; name: string; icon?: string | null };
 type ListRow = { id: string; title: string };
@@ -52,12 +53,16 @@ export default function CommentsScopeFilters({
   const loadLists = useCallback(async (catId: string) => {
     setListsLoading(true);
     try {
-      const params = new URLSearchParams({ includeInactive: 'true' });
+      const params = new URLSearchParams({
+        includeInactive: 'true',
+        page: '1',
+        pageSize: '100',
+      });
       if (catId) params.set('categoryId', catId);
       const res = await fetch(`/api/admin/lists?${params}`);
       const data = await res.json();
-      if (res.ok && Array.isArray(data)) {
-        setLists(data);
+      if (res.ok) {
+        setLists(parseAdminListsResponse<ListRow>(data).items);
       } else {
         setLists([]);
       }

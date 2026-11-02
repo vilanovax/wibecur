@@ -59,6 +59,9 @@ next-env.d.ts
 # YoYo AI version control directory
 .yoyo/
 
+# Nested legacy app tree (do not commit)
+/wibe/
+
 # Capacitor / Android build artifacts
 android/.gradle/
 android/app/build/

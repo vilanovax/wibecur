@@ -39,6 +39,21 @@ export class CatalogNotReadyError extends Error {
   }
 }
 
+/** برخورد unique روی externalKey هنگام ویرایش عنوان/دسته */
+export class CatalogExternalKeyConflictError extends Error {
+  readonly conflictId: string;
+  readonly conflictTitle: string;
+
+  constructor(conflictId: string, conflictTitle: string) {
+    super(
+      `عنوان با موجودیت دیگری در کاتالوگ تداخل دارد («${conflictTitle}»). یا آن را ادغام کنید یا عنوان را عوض کنید.`
+    );
+    this.name = 'CatalogExternalKeyConflictError';
+    this.conflictId = conflictId;
+    this.conflictTitle = conflictTitle;
+  }
+}
+
 /** Prisma Client بعد از schema جدید باید regenerate شود */
 export function isCatalogClientReady(prisma: PrismaClient): boolean {
   const delegate = (prisma as { catalog_items?: { findMany?: unknown } }).catalog_items;
@@ -1224,22 +1239,51 @@ export async function updateCatalogItem(
       ? input.externalKey
       : buildCatalogExternalKey(categorySlug, title, metadata);
 
-  const updated = await catalogDb(prisma).update({
-    where: { id },
-    data: {
-      ...(input.title !== undefined && { title }),
-      ...(input.description !== undefined && { description: input.description?.trim() || null }),
-      ...(input.imageUrl !== undefined && { imageUrl: input.imageUrl?.trim() || null }),
-      ...(input.externalUrl !== undefined && { externalUrl: input.externalUrl?.trim() || null }),
-      ...(input.categorySlug !== undefined && { categorySlug }),
-      ...(input.metadata !== undefined && { metadata: metadata as Prisma.InputJsonValue }),
-      externalKey,
-      updatedAt: new Date(),
-    },
-  });
+  if (externalKey && externalKey !== existing.externalKey) {
+    const conflict = await findCatalogByExternalKey(prisma, externalKey);
+    if (conflict && conflict.id !== id) {
+      const livePlacements = await prisma.items.count({
+        where: { catalogItemId: conflict.id, deletedAt: null },
+      });
+      if (livePlacements === 0) {
+        // تکراری یتیم (فقط زباله یا بدون جایگاه) — کلید را آزاد کن
+        await mergeCatalogItems(prisma, id, [conflict.id]);
+      } else {
+        throw new CatalogExternalKeyConflictError(conflict.id, conflict.title);
+      }
+    }
+  }
 
-  await syncPlacementsFromCatalog(prisma, id);
-  return updated;
+  try {
+    const updated = await catalogDb(prisma).update({
+      where: { id },
+      data: {
+        ...(input.title !== undefined && { title }),
+        ...(input.description !== undefined && { description: input.description?.trim() || null }),
+        ...(input.imageUrl !== undefined && { imageUrl: input.imageUrl?.trim() || null }),
+        ...(input.externalUrl !== undefined && { externalUrl: input.externalUrl?.trim() || null }),
+        ...(input.categorySlug !== undefined && { categorySlug }),
+        ...(input.metadata !== undefined && { metadata: metadata as Prisma.InputJsonValue }),
+        externalKey,
+        updatedAt: new Date(),
+      },
+    });
+
+    await syncPlacementsFromCatalog(prisma, id);
+    return updated;
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      const raced =
+        externalKey != null ? await findCatalogByExternalKey(prisma, externalKey) : null;
+      if (raced && raced.id !== id) {
+        throw new CatalogExternalKeyConflictError(raced.id, raced.title);
+      }
+    }
+    throw error;
+  }
 }
 
 /** گروه‌های احتمالاً تکراری (عنوان نرمال + دسته) */

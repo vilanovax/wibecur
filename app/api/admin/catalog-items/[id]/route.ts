@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { requireAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import {
+  CatalogExternalKeyConflictError,
   deleteCatalogItemCompletely,
   getCatalogItemDetail,
   updateCatalogItem,
@@ -69,6 +70,16 @@ export async function PUT(
 
     return NextResponse.json(updated);
   } catch (error: unknown) {
+    if (error instanceof CatalogExternalKeyConflictError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          conflictCatalogId: error.conflictId,
+          conflictTitle: error.conflictTitle,
+        },
+        { status: 409 }
+      );
+    }
     const message = error instanceof Error ? error.message : 'خطا';
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -92,6 +103,16 @@ export async function PATCH(
     const updated = await updateCatalogItem(prisma, id, { title: title.trim() });
     return NextResponse.json(updated);
   } catch (error: unknown) {
+    if (error instanceof CatalogExternalKeyConflictError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          conflictCatalogId: error.conflictId,
+          conflictTitle: error.conflictTitle,
+        },
+        { status: 409 }
+      );
+    }
     const message = error instanceof Error ? error.message : 'خطا';
     return NextResponse.json({ error: message }, { status: 500 });
   }

@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/auth/require-permission';
 import { nanoid } from 'nanoid';
 import { ensureImageInLiara } from '@/lib/object-storage';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
+
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
 
 export async function POST(request: NextRequest) {
   try {
@@ -86,10 +90,17 @@ export async function POST(request: NextRequest) {
 
     revalidateAdminListsAndCategoriesCache();
     return NextResponse.json(list, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const code = (error as { code?: string })?.code;
     console.error('Error creating list:', error);
+    if (code === 'P2002') {
+      return NextResponse.json(
+        { error: 'این slug قبلاً استفاده شده است' },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { error: error.message || 'خطا در ایجاد لیست' },
+      { error: 'خطا در ایجاد لیست' },
       { status: 500 }
     );
   }
@@ -104,31 +115,63 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get('categoryId');
     const includeInactive = searchParams.get('includeInactive') === 'true';
     const trash = searchParams.get('trash') === 'true';
+    const q = (searchParams.get('q') ?? '').trim();
 
-    const lists = await prisma.lists.findMany({
-      where: {
-        ...(categoryId && { categoryId }),
-        ...(includeInactive ? {} : { isActive: true }),
-        deletedAt: trash ? { not: null } : null,
-      },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        categories: true,
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);
+    const rawSize = parseInt(searchParams.get('pageSize') ?? String(DEFAULT_PAGE_SIZE), 10);
+    const pageSize = Math.min(
+      MAX_PAGE_SIZE,
+      Math.max(1, Number.isFinite(rawSize) ? rawSize : DEFAULT_PAGE_SIZE)
+    );
+
+    const where: Prisma.listsWhereInput = {
+      ...(categoryId ? { categoryId } : {}),
+      ...(includeInactive ? {} : { isActive: true }),
+      deletedAt: trash ? { not: null } : null,
+      ...(q
+        ? {
+            OR: [
+              { title: { contains: q, mode: 'insensitive' } },
+              { slug: { contains: q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, items] = await Promise.all([
+      prisma.lists.count({ where }),
+      prisma.lists.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: {
+          categories: true,
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          _count: {
+            select: { items: true, list_likes: true, bookmarks: true },
           },
         },
-        _count: {
-          select: { items: true, list_likes: true, bookmarks: true },
-        },
-      },
-    });
+      }),
+    ]);
 
-    return NextResponse.json(lists);
-  } catch (error: any) {
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    return NextResponse.json({
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages,
+      hasMore: page < totalPages,
+    });
+  } catch (error: unknown) {
     console.error('Error fetching lists:', error);
     return NextResponse.json(
       { error: 'خطا در دریافت لیست‌ها' },

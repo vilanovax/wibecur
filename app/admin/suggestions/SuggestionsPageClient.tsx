@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { List, Package } from 'lucide-react';
+import { faNumber } from '@/lib/utils';
 import ListSuggestionsTable from '@/components/admin/suggestions/ListSuggestionsTable';
 import ItemSuggestionsTable from '@/components/admin/suggestions/ItemSuggestionsTable';
 
@@ -12,11 +13,12 @@ interface SuggestionsPageClientProps {
   initialPage?: string;
   initialSource?: string;
   itemPendingCount?: number;
+  listPendingCount?: number;
 }
 
 const tabs = [
-  { id: 'items', label: 'آیتم', icon: Package },
-  { id: 'lists', label: 'لیست', icon: List },
+  { id: 'items', label: 'آیتم', icon: Package, pendingKey: 'item' as const },
+  { id: 'lists', label: 'لیست', icon: List, pendingKey: 'list' as const },
 ];
 
 const statusFilters = [
@@ -32,17 +34,23 @@ const sourceFilters = [
   { id: 'form', label: 'فرم کامل' },
 ];
 
-function SegmentedControl<T extends string>({
+function PillGroup<T extends string>({
   value,
   options,
   onChange,
+  ariaLabel,
 }: {
   value: T;
   options: { id: T; label: string }[];
   onChange: (id: T) => void;
+  ariaLabel: string;
 }) {
   return (
-    <div className="inline-flex max-w-full overflow-x-auto rounded-xl bg-gray-100 dark:bg-gray-700/50 p-1 scrollbar-hide">
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      className="flex max-w-full flex-wrap gap-2"
+    >
       {options.map((opt) => {
         const active = value === opt.id;
         return (
@@ -50,10 +58,10 @@ function SegmentedControl<T extends string>({
             key={opt.id}
             type="button"
             onClick={() => onChange(opt.id)}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+            className={`inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition-colors ${
               active
-                ? 'bg-white dark:bg-gray-800 text-(--color-text) dark:text-white shadow-sm'
-                : 'text-wibe-secondary dark:text-(--color-text-subtle) hover:text-(--color-text)'
+                ? 'bg-primary text-white'
+                : 'border border-(--color-border) bg-(--color-surface) text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text)'
             }`}
           >
             {opt.label}
@@ -70,6 +78,7 @@ export default function SuggestionsPageClient({
   initialPage = '1',
   initialSource = 'all',
   itemPendingCount = 0,
+  listPendingCount = 0,
 }: SuggestionsPageClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialTab === 'lists' ? 'lists' : 'items');
@@ -103,76 +112,88 @@ export default function SuggestionsPageClient({
   };
 
   const resolvedStatus = status === 'all' ? undefined : status;
+  const pendingByTab = {
+    item: itemPendingCount,
+    list: listPendingCount,
+  };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm" dir="rtl">
-      <div className="space-y-3 border-b border-gray-100 dark:border-gray-700 px-4 py-4 md:px-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="inline-flex self-start rounded-xl bg-gray-100 dark:bg-gray-700/50 p-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              const active = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => switchTab(tab.id)}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${
-                    active
-                      ? 'bg-white dark:bg-gray-800 text-violet-700 dark:text-violet-300 shadow-sm'
-                      : 'text-wibe-secondary dark:text-(--color-text-subtle) hover:text-(--color-text)'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <SegmentedControl
-            value={status}
-            options={statusFilters}
-            onChange={(id) => {
-              setStatus(id);
-              setPage('1');
-            }}
-          />
+    <div className="space-y-4" dir="rtl">
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+            const pending = pendingByTab[tab.pendingKey];
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => switchTab(tab.id)}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-colors ${
+                  active
+                    ? 'bg-primary text-white'
+                    : 'border border-(--color-border) bg-(--color-surface) text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text)'
+                }`}
+              >
+                <Icon className="size-4" strokeWidth={active ? 2 : 1.5} />
+                {tab.label}
+                {pending > 0 && (
+                  <span
+                    className={`rounded-md px-1.5 text-sm tabular-nums ${
+                      active ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {faNumber(pending)}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
+
+        <PillGroup
+          value={status}
+          options={statusFilters}
+          onChange={(id) => {
+            setStatus(id);
+            setPage('1');
+          }}
+          ariaLabel="وضعیت پیشنهاد"
+        />
 
         {activeTab === 'items' && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-wibe-secondary dark:text-(--color-text-subtle)">منبع:</span>
-            <SegmentedControl
+            <span className="text-sm text-wibe-secondary">منبع</span>
+            <PillGroup
               value={source}
               options={sourceFilters}
               onChange={(id) => {
                 setSource(id);
                 setPage('1');
               }}
+              ariaLabel="منبع پیشنهاد آیتم"
             />
           </div>
         )}
       </div>
 
-      <div className="px-4 py-4 md:px-5 md:py-5">
-        {activeTab === 'lists' ? (
-          <ListSuggestionsTable
-            status={resolvedStatus}
-            currentPage={parseInt(page, 10) || 1}
-            onPageChange={(newPage) => setPage(newPage.toString())}
-            onSwitchToItems={() => switchTab('items')}
-            itemPendingCount={itemPendingCount}
-          />
-        ) : (
-          <ItemSuggestionsTable
-            status={resolvedStatus}
-            source={source === 'all' ? undefined : (source as 'form' | 'menu')}
-            currentPage={parseInt(page, 10) || 1}
-            onPageChange={(newPage) => setPage(newPage.toString())}
-          />
-        )}
-      </div>
+      {activeTab === 'lists' ? (
+        <ListSuggestionsTable
+          status={resolvedStatus}
+          currentPage={parseInt(page, 10) || 1}
+          onPageChange={(newPage) => setPage(newPage.toString())}
+          onSwitchToItems={() => switchTab('items')}
+          itemPendingCount={itemPendingCount}
+        />
+      ) : (
+        <ItemSuggestionsTable
+          status={resolvedStatus}
+          source={source === 'all' ? undefined : (source as 'form' | 'menu')}
+          currentPage={parseInt(page, 10) || 1}
+          onPageChange={(newPage) => setPage(newPage.toString())}
+        />
+      )}
     </div>
   );
 }

@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { computeAndUpsertUserCategoryAffinity } from '@/lib/discovery';
 import { authorizeCron } from '@/lib/cron-auth';
 import { logServerError } from '@/lib/api-error';
+import {
+  parseDiscoveryCronParams,
+  runDiscoveryAffinityBatch,
+} from '@/lib/discovery-cron';
 
-/** POST /api/cron/discovery — به‌روزرسانی وزن دسته‌ای کاربران (روزانه). */
+/**
+ * POST /api/cron/discovery — به‌روزرسانی وزن دسته‌ای کاربران (دسته‌ای).
+ *
+ * Query:
+ * - limit (پیش‌فرض ۵۰، سقف ۵۰۰)
+ * - cursor (آخرین userId پردازش‌شده از پاسخ قبلی)
+ * - concurrency (پیش‌فرض ۵، سقف ۲۰)
+ *
+ * تا hasMore=false صدا را با nextCursor تکرار کن.
+ */
 export async function POST(request: NextRequest) {
   const authResult = authorizeCron(request);
   if (!authResult.ok) {
@@ -12,30 +24,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const userIds = await prisma.bookmarks.findMany({
-      select: { userId: true },
-      distinct: ['userId'],
-    }).then((r) => [...new Set(r.map((x) => x.userId))]);
-    const listUserIds = await prisma.lists.findMany({
-      where: { isPublic: true },
-      select: { userId: true },
-      distinct: ['userId'],
-    }).then((r) => [...new Set(r.map((x) => x.userId))]);
-    const likeUserIds = await prisma.list_likes.findMany({
-      select: { userId: true },
-      distinct: ['userId'],
-    }).then((r) => [...new Set(r.map((x) => x.userId))]);
-    const all = new Set([...userIds, ...listUserIds, ...likeUserIds]);
-
-    let done = 0;
-    for (const userId of all) {
-      await computeAndUpsertUserCategoryAffinity(prisma, userId);
-      done++;
-    }
+    const params = parseDiscoveryCronParams(request);
+    const result = await runDiscoveryAffinityBatch(prisma, params);
 
     return NextResponse.json({
       success: true,
-      message: `Discovery affinity updated for ${done} users`,
+      message: `Discovery affinity updated for ${result.processed} users`,
+      ...result,
     });
   } catch (e) {
     logServerError('cron/discovery', e);

@@ -298,17 +298,20 @@ export default function ItemSuggestionsTable({
       )}
 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-wibe-secondary dark:text-(--color-text-subtle)">
-          <span className="font-semibold text-(--color-text) dark:text-gray-100">{total.toLocaleString('fa-IR')}</span> پیشنهاد
+        <p className="text-sm text-wibe-secondary">
+          <span className="font-semibold text-(--color-text)">
+            {total.toLocaleString('fa-IR')}
+          </span>{' '}
+          پیشنهاد
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {suggestions.length > 1 && (
             <button
               type="button"
               onClick={() => setSortOrder((s) => (s === 'newest' ? 'oldest' : 'newest'))}
-              className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-wibe-secondary dark:text-(--color-text-subtle) hover:bg-gray-50"
+              className="inline-flex min-h-11 items-center rounded-xl border border-(--color-border) px-3 text-sm font-medium text-wibe-secondary hover:bg-(--color-bg)"
             >
-              {sortOrder === 'newest' ? 'جدیدترین ↑' : 'قدیمی‌ترین ↓'}
+              {sortOrder === 'newest' ? 'جدیدترین' : 'قدیمی‌ترین'}
             </button>
           )}
           <button
@@ -317,10 +320,10 @@ export default function ItemSuggestionsTable({
               setBulkMode((b) => !b);
               if (bulkMode) setSelectedIds(new Set());
             }}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-medium transition-colors ${
               bulkMode
-                ? 'border-violet-300 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
-                : 'border-gray-200 dark:border-gray-700 text-wibe-secondary dark:text-(--color-text-subtle) hover:bg-gray-50'
+                ? 'border-primary/30 bg-primary/10 text-primary'
+                : 'border-(--color-border) text-wibe-secondary hover:bg-(--color-bg)'
             }`}
           >
             {bulkMode ? 'لغو انتخاب' : 'انتخاب چندتایی'}

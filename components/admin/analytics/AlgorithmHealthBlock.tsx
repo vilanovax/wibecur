@@ -1,7 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import type { TrendingHealth } from '@/lib/admin/analytics-metrics';
 import { Zap, AlertTriangle } from 'lucide-react';
+import { fa, faNumber } from '@/lib/utils';
 
 interface AlgorithmHealthBlockProps {
   data: TrendingHealth;
@@ -10,73 +12,95 @@ interface AlgorithmHealthBlockProps {
 const CONCENTRATION_RISK_THRESHOLD = 60;
 
 function buildInsight(data: TrendingHealth): string {
-  if (data.trendDistributionIndex >= CONCENTRATION_RISK_THRESHOLD)
-    return 'تمرکز ترند بالا است. احتمال بایاس الگوریتم؛ تنوع در کشف محتوا توصیه می‌شود.';
-  if (data.percentRapidlyDeclining > 30)
-    return 'سهم قابل توجهی از لیست‌ها در حال افت سریع هستند؛ تنوع ترند پایین است.';
-  if (data.percentEnteringHotZone < 5 && data.avgTrendingScoreTop50 > 0)
+  if (data.trendDistributionIndex >= CONCENTRATION_RISK_THRESHOLD) {
+    return 'تمرکز ترند بالاست. احتمال بایاس الگوریتم؛ تنوع در کشف محتوا توصیه می‌شود.';
+  }
+  if (data.percentRapidlyDeclining > 30) {
+    return 'سهم قابل‌توجهی از لیست‌ها در حال افت سریع هستند؛ تنوع ترند پایین است.';
+  }
+  if (data.percentEnteringHotZone < 5 && data.avgTrendingScoreTop50 > 0) {
     return 'امتیاز ترند متمرکز روی تعداد کمی لیست است.';
-  if (data.avgSaveVelocity < 1)
+  }
+  if (data.avgSaveVelocity < 1) {
     return 'سرعت ذخیره میانگین پایین است؛ کشف محتوا ضعیف است.';
-  return 'سلامت الگوریتم ترند در حد قابل قبول است.';
+  }
+  return 'سلامت الگوریتم ترند در حد قابل‌قبول است.';
+}
+
+function Metric({
+  label,
+  value,
+  warn,
+}: {
+  label: string;
+  value: string;
+  warn?: boolean;
+}) {
+  return (
+    <div className="min-w-0 bg-(--color-surface) px-4 py-3">
+      <p className="text-sm text-wibe-secondary">{label}</p>
+      <p
+        className={`mt-1 text-lg font-bold leading-snug ${
+          warn ? 'text-red-700' : 'text-(--color-text)'
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  );
 }
 
 export default function AlgorithmHealthBlock({ data }: AlgorithmHealthBlockProps) {
-  const highConcentration = data.trendDistributionIndex >= CONCENTRATION_RISK_THRESHOLD;
+  const highConcentration =
+    data.trendDistributionIndex >= CONCENTRATION_RISK_THRESHOLD;
 
   return (
-    <section
-      className="rounded-2xl shadow-sm border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden border-l-4 border-l-rose-500"
-      style={{ direction: 'rtl' }}
-    >
-      <div className="p-6">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-slate-500 dark:text-(--color-text-subtle)" />
-            <h2 className="font-semibold text-slate-800 dark:text-gray-100">سلامت الگوریتم ترند</h2>
-          </div>
+    <section className="space-y-3" dir="rtl">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="inline-flex flex-wrap items-center gap-2 text-sm font-semibold text-(--color-text)">
+          <Zap className="size-4" strokeWidth={1.5} />
+          سلامت الگوریتم ترند
           {highConcentration && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-rose-50 dark:bg-rose-900/20 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
-              <AlertTriangle className="w-4 h-4" />
-              High Concentration Risk
+            <span className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-0.5 text-sm font-medium text-red-800">
+              <AlertTriangle className="size-3.5" strokeWidth={1.5} />
+              تمرکز بالا
             </span>
           )}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1">
-            <p className="text-sm text-slate-500 dark:text-(--color-text-subtle) mb-1">⚡ Trend Distribution Index</p>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
-              {data.trendDistributionIndex}٪
-            </p>
-            <p className="text-xs text-slate-500 dark:text-(--color-text-subtle) mt-1">
-              سهم ذخیره‌های ۷ روز توسط ۱۰ لیست برتر
-            </p>
-          </div>
-          <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
-              <p className="text-xs text-slate-500 dark:text-(--color-text-subtle) mb-0.5">میانگین Save Velocity</p>
-              <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
-                {data.avgSaveVelocity.toLocaleString('fa-IR')}
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
-              <p className="text-xs text-slate-500 dark:text-(--color-text-subtle) mb-0.5">افت سریع ٪</p>
-              <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
-                {data.percentRapidlyDeclining}٪
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-gray-800/60 border border-slate-200 dark:border-gray-700">
-              <p className="text-xs text-slate-500 dark:text-(--color-text-subtle) mb-0.5">ورود به ناحیه داغ ٪</p>
-              <p className="text-lg font-semibold text-slate-800 dark:text-gray-100 tabular-nums">
-                {data.percentEnteringHotZone}٪
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <p className="text-sm text-slate-600 dark:text-(--color-text-subtle) mt-3">{buildInsight(data)}</p>
+        </h2>
+        <Link
+          href="/admin/custom/featured"
+          className="inline-flex min-h-11 items-center rounded-xl border border-(--color-border) px-3 text-sm text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text)"
+        >
+          منتخب هوم
+        </Link>
       </div>
+
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-(--color-border) bg-(--color-border) sm:grid-cols-4">
+        <Metric
+          label="تمرکز ۱۰ لیست برتر"
+          value={`${fa(data.trendDistributionIndex.toFixed(1).replace('.', '٫'))}٪`}
+          warn={highConcentration}
+        />
+        <Metric
+          label="میانگین سرعت ذخیره"
+          value={fa(data.avgSaveVelocity.toFixed(2).replace('.', '٫'))}
+        />
+        <Metric
+          label="افت سریع"
+          value={`${fa(data.percentRapidlyDeclining.toFixed(1).replace('.', '٫'))}٪`}
+        />
+        <Metric
+          label="ورود به ناحیه داغ"
+          value={`${fa(data.percentEnteringHotZone.toFixed(1).replace('.', '٫'))}٪`}
+        />
+      </div>
+
+      <p className="text-sm leading-relaxed text-wibe-secondary">
+        {buildInsight(data)}
+        {highConcentration
+          ? ` امتیاز میانگین ۵۰ لیست برتر: ${faNumber(data.avgTrendingScoreTop50)}.`
+          : ''}
+      </p>
     </section>
   );
 }

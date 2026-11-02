@@ -1,6 +1,6 @@
 /**
- * Analytics MVP — Growth & Algorithm Health
- * فقط مانیتورینگ؛ بدون جدول جدید. از داده‌های موجود.
+ * Analytics — رشد، محتوا و سلامت ترند.
+ * بدون جدول جدید؛ از bookmarks / lists / users و پیشنهادهای باز.
  */
 
 import type { PrismaClient } from '@prisma/client';
@@ -10,21 +10,27 @@ import { TRENDING_THRESHOLDS } from '@/lib/trending/constants';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+export const ANALYTICS_RANGES = [7, 14, 30] as const;
+export type AnalyticsRangeDays = (typeof ANALYTICS_RANGES)[number];
+
 export type GrowthStatus = 'growing' | 'flat' | 'declining';
 
 export interface UserGrowthHealth {
-  activeUsers7d: number;
-  newUsers7d: number;
-  growthRateWoW: number;
+  activeUsers: number;
+  newUsers: number;
+  growthRate: number;
   returningUsersPercent: number;
   status: GrowthStatus;
+  windowDays: AnalyticsRangeDays;
 }
 
 export interface ContentEngineHealth {
-  newLists7d: number;
+  newLists: number;
   listsPerActiveUser: number;
-  avgSavesPerList7d: number;
+  avgSavesPerList: number;
   percentListsZeroSaves: number;
+  totalSaves: number;
+  windowDays: AnalyticsRangeDays;
 }
 
 export interface TrendingHealth {
@@ -32,8 +38,9 @@ export interface TrendingHealth {
   avgSaveVelocity: number;
   percentEnteringHotZone: number;
   percentRapidlyDeclining: number;
-  /** % of total 7d saves captured by Top 10 lists (concentration risk if > 60%) */
+  /** ٪ ذخیره‌های بازه که روی ۱۰ لیست برتر متمرکز است */
   trendDistributionIndex: number;
+  windowDays: AnalyticsRangeDays;
 }
 
 export interface ChartDay {
@@ -43,65 +50,97 @@ export interface ChartDay {
   saves: number;
 }
 
+export interface AnalyticsAction {
+  href: string;
+  label: string;
+}
+
 export interface AnalyticsOverview {
   userGrowth: UserGrowthHealth;
   contentEngine: ContentEngineHealth;
   trending: TrendingHealth;
   chart30d: ChartDay[];
+  pendingSuggestions: number;
+  windowDays: AnalyticsRangeDays;
 }
 
-function getCutoffs() {
+export function parseAnalyticsRange(raw: string | undefined | null): AnalyticsRangeDays {
+  const n = Number(raw);
+  if (n === 14 || n === 30 || n === 7) return n;
+  return 7;
+}
+
+function getCutoffs(windowDays: AnalyticsRangeDays) {
   const now = new Date();
   return {
     now,
-    cutoff7: new Date(now.getTime() - 7 * MS_PER_DAY),
-    cutoff14: new Date(now.getTime() - 14 * MS_PER_DAY),
+    cutoffWindow: new Date(now.getTime() - windowDays * MS_PER_DAY),
+    cutoffPrev: new Date(now.getTime() - windowDays * 2 * MS_PER_DAY),
     cutoff30: new Date(now.getTime() - 30 * MS_PER_DAY),
   };
 }
 
-function growthStatus(growthRateWoW: number): GrowthStatus {
-  if (growthRateWoW > 5) return 'growing';
-  if (growthRateWoW < -5) return 'declining';
+function growthStatus(growthRate: number): GrowthStatus {
+  if (growthRate > 5) return 'growing';
+  if (growthRate < -5) return 'declining';
   return 'flat';
 }
 
-export async function getUserGrowthHealth(
-  prisma: PrismaClient
-): Promise<UserGrowthHealth> {
-  const { cutoff7, cutoff14 } = getCutoffs();
+/** کاربر فعال = ذخیره کرده یا لیست ساخته در بازه */
+async function activeUserIdsInRange(
+  prisma: PrismaClient,
+  from: Date,
+  to?: Date
+): Promise<string[]> {
+  const bookmarkWhere = to
+    ? { createdAt: { gte: from, lt: to } }
+    : { createdAt: { gte: from } };
+  const listWhere = to
+    ? { createdAt: { gte: from, lt: to }, deletedAt: null }
+    : { createdAt: { gte: from }, deletedAt: null };
 
-  const [
-    activeUserIdsThisWeek,
-    activeUserIdsLastWeek,
-    newUsersCount,
-  ] = await Promise.all([
+  const [bookmarkUsers, listUsers] = await Promise.all([
     prisma.bookmarks.findMany({
-      where: { createdAt: { gte: cutoff7 } },
+      where: bookmarkWhere,
       select: { userId: true },
       distinct: ['userId'],
     }),
-    prisma.bookmarks.findMany({
-      where: {
-        createdAt: { gte: cutoff14, lt: cutoff7 },
-      },
+    prisma.lists.findMany({
+      where: listWhere,
       select: { userId: true },
       distinct: ['userId'],
     }),
+  ]);
+
+  return [...new Set([
+    ...bookmarkUsers.map((r) => r.userId),
+    ...listUsers.map((r) => r.userId).filter(Boolean) as string[],
+  ])];
+}
+
+export async function getUserGrowthHealth(
+  prisma: PrismaClient,
+  windowDays: AnalyticsRangeDays = 7
+): Promise<UserGrowthHealth> {
+  const { cutoffWindow, cutoffPrev } = getCutoffs(windowDays);
+
+  const [activeThisIds, activeLastIds, newUsersCount] = await Promise.all([
+    activeUserIdsInRange(prisma, cutoffWindow),
+    activeUserIdsInRange(prisma, cutoffPrev, cutoffWindow),
     prisma.users.count({
       where: {
-        createdAt: { gte: cutoff7 },
+        createdAt: { gte: cutoffWindow },
         deletedAt: null,
       },
     }),
   ]);
 
-  const activeThis = activeUserIdsThisWeek.length;
-  const activeLast = activeUserIdsLastWeek.length;
-  const lastSet = new Set(activeUserIdsLastWeek.map((r) => r.userId));
-  const returning = activeUserIdsThisWeek.filter((r) => lastSet.has(r.userId)).length;
+  const activeThis = activeThisIds.length;
+  const activeLast = activeLastIds.length;
+  const lastSet = new Set(activeLastIds);
+  const returning = activeThisIds.filter((id) => lastSet.has(id)).length;
 
-  const growthRateWoW =
+  const growthRate =
     activeLast > 0
       ? Math.round(((activeThis - activeLast) / activeLast) * 1000) / 10
       : activeThis > 0
@@ -112,45 +151,48 @@ export async function getUserGrowthHealth(
     activeThis > 0 ? Math.round((returning / activeThis) * 1000) / 10 : 0;
 
   return {
-    activeUsers7d: activeThis,
-    newUsers7d: newUsersCount,
-    growthRateWoW,
+    activeUsers: activeThis,
+    newUsers: newUsersCount,
+    growthRate,
     returningUsersPercent,
-    status: growthStatus(growthRateWoW),
+    status: growthStatus(growthRate),
+    windowDays,
   };
 }
 
 export async function getContentEngineHealth(
-  prisma: PrismaClient
+  prisma: PrismaClient,
+  windowDays: AnalyticsRangeDays = 7,
+  activeUsersCount?: number
 ): Promise<ContentEngineHealth> {
-  const { cutoff7 } = getCutoffs();
+  const { cutoffWindow } = getCutoffs(windowDays);
 
   const [
-    newLists7d,
-    activeUsers7dCount,
-    bookmarksIn7d,
-    listsWithSavesIn7d,
+    newLists,
+    activeResolved,
+    bookmarksInWindow,
+    listsWithSaves,
     totalLists,
     listsZeroSaves,
   ] = await Promise.all([
     prisma.lists.count({
       where: {
-        createdAt: { gte: cutoff7 },
+        createdAt: { gte: cutoffWindow },
         deletedAt: null,
       },
     }),
-    prisma.bookmarks.findMany({
-      where: { createdAt: { gte: cutoff7 } },
-      select: { userId: true },
-      distinct: ['userId'],
-    }).then((r) => r.length),
+    activeUsersCount != null
+      ? Promise.resolve(activeUsersCount)
+      : activeUserIdsInRange(prisma, cutoffWindow).then((ids) => ids.length),
     prisma.bookmarks.count({
-      where: { createdAt: { gte: cutoff7 } },
+      where: { createdAt: { gte: cutoffWindow } },
     }),
-    prisma.bookmarks.groupBy({
-      by: ['listId'],
-      where: { createdAt: { gte: cutoff7 } },
-    }).then((r) => r.length),
+    prisma.bookmarks
+      .groupBy({
+        by: ['listId'],
+        where: { createdAt: { gte: cutoffWindow } },
+      })
+      .then((r) => r.length),
     prisma.lists.count({ where: { deletedAt: null } }),
     prisma.lists.count({
       where: { deletedAt: null, saveCount: 0 },
@@ -158,12 +200,12 @@ export async function getContentEngineHealth(
   ]);
 
   const listsPerActiveUser =
-    activeUsers7dCount > 0
-      ? Math.round((newLists7d / activeUsers7dCount) * 100) / 100
+    activeResolved > 0
+      ? Math.round((newLists / activeResolved) * 100) / 100
       : 0;
-  const avgSavesPerList7d =
-    listsWithSavesIn7d > 0
-      ? Math.round((bookmarksIn7d / listsWithSavesIn7d) * 100) / 100
+  const avgSavesPerList =
+    listsWithSaves > 0
+      ? Math.round((bookmarksInWindow / listsWithSaves) * 100) / 100
       : 0;
   const percentListsZeroSaves =
     totalLists > 0
@@ -171,48 +213,52 @@ export async function getContentEngineHealth(
       : 0;
 
   return {
-    newLists7d,
+    newLists,
     listsPerActiveUser,
-    avgSavesPerList7d,
+    avgSavesPerList,
     percentListsZeroSaves,
+    totalSaves: bookmarksInWindow,
+    windowDays,
   };
 }
 
 export async function getTrendingHealth(
-  prisma: PrismaClient
+  prisma: PrismaClient,
+  windowDays: AnalyticsRangeDays = 7
 ): Promise<TrendingHealth> {
-  const { cutoff7, cutoff14 } = getCutoffs();
+  const { cutoffWindow, cutoffPrev } = getCutoffs(windowDays);
 
-  // سه کوئریِ مستقل را موازی اجرا کن (قبلاً سریال بودند) و کوئریِ «listIds این هفته»
-  // را در همان savesPerList7d ادغام کن (همان where؛ یکی زیرمجموعهٔ دیگری بود).
-  const [savesPerList7d, listIdsWithSavesLastWeekOnly, totalSaves7d] = await Promise.all([
+  const [savesPerList, listIdsLastOnly, totalSaves] = await Promise.all([
     prisma.bookmarks.groupBy({
       by: ['listId'],
-      where: { createdAt: { gte: cutoff7 } },
+      where: { createdAt: { gte: cutoffWindow } },
       _count: { listId: true },
     }),
     prisma.bookmarks
       .groupBy({
         by: ['listId'],
-        where: { createdAt: { gte: cutoff14, lt: cutoff7 } },
+        where: { createdAt: { gte: cutoffPrev, lt: cutoffWindow } },
       })
       .then((r) => r.map((x) => x.listId)),
-    prisma.bookmarks.count({ where: { createdAt: { gte: cutoff7 } } }),
+    prisma.bookmarks.count({ where: { createdAt: { gte: cutoffWindow } } }),
   ]);
 
-  const listIdsWithSavesThisWeek = savesPerList7d.map((x) => x.listId);
-  const listIdsThis = new Set(listIdsWithSavesThisWeek);
+  const listIdsThis = new Set(savesPerList.map((x) => x.listId));
   const decliningListIds = new Set(
-    listIdsWithSavesLastWeekOnly.filter((id) => !listIdsThis.has(id))
+    listIdsLastOnly.filter((id) => !listIdsThis.has(id))
   );
 
-  const listIds = listIdsWithSavesThisWeek.slice(0, 500);
+  const listIds = savesPerList.map((x) => x.listId).slice(0, 500);
 
-  const sortedBySaves = [...savesPerList7d].sort((a, b) => b._count.listId - a._count.listId);
-  const top10Saves = sortedBySaves.slice(0, 10).reduce((s, r) => s + r._count.listId, 0);
+  const sortedBySaves = [...savesPerList].sort(
+    (a, b) => b._count.listId - a._count.listId
+  );
+  const top10Saves = sortedBySaves
+    .slice(0, 10)
+    .reduce((s, r) => s + r._count.listId, 0);
   const trendDistributionIndex =
-    totalSaves7d > 0
-      ? Math.round((top10Saves / totalSaves7d) * 1000) / 10
+    totalSaves > 0
+      ? Math.round((top10Saves / totalSaves) * 1000) / 10
       : 0;
 
   if (listIds.length === 0) {
@@ -222,10 +268,11 @@ export async function getTrendingHealth(
       percentEnteringHotZone: 0,
       percentRapidlyDeclining: 0,
       trendDistributionIndex,
+      windowDays,
     };
   }
 
-  const metricsMap = await getListMetrics7d(prisma, listIds, 7);
+  const metricsMap = await getListMetrics7d(prisma, listIds, windowDays);
   const scores: { listId: string; score: number; velocity: number }[] = [];
 
   for (const id of listIds) {
@@ -243,9 +290,7 @@ export async function getTrendingHealth(
   const top50 = scores.slice(0, 50);
   const avgTrendingScoreTop50 =
     top50.length > 0
-      ? Math.round(
-          top50.reduce((s, x) => s + x.score, 0) / top50.length
-        )
+      ? Math.round(top50.reduce((s, x) => s + x.score, 0) / top50.length)
       : 0;
   const avgSaveVelocity =
     scores.length > 0
@@ -253,14 +298,15 @@ export async function getTrendingHealth(
           (scores.reduce((s, x) => s + x.velocity, 0) / scores.length) * 100
         ) / 100
       : 0;
-  const enteringHotZone = scores.filter((x) => x.score >= TRENDING_THRESHOLDS.HOT).length;
+  const enteringHotZone = scores.filter(
+    (x) => x.score >= TRENDING_THRESHOLDS.HOT
+  ).length;
   const percentEnteringHotZone =
     scores.length > 0
       ? Math.round((enteringHotZone / scores.length) * 1000) / 10
       : 0;
 
-  const totalWithActivityEither =
-    listIds.length + decliningListIds.size;
+  const totalWithActivityEither = listIds.length + decliningListIds.size;
   const percentRapidlyDeclining =
     totalWithActivityEither > 0
       ? Math.round(
@@ -274,17 +320,18 @@ export async function getTrendingHealth(
     percentEnteringHotZone,
     percentRapidlyDeclining,
     trendDistributionIndex,
+    windowDays,
   };
 }
 
 function toDateStr(d: string | Date): string {
-  return typeof d === 'string' ? d.slice(0, 10) : new Date(d).toISOString().slice(0, 10);
+  return typeof d === 'string'
+    ? d.slice(0, 10)
+    : new Date(d).toISOString().slice(0, 10);
 }
 
-export async function getChart30d(
-  prisma: PrismaClient
-): Promise<ChartDay[]> {
-  const { cutoff30 } = getCutoffs();
+export async function getChart30d(prisma: PrismaClient): Promise<ChartDay[]> {
+  const { cutoff30 } = getCutoffs(7);
 
   type SaveRow = { date: string | Date; count: number; distinct_users: number };
   type ListRow = { date: string | Date; count: number };
@@ -340,20 +387,75 @@ export async function getChart30d(
   return days;
 }
 
-export async function getAnalyticsOverview(
-  prisma: PrismaClient
-): Promise<AnalyticsOverview> {
-  const [userGrowth, contentEngine, trending, chart30d] = await Promise.all([
-    getUserGrowthHealth(prisma),
-    getContentEngineHealth(prisma),
-    getTrendingHealth(prisma),
-    getChart30d(prisma),
+async function getPendingSuggestionsCount(prisma: PrismaClient): Promise<number> {
+  const [lists, items, menu] = await Promise.all([
+    prisma.suggested_lists.count({ where: { status: 'pending' } }),
+    prisma.suggested_items.count({ where: { status: 'pending' } }),
+    prisma.list_comments.count({
+      where: {
+        type: 'suggestion',
+        deletedAt: null,
+        suggestionStatus: 'pending',
+      },
+    }),
   ]);
+  return lists + items + menu;
+}
+
+export async function getAnalyticsOverview(
+  prisma: PrismaClient,
+  windowDays: AnalyticsRangeDays = 7
+): Promise<AnalyticsOverview> {
+  const userGrowth = await getUserGrowthHealth(prisma, windowDays);
+  const [contentEngine, trending, chart30d, pendingSuggestions] =
+    await Promise.all([
+      getContentEngineHealth(prisma, windowDays, userGrowth.activeUsers),
+      getTrendingHealth(prisma, windowDays),
+      getChart30d(prisma),
+      getPendingSuggestionsCount(prisma),
+    ]);
 
   return {
     userGrowth,
     contentEngine,
     trending,
     chart30d,
+    pendingSuggestions,
+    windowDays,
   };
+}
+
+export function buildAnalyticsActions(overview: AnalyticsOverview): AnalyticsAction[] {
+  const actions: AnalyticsAction[] = [];
+  if (overview.pendingSuggestions > 0) {
+    actions.push({
+      href: '/admin/suggestions?status=pending',
+      label: `${overview.pendingSuggestions.toLocaleString('fa-IR')} پیشنهاد در انتظار`,
+    });
+  }
+  if (
+    overview.userGrowth.activeUsers === 0 ||
+    overview.userGrowth.status === 'declining'
+  ) {
+    actions.push({
+      href: '/admin/custom/featured',
+      label: 'چیدن منتخب هوم',
+    });
+  }
+  if (overview.contentEngine.percentListsZeroSaves > 40) {
+    actions.push({
+      href: '/admin/lists',
+      label: 'بررسی لیست‌های بدون ذخیره',
+    });
+  }
+  if (overview.trending.trendDistributionIndex >= 60) {
+    actions.push({
+      href: '/admin/custom/featured',
+      label: 'تنوع‌بخشی به ترند با منتخب',
+    });
+  }
+  if (actions.length === 0) {
+    actions.push({ href: '/admin/kpi', label: 'داشبورد رشد (KPI)' });
+  }
+  return actions.slice(0, 3);
 }

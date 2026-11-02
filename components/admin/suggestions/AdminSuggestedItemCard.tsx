@@ -51,9 +51,18 @@ interface AdminSuggestedItemCardProps {
 }
 
 const STATUS_LABEL: Record<string, { label: string; className: string }> = {
-  pending: { label: 'در انتظار', className: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' },
-  approved: { label: 'تأیید شده', className: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' },
-  rejected: { label: 'رد شده', className: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' },
+  pending: {
+    label: 'در انتظار',
+    className: 'bg-amber-50 text-amber-800',
+  },
+  approved: {
+    label: 'تأیید شده',
+    className: 'bg-emerald-50 text-emerald-800',
+  },
+  rejected: {
+    label: 'رد شده',
+    className: 'bg-red-50 text-red-800',
+  },
 };
 
 export default function AdminSuggestedItemCard({
@@ -80,155 +89,172 @@ export default function AdminSuggestedItemCard({
   const statusCfg = STATUS_LABEL[suggestion.status] ?? STATUS_LABEL.pending;
   const isPending = suggestion.status === 'pending';
 
+  const meta = [
+    category?.name,
+    listSlug ? null : listTitle || null,
+    suggestedBy,
+    timeAgo,
+  ].filter(Boolean);
+
   return (
     <article
-      className={`group rounded-xl border transition-all ${
-        isRemoving ? 'opacity-60 pointer-events-none' : ''
+      className={`rounded-xl border transition-colors ${
+        isRemoving ? 'pointer-events-none opacity-60' : ''
       } ${
         isSelected
-          ? 'border-violet-300 bg-violet-50/40 dark:bg-violet-900/20 ring-1 ring-violet-200'
-          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 hover:shadow-sm'
+          ? 'border-primary/40 bg-primary/5'
+          : 'border-(--color-border) bg-(--color-surface)'
       }`}
     >
-      <div className="flex gap-3 p-3 md:p-4">
-        {/* پوستر */}
-        <div className="relative h-14 w-11 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700/50 md:h-16 md:w-12">
+      <div className="flex gap-3 p-4">
+        <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-lg bg-(--color-bg)">
           {suggestion.imageUrl ? (
             <Image
               src={suggestion.imageUrl}
               alt=""
               width={48}
               height={64}
-              className="h-full w-full object-cover"
+              className="size-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-(--color-text-subtle)">
-              <Package className="h-5 w-5" />
+            <div className="flex size-full items-center justify-center text-wibe-secondary">
+              <Package className="size-5" strokeWidth={1.5} />
             </div>
           )}
           {isBulkMode && (
             <button
               type="button"
               onClick={() => onToggleSelect?.(suggestion.id)}
-              className={`absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 text-[10px] ${
+              className={`absolute start-1 top-1 flex size-8 items-center justify-center rounded-full border-2 ${
                 isSelected
-                  ? 'border-violet-600 bg-violet-600 text-white'
-                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-transparent'
+                  ? 'border-primary bg-primary text-white'
+                  : 'border-(--color-border) bg-(--color-surface) text-transparent'
               }`}
               aria-label="انتخاب"
             >
-              <Check className="h-3 w-3" />
+              <Check className="size-4" strokeWidth={2} />
             </button>
           )}
         </div>
 
-        {/* محتوا */}
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-base font-bold text-(--color-text) dark:text-white">{suggestion.title}</h3>
-              <p className="mt-0.5 truncate text-sm text-wibe-secondary dark:text-(--color-text-subtle)">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-md px-2 py-0.5 text-sm font-medium ${statusCfg.className}`}
+                >
+                  {statusCfg.label}
+                </span>
+                {suggestion.source === 'menu' && (
+                  <span className="rounded-md bg-primary/10 px-2 py-0.5 text-sm font-medium text-primary">
+                    منو
+                  </span>
+                )}
+              </div>
+              <h3 className="text-base font-bold leading-snug text-(--color-text)">
+                {suggestion.title}
+              </h3>
+              <p className="mt-1 text-sm leading-relaxed text-wibe-secondary">
                 {listSlug ? (
-                  <Link href={`/lists/${listSlug}`} className="hover:text-violet-600 hover:underline">
+                  <Link
+                    href={`/lists/${listSlug}`}
+                    className="hover:text-primary hover:underline"
+                  >
                     {listTitle}
                   </Link>
-                ) : (
-                  listTitle
-                )}
-                <span className="mx-1.5 text-(--color-text-subtle)">·</span>
-                {suggestedBy}
-                <span className="mx-1.5 text-(--color-text-subtle)">·</span>
-                {timeAgo}
+                ) : null}
+                {listSlug && meta.length > 0 ? ' · ' : null}
+                {meta.join(' · ')}
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1">
-              <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${statusCfg.className}`}>
-                {statusCfg.label}
-              </span>
-              {suggestion.source === 'menu' && (
-                <span className="rounded-md bg-violet-50 dark:bg-violet-900/20 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:text-violet-300">
-                  منو
-                </span>
-              )}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setMenuOpen((o) => !o)}
-                  className="rounded-lg p-1.5 text-(--color-text-subtle) dark:text-wibe-secondary opacity-0 transition-opacity hover:bg-gray-100 hover:text-wibe-secondary group-hover:opacity-100"
-                  aria-label="گزینه‌ها"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </button>
-                {menuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} aria-hidden />
-                    <div className="absolute left-0 top-full z-20 mt-1 w-44 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 shadow-lg">
-                      {suggestion.source !== 'menu' && (
-                        <button
-                          type="button"
-                          onClick={() => { onEdit(suggestion); setMenuOpen(false); }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-(--color-text) dark:text-gray-200 hover:bg-gray-50"
-                        >
-                          <Edit className="h-4 w-4" /> ویرایش
-                        </button>
-                      )}
-                      {suggestion.externalUrl && (
-                        <a
-                          href={suggestion.externalUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-(--color-text) dark:text-gray-200 hover:bg-gray-50"
-                          onClick={() => setMenuOpen(false)}
-                        >
-                          <ExternalLink className="h-4 w-4" /> لینک
-                        </a>
-                      )}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((o) => !o)}
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-wibe-secondary hover:bg-(--color-bg)"
+                aria-label="گزینه‌ها"
+              >
+                <MoreVertical className="size-4" strokeWidth={1.5} />
+              </button>
+              {menuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setMenuOpen(false)}
+                    aria-hidden
+                  />
+                  <div className="absolute end-0 top-full z-20 mt-1 w-44 rounded-xl border border-(--color-border) bg-(--color-surface) py-1 shadow-lg">
+                    {suggestion.source !== 'menu' && (
                       <button
                         type="button"
-                        onClick={() => { onViewList(suggestion); setMenuOpen(false); }}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-(--color-text) dark:text-gray-200 hover:bg-gray-50"
+                        onClick={() => {
+                          onEdit(suggestion);
+                          setMenuOpen(false);
+                        }}
+                        className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
                       >
-                        <ListIcon className="h-4 w-4" /> لیست
+                        <Edit className="size-4" strokeWidth={1.5} /> ویرایش
                       </button>
-                      {isPending && (
-                        <button
-                          type="button"
-                          onClick={() => { onDelete(suggestion); setMenuOpen(false); }}
-                          className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" /> حذف
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
+                    )}
+                    {suggestion.externalUrl && (
+                      <a
+                        href={suggestion.externalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <ExternalLink className="size-4" strokeWidth={1.5} /> لینک
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onViewList(suggestion);
+                        setMenuOpen(false);
+                      }}
+                      className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
+                    >
+                      <ListIcon className="size-4" strokeWidth={1.5} /> لیست
+                    </button>
+                    {isPending && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onDelete(suggestion);
+                          setMenuOpen(false);
+                        }}
+                        className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="size-4" strokeWidth={1.5} /> حذف
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
-          {description && (
-            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-wibe-secondary dark:text-(--color-text-subtle)">{description}</p>
-          )}
-
-          {category?.name && (
-            <span className="mt-2 inline-block rounded-md bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 text-xs text-wibe-secondary dark:text-(--color-text-subtle)">
-              {category.icon} {category.name}
-            </span>
-          )}
+          {description ? (
+            <p className="line-clamp-2 text-sm leading-relaxed text-wibe-secondary">
+              {description}
+            </p>
+          ) : null}
 
           {isPending && (
-            <div className="mt-3 flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 disabled={processing}
                 onClick={() => onApprove(suggestion)}
-                className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 md:flex-none md:px-5"
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 sm:flex-none"
               >
                 {processing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" strokeWidth={2} />
                 ) : (
-                  <CheckCircle className="h-4 w-4" />
+                  <CheckCircle className="size-4" strokeWidth={2} />
                 )}
                 تأیید
               </button>
@@ -236,9 +262,9 @@ export default function AdminSuggestedItemCard({
                 type="button"
                 disabled={processing}
                 onClick={() => onReject(suggestion)}
-                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 px-4 text-sm font-medium text-(--color-text) dark:text-gray-200 hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
               >
-                <XCircle className="h-4 w-4" />
+                <XCircle className="size-4" strokeWidth={1.5} />
                 رد
               </button>
             </div>

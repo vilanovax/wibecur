@@ -1,6 +1,10 @@
 import nextDynamic from 'next/dynamic';
 import { requireAdmin } from '@/lib/auth';
 import { getCachedAnalyticsOverview } from '@/lib/admin/analytics-metrics-cached';
+import {
+  buildAnalyticsActions,
+  parseAnalyticsRange,
+} from '@/lib/admin/analytics-metrics';
 
 const AnalyticsDashboard = nextDynamic(
   () => import('@/components/admin/analytics/AnalyticsDashboard'),
@@ -14,19 +18,27 @@ const AnalyticsDashboard = nextDynamic(
   }
 );
 
-export default async function AdminAnalyticsPage() {
+export default async function AdminAnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>;
+}) {
   await requireAdmin();
 
-  const overview = await getCachedAnalyticsOverview();
+  const { range: rangeRaw } = await searchParams;
+  const windowDays = parseAnalyticsRange(rangeRaw);
+  const overview = await getCachedAnalyticsOverview(windowDays);
+  const actions = buildAnalyticsActions(overview);
 
   return (
-    <div className="max-w-5xl">
-      <AnalyticsDashboard
-        userGrowth={overview.userGrowth}
-        contentEngine={overview.contentEngine}
-        trending={overview.trending}
-        chart30d={overview.chart30d}
-      />
-    </div>
+    <AnalyticsDashboard
+      userGrowth={overview.userGrowth}
+      contentEngine={overview.contentEngine}
+      trending={overview.trending}
+      chart30d={overview.chart30d}
+      pendingSuggestions={overview.pendingSuggestions}
+      windowDays={windowDays}
+      actions={actions}
+    />
   );
 }
