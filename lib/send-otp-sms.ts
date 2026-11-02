@@ -37,16 +37,8 @@ export async function sendPhoneOtp(options: {
 }): Promise<SendPhoneOtpResult> {
   const { normalizedPhone, purpose, name, avatarId } = options;
 
-  const phoneLimit = await checkActionRateLimit(`otp-send-phone:${normalizedPhone}`, 5, '1 h');
-  if (!phoneLimit.success) {
-    return {
-      ok: false,
-      status: 429,
-      error: 'برای این شماره فعلاً نمی‌توانی کد بگیری. کمی بعد دوباره تلاش کن.',
-    };
-  }
-
-  const remainingMs = getOtpResendRemainingMs(normalizedPhone);
+  // اول cooldown — تا لمس‌های «ارسال دوباره» داخل ۶۰ثانیه سهمیهٔ ساعتی را نسوزانند.
+  const remainingMs = await getOtpResendRemainingMs(normalizedPhone);
   if (remainingMs > 0) {
     const seconds = Math.ceil(remainingMs / 1000);
     return {
@@ -54,6 +46,15 @@ export async function sendPhoneOtp(options: {
       status: 429,
       error: `برای ارسال دوباره ${fa(seconds)} ثانیه صبر کن`,
       retryAfterSeconds: seconds,
+    };
+  }
+
+  const phoneLimit = await checkActionRateLimit(`otp-send-phone:${normalizedPhone}`, 5, '1 h');
+  if (!phoneLimit.success) {
+    return {
+      ok: false,
+      status: 429,
+      error: 'برای این شماره فعلاً نمی‌توانی کد بگیری. کمی بعد دوباره تلاش کن.',
     };
   }
 

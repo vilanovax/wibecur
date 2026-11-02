@@ -3,8 +3,7 @@ import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { nanoid } from 'nanoid';
-import { computeWeightedScore } from '@/lib/comment-utils';
+import { applyListCommentVote } from '@/lib/comment-vote';
 import { checkAchievements } from '@/lib/achievements';
 
 // POST /api/lists/comments/[id]/vote - رای مفید بود / مفید نبود
@@ -33,130 +32,48 @@ export async function POST(
       );
     }
 
-    const comment = await dbQuery(() =>
+    const authorId = await dbQuery(() =>
       prisma.list_comments.findUnique({
         where: { id: commentId },
-        select: {
-          id: true,
-          userId: true,
-          helpfulUp: true,
-          helpfulDown: true,
-          weightedScore: true,
-        },
+        select: { userId: true },
       })
+    ).then((row) => row?.userId ?? null);
+
+    const result = await dbQuery(() =>
+      prisma.$transaction((tx) =>
+        applyListCommentVote(tx, { userId, commentId, value })
+      )
     );
 
-    if (!comment) {
-      return NextResponse.json(
-        { success: false, error: 'کامنت یافت نشد' },
-        { status: 404 }
+    if (value === 1 && authorId && result.userVote === 1) {
+      checkAchievements(prisma, authorId).catch((e) =>
+        console.warn('Achievement check failed:', e)
       );
-    }
-
-    if (comment.userId === userId) {
-      return NextResponse.json(
-        { success: false, error: 'نمی‌توانید به نظر خودتان رای دهید' },
-        { status: 403 }
-      );
-    }
-
-    const existing = await dbQuery(() =>
-      prisma.list_comment_votes.findUnique({
-        where: { userId_commentId: { userId, commentId } },
-      })
-    );
-
-    let newUp = comment.helpfulUp;
-    let newDown = comment.helpfulDown;
-    let userVote: number | null = value;
-
-    if (existing) {
-      if (existing.value === 1) {
-        newUp = Math.max(0, newUp - 1);
-      } else {
-        newDown = Math.max(0, newDown - 1);
-      }
-
-      // کلیک دوباره روی همان رأی = لغو
-      if (existing.value === value) {
-        const weightedScore = computeWeightedScore(newUp, newDown);
-        await dbQuery(async () => {
-          return prisma.$transaction(async (tx) => {
-            await tx.list_comment_votes.delete({
-              where: { userId_commentId: { userId, commentId } },
-            });
-            await tx.list_comments.update({
-              where: { id: commentId },
-              data: {
-                helpfulUp: newUp,
-                helpfulDown: newDown,
-                weightedScore,
-                updatedAt: new Date(),
-              },
-            });
-          });
-        });
-        return NextResponse.json({
-          success: true,
-          data: {
-            helpfulUp: newUp,
-            helpfulDown: newDown,
-            weightedScore,
-            userVote: null,
-          },
-        });
-      }
-    }
-
-    if (value === 1) {
-      newUp += 1;
-    } else {
-      newDown += 1;
-    }
-
-    const weightedScore = computeWeightedScore(newUp, newDown);
-
-    const shouldAutoFlag = newDown >= 5;
-
-    await dbQuery(async () => {
-      return prisma.$transaction(async (tx) => {
-        await tx.list_comment_votes.upsert({
-          where: { userId_commentId: { userId, commentId } },
-          create: {
-            id: nanoid(),
-            userId,
-            commentId,
-            value,
-          },
-          update: { value },
-        });
-        await tx.list_comments.update({
-          where: { id: commentId },
-          data: {
-            helpfulUp: newUp,
-            helpfulDown: newDown,
-            weightedScore,
-            ...(shouldAutoFlag ? { status: 'review' } : {}),
-            updatedAt: new Date(),
-          },
-        });
-      });
-    });
-
-    if (value === 1 && comment.userId) {
-      checkAchievements(prisma, comment.userId).catch((e) => console.warn('Achievement check failed:', e));
     }
 
     return NextResponse.json({
       success: true,
       data: {
-        helpfulUp: newUp,
-        helpfulDown: newDown,
-        weightedScore,
-        userVote,
+        helpfulUp: result.helpfulUp,
+        helpfulDown: result.helpfulDown,
+        weightedScore: result.weightedScore,
+        userVote: result.userVote,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const code = (error as { code?: string })?.code;
+    if (code === 'NOT_FOUND' || code === 'P2025') {
+      return NextResponse.json(
+        { success: false, error: 'کامنت یافت نشد' },
+        { status: 404 }
+      );
+    }
+    if (code === 'SELF_VOTE') {
+      return NextResponse.json(
+        { success: false, error: 'نمی‌توانید به نظر خودتان رای دهید' },
+        { status: 403 }
+      );
+    }
     console.error('Error voting on comment:', error);
     return NextResponse.json(
       { success: false, error: getClientErrorMessage(error, 'خطا در ثبت رای') },
@@ -167,7 +84,7 @@ export async function POST(
 
 // GET /api/lists/comments/[id]/vote - وضعیت رای کاربر
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -209,7 +126,7 @@ export async function GET(
         userVote,
       },
     });
-  } catch (error: any) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'خطا' },
       { status: 500 }

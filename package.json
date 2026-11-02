@@ -108,6 +108,7 @@
     "react-is": "^19.2.7",
     "react-multi-date-picker": "^4.5.2",
     "recharts": "^3.5.1",
+    "redis": "^4.7.1",
     "sharp": "^0.35.2",
     "tailwind-merge": "^2.6.0",
     "unzipper": "^0.12.3",

@@ -9,6 +9,7 @@ import {
   checkRateLimit,
   clearRateLimitsForTests,
   createRateLimiter,
+  peekActionRateLimit,
   rateWindowMs,
 } from './rate-limit';
 
@@ -43,6 +44,19 @@ describe('checkActionRateLimit', () => {
     expect((await checkActionRateLimit('image:a', 1, '1 m')).success).toBe(true);
     expect((await checkActionRateLimit('image:a', 1, '1 m')).success).toBe(false);
     expect((await checkActionRateLimit('image:b', 1, '1 m')).success).toBe(true);
+  });
+});
+
+describe('peekActionRateLimit', () => {
+  it('does not consume the bucket so successful peeks can repeat', async () => {
+    for (let i = 0; i < 5; i += 1) {
+      expect((await peekActionRateLimit('login:user@phone.wibe', 3, '15 m')).success).toBe(true);
+    }
+    expect((await checkActionRateLimit('login:user@phone.wibe', 3, '15 m')).success).toBe(true);
+    expect((await checkActionRateLimit('login:user@phone.wibe', 3, '15 m')).success).toBe(true);
+    expect((await checkActionRateLimit('login:user@phone.wibe', 3, '15 m')).success).toBe(true);
+    expect((await checkActionRateLimit('login:user@phone.wibe', 3, '15 m')).success).toBe(false);
+    expect((await peekActionRateLimit('login:user@phone.wibe', 3, '15 m')).success).toBe(false);
   });
 });
 

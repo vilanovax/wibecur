@@ -3,8 +3,7 @@ import { getClientErrorMessage } from '@/lib/api-error';
 import { auth } from '@/lib/auth-config';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { nanoid } from 'nanoid';
-import { computeWeightedScore } from '@/lib/comment-utils';
+import { applyItemCommentVote } from '@/lib/comment-vote';
 
 // POST /api/comments/[id]/vote — رای مفید بود / مفید نبود (کامنت آیتم)
 export async function POST(
@@ -29,120 +28,32 @@ export async function POST(
       return NextResponse.json({ success: false, error: 'مقدار نامعتبر' }, { status: 400 });
     }
 
-    const comment = await dbQuery(() =>
-      prisma.comments.findUnique({
-        where: { id: commentId },
-        select: {
-          id: true,
-          userId: true,
-          helpfulUp: true,
-          helpfulDown: true,
-          likeCount: true,
-        },
-      })
+    const result = await dbQuery(() =>
+      prisma.$transaction((tx) =>
+        applyItemCommentVote(tx, { userId, commentId, value })
+      )
     );
 
-    if (!comment) {
+    return NextResponse.json({
+      success: true,
+      data: {
+        helpfulUp: result.helpfulUp,
+        helpfulDown: result.helpfulDown,
+        weightedScore: result.weightedScore,
+        userVote: result.userVote,
+      },
+    });
+  } catch (error) {
+    const code = (error as { code?: string })?.code;
+    if (code === 'NOT_FOUND' || (error as { code?: string })?.code === 'P2025') {
       return NextResponse.json({ success: false, error: 'نظر یافت نشد' }, { status: 404 });
     }
-
-    // امنیت: رای دادن به نظر خود مجاز نیست (جلوگیری از دستکاری امتیاز/رتبه).
-    if (comment.userId === userId) {
+    if (code === 'SELF_VOTE') {
       return NextResponse.json(
         { success: false, error: 'نمی‌توانید به نظر خودتان رای دهید' },
         { status: 403 }
       );
     }
-
-    const existing = await dbQuery(() =>
-      prisma.comment_votes.findUnique({
-        where: { userId_commentId: { userId, commentId } },
-      })
-    );
-
-    let newUp = comment.helpfulUp;
-    let newDown = comment.helpfulDown;
-    let userVote: number | null = value;
-
-    if (existing) {
-      if (existing.value === 1) {
-        newUp = Math.max(0, newUp - 1);
-      } else {
-        newDown = Math.max(0, newDown - 1);
-      }
-
-      if (existing.value === value) {
-        const weightedScore = computeWeightedScore(newUp, newDown);
-        await dbQuery(async () => {
-          return prisma.$transaction(async (tx) => {
-            await tx.comment_votes.delete({
-              where: { userId_commentId: { userId, commentId } },
-            });
-            await tx.comments.update({
-              where: { id: commentId },
-              data: {
-                helpfulUp: newUp,
-                helpfulDown: newDown,
-                weightedScore,
-                updatedAt: new Date(),
-              },
-            });
-          });
-        });
-        return NextResponse.json({
-          success: true,
-          data: {
-            helpfulUp: newUp,
-            helpfulDown: newDown,
-            weightedScore,
-            userVote: null,
-          },
-        });
-      }
-    }
-
-    if (value === 1) {
-      newUp += 1;
-    } else {
-      newDown += 1;
-    }
-
-    const weightedScore = computeWeightedScore(newUp, newDown);
-
-    await dbQuery(async () => {
-      return prisma.$transaction(async (tx) => {
-        await tx.comment_votes.upsert({
-          where: { userId_commentId: { userId, commentId } },
-          create: {
-            id: nanoid(),
-            userId,
-            commentId,
-            value,
-          },
-          update: { value },
-        });
-        await tx.comments.update({
-          where: { id: commentId },
-          data: {
-            helpfulUp: newUp,
-            helpfulDown: newDown,
-            weightedScore,
-            updatedAt: new Date(),
-          },
-        });
-      });
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        helpfulUp: newUp,
-        helpfulDown: newDown,
-        weightedScore,
-        userVote,
-      },
-    });
-  } catch (error) {
     console.error('Error voting on item comment:', error);
     return NextResponse.json(
       { success: false, error: getClientErrorMessage(error, 'خطا در ثبت رای') },

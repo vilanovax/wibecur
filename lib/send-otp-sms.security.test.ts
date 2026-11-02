@@ -44,6 +44,26 @@ describe('sendPhoneOtp security', () => {
     vi.resetModules();
   });
 
+  it('checks cooldown before burning the hourly send quota', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    mockGetOtpResendRemainingMs.mockReturnValue(30_000);
+    mockGetSmsIrConfig.mockReturnValue({
+      apiKey: '',
+      dryRun: true,
+      templateId: 1,
+      paramName: 'CODE',
+    });
+    const { sendPhoneOtp } = await import('./send-otp-sms');
+    const result = await sendPhoneOtp({
+      normalizedPhone: '989121234567',
+      purpose: 'login',
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.status).toBe(429);
+    expect(mockCheckActionRateLimit).not.toHaveBeenCalled();
+    expect(mockSendOtpSms).not.toHaveBeenCalled();
+  });
+
   it('never returns devCode in production even if dryRun is true', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     mockGetSmsIrConfig.mockReturnValue({

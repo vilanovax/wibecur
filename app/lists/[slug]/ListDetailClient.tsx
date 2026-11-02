@@ -1145,7 +1145,7 @@ export default function ListDetailClient({
             listTitle={list.title}
             priority
           />
-          <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/45 to-black/15" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/35 to-black/10" />
           <div className="absolute inset-s-4 top-4 z-10">
             <Button
               type="button"
@@ -1167,9 +1167,6 @@ export default function ListDetailClient({
           )}
           <div className="absolute inset-x-0 bottom-0 z-10 p-4 pb-4 text-start">
             <h1 className="text-h1 font-bold leading-tight text-background line-clamp-2">{displayTitle}</h1>
-            {listDescription && (
-              <p className="mt-1 line-clamp-2 wibe-small leading-relaxed text-background/85">{listDescription}</p>
-            )}
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {list.categories && (
                 <Link
@@ -1221,6 +1218,11 @@ export default function ListDetailClient({
             </>
           ) : null}
         </p>
+        {listDescription ? (
+          <p className="text-start wibe-small leading-relaxed text-muted-foreground line-clamp-3">
+            {listDescription}
+          </p>
+        ) : null}
       </div>
 
       {sponsoredPlacements.banner.length > 0 ? (

@@ -89,20 +89,23 @@ export async function PUT(request: NextRequest) {
       avatarId,
     } = body;
 
-    try {
-      if (email) {
-        const existingUser = await dbQuery(() =>
-          prisma.users.findUnique({ where: { email } })
+    if (email) {
+      const existingUser = await dbQuery(() =>
+        prisma.users.findUnique({ where: { email } })
+      );
+      if (existingUser && existingUser.id !== userId) {
+        return NextResponse.json(
+          { success: false, error: 'این ایمیل قبلاً استفاده شده است' },
+          { status: 400 }
         );
-        if (existingUser && existingUser.id !== userId) {
-          return NextResponse.json(
-            { success: false, error: 'این ایمیل قبلاً استفاده شده است' },
-            { status: 400 }
-          );
-        }
       }
+    }
 
-      if (username !== undefined && username !== null && username !== '') {
+    let normalizedUsername: string | null | undefined;
+    if (username !== undefined) {
+      if (username === null || username === '') {
+        normalizedUsername = null;
+      } else {
         const clean = normalizeUsername(String(username));
         const format = validateUsernameFormat(clean);
         if (!format.valid) {
@@ -120,9 +123,8 @@ export async function PUT(request: NextRequest) {
             { status: 400 }
           );
         }
+        normalizedUsername = clean;
       }
-    } catch {
-      // اگر جدول/ستون نبود، چک تکراری را نادیده می‌گیریم و مستقیم آپدیت می‌کنیم
     }
 
     const updateData: {
@@ -140,7 +142,7 @@ export async function PUT(request: NextRequest) {
     } = { updatedAt: new Date() };
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
-    if (username !== undefined) updateData.username = username === '' ? null : String(username).trim().toLowerCase();
+    if (normalizedUsername !== undefined) updateData.username = normalizedUsername;
     if (bio !== undefined) updateData.bio = sanitizeOptionalText(bio, 160);
     if (typeof showBadge === 'boolean') updateData.showBadge = showBadge;
     if (typeof allowCommentNotifications === 'boolean') updateData.allowCommentNotifications = allowCommentNotifications;
@@ -282,7 +284,7 @@ export async function PUT(request: NextRequest) {
         { status: 503 }
       );
     }
-    return NextResponse.json({ success: false, error: message });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
 

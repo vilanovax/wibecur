@@ -1,7 +1,9 @@
 /**
- * محدودیت نرخ در حافظهٔ همین پروسه.
- * برای سرور تک‌پروسه کافی است؛ بین چند نمونه مشترک نمی‌شود.
+ * محدودیت نرخ.
+ * با REDIS_URL بین پروسه‌ها مشترک است؛ بدون آن فقط حافظهٔ همین پروسه.
  */
+
+import { getRedis } from '@/lib/redis';
 
 const WINDOW_MS = { s: 1000, m: 60_000, h: 3_600_000 } as const;
 
@@ -37,6 +39,7 @@ export function apiRateBucket(pathname: string, method: string): ApiRateBucket {
 }
 
 const DEFAULT_BUCKET_CAP = 5_000;
+const REDIS_PREFIX = 'wibe:rl:';
 
 type RateWindow = `${number} ${'s' | 'm' | 'h'}`;
 
@@ -77,8 +80,10 @@ export function createRateLimiter(options?: { maxBuckets?: number; now?: () => n
   async function check(
     identifier: string,
     max: number,
-    window: RateWindow
+    window: RateWindow,
+    options?: { increment?: boolean }
   ): Promise<{ success: boolean }> {
+    const increment = options?.increment !== false;
     const at = now();
     const windowMs = rateWindowMs(window);
     let bucket = buckets.get(identifier);
@@ -89,8 +94,10 @@ export function createRateLimiter(options?: { maxBuckets?: number; now?: () => n
       remember(identifier, bucket, at);
       return { success: false };
     }
-    bucket.count += 1;
-    remember(identifier, bucket, at);
+    if (increment) {
+      bucket.count += 1;
+      remember(identifier, bucket, at);
+    }
     return { success: true };
   }
 
@@ -107,12 +114,60 @@ export function createRateLimiter(options?: { maxBuckets?: number; now?: () => n
 
 const limiter = createRateLimiter();
 
+/** Lua: اتمیک peek/incr با سقف و TTL */
+const RATE_LIMIT_LUA = `
+local key = KEYS[1]
+local max = tonumber(ARGV[1])
+local windowMs = tonumber(ARGV[2])
+local doIncr = ARGV[3] == '1'
+local current = tonumber(redis.call('GET', key) or '0')
+if current >= max then
+  return 0
+end
+if doIncr == false then
+  return 1
+end
+local n = redis.call('INCR', key)
+if n == 1 then
+  redis.call('PEXPIRE', key, windowMs)
+end
+if n > max then
+  return 0
+end
+return 1
+`;
+
+async function checkWithStore(
+  identifier: string,
+  max: number,
+  window: RateWindow,
+  options?: { increment?: boolean }
+): Promise<{ success: boolean }> {
+  const increment = options?.increment !== false;
+  const redis = await getRedis();
+  if (!redis) {
+    return limiter.check(identifier, max, window, { increment });
+  }
+
+  const windowMs = rateWindowMs(window);
+  try {
+    const result = await redis.eval(RATE_LIMIT_LUA, {
+      keys: [`${REDIS_PREFIX}${identifier}`],
+      arguments: [String(max), String(windowMs), increment ? '1' : '0'],
+    });
+    return { success: result === 1 || result === '1' };
+  } catch (error) {
+    console.error('[rate-limit] redis failed — memory fallback', error);
+    return limiter.check(identifier, max, window, { increment });
+  }
+}
+
 export function clearRateLimitsForTests(): void {
   limiter.clear();
 }
 
 export async function checkRateLimit(identifier: string): Promise<{ success: boolean }> {
-  return limiter.check(identifier, API_RATE_LIMIT_MAX, API_RATE_LIMIT_WINDOW);
+  return checkWithStore(identifier, API_RATE_LIMIT_MAX, API_RATE_LIMIT_WINDOW);
 }
 
 export async function checkApiRateLimit(
@@ -120,7 +175,7 @@ export async function checkApiRateLimit(
   ip: string
 ): Promise<{ success: boolean }> {
   const limit = API_RATE_BUCKETS[bucket];
-  return limiter.check(`${bucket}:${ip}`, limit.max, limit.window);
+  return checkWithStore(`${bucket}:${ip}`, limit.max, limit.window);
 }
 
 export async function checkActionRateLimit(
@@ -128,5 +183,14 @@ export async function checkActionRateLimit(
   max: number,
   window: RateWindow
 ): Promise<{ success: boolean }> {
-  return limiter.check(identifier, max, window);
+  return checkWithStore(identifier, max, window);
+}
+
+/** فقط وضعیت سقف را می‌بیند؛ شمارنده را زیاد نمی‌کند (مثلاً قبل از تلاش موفق ورود). */
+export async function peekActionRateLimit(
+  identifier: string,
+  max: number,
+  window: RateWindow
+): Promise<{ success: boolean }> {
+  return checkWithStore(identifier, max, window, { increment: false });
 }

@@ -297,28 +297,8 @@ export async function POST(
       );
     }
 
-    // Check max comments limit (priority: item > global settings)
+    // سقف کامنت داخل transaction دوباره شمرده می‌شود (ضد race)
     const maxComments = item.maxComments ?? globalSettings?.defaultMaxComments ?? null;
-    if (maxComments !== null && maxComments !== undefined) {
-      const currentCommentCount = await dbQuery(() =>
-        prisma.comments.count({
-          where: {
-            itemId,
-            deletedAt: null, // Only count non-deleted comments
-          },
-        })
-      );
-
-      if (currentCommentCount >= maxComments) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: `حداکثر تعداد کامنت (${maxComments}) برای این آیتم تکمیل شده است`,
-          },
-          { status: 403 }
-        );
-      }
-    }
 
     // Check rate limit (غیرفعال در development — مثل کامنت لیست)
     const rateLimitMinutes =
@@ -396,46 +376,68 @@ export async function POST(
       contentLower.includes(word)
     );
 
-    // Create comment
-    const comment = await dbQuery(async () => {
-      return await prisma.$transaction(async (tx) => {
-        const newComment = await tx.comments.create({
-        data: {
-          itemId,
-          userId,
-          content: content.trim(),
-          isFiltered: hasBadWord,
-          isApproved: !hasBadWord, // Auto-approve if no bad words
-        },
-        include: {
-          users: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
+    // Create comment — سقف داخل همان transaction دوباره چک می‌شود
+    let comment;
+    try {
+      comment = await dbQuery(async () => {
+        return await prisma.$transaction(async (tx) => {
+          if (maxComments !== null && maxComments !== undefined) {
+            const currentCommentCount = await tx.comments.count({
+              where: { itemId, deletedAt: null },
+            });
+            if (currentCommentCount >= maxComments) {
+              throw Object.assign(new Error('MAX_COMMENTS'), { code: 'MAX_COMMENTS' });
+            }
+          }
+
+          const newComment = await tx.comments.create({
+            data: {
+              itemId,
+              userId,
+              content: content.trim(),
+              isFiltered: hasBadWord,
+              isApproved: !hasBadWord,
             },
-          },
-        },
+            include: {
+              users: {
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+          });
+
+          if (hasBadWord) {
+            await tx.comment_reports.create({
+              data: {
+                commentId: newComment.id,
+                userId: userId,
+                reason: 'کلمه نامناسب',
+              },
+            });
+
+            await recordBadWordViolation(userId, newComment.id, tx, {
+              skipAutoRestrict: true,
+            });
+          }
+
+          return newComment;
+        });
       });
-
-      // If bad word found, report automatically and track violation
-      if (hasBadWord) {
-        await tx.comment_reports.create({
-          data: {
-            commentId: newComment.id,
-            userId: userId,
-            reason: 'کلمه نامناسب',
+    } catch (error) {
+      if ((error as { code?: string })?.code === 'MAX_COMMENTS') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `حداکثر تعداد کامنت (${maxComments}) برای این آیتم تکمیل شده است`,
           },
-        });
-
-        await recordBadWordViolation(userId, newComment.id, tx, {
-          skipAutoRestrict: true,
-        });
+          { status: 403 }
+        );
       }
-
-        return newComment;
-      });
-    });
+      throw error;
+    }
 
     if (hasBadWord) {
       const totalScore = await getUserPenaltyScore(userId);

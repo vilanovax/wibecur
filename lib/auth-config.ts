@@ -9,15 +9,11 @@ import { isAdminRole } from '@/lib/auth/roles';
 import {
   rememberAdminJwtCache,
   readAdminJwtCache,
-  type AdminJwtSnapshot,
 } from '@/lib/auth/admin-jwt-cache';
-
-function applyAdminJwtRow(token: Record<string, unknown>, row: AdminJwtSnapshot | null) {
-  if (!row || row.deletedAt || !isAdminRole(row.role)) return;
-  token.role = row.role;
-  token.isActive = row.isActive;
-  token.adminPermissions = normalizeAdminPermissions(row.adminPermissions);
-}
+import {
+  applyAdminJwtRow,
+  clearAdminSessionClaims,
+} from '@/lib/auth/apply-admin-jwt';
 
 const config: NextAuthConfig = {
   trustHost: true,
@@ -50,23 +46,30 @@ const config: NextAuthConfig = {
           const email = resolveLoginEmail(identifier);
           if (!email) return null;
 
-          // محدودیت brute-force به‌ازای حساب (نه فقط IP — قابل دور زدن با جعل x-forwarded-for):
-          // حداکثر ۱۰ تلاش ناموفق در ۱۵ دقیقه برای هر شناسه.
-          const { checkActionRateLimit } = await import('@/lib/rate-limit');
-          const { success: underLimit } = await checkActionRateLimit(
-            `login:${email}`,
-            10,
-            '15 m'
-          );
+          // محدودیت brute-force به‌ازای حساب: حداکثر ۱۰ تلاش ناموفق در ۱۵ دقیقه.
+          // فقط شکست‌ها شمارش می‌شوند؛ ورود موفق سهمیه را پر نمی‌کند.
+          const { checkActionRateLimit, peekActionRateLimit } = await import('@/lib/rate-limit');
+          const loginKey = `login:${email}`;
+          const { success: underLimit } = await peekActionRateLimit(loginKey, 10, '15 m');
           if (!underLimit) return null;
+
+          const recordLoginFailure = async () => {
+            await checkActionRateLimit(loginKey, 10, '15 m');
+          };
 
           if (hasOtp) {
             const { consumeOtp, normalizeOtpInput, validateOtpInput } = await import('@/lib/otp');
             const otpError = validateOtpInput(otp);
-            if (otpError) return null;
+            if (otpError) {
+              await recordLoginFailure();
+              return null;
+            }
 
             const normalizedPhone = normalizeIranPhone(identifier);
-            if (!normalizedPhone) return null;
+            if (!normalizedPhone) {
+              await recordLoginFailure();
+              return null;
+            }
 
             const code = normalizeOtpInput(otp);
             // فقط چالش‌های ورود/ثبت‌نام — OTP تنظیم‌رمز را مصرف نکن
@@ -74,7 +77,10 @@ const config: NextAuthConfig = {
             if (!consumed.ok) {
               consumed = await consumeOtp(normalizedPhone, code, { purpose: 'register' });
             }
-            if (!consumed.ok) return null;
+            if (!consumed.ok) {
+              await recordLoginFailure();
+              return null;
+            }
 
             const { resolveUserAfterOtp } = await import('@/lib/otp-auth');
             const user = await resolveUserAfterOtp({
@@ -83,7 +89,10 @@ const config: NextAuthConfig = {
               name: consumed.name,
               avatarId: consumed.avatarId,
             });
-            if (!user) return null;
+            if (!user) {
+              await recordLoginFailure();
+              return null;
+            }
 
             const { isAdminRole } = await import('@/lib/auth/roles');
             const { recordAdminLogin } = await import('@/lib/auth/record-admin-login');
@@ -133,6 +142,7 @@ const config: NextAuthConfig = {
           if (!user || !user.password || !user.isActive || user.deletedAt) {
             bcrypt.compareSync(password as string, DUMMY_HASH);
             await trackAdmin(false);
+            await recordLoginFailure();
             return null;
           }
 
@@ -140,6 +150,7 @@ const config: NextAuthConfig = {
 
           if (!isPasswordValid) {
             await trackAdmin(false);
+            await recordLoginFailure();
             return null;
           }
 
@@ -179,7 +190,11 @@ const config: NextAuthConfig = {
       if (process.env.NEXT_RUNTIME !== 'edge' && userId && isAdminRole(tokenRole)) {
         const cached = readAdminJwtCache(userId);
         if (cached !== undefined) {
-          applyAdminJwtRow(token, cached);
+          // null در کش = خطای اخیر DB → توکن را دست نزن (stale کوتاه).
+          // ردیف واقعی (حتی USER) با applyAdminJwtRow اعمال می‌شود.
+          if (cached !== null) {
+            applyAdminJwtRow(token, cached);
+          }
         } else {
           try {
             const { prisma } = await import('@/lib/prisma');
@@ -187,8 +202,13 @@ const config: NextAuthConfig = {
               where: { id: userId },
               select: { role: true, isActive: true, adminPermissions: true, deletedAt: true },
             });
-            rememberAdminJwtCache(userId, row);
-            applyAdminJwtRow(token, row);
+            if (!row) {
+              // کاربر حذف‌شده: demote؛ کش error نگذار تا درخواست بعد دوباره DB را ببیند
+              clearAdminSessionClaims(token, { isActive: false });
+            } else {
+              rememberAdminJwtCache(userId, row);
+              applyAdminJwtRow(token, row);
+            }
           } catch (error) {
             rememberAdminJwtCache(userId, null);
             console.error('[auth jwt refresh]', error);

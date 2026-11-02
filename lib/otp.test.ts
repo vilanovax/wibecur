@@ -76,7 +76,7 @@ describe('saveOtp / consumeOtp', () => {
   it('enforces resend cooldown', async () => {
     const now = 1_700_000_000_000;
     await saveOtp({ phone: '989121234567', code: '12345', purpose: 'login', now });
-    expect(getOtpResendRemainingMs('989121234567', now + 10_000)).toBeGreaterThan(0);
-    expect(getOtpResendRemainingMs('989121234567', now + 61_000)).toBe(0);
+    expect(await getOtpResendRemainingMs('989121234567', now + 10_000)).toBeGreaterThan(0);
+    expect(await getOtpResendRemainingMs('989121234567', now + 61_000)).toBe(0);
   });
 });

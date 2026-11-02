@@ -1,7 +1,9 @@
 /**
- * تولید، ذخیره و تأیید کد OTP موبایل (حافظهٔ پروسه — Edge-safe، بدون node:crypto).
+ * تولید، ذخیره و تأیید کد OTP موبایل.
+ * اگر REDIS_URL ست باشد بین پروسه‌ها مشترک است؛ وگرنه حافظهٔ همین پروسه.
  */
 
+import { getRedis } from '@/lib/redis';
 import {
   OTP_LENGTH,
   OTP_MAX_ATTEMPTS,
@@ -21,6 +23,7 @@ export {
 } from '@/lib/otp-shared';
 
 const MAX_ENTRIES = 10_000;
+const REDIS_PREFIX = 'wibe:otp:';
 
 type OtpRecord = {
   hash: string;
@@ -32,7 +35,7 @@ type OtpRecord = {
   avatarId?: string;
 };
 
-const store = new Map<string, OtpRecord>();
+const memoryStore = new Map<string, OtpRecord>();
 
 function toHex(buffer: ArrayBuffer): string {
   return Array.from(new Uint8Array(buffer))
@@ -56,19 +59,55 @@ function safeEqualHex(a: string, b: string): boolean {
   return diff === 0;
 }
 
-function remember(phone: string, record: OtpRecord) {
-  store.delete(phone);
-  store.set(phone, record);
-  if (store.size <= MAX_ENTRIES) return;
+function rememberMemory(phone: string, record: OtpRecord) {
+  memoryStore.delete(phone);
+  memoryStore.set(phone, record);
+  if (memoryStore.size <= MAX_ENTRIES) return;
   const now = Date.now();
-  for (const [key, value] of store) {
-    if (value.expiresAt <= now) store.delete(key);
+  for (const [key, value] of memoryStore) {
+    if (value.expiresAt <= now) memoryStore.delete(key);
   }
-  while (store.size > MAX_ENTRIES) {
-    const oldest = store.keys().next().value;
+  while (memoryStore.size > MAX_ENTRIES) {
+    const oldest = memoryStore.keys().next().value;
     if (oldest === undefined) break;
-    store.delete(oldest);
+    memoryStore.delete(oldest);
   }
+}
+
+async function writeRecord(phone: string, record: OtpRecord): Promise<void> {
+  const redis = await getRedis();
+  if (!redis) {
+    rememberMemory(phone, record);
+    return;
+  }
+  const ttlMs = Math.max(1, record.expiresAt - Date.now());
+  await redis.set(`${REDIS_PREFIX}${phone}`, JSON.stringify(record), {
+    PX: ttlMs,
+  });
+}
+
+async function readRecord(phone: string): Promise<OtpRecord | null> {
+  const redis = await getRedis();
+  if (!redis) {
+    return memoryStore.get(phone) ?? null;
+  }
+  const raw = await redis.get(`${REDIS_PREFIX}${phone}`);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as OtpRecord;
+  } catch {
+    await redis.del(`${REDIS_PREFIX}${phone}`);
+    return null;
+  }
+}
+
+async function deleteRecord(phone: string): Promise<void> {
+  const redis = await getRedis();
+  if (!redis) {
+    memoryStore.delete(phone);
+    return;
+  }
+  await redis.del(`${REDIS_PREFIX}${phone}`);
 }
 
 export function generateOtpCode(length = OTP_LENGTH): string {
@@ -86,7 +125,7 @@ export function generateOtpCode(length = OTP_LENGTH): string {
 }
 
 export function clearOtpsForTests(): void {
-  store.clear();
+  memoryStore.clear();
 }
 
 type SaveOtpInput = {
@@ -109,12 +148,12 @@ export async function saveOtp(input: SaveOtpInput): Promise<{ expiresAt: number;
     name: input.name,
     avatarId: input.avatarId,
   };
-  remember(input.phone, record);
+  await writeRecord(input.phone, record);
   return { expiresAt: record.expiresAt, resendAt: record.resendAt };
 }
 
-export function getOtpResendRemainingMs(phone: string, now = Date.now()): number {
-  const record = store.get(phone);
+export async function getOtpResendRemainingMs(phone: string, now = Date.now()): Promise<number> {
+  const record = await readRecord(phone);
   if (!record) return 0;
   if (record.expiresAt <= now) return 0;
   return Math.max(0, record.resendAt - now);
@@ -138,11 +177,11 @@ export async function consumeOtp(
   options?: { purpose?: OtpPurpose; now?: number }
 ): Promise<ConsumeOtpResult> {
   const now = options?.now ?? Date.now();
-  const record = store.get(phone);
+  const record = await readRecord(phone);
 
   if (!record) return { ok: false, reason: 'missing' };
   if (record.expiresAt <= now) {
-    store.delete(phone);
+    await deleteRecord(phone);
     return { ok: false, reason: 'expired' };
   }
   if (options?.purpose && record.purpose !== options.purpose) {
@@ -156,14 +195,14 @@ export async function consumeOtp(
   const matches = safeEqualHex(record.hash, await hashOtp(phone, code));
 
   if (!matches) {
-    remember(phone, { ...record, attempts: nextAttempts });
+    await writeRecord(phone, { ...record, attempts: nextAttempts });
     if (nextAttempts >= OTP_MAX_ATTEMPTS) {
       return { ok: false, reason: 'locked' };
     }
     return { ok: false, reason: 'mismatch' };
   }
 
-  store.delete(phone);
+  await deleteRecord(phone);
   return {
     ok: true,
     purpose: record.purpose,

@@ -56,23 +56,6 @@ export async function POST(request: NextRequest) {
     );
     const maxPersonalLists = settings?.maxPersonalLists || 3;
 
-    // Check how many private lists (isPublic: false) the user has
-    const privateListsCount = await dbQuery(() =>
-      prisma.lists.count({
-        where: {
-          userId,
-          isPublic: false,
-        },
-      })
-    );
-
-    if (privateListsCount >= maxPersonalLists) {
-      return NextResponse.json(
-        { error: `شما نمی‌توانید بیشتر از ${maxPersonalLists} لیست خصوصی ایجاد کنید. لطفاً یکی از لیست‌های قبلی را حذف کنید یا آن را عمومی کنید.` },
-        { status: 400 }
-      );
-    }
-
     // No bad words check for private lists (will be checked when making public)
 
     // Generate unique slug
@@ -113,33 +96,56 @@ export async function POST(request: NextRequest) {
 
     const finalCoverImage = coverImage ? await ensureImageInLiara(coverImage.trim(), 'covers') : null;
 
-    // Create list (isPublic defaults to false for user-created lists, categoryId is null)
-    // Note: updatedAt is managed by Prisma @updatedAt directive
-    const list = await dbQuery(() =>
-      prisma.lists.create({
-        data: {
-          id: nanoid(),
-          title: title.trim(),
-          slug,
-          description: typeof description === 'string' ? description.trim() : null,
-          coverImage: finalCoverImage,
-          categoryId: null, // Personal lists don't have categories
-          userId,
-          isPublic: false, // User lists start as private
-          isActive: true, // Private lists are always active
-          commentsEnabled: typeof commentsEnabled === 'boolean' ? commentsEnabled : true,
-        },
-        include: {
-          users: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
+    // سقف لیست خصوصی داخل transaction دوباره شمرده می‌شود (ضد double-submit)
+    let list;
+    try {
+      list = await dbQuery(() =>
+        prisma.$transaction(async (tx) => {
+          const privateListsCount = await tx.lists.count({
+            where: { userId, isPublic: false },
+          });
+          if (privateListsCount >= maxPersonalLists) {
+            throw Object.assign(new Error('MAX_PERSONAL_LISTS'), {
+              code: 'MAX_PERSONAL_LISTS',
+            });
+          }
+
+          return tx.lists.create({
+            data: {
+              id: nanoid(),
+              title: title.trim(),
+              slug,
+              description: typeof description === 'string' ? description.trim() : null,
+              coverImage: finalCoverImage,
+              categoryId: null,
+              userId,
+              isPublic: false,
+              isActive: true,
+              commentsEnabled: typeof commentsEnabled === 'boolean' ? commentsEnabled : true,
             },
+            include: {
+              users: {
+                select: {
+                  id: true,
+                  name: true,
+                  image: true,
+                },
+              },
+            },
+          });
+        })
+      );
+    } catch (error) {
+      if ((error as { code?: string })?.code === 'MAX_PERSONAL_LISTS') {
+        return NextResponse.json(
+          {
+            error: `شما نمی‌توانید بیشتر از ${maxPersonalLists} لیست خصوصی ایجاد کنید. لطفاً یکی از لیست‌های قبلی را حذف کنید یا آن را عمومی کنید.`,
           },
-        },
-      })
-    );
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
 
     return NextResponse.json(
       {
