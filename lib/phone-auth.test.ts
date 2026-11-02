@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  authEmailToPhone,
   digitsFromPhoneInput,
   formatIranPhoneDisplay,
   formatPhoneDigitsForDisplay,
   normalizeIranPhone,
+  phoneToAuthEmail,
   validatePhoneInput,
 } from './phone-auth';
 
@@ -42,5 +44,16 @@ describe('formatIranPhoneDisplay', () => {
 describe('validatePhoneInput', () => {
   it('passes for Persian mobile input', () => {
     expect(validatePhoneInput('۰۹۱۲۱۲۳۴۵۶۷')).toBeNull();
+  });
+});
+
+describe('authEmailToPhone', () => {
+  it('round-trips phone auth emails', () => {
+    const phone = '989121234567';
+    expect(authEmailToPhone(phoneToAuthEmail(phone))).toBe(phone);
+  });
+
+  it('rejects non-phone emails', () => {
+    expect(authEmailToPhone('user@example.com')).toBeNull();
   });
 });

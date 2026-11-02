@@ -5,13 +5,14 @@ import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, KeyRound, Loader2, MessageSquare } from 'lucide-react';
 import { DEFAULT_PACK_AVATARS } from '@/lib/vibe-avatars';
 import {
   digitsFromPhoneInput,
   formatIranPhoneDisplay,
   formatPhoneDigitsForDisplay,
   normalizeIranPhone,
+  validateAuthPassword,
   validatePhoneInput,
 } from '@/lib/phone-auth';
 import { OTP_LENGTH, normalizeOtpInput, validateOtpInput } from '@/lib/otp-shared';
@@ -26,7 +27,7 @@ const RegisterAvatarPicker = dynamic(() => import('./RegisterAvatarPicker'), {
 });
 
 export type AuthMode = 'login' | 'register';
-type AuthStep = 'form' | 'otp';
+type AuthStep = 'form' | 'method' | 'otp' | 'password';
 
 interface AuthScreenProps {
   mode: AuthMode;
@@ -65,11 +66,13 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [avatarId, setAvatarId] = useState(defaultAvatarId);
   const [step, setStep] = useState<AuthStep>('form');
   const [error, setError] = useState('');
   const [fieldError, setFieldError] = useState('');
-  const [fieldErrorTarget, setFieldErrorTarget] = useState<'phone' | 'otp' | null>(null);
+  const [fieldErrorTarget, setFieldErrorTarget] = useState<'phone' | 'otp' | 'password' | null>(null);
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendSeconds, setResendSeconds] = useState(0);
@@ -109,7 +112,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
     setNotice('');
   };
 
-  const showFieldError = (target: 'phone' | 'otp', message: string) => {
+  const showFieldError = (target: 'phone' | 'otp' | 'password', message: string) => {
     setFieldErrorTarget(target);
     setFieldError(message);
   };
@@ -174,7 +177,19 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
   const handleFormContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     clearFeedback();
-    await sendOtp();
+
+    const phoneError = validatePhoneInput(phone);
+    if (phoneError) {
+      showFieldError('phone', phoneError);
+      return;
+    }
+
+    if (isRegister) {
+      await sendOtp();
+      return;
+    }
+
+    setStep('method');
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
@@ -214,9 +229,50 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
     }
   };
 
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearFeedback();
+
+    const passwordError = validateAuthPassword(password);
+    if (passwordError) {
+      showFieldError('password', passwordError);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await signIn('credentials', {
+        phone,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('شماره یا رمز عبور اشتباه است');
+        return;
+      }
+
+      router.push(callbackUrl);
+      router.refresh();
+    } catch {
+      setError('خطایی رخ داد. دوباره تلاش کن.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetToForm = () => {
     setStep('form');
     setOtp('');
+    setPassword('');
+    setResendSeconds(0);
+    clearFeedback();
+  };
+
+  const backToMethod = () => {
+    setStep('method');
+    setOtp('');
+    setPassword('');
     setResendSeconds(0);
     clearFeedback();
   };
@@ -226,6 +282,15 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
     return normalized ? formatIranPhoneDisplay(normalized) : formatPhoneDigitsForDisplay(phone);
   }, [phone]);
 
+  const onSubmit =
+    step === 'form'
+      ? handleFormContinue
+      : step === 'otp'
+        ? handleVerifyOtp
+        : step === 'password'
+          ? handlePasswordLogin
+          : (e: React.FormEvent) => e.preventDefault();
+
   return (
     <AuthShell mode={isRegister ? 'register' : 'login'}>
       <div className="flex flex-col gap-6">
@@ -234,16 +299,12 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
           subtitle={
             isRegister
               ? 'با شماره موبایل حساب بساز و لیست‌ها را شروع کن.'
-              : 'با شماره موبایل وارد شو؛ کد تأیید پیامک می‌شود.'
+              : 'با شماره موبایل وارد شو — کد پیامک یا رمز عبور.'
           }
         />
 
         <AuthFormCard>
-          <form
-            onSubmit={step === 'form' ? handleFormContinue : handleVerifyOtp}
-            className="flex flex-col gap-4"
-            noValidate
-          >
+          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
             {step === 'form' ? (
               <>
                 {isRegister ? (
@@ -273,31 +334,75 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                   onChange={(e) => handlePhoneChange(e.target.value)}
                   placeholder="۰۹۱۲ ۱۲۳ ۴۵۶۷"
                   autoComplete="tel"
-                  enterKeyHint="send"
+                  enterKeyHint="next"
                   required
                   dir="ltr"
                   autoFocus
                   error={fieldErrorTarget === 'phone' ? fieldError : undefined}
                 />
               </>
-            ) : (
-              <>
-                <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4! py-2!">
-                  <div className="min-w-0">
-                    <p className="wibe-caption text-muted-foreground">شماره موبایل</p>
-                    <p className="truncate wibe-small font-medium text-foreground" dir="ltr">
-                      {displayPhone}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={resetToForm}
-                    className="flex min-h-11 shrink-0 items-center px-2! wibe-small font-medium text-brand"
-                  >
-                    تغییر
-                  </button>
-                </div>
+            ) : null}
 
+            {step !== 'form' ? (
+              <div className="flex items-center justify-between gap-3 rounded-xl bg-muted px-4! py-2!">
+                <div className="min-w-0">
+                  <p className="wibe-caption text-muted-foreground">شماره موبایل</p>
+                  <p className="truncate wibe-small font-medium text-foreground" dir="ltr">
+                    {displayPhone}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={resetToForm}
+                  className="flex min-h-11 shrink-0 items-center px-2! wibe-small font-medium text-brand"
+                >
+                  تغییر
+                </button>
+              </div>
+            ) : null}
+
+            {step === 'method' ? (
+              <div className="flex flex-col gap-3">
+                <p className="wibe-small text-muted-foreground">چطور می‌خواهی وارد شوی؟</p>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => {
+                    void sendOtp();
+                  }}
+                  className="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-background px-4! py-3! text-start transition-colors hover:bg-muted"
+                >
+                  <span className="flex size-10 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                    <MessageSquare className="size-5" strokeWidth={1.5} aria-hidden />
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="wibe-small font-medium text-foreground">کد پیامک</span>
+                    <span className="wibe-caption text-muted-foreground">کد ۵ رقمی به موبایلت می‌آید</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => {
+                    clearFeedback();
+                    setPassword('');
+                    setStep('password');
+                  }}
+                  className="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-background px-4! py-3! text-start transition-colors hover:bg-muted"
+                >
+                  <span className="flex size-10 items-center justify-center rounded-lg bg-muted text-foreground">
+                    <KeyRound className="size-5" strokeWidth={1.5} aria-hidden />
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="wibe-small font-medium text-foreground">رمز عبور</span>
+                    <span className="wibe-caption text-muted-foreground">اگر قبلاً در پروفایل رمز گذاشتی</span>
+                  </span>
+                </button>
+              </div>
+            ) : null}
+
+            {step === 'otp' ? (
+              <>
                 <AuthField
                   id="auth-otp"
                   label="کد تأیید"
@@ -329,8 +434,79 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                     {resendSeconds > 0 ? `ارسال دوباره (${fa(resendSeconds)})` : 'ارسال دوباره'}
                   </button>
                 </div>
+
+                {!isRegister ? (
+                  <button
+                    type="button"
+                    onClick={backToMethod}
+                    className="flex min-h-11 items-center justify-center wibe-caption font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    انتخاب روش دیگر
+                  </button>
+                ) : null}
               </>
-            )}
+            ) : null}
+
+            {step === 'password' ? (
+              <>
+                <AuthField
+                  id="auth-password"
+                  label="رمز عبور"
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrorTarget === 'password') {
+                      setFieldError('');
+                      setFieldErrorTarget(null);
+                    }
+                  }}
+                  placeholder="رمز عبور"
+                  autoComplete="current-password"
+                  enterKeyHint="done"
+                  required
+                  minLength={6}
+                  dir="ltr"
+                  autoFocus
+                  error={fieldErrorTarget === 'password' ? fieldError : undefined}
+                  trailing={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((value) => !value)}
+                      className="absolute end-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                      aria-label={showPassword ? 'مخفی کردن رمز' : 'نمایش رمز'}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="size-5" strokeWidth={1.5} />
+                      ) : (
+                        <Eye className="size-5" strokeWidth={1.5} />
+                      )}
+                    </button>
+                  }
+                />
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => {
+                      void sendOtp();
+                    }}
+                    className="flex min-h-11 items-center px-2! wibe-caption font-medium text-brand"
+                  >
+                    فراموشی رمز؟ ورود با کد
+                  </button>
+                  <button
+                    type="button"
+                    onClick={backToMethod}
+                    className="flex min-h-11 items-center px-2! wibe-caption font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    روش دیگر
+                  </button>
+                </div>
+              </>
+            ) : null}
 
             {notice ? (
               <p role="status" className="wibe-caption text-muted-foreground">
@@ -340,19 +516,42 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
             {error ? <AuthErrorAlert message={error} /> : null}
 
-            <AuthPrimaryButton
-              loading={loading}
-              loadingLabel={step === 'form' ? 'در حال ارسال کد…' : isRegister ? 'در حال ساخت حساب…' : 'در حال ورود…'}
-            >
-              {step === 'form' ? (
-                'دریافت کد تأیید'
-              ) : (
-                <>
-                  {isRegister ? 'تأیید و ساخت حساب' : 'ورود'}
-                  <ArrowLeft className="size-4" aria-hidden />
-                </>
-              )}
-            </AuthPrimaryButton>
+            {step === 'form' || step === 'otp' || step === 'password' ? (
+              <AuthPrimaryButton
+                loading={loading}
+                loadingLabel={
+                  step === 'form'
+                    ? isRegister
+                      ? 'در حال ارسال کد…'
+                      : 'در حال ادامه…'
+                    : step === 'otp'
+                      ? isRegister
+                        ? 'در حال ساخت حساب…'
+                        : 'در حال ورود…'
+                      : 'در حال ورود…'
+                }
+              >
+                {step === 'form' ? (
+                  isRegister ? (
+                    'دریافت کد تأیید'
+                  ) : (
+                    'ادامه'
+                  )
+                ) : (
+                  <>
+                    {isRegister ? 'تأیید و ساخت حساب' : 'ورود'}
+                    <ArrowLeft className="size-4" aria-hidden />
+                  </>
+                )}
+              </AuthPrimaryButton>
+            ) : null}
+
+            {step === 'method' && loading ? (
+              <div className="flex min-h-11 items-center justify-center gap-2 wibe-small text-muted-foreground">
+                <Loader2 className="size-5 animate-spin" aria-hidden />
+                در حال ارسال کد…
+              </div>
+            ) : null}
           </form>
 
           {!isRegister ? (

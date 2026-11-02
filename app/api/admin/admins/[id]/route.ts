@@ -102,7 +102,7 @@ export async function PATCH(
         ...(body.isActive !== undefined && { isActive: nextIsActive }),
         ...(adminPermissions !== undefined && { adminPermissions }),
         ...(parsedNote?.ok && { adminNote: parsedNote.note }),
-        ...(password && { password: bcrypt.hashSync(password, 10) }),
+        ...(password && { password: bcrypt.hashSync(password, 12) }),
         updatedAt: new Date(),
       },
       select: {

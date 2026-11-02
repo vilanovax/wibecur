@@ -61,6 +61,14 @@ export function isPhoneAuthEmail(email: string): boolean {
   return email.endsWith(`@${PHONE_EMAIL_DOMAIN}`);
 }
 
+/** از ایمیل داخلی ۹۸…@phone.wibe شماره نرمال‌شده را برمی‌گرداند */
+export function authEmailToPhone(email: string): string | null {
+  const trimmed = email.trim().toLowerCase();
+  if (!isPhoneAuthEmail(trimmed)) return null;
+  const local = trimmed.slice(0, -(PHONE_EMAIL_DOMAIN.length + 1));
+  return normalizeIranPhone(local);
+}
+
 /** برچسب امن برای UI/aria — ایمیل داخلی phone.wibe را لو نمی‌دهد */
 export function accountDisplayLabel(
   name?: string | null,
@@ -76,8 +84,8 @@ export function accountDisplayLabel(
 }
 
 export function validateAuthPassword(password: string): string | null {
-  if (!password || password.length < 6) {
-    return 'رمز عبور باید حداقل ۶ کاراکتر باشد';
+  if (!password || password.length < 8) {
+    return 'رمز عبور باید حداقل ۸ کاراکتر باشد';
   }
   // bcrypt ورودی بیش از ۷۲ بایت را بی‌صدا کوتاه می‌کند؛ صریحاً محدود می‌کنیم.
   if (password.length > 64) {

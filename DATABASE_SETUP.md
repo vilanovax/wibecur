@@ -1,88 +1,70 @@
-# راه‌اندازی دیتابیس Liara PostgreSQL
+# راه‌اندازی دیتابیس PostgreSQL
 
-## ✅ مراحل انجام شده
+## مراحل انجام‌شده
 
-1. ✅ نصب پکیج‌های Prisma و NextAuth
-2. ✅ ایجاد Prisma Schema
-3. ✅ ایجاد Prisma Client
-4. ✅ راه‌اندازی NextAuth
-5. ✅ ایجاد Seed Script
-6. ✅ به‌روزرسانی صفحات ادمین
+1. نصب پکیج‌های Prisma و NextAuth
+2. ایجاد Prisma Schema
+3. ایجاد Prisma Client
+4. راه‌اندازی NextAuth
+5. ایجاد Seed Script
+6. به‌روزرسانی صفحات ادمین
 
-## 📝 مراحل باقیمانده
+## مراحل باقیمانده
 
-### 1. ایجاد فایل `.env.local`
+### 1. ایجاد فایل `.env`
 
-در ریشه پروژه فایل `.env.local` را ایجاد کنید و محتوای زیر را اضافه کنید:
+در ریشه پروژه فایل `.env` را از روی `.env.example` بساز و مقادیر واقعی را پر کن:
 
 ```env
-# Liara PostgreSQL Database
-DATABASE_URL="postgresql://root:AjsM48P30hBDC0GwFayWVjrj@vinson.liara.cloud:34870/postgres"
+# فقط placeholder — هرگز سکرت واقعی را در docs یا git نگذار
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
+DIRECT_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 
-# For Prisma migrations
-DIRECT_URL="postgresql://root:AjsM48P30hBDC0GwFayWVjrj@vinson.liara.cloud:34870/postgres?schema=public"
-
-# NextAuth Secret
-NEXTAUTH_SECRET="wibecur-secret-key-change-in-production-2025"
-NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
+NEXTAUTH_URL="http://localhost:3003"
 ```
+
+مقادیر نمونهٔ کامل در [`.env.example`](.env.example) است.
 
 ### 2. اتصال به دیتابیس و Migration
 
 ```bash
-# Generate Prisma Client
 npx prisma generate
-
-# Push schema to database
 npx prisma db push
-
-# Run seed to create admin user and categories
 npm run db:seed
 ```
 
 ### 3. تست اتصال
 
 ```bash
-# Open Prisma Studio (GUI for database)
 npm run db:studio
 ```
 
-### 4. ورود به پنل ادمین
+### 4. ورود به پنل ادمین (فقط توسعه)
 
-- موبایل: `09121941532`
-- رمز عبور: `123456`
+Seed فقط در محیط غیرپروداکشن ادمین آزمایشی می‌سازد. رمز پیش‌فرض seed **هرگز** در production استفاده نشود؛ بعد از seed در لوکال، رمز را عوض کن.
 
-## 📁 فایل‌های ایجاد شده
+جزئیات seed: [`prisma/SEED_README.md`](prisma/SEED_README.md)
 
-- `prisma/schema.prisma` - Schema دیتابیس
-- `lib/prisma.ts` - Prisma Client instance
-- `lib/auth.ts` - Helper functions برای authentication
-- `app/api/auth/[...nextauth]/route.ts` - NextAuth route handler
-- `prisma/seed.ts` - Seed script برای ایجاد داده‌های اولیه
-- `app/admin/dashboard/page.tsx` - Dashboard با داده‌های واقعی
-- `app/admin/categories/page.tsx` - مدیریت دسته‌بندی‌ها
-- `app/admin/lists/page.tsx` - مدیریت لیست‌ها
+## فایل‌های مرتبط
 
-## 🔧 Scripts موجود
+- `prisma/schema.prisma` — Schema دیتابیس
+- `lib/prisma.ts` — Prisma Client
+- `lib/auth.ts` — Helperهای authentication
+- `app/api/auth/[...nextauth]/route.ts` — NextAuth
+- `prisma/seed.ts` — Seed
+
+## Scripts
 
 ```bash
-npm run db:push      # Push schema to database
-npm run db:migrate   # Create migration
-npm run db:seed      # Run seed script
-npm run db:studio    # Open Prisma Studio
+npm run db:push
+npm run db:migrate
+npm run db:seed
+npm run db:studio
 ```
 
-## 🎯 مراحل بعدی
+## نکات امنیتی
 
-1. ایجاد صفحه Login
-2. ایجاد فرم‌های Create/Edit برای Categories
-3. ایجاد فرم‌های Create/Edit برای Lists
-4. اضافه کردن Image Upload
-5. اضافه کردن Search و Filter
-
-## ⚠️ نکات مهم
-
-- فایل `.env.local` را به `.gitignore` اضافه کنید (قبلاً اضافه شده)
-- در production، `NEXTAUTH_SECRET` را تغییر دهید
-- برای امنیت بیشتر، از environment variables در production استفاده کنید
-
+- `.env` و `.env*.local` در `.gitignore` هستند — commit نکن
+- در production حتماً `NEXTAUTH_SECRET` و پسورد دیتابیس را با مقادیر تصادفی قوی ست کن
+- اگر سکرتی زمانی در docs یا git لو رفته، فوراً rotate کن

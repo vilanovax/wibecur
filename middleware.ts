@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth-config';
 import { getClientIp } from '@/lib/client-ip';
+import { rejectIfCsrfOriginInvalid } from '@/lib/csrf-origin';
 import { apiRateBucket, checkApiRateLimit } from '@/lib/rate-limit';
 import {
   isAdminRole,
@@ -70,6 +71,9 @@ export default auth(async (req) => {
   const pathname = url.pathname;
 
   if (url.pathname.startsWith('/api')) {
+    const csrfReject = rejectIfCsrfOriginInvalid(req, pathname);
+    if (csrfReject) return csrfReject;
+
     const ip = getClientIp(req.headers);
     const { success } = await checkApiRateLimit(apiRateBucket(pathname, req.method), ip);
     if (!success) {

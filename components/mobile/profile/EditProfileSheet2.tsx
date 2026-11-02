@@ -18,6 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Switch } from '@/components/ui/switch';
+import { fa } from '@/lib/utils';
+import { normalizeOtpInput } from '@/lib/otp-shared';
 
 export interface EditProfileUser {
   id: string;
@@ -318,8 +320,13 @@ export default function EditProfileSheet2({
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordOtp, setPasswordOtp] = useState('');
+  const [passwordMode, setPasswordMode] = useState<'change' | 'otp'>('change');
   const [passwordError, setPasswordError] = useState('');
+  const [passwordNotice, setPasswordNotice] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isSendingPasswordOtp, setIsSendingPasswordOtp] = useState(false);
+  const [passwordOtpSeconds, setPasswordOtpSeconds] = useState(0);
   const [activeTab, setActiveTab] = useState<EditTab>('profile');
   const prevOpenRef = useRef(false);
   const usernameCheckSeq = useRef(0);
@@ -347,18 +354,40 @@ export default function EditProfileSheet2({
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setPasswordOtp('');
+      setPasswordMode('change');
       setPasswordError('');
+      setPasswordNotice('');
+      setPasswordOtpSeconds(0);
       setHasPassword(null);
       setActiveTab('profile');
       void fetch('/api/user/password')
         .then((r) => r.json())
         .then((json) => {
-          if (json.success) setHasPassword(Boolean(json.hasPassword));
-          else setHasPassword(false);
+          if (json.success) {
+            const next = Boolean(json.hasPassword);
+            setHasPassword(next);
+            setPasswordMode(next ? 'change' : 'otp');
+          } else {
+            setHasPassword(false);
+            setPasswordMode('otp');
+          }
         })
-        .catch(() => setHasPassword(false));
+        .catch(() => {
+          setHasPassword(false);
+          setPasswordMode('otp');
+        });
     }
   }, [isOpen, user]);
+
+  useEffect(() => {
+    if (passwordOtpSeconds <= 0) return;
+    const timer = window.setTimeout(
+      () => setPasswordOtpSeconds((s) => Math.max(0, s - 1)),
+      1000
+    );
+    return () => window.clearTimeout(timer);
+  }, [passwordOtpSeconds]);
 
   useEffect(() => {
     const trimmed = normalizeUsername(username);
@@ -524,6 +553,33 @@ export default function EditProfileSheet2({
     }
   };
 
+  const handleSendPasswordOtp = async () => {
+    setPasswordError('');
+    setPasswordNotice('');
+    setIsSendingPasswordOtp(true);
+    try {
+      const res = await fetch('/api/user/password/otp', { method: 'POST' });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        const retry = Number(data?.data?.retryAfterSeconds);
+        if (Number.isFinite(retry) && retry > 0) setPasswordOtpSeconds(retry);
+        throw new Error(data?.error || 'ارسال کد ناموفق بود');
+      }
+      const retry = Number(data?.data?.retryAfterSeconds);
+      setPasswordOtpSeconds(Number.isFinite(retry) && retry > 0 ? retry : 60);
+      setPasswordOtp('');
+      if (typeof data?.data?.devCode === 'string' && process.env.NODE_ENV !== 'production') {
+        setPasswordNotice(`کد تأیید (حالت توسعه): ${data.data.devCode}`);
+      } else {
+        setPasswordNotice('کد تأیید به شماره موبایلت پیامک شد.');
+      }
+    } catch (err: unknown) {
+      setPasswordError(err instanceof Error ? err.message : 'ارسال کد ناموفق بود');
+    } finally {
+      setIsSendingPasswordOtp(false);
+    }
+  };
+
   const handleChangePassword = async () => {
     setPasswordError('');
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -547,6 +603,41 @@ export default function EditProfileSheet2({
       setToast({ message: data.message || 'رمز عبور تغییر کرد', type: 'success' });
     } catch (err: unknown) {
       setPasswordError(err instanceof Error ? err.message : 'خطا در تغییر رمز');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleSetPasswordWithOtp = async () => {
+    setPasswordError('');
+    if (!passwordOtp || !newPassword || !confirmPassword) {
+      setPasswordError('کد تأیید و هر دو فیلد رمز را پر کنید');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const res = await fetch('/api/user/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          otp: passwordOtp,
+          newPassword,
+          confirmPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'خطا در ذخیره رمز');
+      }
+      setPasswordOtp('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setHasPassword(true);
+      setPasswordMode('change');
+      setPasswordNotice('');
+      setToast({ message: data.message || 'رمز عبور ذخیره شد', type: 'success' });
+    } catch (err: unknown) {
+      setPasswordError(err instanceof Error ? err.message : 'خطا در ذخیره رمز');
     } finally {
       setIsChangingPassword(false);
     }
@@ -844,72 +935,197 @@ export default function EditProfileSheet2({
                   <Loader2 className="h-4 w-4 animate-spin" />
                   در حال بررسی…
                 </div>
-              ) : hasPassword === false ? (
-                <div className="rounded-xl border border-dashed border-border bg-muted px-4 py-8 text-center">
-                  <p className="wibe-small font-medium text-foreground">رمز تنظیم نشده</p>
-                  <p className="mt-1.5 wibe-caption leading-relaxed text-muted-foreground">
-                    برای این حساب رمز عبور تعریف نشده است.
-                  </p>
-                </div>
               ) : (
                 <div className="space-y-3.5 rounded-xl border border-border bg-popover p-4 shadow-surface">
-                  {passwordError && (
+                  {hasPassword ? (
+                    <div className="flex gap-2 rounded-xl bg-muted p-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPasswordMode('change');
+                          setPasswordError('');
+                          setPasswordNotice('');
+                        }}
+                        className={
+                          passwordMode === 'change'
+                            ? 'flex min-h-11 flex-1 items-center justify-center rounded-lg bg-background px-3 wibe-caption font-medium text-foreground shadow-sm'
+                            : 'flex min-h-11 flex-1 items-center justify-center rounded-lg px-3 wibe-caption font-medium text-muted-foreground'
+                        }
+                      >
+                        با رمز فعلی
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPasswordMode('otp');
+                          setPasswordError('');
+                          setPasswordNotice('');
+                        }}
+                        className={
+                          passwordMode === 'otp'
+                            ? 'flex min-h-11 flex-1 items-center justify-center rounded-lg bg-background px-3 wibe-caption font-medium text-foreground shadow-sm'
+                            : 'flex min-h-11 flex-1 items-center justify-center rounded-lg px-3 wibe-caption font-medium text-muted-foreground'
+                        }
+                      >
+                        با کد پیامک
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="wibe-caption leading-relaxed text-muted-foreground">
+                      هنوز رمزی نداری. با کد پیامک یک رمز بگذار تا بعداً بدون پیامک هم وارد شوی.
+                    </p>
+                  )}
+
+                  {passwordError ? (
                     <p className="flex items-start justify-start gap-2 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5 text-start text-xs text-destructive">
                       <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                       {passwordError}
                     </p>
+                  ) : null}
+
+                  {passwordNotice ? (
+                    <p role="status" className="wibe-caption text-muted-foreground">
+                      {passwordNotice}
+                    </p>
+                  ) : null}
+
+                  {passwordMode === 'change' && hasPassword ? (
+                    <>
+                      <PasswordField
+                        id="edit-current-password"
+                        label="رمز فعلی"
+                        value={currentPassword}
+                        onChange={setCurrentPassword}
+                        autoComplete="current-password"
+                      />
+                      <div className="grid gap-3.5 lg:grid-cols-2">
+                        <PasswordField
+                          id="edit-new-password"
+                          label="رمز جدید"
+                          value={newPassword}
+                          onChange={setNewPassword}
+                          placeholder="حداقل ۸ کاراکتر"
+                          autoComplete="new-password"
+                        />
+                        <PasswordField
+                          id="edit-confirm-password"
+                          label="تکرار رمز جدید"
+                          value={confirmPassword}
+                          onChange={setConfirmPassword}
+                          autoComplete="new-password"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="brand"
+                        size="lg"
+                        className="w-full"
+                        onClick={() => void handleChangePassword()}
+                        disabled={
+                          isChangingPassword ||
+                          !currentPassword ||
+                          !newPassword ||
+                          !confirmPassword
+                        }
+                      >
+                        {isChangingPassword ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            در حال تغییر…
+                          </>
+                        ) : (
+                          <>
+                            <KeyRound className="h-4 w-4" />
+                            تغییر رمز عبور
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          className="w-full"
+                          onClick={() => void handleSendPasswordOtp()}
+                          disabled={isSendingPasswordOtp || passwordOtpSeconds > 0}
+                        >
+                          {isSendingPasswordOtp ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              در حال ارسال…
+                            </>
+                          ) : passwordOtpSeconds > 0 ? (
+                            `ارسال دوباره (${fa(passwordOtpSeconds)})`
+                          ) : (
+                            'دریافت کد تأیید'
+                          )}
+                        </Button>
+                        <div dir="rtl">
+                          <FieldLabel htmlFor="edit-password-otp">کد تأیید</FieldLabel>
+                          <Input
+                            id="edit-password-otp"
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            dir="ltr"
+                            value={passwordOtp ? fa(passwordOtp) : ''}
+                            onChange={(e) => setPasswordOtp(normalizeOtpInput(e.target.value))}
+                            placeholder="۵ رقم"
+                            maxLength={5}
+                            className="h-12 text-start"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid gap-3.5 lg:grid-cols-2">
+                        <PasswordField
+                          id="edit-set-new-password"
+                          label="رمز جدید"
+                          value={newPassword}
+                          onChange={setNewPassword}
+                          placeholder="حداقل ۸ کاراکتر"
+                          autoComplete="new-password"
+                        />
+                        <PasswordField
+                          id="edit-set-confirm-password"
+                          label="تکرار رمز جدید"
+                          value={confirmPassword}
+                          onChange={setConfirmPassword}
+                          autoComplete="new-password"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="brand"
+                        size="lg"
+                        className="w-full"
+                        onClick={() => void handleSetPasswordWithOtp()}
+                        disabled={
+                          isChangingPassword ||
+                          !passwordOtp ||
+                          !newPassword ||
+                          !confirmPassword
+                        }
+                      >
+                        {isChangingPassword ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            در حال ذخیره…
+                          </>
+                        ) : (
+                          <>
+                            <KeyRound className="h-4 w-4" />
+                            {hasPassword ? 'بازنشانی رمز عبور' : 'ذخیره رمز عبور'}
+                          </>
+                        )}
+                      </Button>
+                    </>
                   )}
-                  <PasswordField
-                    id="edit-current-password"
-                    label="رمز فعلی"
-                    value={currentPassword}
-                    onChange={setCurrentPassword}
-                    autoComplete="current-password"
-                  />
-                  <div className="grid gap-3.5 lg:grid-cols-2">
-                    <PasswordField
-                      id="edit-new-password"
-                      label="رمز جدید"
-                      value={newPassword}
-                      onChange={setNewPassword}
-                      placeholder="حداقل ۶ کاراکتر"
-                      autoComplete="new-password"
-                    />
-                    <PasswordField
-                      id="edit-confirm-password"
-                      label="تکرار رمز جدید"
-                      value={confirmPassword}
-                      onChange={setConfirmPassword}
-                      autoComplete="new-password"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="brand"
-                    size="lg"
-                    className="w-full"
-                    onClick={() => void handleChangePassword()}
-                    disabled={
-                      isChangingPassword ||
-                      !currentPassword ||
-                      !newPassword ||
-                      !confirmPassword
-                    }
-                  >
-                    {isChangingPassword ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        در حال تغییر…
-                      </>
-                    ) : (
-                      <>
-                        <KeyRound className="h-4 w-4" />
-                        تغییر رمز عبور
-                      </>
-                    )}
-                  </Button>
+
                   <p className="text-center wibe-caption text-muted-foreground">
-                    پس از تغییر، با رمز جدید وارد شوید.
+                    بعد از ذخیره می‌توانی از صفحه ورود با رمز هم وارد شوی.
                   </p>
                 </div>
               )}

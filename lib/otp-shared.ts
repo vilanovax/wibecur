@@ -10,7 +10,7 @@ export const OTP_TTL_MS = 5 * 60_000;
 export const OTP_RESEND_COOLDOWN_MS = 60_000;
 export const OTP_MAX_ATTEMPTS = 5;
 
-export type OtpPurpose = 'login' | 'register';
+export type OtpPurpose = 'login' | 'register' | 'set-password';
 
 export function normalizeOtpInput(input: string): string {
   return persianToEnglish(input).replace(/\D/g, '').slice(0, OTP_LENGTH);

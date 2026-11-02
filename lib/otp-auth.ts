@@ -2,7 +2,6 @@
  * ورود/ثبت‌نام با OTP پس از تأیید کد.
  */
 
-import bcrypt from 'bcryptjs';
 import { nanoid } from 'nanoid';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
@@ -39,11 +38,6 @@ async function allocateUsername(normalizedPhone: string): Promise<string> {
 function resolveAvatarId(raw?: string): string {
   const resolved = resolveVibeAvatarId(raw ?? 'vibe') ?? 'vibe';
   return DEFAULT_AVATAR_IDS.has(resolved) ? resolved : 'vibe';
-}
-
-/** رمز تصادفی غیرقابل‌استفاده — حساب‌های OTP-only رمز ورود ندارند */
-function unusablePasswordHash(): string {
-  return bcrypt.hashSync(`otp:${nanoid(32)}`, 12);
 }
 
 export async function resolveUserAfterOtp(options: {
@@ -89,7 +83,7 @@ export async function resolveUserAfterOtp(options: {
         name,
         email,
         username,
-        password: unusablePasswordHash(),
+        password: null,
         role: 'USER',
         avatarType: 'DEFAULT',
         avatarId,

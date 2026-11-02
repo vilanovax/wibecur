@@ -7,6 +7,12 @@ import * as path from 'path';
 const prisma = new PrismaClient();
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'Seed در production ممنوع است. رمزهای پیش‌فرض seed فقط برای توسعه هستند.'
+    );
+  }
+
   console.log('🌱 Seeding database...');
 
   // Try to load exported data
@@ -36,7 +42,7 @@ async function main() {
         user.email === '989121941532@phone.wibe' ||
         user.role === 'ADMIN';
       const password = isAdminSeedEmail
-        ? await bcrypt.hash('123456', 10)
+        ? await bcrypt.hash('123456', 12)
         : user.password
         ? user.password
         : null;
@@ -70,7 +76,7 @@ async function main() {
     console.log('✅ Users seeded');
   } else {
     // Default admin user
-    const hashedPassword = await bcrypt.hash('123456', 10);
+    const hashedPassword = await bcrypt.hash('123456', 12);
     await prisma.users.upsert({
       where: { email: '989121941532@phone.wibe' },
       update: { password: hashedPassword, role: 'ADMIN', updatedAt: new Date() },

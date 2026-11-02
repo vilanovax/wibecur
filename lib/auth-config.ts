@@ -68,7 +68,12 @@ const config: NextAuthConfig = {
             const normalizedPhone = normalizeIranPhone(identifier);
             if (!normalizedPhone) return null;
 
-            const consumed = await consumeOtp(normalizedPhone, normalizeOtpInput(otp));
+            const code = normalizeOtpInput(otp);
+            // فقط چالش‌های ورود/ثبت‌نام — OTP تنظیم‌رمز را مصرف نکن
+            let consumed = await consumeOtp(normalizedPhone, code, { purpose: 'login' });
+            if (!consumed.ok) {
+              consumed = await consumeOtp(normalizedPhone, code, { purpose: 'register' });
+            }
             if (!consumed.ok) return null;
 
             const { resolveUserAfterOtp } = await import('@/lib/otp-auth');
@@ -226,6 +231,21 @@ const config: NextAuthConfig = {
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === 'production'
+          ? '__Secure-authjs.session-token'
+          : 'authjs.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   secret:
     process.env.NEXTAUTH_SECRET ||

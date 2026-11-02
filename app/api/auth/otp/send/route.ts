@@ -1,22 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getClientIp } from '@/lib/client-ip';
-import {
-  generateOtpCode,
-  getOtpResendRemainingMs,
-  OTP_RESEND_COOLDOWN_MS,
-  saveOtp,
-  type OtpPurpose,
-} from '@/lib/otp';
+import type { OtpPurpose } from '@/lib/otp-shared';
 import { normalizeIranPhone, validatePhoneInput } from '@/lib/phone-auth';
 import { checkActionRateLimit } from '@/lib/rate-limit';
-import { getSmsIrConfig, sendOtpSms, toSmsIrMobile } from '@/lib/sms-ir';
+import { sendPhoneOtp } from '@/lib/send-otp-sms';
 import { DEFAULT_PACK_AVATARS, resolveVibeAvatarId } from '@/lib/vibe-avatars';
-import { fa } from '@/lib/utils';
 
 const DEFAULT_AVATAR_IDS = new Set(DEFAULT_PACK_AVATARS.map((a) => a.id));
 
 function parsePurpose(raw: unknown): OtpPurpose | null {
-  if (raw === 'login' || raw === 'register') return raw;
+  if (raw === 'login' || raw === 'register' || raw === 'set-password') return raw;
   return null;
 }
 
@@ -39,84 +32,48 @@ export async function POST(request: Request) {
     const resolvedAvatarId = resolveVibeAvatarId(avatarRaw) ?? 'vibe';
     const avatarId = DEFAULT_AVATAR_IDS.has(resolvedAvatarId) ? resolvedAvatarId : 'vibe';
 
+    // set-password فقط از مسیر authenticated پروفایل مجاز است
+    if (purpose === 'set-password') {
+      return NextResponse.json(
+        { success: false, error: 'برای تنظیم رمز از بخش پروفایل اقدام کن.' },
+        { status: 400 }
+      );
+    }
+
     const phoneError = validatePhoneInput(phoneRaw);
     if (phoneError) {
       return NextResponse.json({ success: false, error: phoneError }, { status: 400 });
     }
 
     const normalizedPhone = normalizeIranPhone(phoneRaw)!;
-
-    const phoneLimit = await checkActionRateLimit(`otp-send-phone:${normalizedPhone}`, 5, '1 h');
-    if (!phoneLimit.success) {
-      return NextResponse.json(
-        { success: false, error: 'برای این شماره فعلاً نمی‌توانی کد بگیری. کمی بعد دوباره تلاش کن.' },
-        { status: 429 }
-      );
-    }
-
-    const remainingMs = getOtpResendRemainingMs(normalizedPhone);
-    if (remainingMs > 0) {
-      const seconds = Math.ceil(remainingMs / 1000);
-      return NextResponse.json(
-        {
-          success: false,
-          error: `برای ارسال دوباره ${fa(seconds)} ثانیه صبر کن`,
-          data: { retryAfterSeconds: seconds },
-        },
-        { status: 429 }
-      );
-    }
-
-    const code = generateOtpCode();
-    const mobile = toSmsIrMobile(normalizedPhone);
-    const smsConfig = getSmsIrConfig();
-    if (!smsConfig.apiKey && !smsConfig.dryRun) {
-      console.error('[otp/send] SMS_IR_API_KEY is not set in this environment');
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'سرویس پیامک روی سرور تنظیم نشده است. کمی بعد دوباره تلاش کن.',
-          code: 'SMS_CONFIG_MISSING',
-        },
-        { status: 503 }
-      );
-    }
-
-    const sms = await sendOtpSms(mobile, code);
-
-    if (!sms.ok) {
-      console.error('[otp/send] sms.ir failed', {
-        status: 'status' in sms ? sms.status : undefined,
-        message: sms.message,
-      });
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'ارسال پیامک ناموفق بود. کمی بعد دوباره تلاش کن.',
-          code: 'SMS_PROVIDER_ERROR',
-        },
-        { status: 502 }
-      );
-    }
-
-    const { expiresAt, resendAt } = await saveOtp({
-      phone: normalizedPhone,
-      code,
+    const result = await sendPhoneOtp({
+      normalizedPhone,
       purpose,
-      name: purpose === 'register' ? name : undefined,
-      avatarId: purpose === 'register' ? avatarId : undefined,
+      name,
+      avatarId,
     });
 
-    const retryAfterSeconds = Math.ceil(OTP_RESEND_COOLDOWN_MS / 1000);
+    if (!result.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: result.error,
+          ...(result.code ? { code: result.code } : {}),
+          ...(result.retryAfterSeconds
+            ? { data: { retryAfterSeconds: result.retryAfterSeconds } }
+            : {}),
+        },
+        { status: result.status }
+      );
+    }
 
     return NextResponse.json({
       success: true,
       data: {
-        expiresAt,
-        resendAt,
-        retryAfterSeconds,
-        // فقط در dry-run برای توسعهٔ لوکال؛ در production هرگز برنمی‌گردد
-        ...(smsConfig.dryRun ? { devCode: code } : {}),
+        expiresAt: result.expiresAt,
+        resendAt: result.resendAt,
+        retryAfterSeconds: result.retryAfterSeconds,
+        ...(result.devCode ? { devCode: result.devCode } : {}),
       },
     });
   } catch (error) {

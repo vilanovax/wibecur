@@ -193,7 +193,7 @@ export default function AdminFormModal({
                   type="password"
                   value={form.password}
                   onChange={(e) => onChange({ password: e.target.value })}
-                  placeholder={mode === 'create' ? 'حداقل ۶ کاراکتر' : 'خالی = بدون تغییر'}
+                  placeholder={mode === 'create' ? 'حداقل ۸ کاراکتر' : 'خالی = بدون تغییر'}
                   className={INPUT}
                   autoComplete={mode === 'create' ? 'new-password' : 'off'}
                 />

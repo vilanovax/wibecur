@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = bcrypt.hashSync(password, 12);
     const created = await prisma.users.create({
       data: {
         id: nanoid(),

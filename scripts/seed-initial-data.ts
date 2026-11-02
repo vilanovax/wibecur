@@ -5,11 +5,17 @@ import { nanoid } from 'nanoid';
 const prisma = new PrismaClient();
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'Seed در production ممنوع است. رمزهای پیش‌فرض seed فقط برای توسعه هستند.'
+    );
+  }
+
   console.log('🌱 Starting seed...');
 
   // 1. Create Admin User
   console.log('Creating admin user...');
-  const hashedPassword = await bcrypt.hash('123456', 10);
+  const hashedPassword = await bcrypt.hash('123456', 12);
 
   const adminUser = await prisma.users.upsert({
     where: { email: '989121941532@phone.wibe' },

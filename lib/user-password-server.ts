@@ -2,11 +2,19 @@ import bcrypt from 'bcryptjs';
 import type { PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { validateAuthPassword } from '@/lib/phone-auth';
+import { consumeOtp, normalizeOtpInput, validateOtpInput } from '@/lib/otp';
 
 export type ChangeUserPasswordInput = {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
+};
+
+export type SetUserPasswordWithOtpInput = {
+  otp: string;
+  newPassword: string;
+  confirmPassword: string;
+  phone: string;
 };
 
 export type ChangeUserPasswordResult =
@@ -24,6 +32,20 @@ export async function userHasPassword(
   return Boolean(user?.password);
 }
 
+function validateNewPasswordPair(
+  newPassword: string,
+  confirmPassword: string
+): ChangeUserPasswordResult | null {
+  const passwordError = validateAuthPassword(newPassword);
+  if (passwordError) {
+    return { ok: false, error: passwordError, status: 400 };
+  }
+  if (newPassword !== confirmPassword) {
+    return { ok: false, error: 'رمز جدید و تکرار آن یکسان نیستند', status: 400 };
+  }
+  return null;
+}
+
 export async function changeUserPassword(
   userId: string,
   input: ChangeUserPasswordInput,
@@ -37,14 +59,8 @@ export async function changeUserPassword(
     return { ok: false, error: 'رمز فعلی را وارد کنید', status: 400 };
   }
 
-  const passwordError = validateAuthPassword(newPassword);
-  if (passwordError) {
-    return { ok: false, error: passwordError, status: 400 };
-  }
-
-  if (newPassword !== confirmPassword) {
-    return { ok: false, error: 'رمز جدید و تکرار آن یکسان نیستند', status: 400 };
-  }
+  const pairError = validateNewPasswordPair(newPassword, confirmPassword);
+  if (pairError) return pairError;
 
   if (currentPassword === newPassword) {
     return { ok: false, error: 'رمز جدید باید با رمز فعلی متفاوت باشد', status: 400 };
@@ -62,7 +78,7 @@ export async function changeUserPassword(
   if (!user.password) {
     return {
       ok: false,
-      error: 'برای این حساب رمز تنظیم نشده است. با پشتیبانی تماس بگیرید.',
+      error: 'برای این حساب هنوز رمزی تنظیم نشده. با کد پیامک رمز بگذار.',
       status: 400,
     };
   }
@@ -78,4 +94,53 @@ export async function changeUserPassword(
   });
 
   return { ok: true, message: 'رمز عبور با موفقیت تغییر کرد' };
+}
+
+/** تعیین یا بازنشانی رمز با تأیید OTP موبایل */
+export async function setUserPasswordWithOtp(
+  userId: string,
+  input: SetUserPasswordWithOtpInput,
+  client: PrismaClient = prisma
+): Promise<ChangeUserPasswordResult> {
+  const newPassword = String(input.newPassword ?? '');
+  const confirmPassword = String(input.confirmPassword ?? '');
+  const otpRaw = String(input.otp ?? '');
+
+  const otpError = validateOtpInput(otpRaw);
+  if (otpError) {
+    return { ok: false, error: otpError, status: 400 };
+  }
+
+  const pairError = validateNewPasswordPair(newPassword, confirmPassword);
+  if (pairError) return pairError;
+
+  const user = await client.users.findUnique({
+    where: { id: userId },
+    select: { id: true, isActive: true, deletedAt: true },
+  });
+
+  if (!user || !user.isActive || user.deletedAt) {
+    return { ok: false, error: 'کاربر یافت نشد', status: 404 };
+  }
+
+  const consumed = await consumeOtp(input.phone, normalizeOtpInput(otpRaw), {
+    purpose: 'set-password',
+  });
+  if (!consumed.ok) {
+    const message =
+      consumed.reason === 'expired'
+        ? 'کد تأیید منقضی شده. دوباره درخواست کن.'
+        : consumed.reason === 'locked'
+          ? 'تعداد تلاش زیاد بود. کمی بعد دوباره درخواست کن.'
+          : 'کد تأیید نادرست است';
+    return { ok: false, error: message, status: 400 };
+  }
+
+  const hashed = bcrypt.hashSync(newPassword, 12);
+  await client.users.update({
+    where: { id: user.id },
+    data: { password: hashed, updatedAt: new Date() },
+  });
+
+  return { ok: true, message: 'رمز عبور ذخیره شد. از این به بعد می‌توانی با رمز هم وارد شوی.' };
 }

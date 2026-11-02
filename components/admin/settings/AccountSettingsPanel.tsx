@@ -186,7 +186,7 @@ export default function AccountSettingsPanel() {
               label="رمز جدید"
               value={newPassword}
               onChange={setNewPassword}
-              placeholder="حداقل ۶ کاراکتر"
+              placeholder="حداقل ۸ کاراکتر"
             />
             <PasswordField
               label="تکرار رمز جدید"

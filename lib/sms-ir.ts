@@ -28,10 +28,12 @@ export function getSmsIrConfig() {
   const templateIdRaw = process.env.SMS_IR_TEMPLATE_ID?.trim() || '727683';
   const templateId = Number(templateIdRaw);
   const paramName = process.env.SMS_IR_OTP_PARAM?.trim() || 'CODE';
+  const isProduction = process.env.NODE_ENV === 'production';
+  // در production هرگز dry-run خودکار نکن — بدون کلید، ارسال fail می‌شود.
+  const dryRunRequested =
+    process.env.SMS_IR_DRY_RUN === '1' || process.env.SMS_IR_DRY_RUN === 'true';
   const dryRun =
-    process.env.SMS_IR_DRY_RUN === '1' ||
-    process.env.SMS_IR_DRY_RUN === 'true' ||
-    (!apiKey && process.env.NODE_ENV !== 'production');
+    !isProduction && (dryRunRequested || !apiKey);
 
   return {
     apiKey,
