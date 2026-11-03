@@ -117,6 +117,71 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
+function catalogMetadataRecord(value: unknown): Record<string, unknown> {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {};
+}
+
+/**
+ * حالت «به‌روزرسانی با JSON»: فقط فیلدهایی که در payload آمده‌اند عوض می‌شوند.
+ * فیلد غایب و متادیتای غایب حفظ می‌شوند (merge روی metadata).
+ */
+export function buildCatalogJsonOverwritePatch(
+  existing: {
+    title: string;
+    description: string | null;
+    imageUrl: string | null;
+    externalUrl: string | null;
+    metadata: unknown;
+  },
+  row: BulkImportPayloadItem,
+  opts: {
+    categorySlug: string;
+    incomingMeta: Record<string, unknown>;
+    resolvedImageUrl?: string | null;
+  }
+): {
+  title?: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  externalUrl?: string | null;
+  categorySlug: string;
+  metadata: Prisma.InputJsonValue;
+  externalKey: string | null;
+} {
+  const title = row.title?.trim() || existing.title;
+  const existingMeta = catalogMetadataRecord(existing.metadata);
+  const incomingMeta = mergeItemTipIntoMetadata(opts.incomingMeta, row.tip);
+  const hasIncomingMetaKeys = Object.keys(incomingMeta).length > 0;
+  const hasTipField = typeof row.tip === 'string';
+  const metadata =
+    hasIncomingMetaKeys || hasTipField
+      ? ({ ...existingMeta, ...incomingMeta } as Prisma.InputJsonValue)
+      : (existing.metadata as Prisma.InputJsonValue) ?? {};
+
+  return {
+    title,
+    ...(typeof row.description === 'string'
+      ? { description: row.description.trim() || null }
+      : {}),
+    ...(typeof row.imageUrl === 'string' && row.imageUrl.trim()
+      ? {
+          imageUrl:
+            opts.resolvedImageUrl?.trim() ||
+            row.imageUrl.trim() ||
+            null,
+        }
+      : {}),
+    ...(typeof row.externalUrl === 'string'
+      ? { externalUrl: row.externalUrl.trim() || null }
+      : {}),
+    categorySlug: opts.categorySlug,
+    metadata,
+    externalKey: buildCatalogExternalKey(opts.categorySlug, title, metadata),
+  };
+}
+
 async function overwriteCatalogFromImportRow(
   db: PrismaClient,
   catalogId: string,
@@ -125,26 +190,30 @@ async function overwriteCatalogFromImportRow(
   categorySlug: string,
   imageCtx: BulkImportImageContext
 ): Promise<void> {
-  const title = row.title?.trim();
-  if (!title) return;
+  const existing = await db.catalog_items.findUnique({
+    where: { id: catalogId },
+    select: {
+      title: true,
+      description: true,
+      imageUrl: true,
+      externalUrl: true,
+      metadata: true,
+    },
+  });
+  if (!existing) return;
 
-  const metaWithTip = mergeItemTipIntoMetadata(metaRecord, row.tip);
-  let imageUrl: string | null | undefined;
-  if (row.imageUrl?.trim()) {
-    imageUrl = await resolveRowImageForImport(row, metaRecord, imageCtx);
+  let resolvedImageUrl: string | null | undefined;
+  if (typeof row.imageUrl === 'string' && row.imageUrl.trim()) {
+    resolvedImageUrl = await resolveRowImageForImport(row, metaRecord, imageCtx);
   }
 
-  await updateCatalogItem(db, catalogId, {
-    title,
-    description: row.description?.trim() || null,
-    ...(row.imageUrl?.trim()
-      ? { imageUrl: imageUrl ?? row.imageUrl.trim() }
-      : {}),
-    externalUrl: row.externalUrl?.trim() || null,
+  const patch = buildCatalogJsonOverwritePatch(existing, row, {
     categorySlug,
-    metadata: metaWithTip as Prisma.InputJsonValue,
-    externalKey: buildCatalogExternalKey(categorySlug, title, metaWithTip),
+    incomingMeta: metaRecord,
+    resolvedImageUrl,
   });
+
+  await updateCatalogItem(db, catalogId, patch);
 }
 
 async function importOneRow(

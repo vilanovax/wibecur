@@ -593,7 +593,7 @@ export default function BulkImportClient({
               <span>
                 <span className="block text-sm font-medium text-(--color-text)">به‌روزرسانی با JSON</span>
                 <span className="mt-0.5 block text-xs leading-relaxed text-wibe-secondary">
-                  اگر آیتم در کاتالوگ یا این لیست باشد، فیلدهای JSON جایگزین دادهٔ فعلی می‌شود.
+                  فقط فیلدهایی که در JSON آمده‌اند عوض می‌شوند؛ فیلدهای غایب در DB دست‌نخورده می‌مانند.
                 </span>
               </span>
             </label>
