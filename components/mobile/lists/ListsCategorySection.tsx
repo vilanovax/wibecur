@@ -70,6 +70,11 @@ export default function ListsCategorySection({
   const gridClass = listsResultsGridClass(viewMode);
   const moreMobile = Math.max(0, lists.length - LISTS_SECTION_PREVIEW_MOBILE);
   const moreDesktop = Math.max(0, lists.length - desktopPreview);
+  /** سه کارت: یکی تمام‌عرض افقی + دو تای کنار هم — بدون خانهٔ خالی */
+  const isTrio = viewMode === 'grid' && visible.length === 3;
+  const sectionGridClass = isTrio
+    ? 'grid grid-cols-2 gap-2 lg:gap-3'
+    : gridClass;
 
   return (
     <section
@@ -111,26 +116,34 @@ export default function ListsCategorySection({
         )}
       </div>
 
-      {/* همه کارت‌ها افقی — چیدمان عمودی (trio) متن پوسترهای baked را می‌برید */}
-      <div className={gridClass}>
-        {visible.map((list, index) => (
-          <div
-            key={list.id}
-            className={
-              !expanded && index >= LISTS_SECTION_PREVIEW_MOBILE ? 'max-lg:hidden' : undefined
-            }
-          >
-            <ListCardCompact
-              list={list}
-              variant={cardVariant}
-              showCreator={false}
-              isBookmarked={bookmarkedIds?.has(list.id)}
-              onBookmarkToggle={onBookmarkToggle}
-              priority={prioritizeFirstCover && index === 0}
-              fetchPriority={prioritizeFirstCover && index === 0 ? undefined : 'low'}
-            />
-          </div>
-        ))}
+      <div className={sectionGridClass}>
+        {visible.map((list, index) => {
+          const isWideLead = isTrio && index === 0;
+          return (
+            <div
+              key={list.id}
+              className={
+                [
+                  !expanded && index >= LISTS_SECTION_PREVIEW_MOBILE ? 'max-lg:hidden' : '',
+                  isWideLead ? 'col-span-2' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ') || undefined
+              }
+            >
+              <ListCardCompact
+                list={list}
+                variant={cardVariant}
+                showCreator={false}
+                isBookmarked={bookmarkedIds?.has(list.id)}
+                onBookmarkToggle={onBookmarkToggle}
+                wide={isWideLead}
+                priority={prioritizeFirstCover && index === 0}
+                fetchPriority={prioritizeFirstCover && index === 0 ? undefined : 'low'}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {hasMore && (

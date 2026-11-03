@@ -55,6 +55,8 @@ interface ListCardCompactProps {
   showBookmark?: boolean;
   /** پر کردن ارتفاع والد (چیدمان trio / row-span) */
   fillHeight?: boolean;
+  /** کارت تمام‌عرض ردیف — نسبت افقی‌تر برای پوستر baked */
+  wide?: boolean;
   /** فقط کارت LCP — بقیه low تا با بنر منتخب رقابت نکنند */
   priority?: boolean;
   fetchPriority?: 'high' | 'low' | 'auto';
@@ -192,6 +194,7 @@ function ListCardCompact({
   isLoggedIn,
   showBookmark = false,
   fillHeight = false,
+  wide = false,
   priority = false,
   fetchPriority,
 }: ListCardCompactProps) {
@@ -363,11 +366,17 @@ function ListCardCompact({
         className={
           fillHeight
             ? `pointer-events-none relative z-1 w-full overflow-hidden bg-muted ${showTitleBelow ? 'min-h-48 lg:min-h-56' : 'h-full min-h-60 lg:min-h-72'}`
-            : `pointer-events-none relative z-1 w-full overflow-hidden bg-muted max-lg:min-h-32 ${
-                showTitleBelow
-                  ? 'aspect-4/3 sm:aspect-16/10 lg:aspect-16/10 lg:max-h-48'
-                  : 'aspect-5/4 sm:aspect-4/3 lg:aspect-16/10 lg:max-h-52 xl:aspect-5/3 xl:max-h-56'
-              }`
+            : wide
+              ? `pointer-events-none relative z-1 w-full overflow-hidden bg-muted max-lg:min-h-36 ${
+                  showTitleBelow
+                    ? 'aspect-2/1 sm:aspect-5/2 lg:aspect-5/2 lg:max-h-56'
+                    : 'aspect-2/1 sm:aspect-5/2 lg:aspect-5/2 lg:max-h-60'
+                }`
+              : `pointer-events-none relative z-1 w-full overflow-hidden bg-muted max-lg:min-h-32 ${
+                  showTitleBelow
+                    ? 'aspect-4/3 sm:aspect-16/10 lg:aspect-16/10 lg:max-h-48'
+                    : 'aspect-5/4 sm:aspect-4/3 lg:aspect-16/10 lg:max-h-52 xl:aspect-5/3 xl:max-h-56'
+                }`
         }
       >
         <ListCoverImage
@@ -375,7 +384,7 @@ function ListCardCompact({
           title={list.title}
           slug={list.slug}
           categorySlug={categorySlug}
-          sizes="(min-width: 1024px) 25vw, 50vw"
+          sizes={wide ? '(min-width: 1024px) 50vw, 100vw' : '(min-width: 1024px) 25vw, 50vw'}
           priority={priority}
           fetchPriority={fetchPriority}
           className="h-full w-full object-cover transition-transform duration-500 ease-out lg:group-hover:scale-105"
