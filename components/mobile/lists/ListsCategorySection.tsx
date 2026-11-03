@@ -71,10 +71,6 @@ export default function ListsCategorySection({
   const moreMobile = Math.max(0, lists.length - LISTS_SECTION_PREVIEW_MOBILE);
   const moreDesktop = Math.max(0, lists.length - desktopPreview);
 
-  /** ۳ کارت در گرید ۲ستونه → چیدمان ۱ بلند + ۲ کوتاه (بدون خانهٔ خالی) */
-  const useTrioLayout =
-    viewMode === 'grid' && !expanded && visible.length === 3;
-
   return (
     <section
       id={`lists-category-${categoryId}`}
@@ -115,55 +111,27 @@ export default function ListsCategorySection({
         )}
       </div>
 
-      {useTrioLayout ? (
-        <div className="grid grid-cols-2 grid-rows-2 gap-2 lg:gap-3">
-          <div className="row-span-2 min-h-0">
+      {/* همه کارت‌ها افقی — چیدمان عمودی (trio) متن پوسترهای baked را می‌برید */}
+      <div className={gridClass}>
+        {visible.map((list, index) => (
+          <div
+            key={list.id}
+            className={
+              !expanded && index >= LISTS_SECTION_PREVIEW_MOBILE ? 'max-lg:hidden' : undefined
+            }
+          >
             <ListCardCompact
-              list={visible[0]!}
+              list={list}
               variant={cardVariant}
               showCreator={false}
-              isBookmarked={bookmarkedIds?.has(visible[0]!.id)}
+              isBookmarked={bookmarkedIds?.has(list.id)}
               onBookmarkToggle={onBookmarkToggle}
-              fillHeight
-              priority={prioritizeFirstCover}
-              fetchPriority={prioritizeFirstCover ? undefined : 'low'}
+              priority={prioritizeFirstCover && index === 0}
+              fetchPriority={prioritizeFirstCover && index === 0 ? undefined : 'low'}
             />
           </div>
-          {visible.slice(1).map((list) => (
-            <div key={list.id} className="min-h-0">
-              <ListCardCompact
-                list={list}
-                variant={cardVariant}
-                showCreator={false}
-                isBookmarked={bookmarkedIds?.has(list.id)}
-                onBookmarkToggle={onBookmarkToggle}
-                fetchPriority="low"
-              />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className={gridClass}>
-          {visible.map((list, index) => (
-            <div
-              key={list.id}
-              className={
-                !expanded && index >= LISTS_SECTION_PREVIEW_MOBILE ? 'max-lg:hidden' : undefined
-              }
-            >
-              <ListCardCompact
-                list={list}
-                variant={cardVariant}
-                showCreator={false}
-                isBookmarked={bookmarkedIds?.has(list.id)}
-                onBookmarkToggle={onBookmarkToggle}
-                priority={prioritizeFirstCover && index === 0}
-                fetchPriority={prioritizeFirstCover && index === 0 ? undefined : 'low'}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
 
       {hasMore && (
         <div className="mt-3 flex justify-center">
