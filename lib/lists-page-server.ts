@@ -19,6 +19,7 @@ export type ListsPageCategory = {
   color: string | null;
   order: number | null;
   isActive: boolean;
+  listCount: number;
 };
 
 export type ListsPageBootstrap = {
@@ -75,6 +76,7 @@ function mapCategories(
     color: c.color,
     order: c.order ?? index,
     isActive: true,
+    listCount: c.listCount,
   }));
 }
 

@@ -86,12 +86,23 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
   };
 
   const handleRemoveItem = async (itemId: string) => {
-    if (!confirm('این آیتم حذف شود؟')) return;
+    if (!confirm('این آیتم فقط از این لیست حذف شود؟ کاتالوگ دست نخورده می‌ماند.')) return;
     try {
-      const res = await fetch(`/api/admin/items/${itemId}`, { method: 'DELETE' });
-      if (res.ok) setItems((prev) => prev.filter((i) => i.id !== itemId));
+      const res = await fetch(`/api/admin/lists/${listId}/items/${itemId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setItems((prev) => prev.filter((i) => i.id !== itemId));
+        setToast({ message: 'آیتم از این لیست حذف شد', type: 'success' });
+      } else {
+        setToast({
+          message: typeof data.error === 'string' ? data.error : 'خطا در حذف از لیست',
+          type: 'error',
+        });
+      }
     } catch {
-      /* ignore */
+      setToast({ message: 'خطا در حذف از لیست', type: 'error' });
     }
   };
 
@@ -101,7 +112,7 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
         <div>
           <h2 className="text-sm font-semibold text-(--color-text)">
             آیتم‌ها
-            <span className="text-wibe-secondary font-normal mr-1">({items.length})</span>
+            <span className="text-wibe-secondary font-normal me-1">({items.length})</span>
           </h2>
           <p className="text-[10px] text-wibe-secondary mt-0.5 flex items-center gap-1">
             {reorderLoading ? (
@@ -184,9 +195,10 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
                 </Link>
                 <button
                   type="button"
-                  onClick={() => handleRemoveItem(item.id)}
+                  onClick={() => void handleRemoveItem(item.id)}
                   className="p-1.5 rounded-lg hover:bg-red-100 text-red-600"
-                  title="حذف"
+                  title="حذف از این لیست"
+                  aria-label="حذف از این لیست"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

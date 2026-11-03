@@ -1,8 +1,8 @@
 import type { PrismaClient } from '@prisma/client';
 import { addCatalogItemToList, isCatalogInList } from '@/lib/catalog-items';
-import { softDeleteItems } from '@/lib/admin/item-trash';
 import { setCatalogAdminDisabledFlags } from '@/lib/admin/catalog-visibility';
 import { notifyListBookmarkers } from '@/lib/utils/notifications';
+import { recountListItemCount } from '@/lib/list-item-count';
 
 export type CatalogBulkAction =
   | 'remove-from-list'
@@ -33,10 +33,13 @@ async function deletePlacements(
   placements: { id: string; listId: string }[]
 ): Promise<number> {
   if (placements.length === 0) return 0;
-  return softDeleteItems(
-    prisma,
-    placements.map((p) => p.id)
-  );
+  const ids = placements.map((p) => p.id);
+  const result = await prisma.items.deleteMany({ where: { id: { in: ids } } });
+  const listIds = [...new Set(placements.map((p) => p.listId))];
+  for (const listId of listIds) {
+    await recountListItemCount(prisma, listId);
+  }
+  return result.count;
 }
 
 async function setModerationStatus(

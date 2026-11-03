@@ -26,6 +26,7 @@ export default async function EditListPage({
           },
         },
         items: {
+          where: { deletedAt: null },
           orderBy: { order: 'asc' },
         },
       },

@@ -59,6 +59,7 @@ type ListsPageCategory = {
   color: string | null;
   order: number | null;
   isActive: boolean;
+  listCount?: number;
 };
 
 interface ListsPageClientProps {
@@ -800,11 +801,14 @@ export default function ListsPageClient({
 
   const handleShowAllCategory = useCallback(
     (categoryId: string, categorySlug?: string) => {
+      if (categorySlug) {
+        router.push(`/categories/${categorySlug}`);
+        return;
+      }
       setFilterState((s) => ({ ...s, categories: new Set([categoryId]) }));
       window.scrollTo({ top: 0, behavior: 'smooth' });
       const params = new URLSearchParams(window.location.search);
-      if (categorySlug) params.set('category', categorySlug);
-      else params.set('category', categoryId);
+      params.set('category', categoryId);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [router, pathname]
@@ -1056,6 +1060,7 @@ export default function ListsPageClient({
                 icon: category.icon,
                 categoryId: category.id,
                 categorySlug: category.slug ?? undefined,
+                listCount: category.listCount ?? sectionLists.length,
                 lists: sectionLists,
                 viewMode: displayViewMode,
                 previewCount: sectionPreviewCount,

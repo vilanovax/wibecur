@@ -158,19 +158,21 @@ export default function ListWorkspaceItemsPanel({
   };
 
   const handleRemoveItem = async (itemId: string) => {
-    if (!confirm('این آیتم از لیست حذف شود؟')) return;
+    if (!confirm('این آیتم فقط از این لیست حذف شود؟ کاتالوگ دست نخورده می‌ماند.')) return;
     setDeletingIds((prev) => new Set(prev).add(itemId));
     try {
-      const res = await fetch(`/api/admin/items/${itemId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/lists/${listId}/items/${itemId}`, {
+        method: 'DELETE',
+      });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         removeItemsFromState([itemId]);
-        setToast({ message: 'آیتم حذف شد', type: 'success' });
+        setToast({ message: 'آیتم از این لیست حذف شد', type: 'success' });
       } else {
-        setToast({ message: data.error || 'خطا در حذف آیتم', type: 'error' });
+        setToast({ message: data.error || 'خطا در حذف از لیست', type: 'error' });
       }
     } catch {
-      setToast({ message: 'خطا در حذف آیتم', type: 'error' });
+      setToast({ message: 'خطا در حذف از لیست', type: 'error' });
     } finally {
       setDeletingIds((prev) => {
         const next = new Set(prev);
@@ -183,24 +185,41 @@ export default function ListWorkspaceItemsPanel({
   const handleBulkDelete = async () => {
     const ids = [...selectedIds];
     if (ids.length === 0) return;
-    if (!confirm(`${ids.length.toLocaleString('fa-IR')} آیتم حذف شود؟`)) return;
+    if (
+      !confirm(
+        `${ids.length.toLocaleString('fa-IR')} آیتم فقط از این لیست حذف شوند؟ کاتالوگ دست نخورده می‌ماند.`
+      )
+    ) {
+      return;
+    }
 
     setBulkLoading(true);
     try {
-      const res = await fetch('/api/admin/items/bulk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemIds: ids, action: 'delete' }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        removeItemsFromState(ids);
+      const results = await Promise.all(
+        ids.map((itemId) =>
+          fetch(`/api/admin/lists/${listId}/items/${itemId}`, { method: 'DELETE' })
+        )
+      );
+      const removed: string[] = [];
+      let firstError = '';
+      for (let i = 0; i < results.length; i++) {
+        const res = results[i];
+        if (res.ok) {
+          removed.push(ids[i]);
+        } else if (!firstError) {
+          const data = await res.json().catch(() => ({}));
+          firstError =
+            typeof data.error === 'string' ? data.error : 'خطا در حذف گروهی';
+        }
+      }
+      if (removed.length > 0) {
+        removeItemsFromState(removed);
         setToast({
-          message: `${(data.processed ?? ids.length).toLocaleString('fa-IR')} آیتم حذف شد`,
+          message: `${removed.length.toLocaleString('fa-IR')} آیتم از این لیست حذف شد`,
           type: 'success',
         });
       } else {
-        setToast({ message: data.error || 'خطا در حذف گروهی', type: 'error' });
+        setToast({ message: firstError || 'خطا در حذف گروهی', type: 'error' });
       }
     } catch {
       setToast({ message: 'خطا در حذف گروهی', type: 'error' });
@@ -309,7 +328,8 @@ export default function ListWorkspaceItemsPanel({
           disabled={isDeleting || bulkLoading}
           onClick={() => void handleRemoveItem(item.id)}
           className="p-1.5 rounded-lg hover:bg-red-100 text-red-600 disabled:opacity-40 transition-colors"
-          title="حذف"
+          title="حذف از این لیست"
+          aria-label="حذف از این لیست"
         >
           {isDeleting ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />

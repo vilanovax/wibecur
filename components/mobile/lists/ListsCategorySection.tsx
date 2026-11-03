@@ -20,6 +20,8 @@ interface ListsCategorySectionProps {
   icon?: string | null;
   categoryId: string;
   categorySlug?: string;
+  /** تعداد واقعی لیست‌های دسته (نه فقط پیش‌نمایش صفحه) */
+  listCount?: number;
   lists: ListItem[];
   viewMode: ListsViewMode;
   /** @deprecated نادیده گرفته می‌شود — layout با CSS واکنش‌گراست */
@@ -39,6 +41,7 @@ export default function ListsCategorySection({
   icon,
   categoryId,
   categorySlug,
+  listCount,
   lists,
   viewMode,
   previewCount = LISTS_SECTION_PREVIEW_DESKTOP,
@@ -58,9 +61,10 @@ export default function ListsCategorySection({
       ? lists
       : lists.slice(0, desktopPreview);
 
-  const filterHref = categorySlug
-    ? `/lists?category=${categorySlug}`
+  const categoryHref = categorySlug
+    ? `/categories/${categorySlug}`
     : `/lists?category=${categoryId}`;
+  const totalListCount = Math.max(listCount ?? 0, lists.length);
 
   const cardVariant = resolveListCardVariant(viewMode);
   const gridClass = listsResultsGridClass(viewMode);
@@ -79,9 +83,14 @@ export default function ListsCategorySection({
       <div className="mb-3 flex items-center gap-2 lg:mb-4">
         <h2 className="flex min-w-0 flex-1 items-center gap-1.5 wibe-h3">
           {icon ? <span aria-hidden>{icon}</span> : null}
-          <span className="truncate">{title}</span>
+          <Link
+            href={categoryHref}
+            className="truncate text-foreground transition-colors hover:text-brand"
+          >
+            {title}
+          </Link>
           <span className="shrink-0 wibe-caption font-normal text-muted-foreground tabular-nums">
-            {lists.length.toLocaleString('fa-IR')} لیست
+            {totalListCount.toLocaleString('fa-IR')} لیست
           </span>
         </h2>
         {hasMore && !expanded && (
@@ -97,7 +106,7 @@ export default function ListsCategorySection({
             </Button>
           ) : (
             <Link
-              href={filterHref}
+              href={categoryHref}
               className="inline-flex h-11 shrink-0 items-center rounded-full border border-brand/30 bg-brand/5 px-4 text-sm font-semibold text-brand"
             >
               مشاهده دسته

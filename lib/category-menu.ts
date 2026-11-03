@@ -1,7 +1,10 @@
 import { unstable_cache } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { dbQuery } from '@/lib/db';
-import { activeCategoryWhere } from '@/lib/public-content-filters';
+import {
+  activeCategoryWhere,
+  publicCuratedListWhere,
+} from '@/lib/public-content-filters';
 
 export type CategoryMenuChip = {
   id: string;
@@ -44,10 +47,12 @@ export type CategoryIndexRow = {
   icon: string | null;
   color: string | null;
   order: number | null;
+  /** تعداد لیست‌های عمومی کیوریت‌شده در این دسته */
+  listCount: number;
 };
 
 async function loadActiveCategoryIndex(): Promise<CategoryIndexRow[]> {
-  return dbQuery(() =>
+  const rows = await dbQuery(() =>
     prisma.categories.findMany({
       where: activeCategoryWhere,
       select: {
@@ -57,15 +62,30 @@ async function loadActiveCategoryIndex(): Promise<CategoryIndexRow[]> {
         icon: true,
         color: true,
         order: true,
+        _count: {
+          select: {
+            lists: { where: publicCuratedListWhere },
+          },
+        },
       },
       orderBy: { order: 'asc' },
     })
   );
+
+  return rows.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    icon: c.icon,
+    color: c.color,
+    order: c.order,
+    listCount: c._count.lists,
+  }));
 }
 
 /** ایندکس /categories — همان تگ منو تا با تغییر دسته باطل شود. */
 export const fetchActiveCategoryIndex: () => Promise<CategoryIndexRow[]> =
-  unstable_cache(loadActiveCategoryIndex, ['active-category-index'], {
+  unstable_cache(loadActiveCategoryIndex, ['active-category-index-v2'], {
     revalidate: 600,
     tags: [CATEGORY_MENU_CACHE_TAG],
   });
