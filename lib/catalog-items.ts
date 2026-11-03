@@ -387,9 +387,14 @@ export async function syncPlacementsFromCatalog(
   if (!catalog) return;
 
   const patch = denormalizedItemFieldsFromCatalog(catalog);
+  const placementMetadata = catalogRefMetadata(catalog, patch.metadata);
   await prisma.items.updateMany({
     where: { catalogItemId },
-    data: { ...patch, updatedAt: new Date() },
+    data: {
+      ...patch,
+      metadata: placementMetadata as Prisma.InputJsonValue,
+      updatedAt: new Date(),
+    },
   });
 }
 

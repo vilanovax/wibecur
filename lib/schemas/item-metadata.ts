@@ -18,87 +18,102 @@ const tipField = {
 // ===================================
 // Movie/Series Metadata Schema
 // ===================================
-export const MovieMetadataSchema = z.object({
-  ...tipField,
-  year: z.union([z.number(), z.string()]).optional().transform((val) => {
-    if (typeof val === 'string') return parseInt(val) || undefined;
-    return val;
-  }),
-  genre: z.string().optional(),
-  director: z.string().optional(),
-  imdbRating: z.string().optional(), // e.g., "8.5"
-  country: z.string().optional(),
-  actors: z
-    .union([z.array(z.string()), z.string()])
-    .optional()
-    .transform((val) => {
-      if (Array.isArray(val)) {
-        return val.map((s) => s.trim()).filter(Boolean).slice(0, 2);
-      }
-      if (typeof val === 'string' && val.trim()) {
-        return val
-          .split(/[,،]/)
-          .map((s) => s.trim())
-          .filter(Boolean)
-          .slice(0, 2);
-      }
-      return undefined;
+/** فیلدهای مشترک جایگاه کاتالوگ — نباید در validate/normalize سوزانده شوند */
+const catalogPlacementFields = {
+  entryKind: z.enum(ENTRY_KINDS).optional(),
+  sourceCategorySlug: z.string().optional(),
+};
+
+export const MovieMetadataSchema = z
+  .object({
+    ...tipField,
+    ...catalogPlacementFields,
+    year: z.union([z.number(), z.string()]).optional().transform((val) => {
+      if (typeof val === 'string') return parseInt(val) || undefined;
+      return val;
     }),
-  imdbId: z.string().optional(),
-  imdbID: z.string().optional(),
-  tmdbId: z.union([z.number(), z.string()]).optional().transform((val) => {
-    if (val === undefined || val === null || val === '') return undefined;
-    const n = typeof val === 'number' ? val : parseInt(String(val), 10);
-    return Number.isNaN(n) ? undefined : n;
-  }),
-  tmdbID: z.union([z.number(), z.string()]).optional(),
-});
+    genre: z.string().optional(),
+    director: z.string().optional(),
+    imdbRating: z.string().optional(), // e.g., "8.5"
+    country: z.string().optional(),
+    actors: z
+      .union([z.array(z.string()), z.string()])
+      .optional()
+      .transform((val) => {
+        if (Array.isArray(val)) {
+          return val.map((s) => s.trim()).filter(Boolean).slice(0, 2);
+        }
+        if (typeof val === 'string' && val.trim()) {
+          return val
+            .split(/[,،]/)
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .slice(0, 2);
+        }
+        return undefined;
+      }),
+    imdbId: z.string().optional(),
+    imdbID: z.string().optional(),
+    tmdbId: z.union([z.number(), z.string()]).optional().transform((val) => {
+      if (val === undefined || val === null || val === '') return undefined;
+      const n = typeof val === 'number' ? val : parseInt(String(val), 10);
+      return Number.isNaN(n) ? undefined : n;
+    }),
+    tmdbID: z.union([z.number(), z.string()]).optional(),
+  })
+  .passthrough();
 
 export type MovieMetadata = z.infer<typeof MovieMetadataSchema>;
 
 // ===================================
 // Book Metadata Schema
 // ===================================
-export const BookMetadataSchema = z.object({
-  ...tipField,
-  author: z.string().optional(),
-  genre: z.string().optional(),
-  isbn: z.string().optional(),
-  ISBN: z.string().optional(),
-  source: z.enum(['taaghche', 'fidibo', 'ketabrah']).optional(),
-  sourceId: z.string().optional(),
-  contentType: z.enum(['ebook', 'audiobook']).optional(),
-});
+export const BookMetadataSchema = z
+  .object({
+    ...tipField,
+    ...catalogPlacementFields,
+    author: z.string().optional(),
+    genre: z.string().optional(),
+    isbn: z.string().optional(),
+    ISBN: z.string().optional(),
+    source: z.enum(['taaghche', 'fidibo', 'ketabrah']).optional(),
+    sourceId: z.string().optional(),
+    contentType: z.enum(['ebook', 'audiobook']).optional(),
+  })
+  .passthrough();
 
 export type BookMetadata = z.infer<typeof BookMetadataSchema>;
 
 // ===================================
 // Cafe/Restaurant Metadata Schema
 // ===================================
-export const CafeMetadataSchema = z.object({
-  ...tipField,
-  address: z.string().min(1, 'آدرس الزامی است'),
-  priceRange: z.enum(['$', '$$', '$$$', '$$$$'], {
-    errorMap: () => ({ message: 'بازه قیمت الزامی است' }),
-  }),
-  cuisine: z.string().optional(),
-  phone: z
-    .string()
-    .optional()
-    .transform((val) => normalizePhoneNumber(val)),
-  instagram: z
-    .string()
-    .optional()
-    .transform((val) => normalizeInstagramUrl(val)),
-  website: z
-    .string()
-    .optional()
-    .transform((val) => normalizeWebsiteUrl(val)),
-  mapsUrl: z
-    .string()
-    .optional()
-    .transform((val) => normalizeMapsUrl(val)),
-});
+export const CafeMetadataSchema = z
+  .object({
+    ...tipField,
+    ...catalogPlacementFields,
+    address: z.string().min(1, 'آدرس الزامی است'),
+    priceRange: z.enum(['$', '$$', '$$$', '$$$$'], {
+      errorMap: () => ({ message: 'بازه قیمت الزامی است' }),
+    }),
+    cuisine: z.string().optional(),
+    phone: z
+      .string()
+      .optional()
+      .transform((val) => normalizePhoneNumber(val)),
+    instagram: z
+      .string()
+      .optional()
+      .transform((val) => normalizeInstagramUrl(val)),
+    website: z
+      .string()
+      .optional()
+      .transform((val) => normalizeWebsiteUrl(val)),
+    mapsUrl: z
+      .string()
+      .optional()
+      .transform((val) => normalizeMapsUrl(val)),
+  })
+  .passthrough();
 
 export type CafeMetadata = z.infer<typeof CafeMetadataSchema>;
 

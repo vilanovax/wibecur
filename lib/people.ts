@@ -185,6 +185,23 @@ export function nameMatchesSlug(name: string, slug: string): boolean {
   return personSlugsMatch(personSlug(name), slug);
 }
 
+/**
+ * تطبیق نام روی صفحهٔ شخص: اسلاگ لاتین پروفایل (umberto-eco)
+ * با املاهای فارسی در metadata (اومبرتو اکو / امبرتو اکو).
+ */
+export function personNameMatchesPageIdentity(
+  name: string,
+  slug: string,
+  anchors: string[] = []
+): boolean {
+  if (nameMatchesSlug(name, slug)) return true;
+  return anchors.some(
+    (anchor) =>
+      Boolean(anchor.trim()) &&
+      (personNamesLikelySamePerson(name, anchor) || nameMatchesSlug(name, personSlug(anchor)))
+  );
+}
+
 export function personIdentityMatches(
   a: {
     role: PersonRole;

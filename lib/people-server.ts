@@ -16,8 +16,8 @@ import {
   extractPersonNamesFromMetadata,
   isPersonRole,
   mergeItemMetadata,
-  nameMatchesSlug,
   personItemDedupeKey,
+  personNameMatchesPageIdentity,
   PERSON_ROLE_META,
   type PersonPageData,
   type PersonPageItem,
@@ -27,6 +27,23 @@ import {
 
 function slugToSearchPattern(slug: string): string {
   return slug.replace(/-/g, ' ').trim();
+}
+
+function collectPersonPageAnchors(
+  slug: string,
+  profileDisplayName?: string | null
+): string[] {
+  const anchors = new Set<string>();
+  const fromSlug = slugToSearchPattern(slug);
+  if (fromSlug) anchors.add(fromSlug);
+  const display = profileDisplayName?.trim();
+  if (display) {
+    anchors.add(display);
+    for (const part of display.split(/\s+/)) {
+      if (part.length >= 3) anchors.add(part);
+    }
+  }
+  return [...anchors];
 }
 
 function metadataContains(path: string[], term: string): Prisma.JsonFilter {
@@ -72,32 +89,36 @@ function itemMatchesPerson(
     catalog_items: { metadata: unknown } | null;
   },
   role: PersonRole,
-  slug: string
+  slug: string,
+  pageAnchors: string[] = []
 ): boolean {
-  return personNamesOnItem(item, role).some((name) => nameMatchesSlug(name, slug));
+  return personNamesOnItem(item, role).some((name) =>
+    personNameMatchesPageIdentity(name, slug, pageAnchors)
+  );
 }
 
 /** املاهای نزدیک همان شخص — «جرد دایموند» و «جارد دایموند» — را هم به صفحه می‌آورد. */
 function expandSpellingVariants<T extends { metadata: unknown; catalog_items: { metadata: unknown } | null }>(
   rows: T[],
   role: PersonRole,
-  slug: string
+  slug: string,
+  pageAnchors: string[] = []
 ): T[] {
-  const anchors = new Set<string>();
+  const anchors = new Set<string>(pageAnchors);
   for (const row of rows) {
     for (const name of personNamesOnItem(row, role)) {
-      if (nameMatchesSlug(name, slug)) anchors.add(name);
+      if (personNameMatchesPageIdentity(name, slug, pageAnchors)) anchors.add(name);
     }
   }
   const anchorList = [...anchors];
   if (anchorList.length === 0) {
-    return rows.filter((row) => itemMatchesPerson(row, role, slug));
+    return rows.filter((row) => itemMatchesPerson(row, role, slug, pageAnchors));
   }
 
   return rows.filter((row) =>
     personNamesOnItem(row, role).some(
       (name) =>
-        nameMatchesSlug(name, slug) ||
+        personNameMatchesPageIdentity(name, slug, pageAnchors) ||
         anchorList.some((anchor) => personNamesLikelySamePerson(name, anchor))
     )
   );
@@ -145,7 +166,8 @@ async function loadItemsByIds(
   client: PrismaClient,
   role: PersonRole,
   slug: string,
-  ids: string[]
+  ids: string[],
+  pageAnchors: string[] = []
 ): Promise<PersonItemRow[]> {
   const rows = await client.items.findMany({
     where: {
@@ -156,7 +178,7 @@ async function loadItemsByIds(
     select: personItemSelect,
   });
   if (rows.length === 0) return [];
-  const expanded = expandSpellingVariants(rows, role, slug);
+  const expanded = expandSpellingVariants(rows, role, slug, pageAnchors);
   return expanded.length > 0 ? expanded : rows;
 }
 
@@ -165,36 +187,41 @@ async function findPublicItemsForPerson(
   role: PersonRole,
   slug: string
 ): Promise<PersonItemRow[]> {
+  const profile = await getPersonProfileFlexible(client, role, slug);
+  const pageAnchors = collectPersonPageAnchors(slug, profile?.displayName);
+
   const knownIds = peekPersonItemIds(role, slug);
   if (knownIds) {
-    const indexed = await loadItemsByIds(client, role, slug, knownIds);
+    const indexed = await loadItemsByIds(client, role, slug, knownIds, pageAnchors);
     if (indexed.length > 0) return indexed;
   }
 
-  const pattern = slugToSearchPattern(slug);
-  if (!pattern) return [];
+  const searchPatterns = [...new Set(pageAnchors.map((a) => a.trim()).filter(Boolean))];
+  if (searchPatterns.length === 0) return [];
 
-  // مسیر سریع — نام لاتین عین اسلاگ داخل metadata است. نام فارسی این‌جا صفر برمی‌گرداند.
+  // مسیر سریع — لاتین از اسلاگ یا فارسی از displayName پروفایل
   const filtered = await client.items.findMany({
     where: {
       ...publicItemWhere,
       lists: publicListWhere,
-      OR: buildPersonSearchWhere(role, pattern),
+      OR: searchPatterns.flatMap((pattern) => buildPersonSearchWhere(role, pattern)),
     },
     select: personItemSelect,
     orderBy: [{ title: 'asc' }],
     take: 500,
   });
 
-  const fastMatches = filtered.filter((row) => itemMatchesPerson(row, role, slug));
+  const fastMatches = filtered.filter((row) =>
+    itemMatchesPerson(row, role, slug, pageAnchors)
+  );
   if (fastMatches.length > 0) {
-    return fastMatches;
+    return expandSpellingVariants(fastMatches, role, slug, pageAnchors);
   }
 
   await getCachedDiscoveredPeople();
   const warmedIds = peekPersonItemIds(role, slug);
   if (warmedIds) {
-    const indexed = await loadItemsByIds(client, role, slug, warmedIds);
+    const indexed = await loadItemsByIds(client, role, slug, warmedIds, pageAnchors);
     if (indexed.length > 0) return indexed;
   }
 
@@ -207,7 +234,7 @@ async function findPublicItemsForPerson(
     take: PERSON_ITEM_SCAN_LIMIT,
   });
 
-  return expandSpellingVariants(scanned, role, slug);
+  return expandSpellingVariants(scanned, role, slug, pageAnchors);
 }
 
 export async function resolvePersonPage(
@@ -219,11 +246,15 @@ export async function resolvePersonPage(
   const matched = await findPublicItemsForPerson(client, role, slug);
   if (matched.length === 0) return null;
 
+  const profileEarly = await getPersonProfileFlexible(client, role, slug);
+  const pageAnchors = collectPersonPageAnchors(slug, profileEarly?.displayName);
   const displayName =
     extractPersonNamesFromMetadata(
       mergeItemMetadata(matched[0].metadata, matched[0].catalog_items?.metadata),
       role
-    ).find((name) => nameMatchesSlug(name, slug)) ?? slugToSearchPattern(slug);
+    ).find((name) => personNameMatchesPageIdentity(name, slug, pageAnchors)) ??
+    profileEarly?.displayName?.trim() ??
+    slugToSearchPattern(slug);
 
   const profile = await getPersonProfileFlexible(client, role, slug, displayName);
   const roleLabel = PERSON_ROLE_META[role].label;

@@ -22,6 +22,7 @@ import {
   updateCatalogItem,
 } from '@/lib/catalog-items';
 import {
+  carryCatalogPlacementMetadata,
   extractBulkImportEntryKind,
   isBulkImportLightweightRow,
   mergeItemTipIntoMetadata,
@@ -123,9 +124,23 @@ function catalogMetadataRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
+/** فقط کلیدهای با مقدار واقعی — رشته/آرایهٔ خالی و null متادیتای DB را پاک نمی‌کنند */
+export function pickNonEmptyMetadataUpdates(
+  incoming: Record<string, unknown>
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(incoming)) {
+    if (value === undefined || value === null) continue;
+    if (typeof value === 'string' && !value.trim()) continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    out[key] = typeof value === 'string' ? value.trim() : value;
+  }
+  return out;
+}
+
 /**
- * حالت «به‌روزرسانی با JSON»: فقط فیلدهایی که در payload آمده‌اند عوض می‌شوند.
- * فیلد غایب و متادیتای غایب حفظ می‌شوند (merge روی metadata).
+ * حالت «به‌روزرسانی با JSON»: فقط مقادیر غیرخالیِ آمده در payload عوض می‌شوند.
+ * کلید غایب یا رشتهٔ خالی («») دادهٔ کاتالوگ را پاک نمی‌کند؛ metadata هم merge می‌شود.
  */
 export function buildCatalogJsonOverwritePatch(
   existing: {
@@ -152,30 +167,31 @@ export function buildCatalogJsonOverwritePatch(
 } {
   const title = row.title?.trim() || existing.title;
   const existingMeta = catalogMetadataRecord(existing.metadata);
-  const incomingMeta = mergeItemTipIntoMetadata(opts.incomingMeta, row.tip);
-  const hasIncomingMetaKeys = Object.keys(incomingMeta).length > 0;
-  const hasTipField = typeof row.tip === 'string';
+  const tipFromRow =
+    typeof row.tip === 'string' && row.tip.trim() ? row.tip.trim() : undefined;
+  const incomingMeta = pickNonEmptyMetadataUpdates(
+    mergeItemTipIntoMetadata(opts.incomingMeta, tipFromRow)
+  );
   const metadata =
-    hasIncomingMetaKeys || hasTipField
+    Object.keys(incomingMeta).length > 0
       ? ({ ...existingMeta, ...incomingMeta } as Prisma.InputJsonValue)
-      : (existing.metadata as Prisma.InputJsonValue) ?? {};
+      : ((existing.metadata as Prisma.InputJsonValue) ?? {});
+
+  const description =
+    typeof row.description === 'string' ? row.description.trim() : '';
+  const externalUrl =
+    typeof row.externalUrl === 'string' ? row.externalUrl.trim() : '';
+  const imageFromRow =
+    typeof row.imageUrl === 'string' ? row.imageUrl.trim() : '';
+  const resolvedImage = opts.resolvedImageUrl?.trim() || '';
 
   return {
     title,
-    ...(typeof row.description === 'string'
-      ? { description: row.description.trim() || null }
+    ...(description ? { description } : {}),
+    ...(imageFromRow || resolvedImage
+      ? { imageUrl: resolvedImage || imageFromRow || null }
       : {}),
-    ...(typeof row.imageUrl === 'string' && row.imageUrl.trim()
-      ? {
-          imageUrl:
-            opts.resolvedImageUrl?.trim() ||
-            row.imageUrl.trim() ||
-            null,
-        }
-      : {}),
-    ...(typeof row.externalUrl === 'string'
-      ? { externalUrl: row.externalUrl.trim() || null }
-      : {}),
+    ...(externalUrl ? { externalUrl } : {}),
     categorySlug: opts.categorySlug,
     metadata,
     externalKey: buildCatalogExternalKey(opts.categorySlug, title, metadata),
@@ -237,17 +253,22 @@ async function importOneRow(
   }
 
   try {
+    const rawMeta = (row.metadata ?? {}) as Record<string, unknown>;
     const metaInput = normalizeBulkImportMetadata(
       ctx.categorySlug,
-      (row.metadata ?? {}) as Record<string, unknown>,
+      rawMeta,
       row.externalUrl
     );
-    const entryKind = extractBulkImportEntryKind(
+    // entryKind سبک (tip/fact/link) فقط برای دسته‌های mixed؛ catalog_ref از JSON هم حفظ می‌شود
+    const lightweightKind = extractBulkImportEntryKind(
       ctx.categorySlug,
       metaInput,
       row.entryKind ?? metaInput.entryKind
     );
-    if (entryKind) metaInput.entryKind = entryKind;
+    if (lightweightKind) metaInput.entryKind = lightweightKind;
+    const topLevelKind = parseEntryKind(row.entryKind);
+    if (topLevelKind) metaInput.entryKind = topLevelKind;
+    carryCatalogPlacementMetadata(rawMeta, metaInput);
 
     const imdbFromUrl = extractImdbIdFromUrl(row.externalUrl);
     if (imdbFromUrl && !metaInput.imdbId) metaInput.imdbId = imdbFromUrl;
@@ -264,9 +285,14 @@ async function importOneRow(
 
     const meta = metadataValidation.data || {};
     const metaRecord = meta as Record<string, unknown>;
+    carryCatalogPlacementMetadata(rawMeta, metaRecord);
+    carryCatalogPlacementMetadata(metaInput, metaRecord);
+    if (topLevelKind) metaRecord.entryKind = topLevelKind;
     if (!parseEntryKind(metaRecord.entryKind)) {
       delete metaRecord.entryKind;
     }
+    const entryKind =
+      lightweightKind ?? parseEntryKind(metaRecord.entryKind) ?? parseEntryKind(row.entryKind);
 
     if (
       isMixedListCategory(ctx.categorySlug) &&

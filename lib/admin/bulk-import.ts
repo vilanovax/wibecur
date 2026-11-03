@@ -186,6 +186,20 @@ export function getBulkImportCategoryLabel(kind: BulkImportCategoryKind): string
   }
 }
 
+/** entryKind / sourceCategorySlug را از JSON نگه می‌دارد (حتی برای book/movie) */
+export function carryCatalogPlacementMetadata(
+  meta: Record<string, unknown> | null | undefined,
+  target: Record<string, unknown> = {}
+): Record<string, unknown> {
+  if (!meta || typeof meta !== 'object') return target;
+  const kind = parseEntryKind(meta.entryKind);
+  if (kind) target.entryKind = kind;
+  if (typeof meta.sourceCategorySlug === 'string' && meta.sourceCategorySlug.trim()) {
+    target.sourceCategorySlug = meta.sourceCategorySlug.trim();
+  }
+  return target;
+}
+
 function normalizeMovieImportMetadata(
   meta: Record<string, unknown> | null | undefined,
   externalUrl?: string | null
@@ -220,7 +234,7 @@ function normalizeMovieImportMetadata(
     const n = parseInt(String(tmdb), 10);
     if (!Number.isNaN(n)) out.tmdbId = n;
   }
-  return out;
+  return carryCatalogPlacementMetadata(meta, out);
 }
 
 function normalizeBookImportMetadata(meta: Record<string, unknown> | null | undefined): Record<string, unknown> {
@@ -238,7 +252,7 @@ function normalizeBookImportMetadata(meta: Record<string, unknown> | null | unde
   if (meta.contentType === 'ebook' || meta.contentType === 'audiobook') {
     out.contentType = meta.contentType;
   }
-  return out;
+  return carryCatalogPlacementMetadata(meta, out);
 }
 
 import { normalizeCafeMetadataFields } from '@/lib/cafe-metadata';
@@ -255,14 +269,13 @@ export function normalizeBulkImportMetadata(
     case 'book':
       return normalizeBookImportMetadata(meta);
     case 'cafe':
-      return normalizeCafeMetadataFields(meta);
+      return carryCatalogPlacementMetadata(meta, normalizeCafeMetadataFields(meta));
     default: {
       const out: Record<string, unknown> =
         meta && typeof meta === 'object' ? { ...meta } : {};
       if (typeof out.tip === 'string' && out.tip.trim()) out.tip = out.tip.trim();
-      if (typeof out.entryKind === 'string') out.entryKind = out.entryKind.trim();
       if (typeof out.factType === 'string') out.factType = out.factType.trim();
-      return out;
+      return carryCatalogPlacementMetadata(meta, out);
     }
   }
 }

@@ -91,6 +91,15 @@ describe('people helpers', () => {
     expect(nameMatchesSlug('میگل دو سروانتس', slug)).toBe(true);
   });
 
+  it('matches Persian Eco spellings to Latin profile slug umberto-eco', async () => {
+    const { personNameMatchesPageIdentity } = await import('@/lib/people');
+    const anchors = ['اومبرتو اکو'];
+    expect(personNameMatchesPageIdentity('اومبرتو اکو', 'umberto-eco', anchors)).toBe(true);
+    expect(personNameMatchesPageIdentity('امبرتو اکو', 'umberto-eco', anchors)).toBe(true);
+    expect(personNameMatchesPageIdentity('اومبرتو', 'umberto-eco', anchors)).toBe(false);
+    expect(nameMatchesSlug('اومبرتو اکو', 'umberto-eco')).toBe(false);
+  });
+
   it('parses actor lists', () => {
     expect(parseActorNames('Matt Damon, Franka Potente')).toEqual([
       'Matt Damon',
