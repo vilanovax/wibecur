@@ -9,6 +9,7 @@ interface FilmNewListsSectionProps {
   lists: CategoryListCard[];
   categoryName: string;
   categoryIcon?: string | null;
+  categoryIconImage?: string | null;
   accentColor?: string;
 }
 
@@ -17,6 +18,7 @@ export default function FilmNewListsSection({
   lists,
   categoryName,
   categoryIcon = '🎬',
+  categoryIconImage,
 }: FilmNewListsSectionProps) {
   if (lists.length === 0) return null;
 
@@ -38,6 +40,7 @@ export default function FilmNewListsSection({
           >
             <ListCategoryIconTile
               icon={categoryIcon}
+              iconImage={categoryIconImage}
               size="lg"
               className="bg-gray-800"
             />

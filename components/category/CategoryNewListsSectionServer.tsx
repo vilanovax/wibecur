@@ -8,6 +8,7 @@ type CategoryNewListsSectionServerProps = {
   categoryName: string;
   categorySlug?: string;
   categoryIcon?: string | null;
+  categoryIconImage?: string | null;
   inset?: boolean;
 };
 
@@ -15,6 +16,7 @@ export default function CategoryNewListsSectionServer({
   lists,
   categoryName,
   categoryIcon,
+  categoryIconImage,
   inset = false,
 }: CategoryNewListsSectionServerProps) {
   if (lists.length === 0) return null;
@@ -34,6 +36,7 @@ export default function CategoryNewListsSectionServer({
             key={list.id}
             list={list}
             categoryIcon={categoryIcon}
+            categoryIconImage={categoryIconImage}
             showCreator={false}
             showSaveCount={false}
           />

@@ -12,6 +12,7 @@ export type ImageProfile =
   | 'itemImage'
   | 'itemThumbnail'
   | 'hubCover'
+  | 'categoryIcon'
   | 'siteLogo'
   | 'default';
 
@@ -113,6 +114,19 @@ export const IMAGE_PROFILES: Record<ImageProfile, ImageProfileConfig> = {
     format: 'webp',
   },
 
+  /** آیکون گرافیکی دسته — مربع کوچک با شفافیت */
+  categoryIcon: {
+    maxWidth: 256,
+    maxHeight: 256,
+    resizeFit: 'inside',
+    quality: 90,
+    maxSize: 80 * 1024, // 80KB
+    skipOptimizationIfSmallerThan: 0,
+    format: 'webp',
+    forceOptimize: true,
+    preserveAlpha: true,
+  },
+
   /** لوگوی سایت — هدر و ناوبری (نسبت افقی، شفافیت حفظ می‌شود) */
   siteLogo: {
     maxWidth: 480,
@@ -166,6 +180,8 @@ export const IMAGE_UPLOAD_HINTS = {
     'JPG/PNG/WebP تا ۱۰MB — برش ۲۱:۹، WebP ۱۶۰۰×۶۸۶ (~۲۲۰KB) و ذخیره در ParsPack',
   categoryHero:
     'JPG/PNG/WebP تا ۱۰MB — در ParsPack (hubs) · WebP ۱۶۰۰×۹۰۰ (~۳۲۰KB)',
+  categoryIcon:
+    'PNG/WebP با پس‌زمینه شفاف ترجیحاً · خروجی WebP حداکثر ۲۵۶×۲۵۶ (~۸۰KB)',
   siteLogo:
     'PNG/WebP با پس‌زمینه شفاف · خروجی WebP حداکثر ۴۸۰×۱۲۰px (~۱۲۰KB) — مناسب هدر سایت',
   avatar: 'JPG/PNG/WebP تا ۱۰MB — به WebP ۴۰۰×۴۰۰ (~۵۰۰KB) بهینه می‌شود',

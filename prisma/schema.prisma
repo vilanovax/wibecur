@@ -34,7 +34,9 @@ model categories {
   id                   String                @id
   name                 String
   slug                 String                @unique
-  icon                 String
+  icon                 String // ایموجی پشتیبان (وقتی تصویر نباشد)
+  /// آیکون گرافیکی اختیاری (PNG/WebP) — اگر باشد در UI به‌جای ایموجی نشان داده می‌شود
+  iconImage            String?
   color                String                @default("#6366F1")
   accentColor          String? // برای Category Page 2.0 - رنگ تاکید (مثلاً بنفش فیلم، نارنجی رستوران)
   description          String?

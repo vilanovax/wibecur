@@ -228,6 +228,7 @@ export type CategoryWithLists = {
   name: string;
   slug: string;
   icon: string;
+  iconImage?: string | null;
   color: string;
   description: string | null;
   order: number;
@@ -250,6 +251,7 @@ export function toCategoryIntelligenceRow(
     name: cat.name,
     slug: cat.slug,
     icon: cat.icon,
+    iconImage: cat.iconImage ?? null,
     color: cat.color,
     description: cat.description,
     order: cat.order,
@@ -279,6 +281,7 @@ export function toCategoryIntelligenceRowFromAggregate(
     name: cat.name,
     slug: cat.slug,
     icon: cat.icon,
+    iconImage: cat.iconImage ?? null,
     color: cat.color,
     description: cat.description,
     order: cat.order,

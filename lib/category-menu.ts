@@ -11,6 +11,7 @@ export type CategoryMenuChip = {
   slug: string;
   name: string;
   icon: string | null;
+  iconImage?: string | null;
 };
 
 export const CATEGORY_MENU_CACHE_TAG = 'category-menu';
@@ -24,6 +25,7 @@ async function loadActiveCategoryMenu(): Promise<CategoryMenuChip[]> {
         name: true,
         slug: true,
         icon: true,
+        iconImage: true,
       },
       orderBy: { order: 'asc' },
     })
@@ -35,7 +37,7 @@ async function loadActiveCategoryMenu(): Promise<CategoryMenuChip[]> {
  * با revalidateTag('category-menu') هنگام تغییر دسته‌ها تازه می‌شود.
  */
 export const fetchActiveCategoryMenu: () => Promise<CategoryMenuChip[]> =
-  unstable_cache(loadActiveCategoryMenu, ['active-category-menu'], {
+  unstable_cache(loadActiveCategoryMenu, ['active-category-menu-v2'], {
     revalidate: 600,
     tags: [CATEGORY_MENU_CACHE_TAG],
   });
@@ -45,6 +47,7 @@ export type CategoryIndexRow = {
   name: string;
   slug: string | null;
   icon: string | null;
+  iconImage: string | null;
   color: string | null;
   order: number | null;
   /** تعداد لیست‌های عمومی کیوریت‌شده در این دسته */
@@ -60,6 +63,7 @@ async function loadActiveCategoryIndex(): Promise<CategoryIndexRow[]> {
         name: true,
         slug: true,
         icon: true,
+        iconImage: true,
         color: true,
         order: true,
         _count: {
@@ -77,6 +81,7 @@ async function loadActiveCategoryIndex(): Promise<CategoryIndexRow[]> {
     name: c.name,
     slug: c.slug,
     icon: c.icon,
+    iconImage: c.iconImage,
     color: c.color,
     order: c.order,
     listCount: c._count.lists,
@@ -85,7 +90,7 @@ async function loadActiveCategoryIndex(): Promise<CategoryIndexRow[]> {
 
 /** ایندکس /categories — همان تگ منو تا با تغییر دسته باطل شود. */
 export const fetchActiveCategoryIndex: () => Promise<CategoryIndexRow[]> =
-  unstable_cache(loadActiveCategoryIndex, ['active-category-index-v2'], {
+  unstable_cache(loadActiveCategoryIndex, ['active-category-index-v3'], {
     revalidate: 600,
     tags: [CATEGORY_MENU_CACHE_TAG],
   });

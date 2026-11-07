@@ -8,6 +8,7 @@ interface HubNewListsProps {
   lists: CategoryListCard[];
   categoryName: string;
   categoryIcon?: string | null;
+  categoryIconImage?: string | null;
   accentColor?: string;
 }
 
@@ -15,6 +16,7 @@ export default function HubNewLists({
   lists,
   categoryName,
   categoryIcon,
+  categoryIconImage,
 }: HubNewListsProps) {
   if (lists.length === 0) return null;
 
@@ -32,6 +34,7 @@ export default function HubNewLists({
             key={list.id}
             list={list}
             categoryIcon={categoryIcon}
+            categoryIconImage={categoryIconImage}
             className="p-2.5"
             showCreator={false}
             showSaveCount={false}

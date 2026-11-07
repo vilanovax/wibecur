@@ -137,6 +137,7 @@ export default function CategoryPage2Client({
       categoryName={category.name}
       categorySlug={category.slug}
       categoryIcon={category.icon}
+      categoryIconImage={category.iconImage}
     />
   );
 

@@ -5,11 +5,14 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { isValidCategorySlug } from '@/lib/admin/category-intelligence-shared';
 import type { SlugCheckState } from '@/hooks/useCategorySlugCheck';
 import CategoryHeroImageField from '@/components/admin/categories/CategoryHeroImageField';
+import CategoryIconImageField from '@/components/admin/categories/CategoryIconImageField';
+import CategoryIcon from '@/components/shared/CategoryIcon';
 
 export type CategoryIdentityValues = {
   name: string;
   slug: string;
   icon: string;
+  iconImage?: string;
   color: string;
   accentColor: string;
   description: string;
@@ -156,10 +159,13 @@ export default function CategoryFormIdentity({
         </div>
 
         <div>
-          <label htmlFor="icon" className="block text-sm font-medium text-(--color-text) mb-1">
-            آیکون (Emoji) *
+          <label htmlFor="icon" className="mb-1 block text-sm font-medium text-(--color-text)">
+            آیکون ایموجی (پشتیبان) *
           </label>
-          <div className="flex gap-3 items-center">
+          <p className="mb-2 text-xs text-wibe-secondary">
+            اگر تصویر گرافیکی نباشد، همین ایموجی نشان داده می‌شود.
+          </p>
+          <div className="flex items-center gap-3">
             <input
               type="text"
               id="icon"
@@ -170,23 +176,29 @@ export default function CategoryFormIdentity({
               className={`flex-1 ${inputClass}`}
               placeholder="🎬"
             />
-            {values.icon && (
-              <span className="text-3xl" role="img" aria-label="preview">
-                {values.icon}
-              </span>
-            )}
+            <CategoryIcon
+              icon={values.icon}
+              iconImage={values.iconImage}
+              size="lg"
+            />
           </div>
-          <div className="flex flex-wrap gap-1.5 mt-2">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {['🎬', '☕', '📚', '🎧', '✈️', '🚗', '🍽️', '🎮'].map((emoji) => (
               <button
                 key={emoji}
                 type="button"
                 onClick={() => onChange({ icon: emoji })}
-                className="w-9 h-9 rounded-lg border border-(--color-border) hover:bg-(--color-bg) text-lg"
+                className="flex size-9 items-center justify-center rounded-lg border border-(--color-border) text-lg hover:bg-(--color-bg)"
               >
                 {emoji}
               </button>
             ))}
+          </div>
+          <div className="mt-4">
+            <CategoryIconImageField
+              value={values.iconImage ?? ''}
+              onChange={(iconImage) => onChange({ iconImage })}
+            />
           </div>
         </div>
 
@@ -249,17 +261,12 @@ export default function CategoryFormIdentity({
                 : 'var(--color-bg)',
             }}
           >
-            <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl"
-              style={{
-                backgroundColor: (values.accentColor || values.color)
-                  ? `${values.accentColor || values.color}25`
-                  : 'var(--color-bg)',
-                color: values.accentColor || values.color || 'var(--color-text)',
-              }}
-            >
-              {values.icon || '📁'}
-            </div>
+            <CategoryIcon
+              icon={values.icon || '📁'}
+              iconImage={values.iconImage}
+              size="lg"
+              className="size-14"
+            />
             <div>
               <p className="font-semibold text-(--color-text)">{values.name || 'نام دسته'}</p>
               <p className="text-xs text-wibe-secondary font-mono" dir="ltr">

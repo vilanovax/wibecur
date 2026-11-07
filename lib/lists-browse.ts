@@ -49,6 +49,7 @@ export const listsBrowseSelect = {
       name: true,
       slug: true,
       icon: true,
+      iconImage: true,
       coverDisplayMode: true,
     },
   },

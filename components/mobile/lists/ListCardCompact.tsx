@@ -30,6 +30,7 @@ type ListWithCreator = {
   categories?: {
     name: string;
     icon: string | null;
+    iconImage?: string | null;
     slug?: string | null;
     coverDisplayMode?: string | null;
   } | null;
@@ -249,7 +250,11 @@ function ListCardCompact({
           aria-label={displayTitle}
         />
         <div className="pointer-events-none relative z-1 flex gap-2">
-          <ListCategoryIconTile icon={list.categories?.icon} size="sm" />
+          <ListCategoryIconTile
+            icon={list.categories?.icon}
+            iconImage={list.categories?.iconImage}
+            size="sm"
+          />
           <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
             <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug text-foreground">
               {renderTitle('')}
@@ -285,7 +290,11 @@ function ListCardCompact({
           aria-label={displayTitle}
         />
         <div className="pointer-events-none relative z-1 flex gap-2.5">
-          <ListCategoryIconTile icon={list.categories?.icon} size="md" />
+          <ListCategoryIconTile
+            icon={list.categories?.icon}
+            iconImage={list.categories?.iconImage}
+            size="md"
+          />
           <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-12 lg:pe-11' : ''}`}>
             {badges.length > 0 && (
               <div className="mb-0.5 flex flex-wrap gap-1">

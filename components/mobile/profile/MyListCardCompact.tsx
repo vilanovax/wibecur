@@ -27,7 +27,12 @@ export interface MyListCardData {
   isActive?: boolean;
   isFeatured?: boolean;
   badge?: string | null;
-  categories?: { name: string; icon: string | null; slug?: string | null } | null;
+  categories?: {
+    name: string;
+    icon: string | null;
+    iconImage?: string | null;
+    slug?: string | null;
+  } | null;
   _count?: { items: number; bookmarks: number; list_likes: number };
 }
 
@@ -66,7 +71,11 @@ export default function MyListCardCompact({
         onPointerDown={() => router.prefetch(`/user-lists/${list.id}`)}
         className="flex min-h-20 min-w-0 flex-1 gap-3 p-3 transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/60"
       >
-        <ListCategoryIconTile icon={list.categories?.icon} size="md" />
+        <ListCategoryIconTile
+          icon={list.categories?.icon}
+          iconImage={list.categories?.iconImage}
+          size="md"
+        />
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-0.5">
           <div className="flex flex-wrap items-center gap-1">
             {showVisibilityOnCover ? (

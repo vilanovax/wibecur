@@ -11,16 +11,22 @@ interface CategoryListCardImprovedProps {
   accentColor?: string;
   categorySlug?: string | null;
   categoryIcon?: string | null;
+  categoryIconImage?: string | null;
 }
 
 export default function CategoryListCardImproved({
   list,
   categoryIcon,
+  categoryIconImage,
 }: CategoryListCardImprovedProps) {
   return (
     <Link href={`/lists/${list.slug}`} className="block">
       <Card className="flex gap-3 bg-popover p-3">
-        <ListCategoryIconTile icon={categoryIcon} size="md" />
+        <ListCategoryIconTile
+          icon={categoryIcon}
+          iconImage={categoryIconImage}
+          size="md"
+        />
         <div className="min-w-0 flex-1">
           <div className="mb-0.5 flex items-center gap-2">
             {list.creator?.image ? (

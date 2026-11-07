@@ -24,6 +24,7 @@ function slimCategory(category: CategoryInfo): CategoryInfo {
     name: category.name,
     slug: category.slug,
     icon: category.icon,
+    iconImage: category.iconImage ?? null,
     color: category.color,
     accentColor: category.accentColor ?? null,
     layoutType: category.layoutType ?? null,

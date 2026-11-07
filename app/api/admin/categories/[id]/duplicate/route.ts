@@ -58,6 +58,7 @@ export async function POST(
         name: copyName,
         slug,
         icon: source.icon,
+        iconImage: source.iconImage,
         color: source.color,
         accentColor: source.accentColor,
         description: source.description,

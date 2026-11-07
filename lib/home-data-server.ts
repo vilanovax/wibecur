@@ -57,6 +57,7 @@ async function computeHomePageData(): Promise<HomeData> {
               name: true,
               slug: true,
               icon: true,
+              iconImage: true,
               isActive: true,
               coverDisplayMode: true,
             },
@@ -128,6 +129,7 @@ async function computeHomePageData(): Promise<HomeData> {
       name: string;
       slug: string;
       icon: string;
+      iconImage?: string | null;
       isActive?: boolean;
       coverDisplayMode?: string | null;
     } | null;
@@ -171,6 +173,7 @@ async function computeHomePageData(): Promise<HomeData> {
             name: l.categories.name,
             slug: l.categories.slug,
             icon: l.categories.icon,
+            iconImage: l.categories.iconImage ?? null,
             coverDisplayMode: l.categories.coverDisplayMode ?? null,
           }
         : null,

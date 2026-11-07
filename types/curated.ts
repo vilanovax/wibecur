@@ -30,6 +30,7 @@ export interface CuratedList {
   category?: {
     name: string;
     icon?: string | null;
+    iconImage?: string | null;
     slug?: string | null;
     coverDisplayMode?: string | null;
   } | null;
@@ -66,6 +67,7 @@ export interface CuratedCategory {
   slug?: string;
   title: string;
   icon: string;
+  iconImage?: string | null;
 }
 
 /** Mode tabs for segmented control */

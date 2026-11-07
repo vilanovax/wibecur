@@ -9,6 +9,7 @@ import {
 } from '@/lib/admin/category-form-constants';
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
 import { finalizeCategoryHeroImage } from '@/lib/admin/finalize-category-hero-image';
+import { finalizeCategoryIconImage } from '@/lib/admin/finalize-category-icon-image';
 
 const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;
 function normalizeTrendingWeight(value: unknown): number {
@@ -27,6 +28,7 @@ export async function POST(request: NextRequest) {
       name,
       slug,
       icon,
+      iconImage,
       color,
       accentColor,
       description,
@@ -66,6 +68,12 @@ export async function POST(request: NextRequest) {
     }
     const finalHeroImage = heroResult.url;
 
+    const iconResult = await finalizeCategoryIconImage(iconImage);
+    if (!iconResult.ok) {
+      return NextResponse.json({ error: iconResult.error }, { status: 400 });
+    }
+    const finalIconImage = iconResult.url;
+
     // Create category
     const category = await prisma.categories.create({
       data: {
@@ -73,6 +81,7 @@ export async function POST(request: NextRequest) {
         name,
         slug,
         icon,
+        iconImage: finalIconImage,
         color: color || '#6366F1',
         accentColor: normalizeOptionalHexColor(accentColor),
         description,

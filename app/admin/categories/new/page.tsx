@@ -34,6 +34,7 @@ export default function NewCategoryPage() {
     name: '',
     slug: '',
     icon: '',
+    iconImage: '',
     color: '#4F46E5',
     accentColor: '',
     heroImage: '',
@@ -127,6 +128,7 @@ export default function NewCategoryPage() {
         body: JSON.stringify({
           ...formData,
           accentColor: formData.accentColor || null,
+          iconImage: formData.iconImage || null,
           heroImage: formData.heroImage || null,
           layoutType: formData.layoutType || null,
         }),

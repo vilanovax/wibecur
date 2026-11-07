@@ -13,7 +13,11 @@ export type ListRowCompactList = {
   saveCount?: number;
   itemCount?: number;
   creator?: { name?: string | null } | null;
-  categories?: { icon?: string | null; slug?: string | null } | null;
+  categories?: {
+    icon?: string | null;
+    iconImage?: string | null;
+    slug?: string | null;
+  } | null;
 };
 
 type ListRowCompactProps = {
@@ -25,6 +29,7 @@ type ListRowCompactProps = {
   thumb?: 'icon' | 'square' | 'poster';
   /** آیکون دستهٔ والد وقتی روی خود لیست categories.icon نیست */
   categoryIcon?: string | null;
+  categoryIconImage?: string | null;
   showCreator?: boolean;
   /** @deprecated آمار دیگر نمایش داده نمی‌شود */
   showStats?: boolean;
@@ -37,10 +42,12 @@ type ListRowCompactProps = {
 export default function ListRowCompact({
   list,
   categoryIcon,
+  categoryIconImage,
   showCreator = true,
   className = '',
 }: ListRowCompactProps) {
   const icon = categoryIcon ?? list.categories?.icon ?? '📋';
+  const iconImage = categoryIconImage ?? list.categories?.iconImage ?? null;
 
   return (
     <Link
@@ -48,7 +55,7 @@ export default function ListRowCompact({
       className={cn('block transition-transform active:scale-[0.99]', className)}
     >
       <Card className="flex gap-3 bg-popover p-3 lg:p-4">
-        <ListCategoryIconTile icon={icon} size="md" />
+        <ListCategoryIconTile icon={icon} iconImage={iconImage} size="md" />
         <div className="flex min-w-0 flex-1 flex-col justify-center text-start">
           <h3 className="line-clamp-2 text-sm font-semibold text-foreground">
             {list.title}

@@ -34,6 +34,7 @@ export const USER_LIST_SELECT = {
       name: true,
       slug: true,
       icon: true,
+      iconImage: true,
       color: true,
     },
   },
@@ -70,6 +71,7 @@ export const PROFILE_LIST_SELECT = {
       name: true,
       slug: true,
       icon: true,
+      iconImage: true,
     },
   },
 } as const;

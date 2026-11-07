@@ -16,6 +16,7 @@ function slimExploreList(list: CuratedList): CuratedList {
       ? {
           name: list.category.name,
           icon: list.category.icon,
+          iconImage: list.category.iconImage ?? null,
           slug: list.category.slug,
           coverDisplayMode: list.category.coverDisplayMode ?? null,
         }

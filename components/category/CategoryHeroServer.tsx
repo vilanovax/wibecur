@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import HeroCoverImage from '@/components/shared/HeroCoverImage';
+import CategoryIcon from '@/components/shared/CategoryIcon';
 import { getCategoryHeroDisplayUrl } from '@/lib/display-image';
 import { isLocationCategorySlug } from '@/lib/category-layout';
 import type { CategoryInfo, CategoryMetrics } from '@/types/category-page';
@@ -28,10 +29,14 @@ export default function CategoryHeroServer({ category, metrics }: CategoryHeroSe
         <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/45 to-black/15" />
 
         <div className="absolute inset-0 flex flex-col justify-end p-4 pb-5 text-start lg:p-6 lg:pb-6">
-          <h1 className="wibe-h1 text-background lg:text-3xl">
-            <span className="me-1.5" aria-hidden>
-              {category.icon}
-            </span>
+          <h1 className="flex items-center gap-2 wibe-h1 text-background lg:text-3xl">
+            <CategoryIcon
+              icon={category.icon}
+              iconImage={category.iconImage}
+              size="md"
+              bare
+              className="size-8 text-2xl lg:size-10 lg:text-3xl"
+            />
             {category.name}
           </h1>
           <p className="mt-1 line-clamp-2 wibe-small text-background/90 lg:text-base">

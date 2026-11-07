@@ -101,6 +101,7 @@ async function fetchCategoriesIntelligenceData(): Promise<CategoriesIntelligence
           name: true,
           slug: true,
           icon: true,
+          iconImage: true,
           color: true,
           description: true,
           order: true,

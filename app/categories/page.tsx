@@ -11,6 +11,7 @@ import {
 } from '@/lib/category-menu';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import CategoryIcon from '@/components/shared/CategoryIcon';
 
 export const revalidate = 3600;
 
@@ -36,6 +37,7 @@ export default async function CategoriesIndexPage() {
     name: string;
     slug: string | null;
     icon: string | null;
+    iconImage: string | null;
     color: string | null;
   }[] = [];
 
@@ -95,9 +97,13 @@ export default async function CategoriesIndexPage() {
             {categories.map((cat) => (
               <Link key={cat.id} href={`/categories/${cat.slug ?? cat.id}`} className="block">
                 <Card className="flex min-h-24 flex-col items-center justify-center gap-2 bg-popover p-4">
-                  <span className="text-3xl leading-none" aria-hidden>
-                    {cat.icon ?? '📁'}
-                  </span>
+                  <CategoryIcon
+                    icon={cat.icon ?? '📁'}
+                    iconImage={cat.iconImage}
+                    size="lg"
+                    bare
+                    className="size-12 text-3xl"
+                  />
                   <span className="line-clamp-2 text-center text-sm font-semibold text-foreground">
                     {cat.name}
                   </span>

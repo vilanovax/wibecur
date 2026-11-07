@@ -38,6 +38,7 @@ export default function MyListsTopCarousel({ lists }: MyListsTopCarouselProps) {
                 <Card className="flex h-full flex-col gap-2 bg-popover p-3">
                   <ListCategoryIconTile
                     icon={list.categories?.icon}
+                    iconImage={list.categories?.iconImage}
                     size="md"
                     className="self-start"
                   />

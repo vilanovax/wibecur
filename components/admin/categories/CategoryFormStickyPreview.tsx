@@ -9,11 +9,13 @@ import {
   type CoverDisplayMode,
 } from '@/lib/admin/category-form-constants';
 import { getDisplayImageUrl } from '@/lib/display-image';
+import CategoryIcon from '@/components/shared/CategoryIcon';
 
 export type CategoryFormPreviewData = {
   name: string;
   slug: string;
   icon: string;
+  iconImage?: string;
   color: string;
   accentColor: string;
   description: string;
@@ -77,12 +79,17 @@ export default function CategoryFormStickyPreview({
           className="flex items-center gap-3 rounded-xl border border-(--color-border) p-4"
           style={{ backgroundColor: `${accent}12` }}
         >
-          <div
-            className="flex size-12 shrink-0 items-center justify-center rounded-xl text-2xl"
+          <span
+            className="inline-flex shrink-0 rounded-xl"
             style={{ backgroundColor: `${accent}28`, color: accent }}
           >
-            {values.icon || '📁'}
-          </div>
+            <CategoryIcon
+              icon={values.icon || '📁'}
+              iconImage={values.iconImage}
+              size="md"
+              className="size-12 bg-transparent text-2xl"
+            />
+          </span>
           <div className="min-w-0">
             <p className="truncate font-semibold text-(--color-text)">
               {values.name || 'نام دسته'}

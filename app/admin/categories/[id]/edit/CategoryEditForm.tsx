@@ -44,6 +44,7 @@ type FormState = {
   name: string;
   slug: string;
   icon: string;
+  iconImage: string;
   color: string;
   accentColor: string;
   heroImage: string;
@@ -61,6 +62,7 @@ function buildInitialForm(category: categories): FormState {
     name: category.name,
     slug: category.slug,
     icon: category.icon,
+    iconImage: category.iconImage || '',
     color: category.color,
     accentColor: category.accentColor || '',
     heroImage: category.heroImage || '',
@@ -156,6 +158,7 @@ export default function CategoryEditForm({
           name: formData.name,
           slug: formData.slug,
           icon: formData.icon,
+          iconImage: formData.iconImage || null,
           color: formData.color,
           accentColor: formData.accentColor || null,
           heroImage: formData.heroImage || null,

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import CategoryIcon from '@/components/shared/CategoryIcon';
 import { getCategoryCoverUrl } from '@/lib/category-cover-images';
 import type { CuratedCategory } from '@/types/curated';
 import ExploreSectionTitle from './ExploreSectionTitle';
@@ -51,8 +52,14 @@ export default function CategoryDiscoverySection({ categories }: CategoryDiscove
                 aria-hidden
               />
               <div className="absolute inset-x-0 bottom-0 p-2 text-center lg:p-2.5">
-                <span className="mb-0.5 block text-base leading-none lg:text-lg" aria-hidden>
-                  {cat.icon}
+                <span className="mb-0.5 flex justify-center">
+                  <CategoryIcon
+                    icon={cat.icon}
+                    iconImage={cat.iconImage}
+                    size="sm"
+                    bare
+                    className="text-base lg:text-lg"
+                  />
                 </span>
                 <span className="line-clamp-2 wibe-caption font-semibold leading-tight text-white">
                   {cat.title}

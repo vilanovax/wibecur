@@ -44,6 +44,7 @@ const exploreListSelect = {
       name: true,
       slug: true,
       icon: true,
+      iconImage: true,
       isActive: true,
       coverDisplayMode: true,
     },
@@ -143,6 +144,7 @@ type DbListRow = {
     name: string;
     slug: string | null;
     icon: string | null;
+    iconImage?: string | null;
     isActive: boolean;
   } | null;
   users: {
@@ -205,6 +207,7 @@ function mapCategoryMeta(
   return {
     name: categories.name,
     icon: categories.icon,
+    iconImage: categories.iconImage ?? null,
     slug: categories.slug,
     coverDisplayMode:
       (categories as { coverDisplayMode?: string | null }).coverDisplayMode ?? null,
@@ -299,9 +302,15 @@ function mapTrendingToCurated(t: TrendingListResult, rising = false): CuratedLis
   };
 }
 
-function mapCategories(
-  rows: { id: string; name: string; slug: string | null; icon: string | null }[]
-): CuratedCategory[] {
+type ExploreCategoryRaw = {
+  id: string;
+  name: string;
+  slug: string | null;
+  icon: string | null;
+  iconImage?: string | null;
+};
+
+function mapCategories(rows: ExploreCategoryRaw[]): CuratedCategory[] {
   return [
     { id: 'all', title: 'همه', icon: '📋' },
     ...rows.map((c) => ({
@@ -309,20 +318,26 @@ function mapCategories(
       slug: c.slug ?? undefined,
       title: c.name,
       icon: c.icon ?? '📁',
+      iconImage: c.iconImage ?? null,
     })),
   ];
 }
 
 function enrichListCategory(
   list: CuratedList,
-  categoriesRaw: { id: string; name: string; slug: string | null; icon: string | null }[]
+  categoriesRaw: ExploreCategoryRaw[]
 ): CuratedList {
   if (list.category?.name) return list;
   const cat = categoriesRaw.find((c) => c.id === list.categoryId);
   if (!cat) return list;
   return {
     ...list,
-    category: { name: cat.name, icon: cat.icon, slug: cat.slug },
+    category: {
+      name: cat.name,
+      icon: cat.icon,
+      iconImage: cat.iconImage ?? null,
+      slug: cat.slug,
+    },
   };
 }
 
@@ -361,7 +376,7 @@ type ExploreBasePayload = Pick<ExplorePayload, 'lists' | 'categories'>;
 
 /** Sync merge — missing trending/rising rows already included via pool extraListIds */
 function mergeExploreLists(
-  categoriesRaw: { id: string; name: string; slug: string | null; icon: string | null }[],
+  categoriesRaw: ExploreCategoryRaw[],
   listsRaw: DbListRow[],
   trendingRaw: TrendingListResult[],
   risingRaw: TrendingListResult[]
@@ -436,6 +451,7 @@ async function fetchExploreBaseData(): Promise<ExploreBasePayload> {
     name: c.name,
     slug: c.slug,
     icon: c.icon,
+    iconImage: c.iconImage,
   }));
   const categoryIds = categoriesRaw.map((c) => c.id);
   const extraListIds = [
@@ -453,7 +469,7 @@ async function fetchExploreBaseData(): Promise<ExploreBasePayload> {
 
 const getCachedExploreBase = unstable_cache(
   fetchExploreBaseData,
-  ['explore-base-v27'],
+  ['explore-base-v28'],
   { revalidate: 300, tags: ['explore'] }
 );
 

@@ -15,6 +15,7 @@ export async function GET(_request: NextRequest) {
           name: true,
           slug: true,
           icon: true,
+          iconImage: true,
           color: true,
         },
         orderBy: { order: 'asc' },

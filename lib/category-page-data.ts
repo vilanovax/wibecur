@@ -166,6 +166,7 @@ async function getCategoryAndMetrics(
         name: true,
         slug: true,
         icon: true,
+        iconImage: true,
         color: true,
         accentColor: true,
         description: true,

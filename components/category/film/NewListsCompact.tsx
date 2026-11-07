@@ -9,12 +9,14 @@ interface NewListsCompactProps {
   lists: CategoryListCard[];
   categoryName: string;
   categoryIcon?: string | null;
+  categoryIconImage?: string | null;
 }
 
 export default function NewListsCompact({
   lists,
   categoryName,
   categoryIcon,
+  categoryIconImage,
 }: NewListsCompactProps) {
   if (lists.length === 0) return null;
 
@@ -32,6 +34,7 @@ export default function NewListsCompact({
             key={list.id}
             list={list}
             categoryIcon={categoryIcon}
+            categoryIconImage={categoryIconImage}
             showCreator={false}
             showSaveCount={false}
           />

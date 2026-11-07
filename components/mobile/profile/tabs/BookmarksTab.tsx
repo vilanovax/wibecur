@@ -21,7 +21,14 @@ type ListWithMeta = {
   slug: string;
   coverImage: string | null;
   updatedAt: string;
-  categories: { id: string; name: string; slug: string; icon: string; color?: string } | null;
+  categories: {
+    id: string;
+    name: string;
+    slug: string;
+    icon: string;
+    iconImage?: string | null;
+    color?: string;
+  } | null;
 };
 
 interface BookmarkItem {
@@ -234,7 +241,11 @@ export default function BookmarksTab({
                 onPointerDown={() => router.prefetch(`/lists/${list.slug}`)}
                 className="flex min-w-0 flex-1 gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
               >
-                <ListCategoryIconTile icon={list.categories?.icon} size="md" />
+                <ListCategoryIconTile
+                  icon={list.categories?.icon}
+                  iconImage={list.categories?.iconImage}
+                  size="md"
+                />
                 <div className="min-w-0 flex-1 self-center text-start">
                   <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
                     {list.title}

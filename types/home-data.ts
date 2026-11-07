@@ -25,6 +25,7 @@ export interface HomeListData {
     name: string;
     slug: string;
     icon: string;
+    iconImage?: string | null;
     coverDisplayMode?: string | null;
   } | null;
   creator?: HomeListCreator | null;

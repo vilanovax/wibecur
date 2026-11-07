@@ -10,6 +10,7 @@ import {
 import CategoryBadges from './CategoryBadges';
 import EngagementBar from './EngagementBar';
 import CategoryActions from './CategoryActions';
+import CategoryIcon from '@/components/shared/CategoryIcon';
 
 interface CategoryCardProps {
   category: CategoryIntelligenceRow;
@@ -72,15 +73,12 @@ export default function CategoryCard({
           href={`/admin/categories/${category.id}/edit`}
           className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)"
         >
-          <div
-            className="flex size-11 shrink-0 items-center justify-center rounded-xl text-lg"
-            style={{
-              backgroundColor: category.color ? `${category.color}20` : 'var(--color-bg)',
-              color: category.color || undefined,
-            }}
-          >
-            {category.icon || '📁'}
-          </div>
+          <CategoryIcon
+            icon={category.icon || '📁'}
+            iconImage={category.iconImage}
+            size="md"
+            className="size-11 text-lg"
+          />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h3 className="truncate font-semibold text-(--color-text)">{category.name}</h3>
@@ -156,14 +154,12 @@ export default function CategoryCard({
           href={`/admin/categories/${category.id}/edit`}
           className="flex items-center gap-3 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary) rounded-t-xl"
         >
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 opacity-70"
-            style={{
-              backgroundColor: category.color ? `${category.color}15` : 'var(--color-surface)',
-            }}
-          >
-            {category.icon || '📁'}
-          </div>
+          <CategoryIcon
+            icon={category.icon || '📁'}
+            iconImage={category.iconImage}
+            size="md"
+            className="size-10 shrink-0 text-lg opacity-70"
+          />
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-(--color-text) truncate">{category.name}</h3>
             <p className="text-xs text-wibe-secondary font-mono truncate" dir="ltr">
@@ -205,15 +201,12 @@ export default function CategoryCard({
             href={`/admin/categories/${category.id}/edit`}
             className="flex items-center gap-3 min-w-0 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary) rounded-lg"
           >
-            <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 text-lg"
-              style={{
-                backgroundColor: category.color ? `${category.color}20` : 'var(--color-bg)',
-                color: category.color || undefined,
-              }}
-            >
-              {category.icon || '📁'}
-            </div>
+            <CategoryIcon
+              icon={category.icon || '📁'}
+              iconImage={category.iconImage}
+              size="md"
+              className="size-11 shrink-0 text-lg"
+            />
             <div className="min-w-0">
               <h3 className="font-semibold text-(--color-text) truncate">{category.name}</h3>
               <p className="text-xs text-wibe-secondary font-mono truncate" dir="ltr">

@@ -13,6 +13,7 @@ const BOOKMARK_LIST_SELECT = {
       name: true,
       slug: true,
       icon: true,
+      iconImage: true,
     },
   },
 } as const;

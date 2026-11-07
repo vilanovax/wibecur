@@ -6,7 +6,13 @@ import Image from 'next/image';
 import { IMAGE_UPLOAD_HINTS, MAX_RAW_UPLOAD_SIZE } from '@/lib/image-config';
 import { getDisplayImageUrl } from '@/lib/display-image';
 
-export type ListImageUploadPurpose = 'list-cover' | 'list-horizontal' | 'category-hero' | 'site-logo' | 'avatar';
+export type ListImageUploadPurpose =
+  | 'list-cover'
+  | 'list-horizontal'
+  | 'category-hero'
+  | 'category-icon'
+  | 'site-logo'
+  | 'avatar';
 
 interface ImageUploadProps {
   value: string;
@@ -14,8 +20,8 @@ interface ImageUploadProps {
   label?: string;
   /** نوع آپلود — تعیین پروفایل بهینه‌سازی در سرور */
   uploadPurpose?: ListImageUploadPurpose;
-  /** نسبت پیش‌نمایش (cover | horizontal | logo | default) */
-  previewVariant?: 'cover' | 'horizontal' | 'logo' | 'default';
+  /** نسبت پیش‌نمایش (cover | horizontal | logo | icon | default) */
+  previewVariant?: 'cover' | 'horizontal' | 'logo' | 'icon' | 'default';
   /** نمای فشرده برای فرم ویرایش */
   compact?: boolean;
 }
@@ -24,14 +30,16 @@ const PURPOSE_HINT: Record<ListImageUploadPurpose, string> = {
   'list-cover': IMAGE_UPLOAD_HINTS.listCover,
   'list-horizontal': IMAGE_UPLOAD_HINTS.listHorizontal,
   'category-hero': IMAGE_UPLOAD_HINTS.categoryHero,
+  'category-icon': IMAGE_UPLOAD_HINTS.categoryIcon,
   'site-logo': IMAGE_UPLOAD_HINTS.siteLogo,
   avatar: IMAGE_UPLOAD_HINTS.avatar,
 };
 
-const PREVIEW_CLASS: Record<'cover' | 'horizontal' | 'logo' | 'default', string> = {
+const PREVIEW_CLASS: Record<'cover' | 'horizontal' | 'logo' | 'icon' | 'default', string> = {
   cover: 'aspect-4/3 max-h-44',
   horizontal: 'aspect-21/9 max-h-36',
   logo: 'aspect-4/1 max-h-28 bg-(--color-bg)',
+  icon: 'mx-auto aspect-square max-h-28 max-w-28 bg-(--color-bg)',
   default: 'h-64',
 };
 
@@ -48,13 +56,14 @@ function CoverPreview({
   onReplace?: () => void;
   replaceLoading?: boolean;
   compact?: boolean;
-  previewVariant?: 'cover' | 'horizontal' | 'logo' | 'default';
+  previewVariant?: 'cover' | 'horizontal' | 'logo' | 'icon' | 'default';
 }) {
   const [broken, setBroken] = useState(false);
   const displaySrc = getDisplayImageUrl(src) || src;
   const aspectClass = compact
     ? PREVIEW_CLASS[previewVariant]
     : PREVIEW_CLASS[previewVariant === 'default' ? 'default' : previewVariant];
+  const containPreview = previewVariant === 'logo' || previewVariant === 'icon';
 
   useEffect(() => {
     setBroken(false);
@@ -63,7 +72,7 @@ function CoverPreview({
   return (
     <div className="space-y-2">
       <div
-        className={`relative w-full rounded-xl overflow-hidden border border-(--color-border-muted) bg-(--color-bg) ${
+        className={`relative w-full overflow-hidden rounded-xl border border-(--color-border-muted) bg-(--color-bg) ${
           compact ? aspectClass : aspectClass
         }`}
       >
@@ -72,7 +81,7 @@ function CoverPreview({
             src={displaySrc}
             alt="کاور"
             fill
-              className={previewVariant === 'logo' ? 'object-contain p-3' : 'object-cover'}
+            className={containPreview ? 'object-contain p-3' : 'object-cover'}
             unoptimized
             onError={() => setBroken(true)}
           />
@@ -130,11 +139,13 @@ export default function ImageUpload({
     previewVariant ??
     (uploadPurpose === 'site-logo'
       ? 'logo'
-      : uploadPurpose === 'list-horizontal' || uploadPurpose === 'category-hero'
-        ? 'horizontal'
-        : uploadPurpose === 'list-cover'
-          ? 'cover'
-          : 'default');
+      : uploadPurpose === 'category-icon'
+        ? 'icon'
+        : uploadPurpose === 'list-horizontal' || uploadPurpose === 'category-hero'
+          ? 'horizontal'
+          : uploadPurpose === 'list-cover'
+            ? 'cover'
+            : 'default');
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);

@@ -6,6 +6,7 @@ import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 import { isSameCategorySlug } from '@/lib/category-slug-aliases';
 import { trackCategoryChipClick } from '@/lib/analytics';
 import type { CategoryMenuChip } from '@/lib/category-menu';
+import CategoryIcon from '@/components/shared/CategoryIcon';
 import { Skeleton } from '@/components/ui/skeleton';
 
 async function fetchActiveCategories(): Promise<CategoryMenuChip[]> {
@@ -92,8 +93,18 @@ export default function QuickCategoryChips({
                     : 'border-border bg-popover hover:bg-muted'
                 }`}
               >
-                <span className={isActive ? 'text-brand-foreground' : 'text-foreground'}>
-                  {cat.icon ? `${cat.icon} ` : ''}
+                <span
+                  className={`inline-flex items-center gap-1.5 ${
+                    isActive ? 'text-brand-foreground' : 'text-foreground'
+                  }`}
+                >
+                  <CategoryIcon
+                    icon={cat.icon}
+                    iconImage={cat.iconImage}
+                    size="xs"
+                    bare
+                    className={isActive ? 'bg-transparent' : undefined}
+                  />
                   {cat.name}
                 </span>
               </Link>

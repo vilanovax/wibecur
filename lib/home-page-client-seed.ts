@@ -24,6 +24,7 @@ function slimListCard(list: HomeListData): HomeListData {
           name: list.categories.name,
           slug: list.categories.slug,
           icon: list.categories.icon,
+          iconImage: list.categories.iconImage ?? null,
         }
       : null,
     creator: list.creator

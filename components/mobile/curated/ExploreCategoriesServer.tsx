@@ -4,6 +4,7 @@ import { getCategoryCoverUrl } from '@/lib/category-cover-images';
 import { resolveNextImageSrc } from '@/lib/next-image-src';
 import type { CuratedCategory } from '@/types/curated';
 import { Card } from '@/components/ui/card';
+import CategoryIcon from '@/components/shared/CategoryIcon';
 import ExploreSectionTitle from './ExploreSectionTitle';
 
 type ExploreCategoriesServerProps = {
@@ -49,8 +50,14 @@ export default function ExploreCategoriesServer({ categories }: ExploreCategorie
                   unoptimized={cover.unoptimized}
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-wibe-surface text-2xl">
-                  {cat.icon}
+                <div className="flex h-full w-full items-center justify-center bg-wibe-surface">
+                  <CategoryIcon
+                    icon={cat.icon}
+                    iconImage={cat.iconImage}
+                    size="lg"
+                    bare
+                    className="text-2xl"
+                  />
                 </div>
               )}
               <div
@@ -58,8 +65,14 @@ export default function ExploreCategoriesServer({ categories }: ExploreCategorie
                 aria-hidden
               />
               <div className="absolute inset-x-0 bottom-0 p-2 text-center lg:p-2.5">
-                <span className="mb-0.5 block text-base leading-none lg:text-lg" aria-hidden>
-                  {cat.icon}
+                <span className="mb-0.5 flex justify-center">
+                  <CategoryIcon
+                    icon={cat.icon}
+                    iconImage={cat.iconImage}
+                    size="sm"
+                    bare
+                    className="text-base lg:text-lg"
+                  />
                 </span>
                 <span className="line-clamp-2 wibe-caption font-semibold leading-tight text-white">
                   {cat.title}

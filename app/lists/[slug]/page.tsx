@@ -52,6 +52,7 @@ function loadListBySlug(slug: string) {
           name: true,
           slug: true,
           icon: true,
+          iconImage: true,
           isActive: true,
           coverDisplayMode: true,
         },

@@ -3,6 +3,7 @@
 import type { CuratedCategory } from '@/types/curated';
 import { fa } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CategoryIcon from '@/components/shared/CategoryIcon';
 
 interface CategoryChipsProps {
   categories: CuratedCategory[];
@@ -28,7 +29,13 @@ export default function CategoryChips({
             <TabsList aria-label="دسته‌های اکسپلور" className="w-max">
               {categories.map((cat) => (
                 <TabsTrigger key={cat.id} value={cat.id} className="h-11 gap-1.5 px-3">
-                  <span aria-hidden>{cat.icon}</span>
+                  <CategoryIcon
+                    icon={cat.icon}
+                    iconImage={cat.iconImage}
+                    size="xs"
+                    bare
+                    className="bg-transparent"
+                  />
                   {cat.title}
                 </TabsTrigger>
               ))}

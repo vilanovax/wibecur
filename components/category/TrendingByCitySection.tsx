@@ -10,12 +10,14 @@ interface TrendingByCitySectionProps {
   allLists: CategoryListCard[];
   categoryName: string;
   categoryIcon?: string | null;
+  categoryIconImage?: string | null;
   accentColor?: string;
 }
 
 export default function TrendingByCitySection({
   allLists,
   categoryIcon,
+  categoryIconImage,
   accentColor = '#6366F1',
 }: TrendingByCitySectionProps) {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -57,6 +59,7 @@ export default function TrendingByCitySection({
               list={list}
               accentColor={accentColor}
               categoryIcon={categoryIcon}
+              categoryIconImage={categoryIconImage}
             />
           ))
         ) : (

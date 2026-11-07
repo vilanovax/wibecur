@@ -205,6 +205,7 @@ export async function GET(request: NextRequest) {
               name: true,
               slug: true,
               icon: true,
+              iconImage: true,
               color: true,
             },
           },

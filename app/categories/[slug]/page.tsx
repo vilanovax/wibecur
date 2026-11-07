@@ -124,6 +124,7 @@ export default async function CategoryPage({
               categoryName={pageData.category.name}
               categorySlug={pageData.category.slug}
               categoryIcon={pageData.category.icon}
+              categoryIconImage={pageData.category.iconImage}
             />
           }
           viralSpotlightSection={

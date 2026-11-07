@@ -19,6 +19,7 @@ import {
   trashCategoryWithContents,
 } from '@/lib/admin/category-trash';
 import { finalizeCategoryHeroImage } from '@/lib/admin/finalize-category-hero-image';
+import { finalizeCategoryIconImage } from '@/lib/admin/finalize-category-icon-image';
 
 const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;
 function normalizeTrendingWeight(value: unknown): number {
@@ -42,6 +43,7 @@ export async function PUT(
       name,
       slug,
       icon,
+      iconImage,
       color,
       accentColor,
       description,
@@ -106,12 +108,22 @@ export async function PUT(
       finalHeroImage = heroResult.url;
     }
 
+    let finalIconImage: string | null | undefined = undefined;
+    if (iconImage !== undefined) {
+      const iconResult = await finalizeCategoryIconImage(iconImage);
+      if (!iconResult.ok) {
+        return NextResponse.json({ error: iconResult.error }, { status: 400 });
+      }
+      finalIconImage = iconResult.url;
+    }
+
     const category = await prisma.categories.update({
       where: { id },
       data: {
         name,
         slug,
         icon,
+        ...(finalIconImage !== undefined && { iconImage: finalIconImage }),
         color: color || '#6366F1',
         accentColor: normalizeOptionalHexColor(accentColor),
         description,

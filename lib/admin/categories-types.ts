@@ -36,6 +36,7 @@ export interface CategoryIntelligenceRow {
   name: string;
   slug: string;
   icon: string | null;
+  iconImage?: string | null;
   color: string | null;
   description: string | null;
   order: number;

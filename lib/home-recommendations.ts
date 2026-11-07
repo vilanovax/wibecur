@@ -34,6 +34,7 @@ export type HomeRecommendationItem = {
     name: string;
     slug: string;
     icon: string;
+    iconImage?: string | null;
     isActive?: boolean;
     coverDisplayMode?: string | null;
   } | null;
@@ -68,6 +69,7 @@ const listSelect = {
       name: true,
       slug: true,
       icon: true,
+      iconImage: true,
       isActive: true,
       coverDisplayMode: true,
     },

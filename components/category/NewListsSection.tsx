@@ -10,6 +10,7 @@ interface NewListsSectionProps {
   categoryName: string;
   categorySlug?: string;
   categoryIcon?: string | null;
+  categoryIconImage?: string | null;
   /** بدون padding افقی — داخل شِل صفحه */
   inset?: boolean;
 }
@@ -18,6 +19,7 @@ export default function NewListsSection({
   lists,
   categoryName,
   categoryIcon,
+  categoryIconImage,
   inset = false,
 }: NewListsSectionProps) {
   if (lists.length === 0) return null;
@@ -37,6 +39,7 @@ export default function NewListsSection({
             key={list.id}
             list={list}
             categoryIcon={categoryIcon}
+            categoryIconImage={categoryIconImage}
             showCreator={false}
             showSaveCount={false}
           />

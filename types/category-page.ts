@@ -9,6 +9,8 @@ export interface CategoryInfo {
   name: string;
   slug: string;
   icon: string;
+  /** آیکون گرافیکی — اگر باشد به‌جای ایموجی */
+  iconImage?: string | null;
   color: string;
   accentColor?: string | null;
   description?: string | null;
