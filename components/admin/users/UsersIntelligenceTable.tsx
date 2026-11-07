@@ -73,7 +73,7 @@ export default function UsersIntelligenceTable({
               <th className="hidden px-3 py-2 text-start text-sm font-medium text-wibe-secondary md:table-cell">
                 ذخیره
               </th>
-              <th className="sticky end-0 w-12 bg-(--color-bg) px-2 py-2 text-start text-sm font-medium text-wibe-secondary">
+              <th className="sticky inset-e-0 w-12 bg-(--color-bg) px-2 py-2 text-start text-sm font-medium text-wibe-secondary">
                 <span className="sr-only">عمل</span>
               </th>
             </tr>
@@ -101,7 +101,7 @@ export default function UsersIntelligenceTable({
                           size={36}
                         />
                         <span
-                          className={`absolute end-0 bottom-0 size-2 rounded-full border-2 border-(--color-surface) ${
+                          className={`absolute inset-e-0 bottom-0 size-2 rounded-full border-2 border-(--color-surface) ${
                             user.isActive ? 'bg-emerald-500' : 'bg-gray-400'
                           }`}
                           title={user.isActive ? 'فعال' : 'غیرفعال'}
@@ -199,7 +199,7 @@ export default function UsersIntelligenceTable({
                     {faNumber(user.bookmarksCount)}
                   </td>
                   <td
-                    className="sticky end-0 bg-(--color-surface) px-2 py-2 hover:bg-(--color-bg)"
+                    className="sticky inset-e-0 bg-(--color-surface) px-2 py-2 hover:bg-(--color-bg)"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                   >

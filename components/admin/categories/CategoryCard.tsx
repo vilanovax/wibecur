@@ -71,7 +71,7 @@ export default function CategoryCard({
       >
         <Link
           href={`/admin/categories/${category.id}/edit`}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <CategoryIcon
             icon={category.icon || '📁'}
@@ -152,7 +152,7 @@ export default function CategoryCard({
       >
         <Link
           href={`/admin/categories/${category.id}/edit`}
-          className="flex items-center gap-3 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary) rounded-t-xl"
+          className="flex items-center gap-3 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-t-xl"
         >
           <CategoryIcon
             icon={category.icon || '📁'}
@@ -199,7 +199,7 @@ export default function CategoryCard({
         <div className="flex items-start justify-between gap-3 mb-3">
           <Link
             href={`/admin/categories/${category.id}/edit`}
-            className="flex items-center gap-3 min-w-0 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary) rounded-lg"
+            className="flex items-center gap-3 min-w-0 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
           >
             <CategoryIcon
               icon={category.icon || '📁'}
@@ -233,7 +233,7 @@ export default function CategoryCard({
 
         <Link
           href={`/admin/categories/${category.id}/edit`}
-          className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-(--primary)"
+          className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <div className="mb-3 flex flex-wrap gap-1.5">
             {highlightNeedsBoost ? (

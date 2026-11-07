@@ -498,7 +498,7 @@ export default function AuthScreen({
                     <button
                       type="button"
                       onClick={() => setShowPassword((value) => !value)}
-                      className="absolute end-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                      className="absolute inset-e-1 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
                       aria-label={showPassword ? 'مخفی کردن رمز' : 'نمایش رمز'}
                     >
                       {showPassword ? (

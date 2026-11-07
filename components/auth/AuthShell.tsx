@@ -102,7 +102,7 @@ function AuthVisualPane({ isRegister }: { isRegister: boolean }) {
         'relative shrink-0 overflow-hidden',
         // موبایل: نوار کوتاه تا فیلد موبایل و CTA بالای fold بمانند؛ دسکتاپ ستون کامل
         'order-first h-28 w-full pt-[env(safe-area-inset-top)] sm:h-36',
-        'lg:order-none lg:h-auto lg:min-h-dvh lg:w-auto lg:flex-1 lg:pt-0',
+        'lg:order-0 lg:h-auto lg:min-h-dvh lg:w-auto lg:flex-1 lg:pt-0',
       )}
       aria-label="نمای محصول وایب"
     >

@@ -112,7 +112,7 @@ function CoverPreview({
         >
           {replaceLoading ? (
             <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-(--primary) border-t-transparent" />
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               در حال آپلود…
             </>
           ) : (
@@ -321,13 +321,13 @@ export default function ImageUpload({
               onDrop={handleDrop}
               className={`flex flex-col items-center justify-center w-full ${dropHeight} border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
                 dragActive
-                  ? 'border-(--primary) bg-primary/5'
+                  ? 'border-primary bg-primary/5'
                   : 'border-(--color-border) bg-(--color-bg) hover:bg-(--color-surface)'
               }`}
             >
               {uploading ? (
                 <>
-                  <div className="w-8 h-8 border-2 border-(--primary) border-t-transparent rounded-full animate-spin mb-2" />
+                  <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2" />
                   <p className="text-xs text-wibe-secondary">در حال بهینه‌سازی و آپلود...</p>
                 </>
               ) : (

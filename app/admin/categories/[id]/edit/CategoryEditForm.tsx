@@ -408,7 +408,7 @@ export default function CategoryEditForm({
                     setFormData((p) => ({ ...p, order: parseInt(e.target.value, 10) || 0 }))
                   }
                   min={0}
-                  className="w-full max-w-30 px-3 py-2 rounded-xl border border-(--color-border) bg-(--color-surface) focus:ring-2 focus:ring-(--primary)"
+                  className="w-full max-w-30 px-3 py-2 rounded-xl border border-(--color-border) bg-(--color-surface) focus:ring-2 focus:ring-primary"
                 />
                 <p className="text-xs text-wibe-secondary mt-1">عدد کوچکتر = نمایش زودتر</p>
               </div>
