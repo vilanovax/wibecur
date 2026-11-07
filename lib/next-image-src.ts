@@ -1,10 +1,14 @@
-import { normalizeLocalBannerSrc } from '@/lib/image-url-policy';
+import {
+  isAmazonOrImdbImageUrl,
+  normalizeLocalBannerSrc,
+} from '@/lib/image-url-policy';
 import { unwrapStoredImageProxy } from '@/lib/image-url-sanitize';
 import { isLegacyLiaraStorageUrl, isParsPackStorageUrl } from '@/lib/object-storage-config';
 
 /**
  * next/image must not re-host storage files.
  * ParsPack and legacy Liara URLs stay as the public object URL (unoptimized).
+ * Amazon/IMDb posters هم unoptimized می‌مانند — بهینه‌ساز next روی آن‌ها ۵۰۰ می‌دهد.
  */
 export function resolveNextImageSrc(src: string): {
   src: string;
@@ -18,6 +22,10 @@ export function resolveNextImageSrc(src: string): {
     normalized && /^https?:\/\//.test(normalized) ? normalized : null;
 
   if (httpsUrl && (isParsPackStorageUrl(httpsUrl) || isLegacyLiaraStorageUrl(httpsUrl))) {
+    return { src: httpsUrl, unoptimized: true };
+  }
+
+  if (httpsUrl && isAmazonOrImdbImageUrl(httpsUrl)) {
     return { src: httpsUrl, unoptimized: true };
   }
 

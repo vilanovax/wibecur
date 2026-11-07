@@ -38,8 +38,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'فایلی انتخاب نشده است' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
+    // بعضی مرورگرها برای WebP type خالی یا octet-stream می‌فرستند
+    const mime = (file.type || '').toLowerCase();
+    if (mime && !mime.startsWith('image/') && mime !== 'application/octet-stream') {
       return NextResponse.json(
         { error: 'فقط فایل‌های تصویری مجاز هستند' },
         { status: 400 }

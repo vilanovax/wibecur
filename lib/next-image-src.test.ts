@@ -54,4 +54,12 @@ describe('resolveNextImageSrc', () => {
     expect(result.src).toBe(url);
     expect(result.unoptimized).toBe(false);
   });
+
+  it('skips next/image optimizer for Amazon/IMDb posters', () => {
+    const url =
+      'https://m.media-amazon.com/images/M/MV5Bexample@._V1_QL75_UX380_CR0,1,380,562_.jpg';
+    const result = resolveNextImageSrc(url);
+    expect(result.src).toBe(url);
+    expect(result.unoptimized).toBe(true);
+  });
 });

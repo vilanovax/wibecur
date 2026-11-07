@@ -81,8 +81,19 @@ const getCachedSettings = unstable_cache(loadSettings, ['site-settings'], {
  * Get or create settings (singleton).
  * - `cache()` React: dedupe داخل یک request (مثلاً چند صدا در layout).
  * - `unstable_cache`: dedupe بین request‌ها تا کوئری DB از مسیر بحرانی حذف شود.
+ * - خارج از Next request (اسکریپت‌ها): مستقیم از DB بدون cache.
  */
-export const getSettings = cache(() => getCachedSettings());
+export const getSettings = cache(async () => {
+  try {
+    return await getCachedSettings();
+  } catch (error) {
+    const msg = String((error as Error)?.message ?? error ?? '');
+    if (msg.includes('incrementalCache')) {
+      return loadSettings();
+    }
+    throw error;
+  }
+});
 
 /** باطل‌کردن کش تنظیمات — بعد از هر تغییر صدا زده می‌شود. */
 export function invalidateSettingsCache(): void {

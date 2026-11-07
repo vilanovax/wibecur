@@ -7,7 +7,30 @@ const ALLOWED_EXTERNAL_HOSTS = new Set([
   'commons.wikimedia.org',
   'm.media-amazon.com',
   'ia.media-imdb.com',
+  'images-na.ssl-images-amazon.com',
 ]);
+
+const AMAZON_IMDB_IMAGE_HOSTS = new Set([
+  'm.media-amazon.com',
+  'ia.media-imdb.com',
+  'images-na.ssl-images-amazon.com',
+]);
+
+/** پوستر Amazon/IMDb — /_next/image به‌خاطر @ در مسیر و بلاک سرور اغلب ۵۰۰ می‌دهد */
+export function isAmazonOrImdbImageUrl(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  try {
+    return AMAZON_IMDB_IMAGE_HOSTS.has(new URL(trimmed).hostname.toLowerCase());
+  } catch {
+    return (
+      trimmed.includes('media-amazon.com') ||
+      trimmed.includes('media-imdb.com') ||
+      trimmed.includes('ssl-images-amazon.com')
+    );
+  }
+}
 
 /** URL تصویر TMDB — در ایران بدون VPN در دسترس نیست */
 export function isTmdbImageUrl(url: string | null | undefined): boolean {

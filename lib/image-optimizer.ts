@@ -98,7 +98,8 @@ async function preparePipeline(
   profileConfig: ReturnType<typeof getImageProfile> | null
 ): Promise<Sharp> {
   const sharp = await getSharp();
-  let pipeline = sharp(toNodeBuffer(buffer)).rotate();
+  // failOn: none — WebP/PNGهای سالمی که warning دارند روی سرور رد نشوند
+  let pipeline = sharp(toNodeBuffer(buffer), { failOn: 'none', animated: true }).rotate();
 
   if (profileConfig?.trimTransparent) {
     try {

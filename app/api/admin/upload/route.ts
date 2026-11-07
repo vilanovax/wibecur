@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!file.type.startsWith('image/')) {
+    // بعضی مرورگرها برای WebP type خالی یا application/octet-stream می‌فرستند —
+    // اعتبارسنجی واقعی با magic bytes + sharp در validateImage انجام می‌شود.
+    const mime = (file.type || '').toLowerCase();
+    if (mime && !mime.startsWith('image/') && mime !== 'application/octet-stream') {
       return NextResponse.json(
         { error: 'فقط فایل‌های تصویری مجاز هستند' },
         { status: 400 }
@@ -45,6 +48,14 @@ export async function POST(request: NextRequest) {
 
     const validation = await validateImage(buffer, profile);
     if (!validation.isValid) {
+      console.warn('[admin/upload] validateImage rejected', {
+        purpose,
+        profile,
+        mime: file.type,
+        size: file.size,
+        name: file.name,
+        error: validation.error,
+      });
       return NextResponse.json(
         { error: validation.error || 'تصویر نامعتبر است' },
         { status: 400 }

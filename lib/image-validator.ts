@@ -1,5 +1,5 @@
 import { ALLOWED_IMAGE_FORMATS, MAX_UPLOAD_SIZE, ImageProfile, getImageProfile } from './image-config';
-import { getSharp } from './get-sharp';
+import { getSharp, type Metadata } from './get-sharp';
 import { toNodeBuffer } from './to-node-buffer';
 
 export interface ValidationResult {
@@ -11,6 +11,44 @@ export interface ValidationResult {
     format: string;
     size: number;
   };
+}
+
+/** تشخیص فرمت از بایت‌های ابتدای فایل — وقتی sharp سخت‌گیرانه fail می‌کند */
+export function sniffImageFormat(buffer: Buffer): 'jpeg' | 'png' | 'webp' | 'gif' | null {
+  if (buffer.length < 12) return null;
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'jpeg';
+  if (
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47
+  ) {
+    return 'png';
+  }
+  if (
+    buffer.toString('ascii', 0, 4) === 'RIFF' &&
+    buffer.toString('ascii', 8, 12) === 'WEBP'
+  ) {
+    return 'webp';
+  }
+  if (buffer.toString('ascii', 0, 6) === 'GIF87a' || buffer.toString('ascii', 0, 6) === 'GIF89a') {
+    return 'gif';
+  }
+  return null;
+}
+
+async function readImageMetadata(buffer: Buffer): Promise<Metadata> {
+  const sharp = await getSharp();
+  try {
+    return await sharp(buffer, { failOn: 'truncated', animated: true }).rotate().metadata();
+  } catch (strictError) {
+    // بعضی WebP/PNGهای سالم با failOn پیش‌فرض رد می‌شوند
+    try {
+      return await sharp(buffer, { failOn: 'none', animated: true }).rotate().metadata();
+    } catch {
+      throw strictError;
+    }
+  }
 }
 
 /**
@@ -34,12 +72,33 @@ export async function validateImage(
       };
     }
 
+    if (normalized.length < 32) {
+      return {
+        isValid: false,
+        error: 'فایل تصویر خالی یا ناقص است',
+      };
+    }
+
+    const sniffed = sniffImageFormat(normalized);
+
     // Check if it's a valid image
-    let metadata;
+    let metadata: Metadata;
     try {
-      const sharp = await getSharp();
-      metadata = await sharp(normalized).metadata();
+      metadata = await readImageMetadata(normalized);
     } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error('[validateImage] sharp metadata failed:', {
+        sniffed,
+        bytes: normalized.length,
+        detail,
+      });
+      if (sniffed === 'webp' || sniffed === 'jpeg' || sniffed === 'png') {
+        // امضای فایل درست است ولی decode شکست خورد — پیام دقیق‌تر برای ادمین
+        return {
+          isValid: false,
+          error: `خواندن تصویر ${sniffed.toUpperCase()} روی سرور ناموفق بود. فایل را دوباره به‌صورت JPG ذخیره کنید یا یک بار دیگر آپلود کنید.`,
+        };
+      }
       return {
         isValid: false,
         error: 'فایل انتخاب شده یک تصویر معتبر نیست',
@@ -47,7 +106,7 @@ export async function validateImage(
     }
 
     // Check format
-    const format = metadata.format;
+    const format = metadata.format || sniffed || undefined;
     if (!format || !['jpeg', 'jpg', 'png', 'webp'].includes(format)) {
       return {
         isValid: false,
@@ -67,7 +126,7 @@ export async function validateImage(
     }
 
     // Check if image is corrupted
-    if (!metadata.channels || metadata.channels < 1) {
+    if (metadata.channels != null && metadata.channels < 1) {
       return {
         isValid: false,
         error: 'تصویر خراب است یا فرمت آن پشتیبانی نمی‌شود',
