@@ -1,6 +1,10 @@
 import type { Metadata, Sharp } from 'sharp';
 import { ImageProfile, getImageProfile } from './image-config';
-import { getSharp } from './get-sharp';
+import { getSharp, tryGetSharp } from './get-sharp';
+import {
+  readImageDimensionsFromHeaders,
+  sniffImageFormat,
+} from './image-validator';
 import { toNodeBuffer } from './to-node-buffer';
 
 export interface OptimizeImageOptions {
@@ -264,6 +268,22 @@ export async function optimizeImage(
   };
 }
 
+function passthroughWithoutSharp(buffer: Buffer, originalSize: number): OptimizeImageResult {
+  const sniffed = sniffImageFormat(buffer);
+  const dims = readImageDimensionsFromHeaders(buffer, sniffed);
+  const { ext, contentType } = formatMeta(
+    sniffed === 'jpeg' ? 'jpeg' : sniffed === 'png' ? 'png' : sniffed === 'webp' ? 'webp' : undefined
+  );
+  console.warn(
+    '[optimizeImage] sharp unavailable — uploading original without resize/re-encode',
+    { sniffed, bytes: originalSize, dims }
+  );
+  return buildResult(buffer, contentType, ext, originalSize, true, {
+    width: dims?.width,
+    height: dims?.height,
+  });
+}
+
 export async function optimizeImageDetailed(
   buffer: Buffer,
   options: OptimizeImageOptions = {}
@@ -293,8 +313,12 @@ export async function optimizeImageDetailed(
     trimTransparent,
   };
 
+  const sharp = await tryGetSharp();
+  if (!sharp) {
+    return passthroughWithoutSharp(normalized, originalSize);
+  }
+
   try {
-    const sharp = await getSharp();
     const metadata = await sharp(normalized, { failOn: 'none', animated: true }).metadata();
     const width = metadata.width || 0;
     const height = metadata.height || 0;
@@ -354,25 +378,21 @@ export async function optimizeImageDetailed(
         { width: fallback.width, height: fallback.height }
       );
     } catch {
-      const sharp = await getSharp();
-      const metadata = await sharp(normalized, { failOn: 'none', animated: true })
-        .metadata()
-        .catch(() => null);
-      const { ext, contentType } = formatMeta(metadata?.format);
-      return buildResult(normalized, contentType, ext, originalSize, true, {
-        width: metadata?.width,
-        height: metadata?.height,
-      });
+      // encode هم شکست — فایل اصلی را آپلود کن (نه 500)
+      return passthroughWithoutSharp(normalized, originalSize);
     }
   }
 }
 
 export async function detectImageType(buffer: Buffer): Promise<string | null> {
   try {
-    const sharp = await getSharp();
-    const metadata = await sharp(toNodeBuffer(buffer)).metadata();
-    return metadata.format || null;
+    const sharp = await tryGetSharp();
+    if (sharp) {
+      const metadata = await sharp(toNodeBuffer(buffer)).metadata();
+      return metadata.format || null;
+    }
   } catch {
-    return null;
+    /* fall through to magic bytes */
   }
+  return sniffImageFormat(toNodeBuffer(buffer));
 }

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { readWebpDimensions, sniffImageFormat, validateImage } from './image-validator';
+import {
+  readJpegDimensions,
+  readPngDimensions,
+  readWebpDimensions,
+  sniffImageFormat,
+  validateImage,
+} from './image-validator';
 import { getSharp } from './get-sharp';
 
 describe('sniffImageFormat', () => {
@@ -41,6 +47,40 @@ describe('readWebpDimensions', () => {
 
     const dims = readWebpDimensions(Buffer.from(webp));
     expect(dims).toEqual({ width: 160, height: 68 });
+  });
+});
+
+describe('readPngDimensions / readJpegDimensions', () => {
+  it('reads PNG IHDR without sharp metadata path', async () => {
+    const sharp = await getSharp();
+    const png = await sharp({
+      create: {
+        width: 88,
+        height: 44,
+        channels: 4,
+        background: { r: 1, g: 2, b: 3, alpha: 1 },
+      },
+    })
+      .png()
+      .toBuffer();
+
+    expect(readPngDimensions(Buffer.from(png))).toEqual({ width: 88, height: 44 });
+  });
+
+  it('reads JPEG SOF without sharp metadata path', async () => {
+    const sharp = await getSharp();
+    const jpeg = await sharp({
+      create: {
+        width: 120,
+        height: 90,
+        channels: 3,
+        background: { r: 10, g: 20, b: 30 },
+      },
+    })
+      .jpeg({ quality: 80 })
+      .toBuffer();
+
+    expect(readJpegDimensions(Buffer.from(jpeg))).toEqual({ width: 120, height: 90 });
   });
 });
 

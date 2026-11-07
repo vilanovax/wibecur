@@ -1,5 +1,5 @@
 import { ALLOWED_IMAGE_FORMATS, MAX_UPLOAD_SIZE, ImageProfile, getImageProfile } from './image-config';
-import { getSharp, type Metadata } from './get-sharp';
+import { getSharpLoadError, tryGetSharp, type Metadata } from './get-sharp';
 import { toNodeBuffer } from './to-node-buffer';
 
 export interface ValidationResult {
@@ -65,8 +65,74 @@ export function readWebpDimensions(buffer: Buffer): { width: number; height: num
   return null;
 }
 
+/** ابعاد PNG از IHDR — بدون sharp */
+export function readPngDimensions(buffer: Buffer): { width: number; height: number } | null {
+  if (sniffImageFormat(buffer) !== 'png' || buffer.length < 24) return null;
+  try {
+    const width = buffer.readUInt32BE(16);
+    const height = buffer.readUInt32BE(20);
+    if (width > 0 && height > 0 && width < 100_000 && height < 100_000) {
+      return { width, height };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/** ابعاد JPEG از SOF0/SOF2 — بدون sharp */
+export function readJpegDimensions(buffer: Buffer): { width: number; height: number } | null {
+  if (sniffImageFormat(buffer) !== 'jpeg' || buffer.length < 4) return null;
+  try {
+    let offset = 2;
+    while (offset + 9 < buffer.length) {
+      if (buffer[offset] !== 0xff) {
+        offset += 1;
+        continue;
+      }
+      const marker = buffer[offset + 1];
+      if (marker === 0xda || marker === 0xd9) break;
+      if (marker === 0x00 || (marker >= 0xd0 && marker <= 0xd7)) {
+        offset += 2;
+        continue;
+      }
+      const size = buffer.readUInt16BE(offset + 2);
+      if (size < 2 || offset + 2 + size > buffer.length) break;
+      // SOF0 / SOF1 / SOF2 / SOF3
+      if (
+        marker === 0xc0 ||
+        marker === 0xc1 ||
+        marker === 0xc2 ||
+        marker === 0xc3
+      ) {
+        const height = buffer.readUInt16BE(offset + 5);
+        const width = buffer.readUInt16BE(offset + 7);
+        if (width > 0 && height > 0) return { width, height };
+        break;
+      }
+      offset += 2 + size;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function readImageDimensionsFromHeaders(
+  buffer: Buffer,
+  format: 'jpeg' | 'png' | 'webp' | 'gif' | null = sniffImageFormat(buffer)
+): { width: number; height: number } | null {
+  if (format === 'webp') return readWebpDimensions(buffer);
+  if (format === 'png') return readPngDimensions(buffer);
+  if (format === 'jpeg') return readJpegDimensions(buffer);
+  return null;
+}
+
 async function readImageMetadata(buffer: Buffer): Promise<Metadata> {
-  const sharp = await getSharp();
+  const sharp = await tryGetSharp();
+  if (!sharp) {
+    throw getSharpLoadError() ?? new Error('sharp unavailable');
+  }
   // بدون rotate — بعضی WebPها با rotate قبل از metadata روی musl می‌شکنند
   try {
     return await sharp(buffer, { failOn: 'none', animated: true, unlimited: true }).metadata();
@@ -125,29 +191,37 @@ export async function validateImage(
       });
     }
 
-    // اگر sharp شکست خورد ولی امضای فایل معتبر است، از هدر WebP ابعاد را بگیر
-    if (!metadata && sniffed === 'webp') {
-      const dims = readWebpDimensions(normalized);
+    // sharp لود نشد یا metadata نداد — ابعاد از هدر فایل
+    if (!metadata && sniffed && sniffed !== 'gif') {
+      const dims = readImageDimensionsFromHeaders(normalized, sniffed);
       if (dims) {
-        console.warn('[validateImage] accepting WebP via header dimensions; sharp failed:', sharpErrorDetail);
+        console.warn(
+          '[validateImage] accepting',
+          sniffed,
+          'via header dimensions; sharp unavailable/failed:',
+          sharpErrorDetail
+        );
         metadata = {
-          format: 'webp',
+          format: sniffed === 'jpeg' ? 'jpeg' : sniffed,
           width: dims.width,
           height: dims.height,
-          channels: 3,
+          channels: sniffed === 'png' ? 4 : 3,
+        } as unknown as Metadata;
+      } else if (sniffed === 'jpeg' || sniffed === 'png' || sniffed === 'webp') {
+        // امضای معتبر است ولی SOF/IHDR خوانده نشد — رد نکن؛ آپلود بدون resize ممکن است
+        console.warn(
+          '[validateImage] accepting',
+          sniffed,
+          'via magic bytes only; sharp unavailable/failed:',
+          sharpErrorDetail
+        );
+        metadata = {
+          format: sniffed === 'jpeg' ? 'jpeg' : sniffed,
+          width: 1,
+          height: 1,
+          channels: sniffed === 'png' ? 4 : 3,
         } as unknown as Metadata;
       }
-    }
-
-    // JPEG/PNG با امضای درست — اجازه بده بهینه‌ساز با failOn:none تلاش کند
-    if (!metadata && (sniffed === 'jpeg' || sniffed === 'png')) {
-      console.warn('[validateImage] accepting', sniffed, 'via magic bytes; sharp failed:', sharpErrorDetail);
-      metadata = {
-        format: sniffed === 'jpeg' ? 'jpeg' : 'png',
-        width: 1,
-        height: 1,
-        channels: sniffed === 'png' ? 4 : 3,
-      } as unknown as Metadata;
     }
 
     if (!metadata) {

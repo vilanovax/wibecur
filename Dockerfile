@@ -3,10 +3,9 @@
 
 ARG DOCKER_MIRROR=docker-mirror.liara.ir
 FROM ${DOCKER_MIRROR}/library/node:20-alpine AS base
-# vips سیستمی نصب نشود — با باینری prebuilt sharp (@img/sharp-libvips-*) تداخل می‌کند
-# و اغلب decodeی WebP روی سرور را می‌شکند.
-RUN apk add --no-cache libc6-compat openssl
-ENV SHARP_IGNORE_GLOBAL_LIBVIPS=1
+# vips برای runtime — sharp از سورس به همین لینک می‌شود (نه باینری prebuilt x86-64-v2)
+# بعضی هاست‌های لیارا CPU قدیمی دارند؛ prebuilt sharp + wasm SIMD آنجا fail می‌شود.
+RUN apk add --no-cache libc6-compat openssl vips
 WORKDIR /app
 
 FROM base AS deps
@@ -20,11 +19,23 @@ COPY package.json package-lock.json .npmrc ./
 COPY scripts/install-git-hooks.mjs ./scripts/install-git-hooks.mjs
 RUN npm install --loglevel ${NPM_LOGLEVEL}
 
+# sharp prebuilt برای x86-64-v2 است؛ روی هاست قدیمی لود نمی‌شود.
+# از سورس با libvips سیستمی و -march=x86-64 بساز تا روی CPUهای v1 هم کار کند.
+RUN apk add --no-cache vips-dev fftw-dev build-base python3 \
+  && SHARP_FORCE_GLOBAL_LIBVIPS=1 \
+     npm_config_build_from_source=true \
+     CFLAGS="-O2 -march=x86-64 -mtune=generic" \
+     CXXFLAGS="-O2 -march=x86-64 -mtune=generic" \
+     npm rebuild sharp --build-from-source --loglevel ${NPM_LOGLEVEL} \
+  && apk del --no-network build-base python3 vips-dev fftw-dev || true
+
 FROM base AS builder
 ARG NPM_LOGLEVEL=verbose
 ARG PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 ENV PRISMA_ENGINES_MIRROR=$PRISMA_ENGINES_MIRROR
 ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
+# در بیلد/ران از libvips سیستمی استفاده کن — prebuilt @img/sharp-libvips-* را نادیده بگیر
+ENV SHARP_FORCE_GLOBAL_LIBVIPS=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -75,7 +86,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV NODE_OPTIONS=--max-http-header-size=16384
-ENV SHARP_IGNORE_GLOBAL_LIBVIPS=1
+ENV SHARP_FORCE_GLOBAL_LIBVIPS=1
 
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
