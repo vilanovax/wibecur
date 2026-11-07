@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Sparkles, Bookmark } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
+import ListCategoryIconTile from '@/components/shared/ListCategoryIconTile';
 import { Card } from '@/components/ui/card';
 import UserAvatar from '@/components/shared/UserAvatar';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
@@ -248,20 +249,7 @@ function ListCardCompact({
           aria-label={displayTitle}
         />
         <div className="pointer-events-none relative z-1 flex gap-2">
-          <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-muted lg:transition-transform lg:duration-300 lg:group-hover:scale-105">
-            <ListCoverImage
-              coverImage={list.coverImage}
-              title={list.title}
-              slug={list.slug}
-              categorySlug={categorySlug}
-              sizes="56px"
-              priority={priority}
-              fetchPriority={fetchPriority}
-              className="h-full w-full object-cover lg:transition-transform lg:duration-300 lg:group-hover:scale-110"
-              fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-lg"
-            />
-          </div>
+          <ListCategoryIconTile icon={list.categories?.icon} size="sm" />
           <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
             <h3 className="line-clamp-2 wibe-caption font-semibold leading-snug text-foreground">
               {renderTitle('')}
@@ -297,20 +285,7 @@ function ListCardCompact({
           aria-label={displayTitle}
         />
         <div className="pointer-events-none relative z-1 flex gap-2.5">
-          <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted lg:size-20">
-            <ListCoverImage
-              coverImage={list.coverImage}
-              title={list.title}
-              slug={list.slug}
-              categorySlug={categorySlug}
-              sizes="72px"
-              priority={priority}
-              fetchPriority={fetchPriority}
-              className="h-full w-full object-cover transition-transform duration-300 lg:group-hover:scale-110"
-              fallbackIcon={list.categories?.icon ?? '📋'}
-              fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
-            />
-          </div>
+          <ListCategoryIconTile icon={list.categories?.icon} size="md" />
           <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-12 lg:pe-11' : ''}`}>
             {badges.length > 0 && (
               <div className="mb-0.5 flex flex-wrap gap-1">

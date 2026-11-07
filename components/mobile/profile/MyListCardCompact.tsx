@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Settings, Flame } from 'lucide-react';
-import ListCoverImage from '@/components/shared/ListCoverImage';
-import ListCardStats from '@/components/shared/ListCardStats';
+import ListCategoryIconTile from '@/components/shared/ListCategoryIconTile';
 import ListVisibilityBadge, { getListVisibilityVariant } from './ListVisibilityBadge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -50,9 +49,7 @@ export default function MyListCardCompact({
 }: MyListCardCompactProps) {
   const router = useRouter();
   const itemCount = getListItemCount(list);
-  const saveCount = list.saveCount ?? list._count?.bookmarks ?? 0;
   const likes = list.likeCount ?? list._count?.list_likes ?? 0;
-  const categorySlug = list.categories?.slug ?? null;
   const isViral = likes >= VIRAL_LIKE_THRESHOLD;
   const badge = list.badge?.toString().toLowerCase() ?? null;
   const isFeatured = list.isFeatured || badge === 'featured';
@@ -69,19 +66,7 @@ export default function MyListCardCompact({
         onPointerDown={() => router.prefetch(`/user-lists/${list.id}`)}
         className="flex min-h-20 min-w-0 flex-1 gap-3 p-3 transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/60"
       >
-        <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted aspect-square">
-          <ListCoverImage
-            coverImage={list.coverImage}
-            title={list.title}
-            slug={list.slug}
-            categorySlug={categorySlug}
-            sizes="64px"
-            fetchPriority="low"
-            className="h-full w-full object-cover"
-            fallbackIcon={list.categories?.icon ?? '📋'}
-            fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
-          />
-        </div>
+        <ListCategoryIconTile icon={list.categories?.icon} size="md" />
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-0.5">
           <div className="flex flex-wrap items-center gap-1">
             {showVisibilityOnCover ? (
@@ -116,13 +101,11 @@ export default function MyListCardCompact({
           <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground">
             {list.title}
           </h3>
-          {list.categories?.name && (
+          {list.categories?.name ? (
             <p className="line-clamp-1 wibe-caption text-muted-foreground">
-              {list.categories.icon ? `${list.categories.icon} ` : ''}
               {list.categories.name}
             </p>
-          )}
-          <ListCardStats saves={saveCount} itemCount={itemCount} variant="compact" />
+          ) : null}
         </div>
       </Link>
       {!hideSettings && (

@@ -39,7 +39,7 @@ describe('validateImage', () => {
       .webp({ quality: 80 })
       .toBuffer();
 
-    const result = await validateImage(Buffer.from(webp), 'cover');
+    const result = await validateImage(Buffer.from(webp), 'coverList');
     expect(result.isValid).toBe(true);
     expect(result.metadata?.format).toBe('webp');
     expect(result.metadata?.width).toBe(96);
@@ -47,7 +47,7 @@ describe('validateImage', () => {
   });
 
   it('rejects empty buffer', async () => {
-    const result = await validateImage(Buffer.alloc(8), 'cover');
+    const result = await validateImage(Buffer.alloc(8), 'coverList');
     expect(result.isValid).toBe(false);
     expect(result.error).toMatch(/خالی|ناقص|معتبر/);
   });

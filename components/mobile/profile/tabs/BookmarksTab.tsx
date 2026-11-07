@@ -10,7 +10,7 @@ import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import ListCoverImage from '@/components/shared/ListCoverImage';
-import ListCardStats from '@/components/shared/ListCardStats';
+import ListCategoryIconTile from '@/components/shared/ListCategoryIconTile';
 import Toast from '@/components/shared/Toast';
 import { homeBookmarksQueryKey } from '@/hooks/useHomeBookmarks';
 import type { ProfileBookmarkSSR } from '@/lib/profile-ssr-types';
@@ -20,20 +20,8 @@ type ListWithMeta = {
   title: string;
   slug: string;
   coverImage: string | null;
-  itemCount?: number;
-  likeCount?: number;
-  viewCount?: number;
-  saveCount?: number;
   updatedAt: string;
   categories: { id: string; name: string; slug: string; icon: string; color?: string } | null;
-  users: {
-    id: string;
-    name: string | null;
-    username: string | null;
-    image: string | null;
-    curatorLevel?: string | null;
-  } | null;
-  _count?: { items: number; list_likes: number; bookmarks: number };
 };
 
 interface BookmarkItem {
@@ -234,8 +222,6 @@ export default function BookmarksTab({
       <div className="space-y-2.5">
         {displayedBookmarks.map((bookmark) => {
           const list = bookmark.list;
-          const items = list.itemCount ?? list._count?.items ?? 0;
-          const saves = list.saveCount ?? list._count?.bookmarks ?? 0;
 
           return (
             <Card
@@ -248,30 +234,16 @@ export default function BookmarksTab({
                 onPointerDown={() => router.prefetch(`/lists/${list.slug}`)}
                 className="flex min-w-0 flex-1 gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
               >
-                <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
-                  <ListCoverImage
-                    coverImage={list.coverImage}
-                    title={list.title}
-                    slug={list.slug}
-                    categorySlug={list.categories?.slug}
-                    sizes="64px"
-                    fetchPriority="low"
-                    className="h-full w-full object-cover"
-                    fallbackIcon={list.categories?.icon}
-                    fallbackClassName="flex h-full w-full items-center justify-center bg-muted text-xl"
-                  />
-                </div>
-                <div className="min-w-0 flex-1 text-start">
+                <ListCategoryIconTile icon={list.categories?.icon} size="md" />
+                <div className="min-w-0 flex-1 self-center text-start">
                   <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
                     {list.title}
                   </h3>
                   {list.categories?.name ? (
                     <p className="mt-0.5 line-clamp-1 wibe-caption text-muted-foreground">
-                      {list.categories.icon ? `${list.categories.icon} ` : ''}
                       {list.categories.name}
                     </p>
                   ) : null}
-                  <ListCardStats saves={saves} itemCount={items} variant="compact" className="mt-1" />
                 </div>
               </Link>
               <button
@@ -293,8 +265,6 @@ export default function BookmarksTab({
       <div className="grid grid-cols-3 gap-4 xl:grid-cols-4">
         {displayedBookmarks.map((bookmark) => {
           const list = bookmark.list;
-          const items = list.itemCount ?? list._count?.items ?? 0;
-          const saves = list.saveCount ?? list._count?.bookmarks ?? 0;
 
           return (
             <Card key={bookmark.id} className="relative overflow-hidden bg-popover p-0">
@@ -327,10 +297,9 @@ export default function BookmarksTab({
                   />
                 </div>
                 <div className="p-2.5">
-                  <h3 className="mb-1 line-clamp-2 wibe-small font-semibold text-foreground">
+                  <h3 className="line-clamp-2 wibe-small font-semibold text-foreground">
                     {list.title}
                   </h3>
-                  <ListCardStats saves={saves} itemCount={items} variant="compact" />
                 </div>
               </Link>
             </Card>

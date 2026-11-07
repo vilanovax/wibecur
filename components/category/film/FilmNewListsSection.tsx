@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import ImageWithFallback from '@/components/shared/ImageWithFallback';
+import ListCategoryIconTile from '@/components/shared/ListCategoryIconTile';
 import type { CategoryListCard } from '@/types/category-page';
+import { fa } from '@/lib/utils';
 
 interface FilmNewListsSectionProps {
   lists: CategoryListCard[];
   categoryName: string;
+  categoryIcon?: string | null;
   accentColor?: string;
 }
 
@@ -14,7 +16,7 @@ interface FilmNewListsSectionProps {
 export default function FilmNewListsSection({
   lists,
   categoryName,
-  accentColor = '#A855F7',
+  categoryIcon = '🎬',
 }: FilmNewListsSectionProps) {
   if (lists.length === 0) return null;
 
@@ -32,38 +34,26 @@ export default function FilmNewListsSection({
           <Link
             key={list.id}
             href={`/lists/${list.slug}`}
-            className="flex gap-4 p-4 rounded-2xl bg-gray-900 border border-gray-800 active:scale-[0.99] transition-transform"
+            className="flex gap-4 rounded-2xl border border-gray-800 bg-gray-900 p-4 transition-transform active:scale-[0.99]"
           >
-            <div className="w-20 h-28 rounded-xl bg-gray-800 shrink-0 overflow-hidden">
-              {list.coverImage ? (
-                <ImageWithFallback
-                  src={list.coverImage}
-                  alt={list.title}
-                  className="w-full h-full object-cover"
-                  placeholderSize="cover"
-                />
-              ) : (
-                <div
-                  className="w-full h-full flex items-center justify-center text-3xl opacity-50"
-                  style={{ backgroundColor: `${accentColor}20` }}
-                >
-                  🎬
-                </div>
-              )}
-            </div>
+            <ListCategoryIconTile
+              icon={categoryIcon}
+              size="lg"
+              className="bg-gray-800"
+            />
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-white/90 text-base line-clamp-2">
+              <h3 className="line-clamp-2 text-base font-semibold text-white/90">
                 {list.title}
               </h3>
               {list.creator?.name && (
-                <p className="text-sm text-white/65 mt-1">{list.creator.name}</p>
+                <p className="mt-1 text-sm text-white/65">{list.creator.name}</p>
               )}
-              <div className="flex gap-3 mt-2 text-sm text-wibe-secondary">
-                <span>⭐ {list.saveCount}</span>
+              <div className="mt-2 flex gap-3 text-sm text-wibe-secondary">
+                <span>⭐ {fa(list.saveCount)}</span>
                 <span>•</span>
-                <span>❤️ {list.likeCount}</span>
+                <span>❤️ {fa(list.likeCount)}</span>
                 <span>•</span>
-                <span>{list.itemCount} آیتم</span>
+                <span>{fa(list.itemCount)} آیتم</span>
               </div>
             </div>
           </Link>

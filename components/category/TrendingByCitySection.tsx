@@ -9,11 +9,13 @@ import CategorySectionTitle from './CategorySectionTitle';
 interface TrendingByCitySectionProps {
   allLists: CategoryListCard[];
   categoryName: string;
+  categoryIcon?: string | null;
   accentColor?: string;
 }
 
 export default function TrendingByCitySection({
   allLists,
+  categoryIcon,
   accentColor = '#6366F1',
 }: TrendingByCitySectionProps) {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -50,7 +52,12 @@ export default function TrendingByCitySection({
       <div className="mt-4 space-y-3">
         {filtered.length > 0 ? (
           filtered.map((list) => (
-            <CategoryListCardImproved key={list.id} list={list} accentColor={accentColor} />
+            <CategoryListCardImproved
+              key={list.id}
+              list={list}
+              accentColor={accentColor}
+              categoryIcon={categoryIcon}
+            />
           ))
         ) : (
           <p className="wibe-small text-wibe-secondary py-4 text-center">

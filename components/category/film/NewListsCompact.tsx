@@ -8,11 +8,13 @@ import { FILM_SECTION } from './film-layout';
 interface NewListsCompactProps {
   lists: CategoryListCard[];
   categoryName: string;
+  categoryIcon?: string | null;
 }
 
 export default function NewListsCompact({
   lists,
   categoryName,
+  categoryIcon,
 }: NewListsCompactProps) {
   if (lists.length === 0) return null;
 
@@ -29,7 +31,7 @@ export default function NewListsCompact({
           <ListRowCompact
             key={list.id}
             list={list}
-            thumb="poster"
+            categoryIcon={categoryIcon}
             showCreator={false}
             showSaveCount={false}
           />

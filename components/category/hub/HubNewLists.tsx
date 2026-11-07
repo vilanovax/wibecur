@@ -7,12 +7,14 @@ import type { CategoryListCard } from '@/types/category-page';
 interface HubNewListsProps {
   lists: CategoryListCard[];
   categoryName: string;
+  categoryIcon?: string | null;
   accentColor?: string;
 }
 
 export default function HubNewLists({
   lists,
   categoryName,
+  categoryIcon,
 }: HubNewListsProps) {
   if (lists.length === 0) return null;
 
@@ -29,7 +31,7 @@ export default function HubNewLists({
           <ListRowCompact
             key={list.id}
             list={list}
-            thumb="square"
+            categoryIcon={categoryIcon}
             className="p-2.5"
             showCreator={false}
             showSaveCount={false}

@@ -131,7 +131,13 @@ export default function CategoryPage2Client({
   );
 
   const newListsClient = (
-    <NewListsSectionLazy inset lists={newLists} categoryName={category.name} />
+    <NewListsSectionLazy
+      inset
+      lists={newLists}
+      categoryName={category.name}
+      categorySlug={category.slug}
+      categoryIcon={category.icon}
+    />
   );
 
   const viralSpotlightClient = featuredSpotlight ? (

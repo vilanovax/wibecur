@@ -7,6 +7,7 @@ import {
 import { prefetchGuidedDiscovery } from '@/lib/discovery/guided-client';
 import { preloadGuidedDiscoverySheet } from './explore-lazy-sections';
 import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 type Props = {
   card: MoodExplorerCard;
@@ -37,22 +38,35 @@ export default function MoodMissionCard({ card, onSelect }: Props) {
       type="button"
       onPointerDown={() => warmMoodOpen(card)}
       onClick={() => onSelect(card)}
-      className="w-full rounded-xl text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+      className="group w-full rounded-xl text-start transition-transform duration-200 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 motion-reduce:transition-none motion-reduce:active:scale-100"
     >
-      <Card className="flex min-h-32 flex-col bg-popover p-4 lg:min-h-36">
-      <span
-        className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-xl"
-        aria-hidden
+      <Card
+        className={cn(
+          'flex min-h-36 flex-col justify-between overflow-hidden bg-linear-to-bl p-4 shadow-none lg:min-h-40 lg:p-5',
+          'lg:transition-shadow lg:duration-200 lg:group-hover:shadow-sm',
+          card.gradient
+        )}
       >
-        {card.icon}
-      </span>
+        <span
+          className={cn(
+            'mb-3 flex size-12 shrink-0 items-center justify-center rounded-xl text-2xl',
+            'lg:transition-transform lg:duration-200 lg:group-hover:scale-105',
+            'motion-reduce:lg:group-hover:scale-100',
+            card.accent
+          )}
+          aria-hidden
+        >
+          {card.icon}
+        </span>
 
-      <p className="text-balance wibe-small font-semibold text-foreground">
-        {card.title}
-      </p>
-      <p className="relative mt-1 line-clamp-2 text-balance wibe-small text-muted-foreground">
-        {card.subtitle}
-      </p>
+        <div className="min-w-0">
+          <p className="text-balance wibe-small font-semibold leading-snug text-foreground">
+            {card.title}
+          </p>
+          <p className="mt-1 line-clamp-2 text-pretty wibe-caption leading-relaxed text-muted-foreground">
+            {card.subtitle}
+          </p>
+        </div>
       </Card>
     </button>
   );

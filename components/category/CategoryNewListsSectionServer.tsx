@@ -1,26 +1,25 @@
 import CategorySectionTitle from './CategorySectionTitle';
 import ListRowCompact from '@/components/shared/ListRowCompact';
-import { CATEGORY_SECTION, isFilmCategorySlug } from '@/lib/category-layout';
+import { CATEGORY_SECTION } from '@/lib/category-layout';
 import type { CategoryListCard } from '@/types/category-page';
 
 type CategoryNewListsSectionServerProps = {
   lists: CategoryListCard[];
   categoryName: string;
   categorySlug?: string;
+  categoryIcon?: string | null;
   inset?: boolean;
 };
 
 export default function CategoryNewListsSectionServer({
   lists,
   categoryName,
-  categorySlug,
+  categoryIcon,
   inset = false,
 }: CategoryNewListsSectionServerProps) {
   if (lists.length === 0) return null;
 
   const sectionClass = `${CATEGORY_SECTION} ${inset ? '' : 'px-4'}`;
-  const thumb =
-    categorySlug && isFilmCategorySlug(categorySlug) ? 'poster' : 'square';
 
   return (
     <section className={sectionClass}>
@@ -34,7 +33,7 @@ export default function CategoryNewListsSectionServer({
           <ListRowCompact
             key={list.id}
             list={list}
-            thumb={thumb}
+            categoryIcon={categoryIcon}
             showCreator={false}
             showSaveCount={false}
           />

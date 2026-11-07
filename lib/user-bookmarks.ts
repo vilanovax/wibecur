@@ -1,13 +1,11 @@
 import { prisma } from './prisma';
 
+/** کارت ذخیره‌ها — بدون آمار (دیگر در UI نشان داده نمی‌شود) */
 const BOOKMARK_LIST_SELECT = {
   id: true,
   title: true,
   slug: true,
   coverImage: true,
-  itemCount: true,
-  likeCount: true,
-  saveCount: true,
   updatedAt: true,
   categories: {
     select: {
@@ -15,7 +13,6 @@ const BOOKMARK_LIST_SELECT = {
       name: true,
       slug: true,
       icon: true,
-      coverDisplayMode: true,
     },
   },
 } as const;

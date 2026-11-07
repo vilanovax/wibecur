@@ -9,6 +9,7 @@ import {
 } from '@/lib/discovery/mood-explorer-config';
 import MoodMissionCard from './MoodMissionCard';
 import { Button } from '@/components/ui/button';
+import { fa } from '@/lib/utils';
 
 type Props = {
   onMoodSelect: (card: MoodExplorerCard) => void;
@@ -23,7 +24,7 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
 
   return (
     <div className="mb-0">
-      <header className="mb-3.5 lg:mb-4">
+      <header className="mb-4 lg:mb-5">
         <h2 className="text-balance wibe-h3 text-foreground">
           امروز دنبال چه وایبی هستی؟
         </h2>
@@ -55,19 +56,19 @@ export default function MoodExplorerHero({ onMoodSelect, disabled = false }: Pro
           type="button"
           variant="outline"
           size="lg"
-          className="mt-3 w-full"
+          className="mt-4 h-12 w-full gap-2 rounded-full"
           onClick={() => setShowAll((v) => !v)}
           aria-expanded={showAll}
         >
           {showAll ? (
             <>
               بستن مودها
-              <ChevronUp className="h-4 w-4" strokeWidth={2} aria-hidden />
+              <ChevronUp className="size-4" strokeWidth={2} aria-hidden />
             </>
           ) : (
             <>
-              مودهای بیشتر ({EXTRA_COUNT.toLocaleString('fa-IR')})
-              <ChevronDown className="h-4 w-4" strokeWidth={2} aria-hidden />
+              مودهای بیشتر ({fa(EXTRA_COUNT)})
+              <ChevronDown className="size-4" strokeWidth={2} aria-hidden />
             </>
           )}
         </Button>
