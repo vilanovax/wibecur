@@ -9,12 +9,13 @@ import {
   KeyRound,
   Loader2,
   LogIn,
+  Monitor,
   Shield,
   ShieldAlert,
   SlidersHorizontal,
 } from 'lucide-react';
 import UserAvatar from '@/components/shared/UserAvatar';
-import { AdminCard, MetricCard } from '@/components/admin/design-system';
+import { AdminCard } from '@/components/admin/design-system';
 import RoleTemplatePicker from './RoleTemplatePicker';
 import PermissionPicker from './PermissionPicker';
 import type { AdminFormState } from './AdminFormModal';
@@ -29,6 +30,12 @@ import type { AdminRole } from '@/lib/auth/roles';
 import { formatRelativeTime } from '@/lib/format-relative-time';
 import { parseUserAgentShort } from '@/lib/audit/display';
 import { usePermissions } from '@/hooks/usePermissions';
+import {
+  authEmailToPhone,
+  formatIranPhoneDisplay,
+  isPhoneAuthEmail,
+} from '@/lib/phone-auth';
+import { faNumber } from '@/lib/utils';
 
 type DossierPayload = AdminDossier & {
   roleTemplates: AdminRoleTemplate[];
@@ -36,14 +43,14 @@ type DossierPayload = AdminDossier & {
 };
 
 const INPUT =
-  'mt-1.5 w-full rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-400';
+  'mt-2 w-full rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-2.5 text-sm text-(--color-text) placeholder:text-wibe-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30';
 
 const ROLE_BADGE: Record<AdminRole, string> = {
-  SUPER_ADMIN: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200',
-  ADMIN: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200',
-  EDITOR: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
-  MODERATOR: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
-  ANALYST: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200',
+  SUPER_ADMIN: 'bg-purple-50 text-purple-800',
+  ADMIN: 'bg-violet-50 text-violet-800',
+  EDITOR: 'bg-blue-50 text-blue-800',
+  MODERATOR: 'bg-amber-50 text-amber-800',
+  ANALYST: 'bg-sky-50 text-sky-800',
 };
 
 function formFromAccount(account: AdminAccountRow): AdminFormState {
@@ -69,8 +76,53 @@ function formatExact(iso: string) {
   });
 }
 
+function accountContact(email: string): string {
+  if (isPhoneAuthEmail(email)) {
+    const phone = authEmailToPhone(email);
+    return phone ? formatIranPhoneDisplay(phone) : email;
+  }
+  return email;
+}
+
 function EmptyLine({ children }: { children: string }) {
-  return <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">{children}</p>;
+  return (
+    <p className="py-8 text-center text-sm text-wibe-secondary">{children}</p>
+  );
+}
+
+function StatCell({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  tone = 'default',
+}: {
+  icon: typeof ClipboardList;
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: 'default' | 'danger';
+}) {
+  return (
+    <div className="flex min-w-0 items-start gap-3 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 py-3">
+      <div
+        className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
+          tone === 'danger' ? 'bg-red-50 text-red-700' : 'bg-primary/10 text-primary'
+        }`}
+      >
+        <Icon className="size-4" strokeWidth={1.5} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm text-wibe-secondary">{label}</p>
+        <p className="mt-1 truncate text-lg font-bold leading-snug tabular-nums text-(--color-text)">
+          {value}
+        </p>
+        {hint ? (
+          <p className="mt-1 truncate text-sm text-wibe-secondary">{hint}</p>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 export default function AdminDossierClient({ adminId }: { adminId: string }) {
@@ -86,31 +138,35 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
   const [roleTemplates, setRoleTemplates] = useState<AdminRoleTemplate[]>(ADMIN_ROLE_TEMPLATES);
   const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>(PERMISSION_GROUPS);
   const [form, setForm] = useState<AdminFormState | null>(null);
+  const [activityTab, setActivityTab] = useState<'logins' | 'ops'>('logins');
 
-  const load = useCallback(async (silent = false) => {
-    if (!silent) setLoading(true);
-    setError(null);
-    setMissing(false);
-    try {
-      const res = await fetch(`/api/admin/admins/${adminId}`);
-      const json = await res.json();
-      if (res.status === 404) {
-        setMissing(true);
-        setDossier(null);
-        return;
+  const load = useCallback(
+    async (silent = false) => {
+      if (!silent) setLoading(true);
+      setError(null);
+      setMissing(false);
+      try {
+        const res = await fetch(`/api/admin/admins/${adminId}`);
+        const json = await res.json();
+        if (res.status === 404) {
+          setMissing(true);
+          setDossier(null);
+          return;
+        }
+        if (!res.ok || !json.success) throw new Error(json.error || 'خطا در بارگذاری');
+        const data = json.data as DossierPayload;
+        setDossier(data);
+        setRoleTemplates(data.roleTemplates ?? ADMIN_ROLE_TEMPLATES);
+        setPermissionGroups(data.permissionGroups ?? PERMISSION_GROUPS);
+        setForm(formFromAccount(data.account));
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'خطا');
+      } finally {
+        if (!silent) setLoading(false);
       }
-      if (!res.ok || !json.success) throw new Error(json.error || 'خطا در بارگذاری');
-      const data = json.data as DossierPayload;
-      setDossier(data);
-      setRoleTemplates(data.roleTemplates ?? ADMIN_ROLE_TEMPLATES);
-      setPermissionGroups(data.permissionGroups ?? PERMISSION_GROUPS);
-      setForm(formFromAccount(data.account));
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'خطا');
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  }, [adminId]);
+    },
+    [adminId]
+  );
 
   useEffect(() => {
     if (canManage) load();
@@ -118,14 +174,20 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
   }, [canManage, load]);
 
   const assignableRoles = useMemo(
-    () => roleTemplates.filter((template) => actorRole === 'SUPER_ADMIN' || template.role !== 'SUPER_ADMIN'),
+    () =>
+      roleTemplates.filter(
+        (template) => actorRole === 'SUPER_ADMIN' || template.role !== 'SUPER_ADMIN'
+      ),
     [roleTemplates, actorRole]
   );
 
   const draftPermissions = useMemo(() => {
     if (!form || !dossier) return [];
     if (form.useCustomPermissions) return form.adminPermissions;
-    return roleTemplates.find((template) => template.role === form.role)?.permissions ?? dossier.account.effectivePermissions;
+    return (
+      roleTemplates.find((template) => template.role === form.role)?.permissions ??
+      dossier.account.effectivePermissions
+    );
   }, [form, dossier, roleTemplates]);
 
   const menu = useMemo(() => visibleAdminMenu(draftPermissions), [draftPermissions]);
@@ -170,7 +232,10 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
 
   if (!canManage) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900" dir="rtl">
+      <div
+        className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900"
+        dir="rtl"
+      >
         دسترسی «مدیریت نقش‌ها» برای پرونده ادمین لازم است.
       </div>
     );
@@ -179,7 +244,7 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
   if (loading) {
     return (
       <div className="flex min-h-64 items-center justify-center" dir="rtl">
-        <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
+        <Loader2 className="size-8 animate-spin text-primary" strokeWidth={1.5} />
       </div>
     );
   }
@@ -189,55 +254,73 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
       <div className="space-y-4" dir="rtl">
         <Link
           href="/admin/users?tab=admins"
-          className="inline-flex min-h-11 items-center gap-1 text-sm text-gray-500"
+          className="inline-flex min-h-11 items-center gap-1 text-sm text-wibe-secondary"
         >
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="size-4" strokeWidth={1.5} />
           بازگشت به ادمین‌ها
         </Link>
-        <p className="text-sm text-gray-700 dark:text-gray-200">{error || 'ادمین یافت نشد'}</p>
+        <p className="text-sm text-(--color-text)">{error || 'ادمین یافت نشد'}</p>
       </div>
     );
   }
 
   const { account, performance, logins, operations } = dossier;
-  const canSubmit =
-    !form.useCustomPermissions || form.adminPermissions.length > 0;
+  const canSubmit = !form.useCustomPermissions || form.adminPermissions.length > 0;
   const selectedTemplate = roleTemplates.find((template) => template.role === form.role);
+  const contact = accountContact(account.email);
+  const contactIsPhone = isPhoneAuthEmail(account.email);
 
   return (
-    <div className="space-y-6" dir="rtl">
-      <div>
-        <Link
-          href="/admin/users?tab=admins"
-          className="inline-flex min-h-11 items-center gap-1 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-        >
-          <ArrowRight className="h-4 w-4" />
-          بازگشت به ادمین‌ها
-        </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-3">
+    <div className="space-y-4" dir="rtl">
+      <Link
+        href="/admin/users?tab=admins"
+        className="inline-flex min-h-11 items-center gap-1 text-sm text-wibe-secondary hover:text-(--color-text)"
+      >
+        <ArrowRight className="size-4" strokeWidth={1.5} />
+        بازگشت به ادمین‌ها
+      </Link>
+
+      <header className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-(--color-border) bg-(--color-surface) p-4">
+        <div className="flex min-w-0 items-start gap-3">
           <UserAvatar src={null} name={account.name} email={account.email} size={48} />
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {account.name || 'بدون نام'}
-            </h1>
-            <p className="text-sm text-gray-500 font-mono" dir="ltr">
-              {account.email}
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="truncate text-2xl font-bold leading-snug text-(--color-text)">
+                {account.name || 'بدون نام'}
+              </h1>
+              <span
+                className={`inline-flex rounded-md px-2 py-0.5 text-sm font-medium ${ROLE_BADGE[account.role]}`}
+              >
+                {account.roleLabel}
+              </span>
+              <span
+                className={`inline-flex rounded-md px-2 py-0.5 text-sm font-medium ${
+                  account.isActive
+                    ? 'bg-emerald-50 text-emerald-800'
+                    : 'bg-red-50 text-red-800'
+                }`}
+              >
+                {account.isActive ? 'فعال' : 'غیرفعال'}
+              </span>
+            </div>
+            <p
+              className="mt-1 truncate text-sm text-wibe-secondary"
+              dir={contactIsPhone ? 'ltr' : undefined}
+            >
+              {contact}
             </p>
           </div>
-          <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${ROLE_BADGE[account.role]}`}>
-            {account.roleLabel}
-          </span>
-          <span
-            className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
-              account.isActive
-                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
-                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
-            }`}
-          >
-            {account.isActive ? 'فعال' : 'غیرفعال'}
-          </span>
         </div>
-      </div>
+        <button
+          type="button"
+          disabled={saving || !canSubmit}
+          onClick={save}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+        >
+          {saving ? <Loader2 className="size-4 animate-spin" strokeWidth={1.5} /> : null}
+          ذخیره تغییرات
+        </button>
+      </header>
 
       {message ? (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
@@ -245,27 +328,41 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
         </div>
       ) : null}
       {error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard
-          title="عملیات ۳۰ روز"
-          value={performance.operationCount}
+      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+        <StatCell
           icon={ClipboardList}
+          label="عملیات ۳۰ روز"
+          value={faNumber(performance.operationCount)}
         />
-        <MetricCard
-          title="ورود موفق"
-          value={performance.loginSuccess}
+        <StatCell
           icon={LogIn}
-          delta={performance.lastLoginAt ? formatRelativeTime(performance.lastLoginAt) : 'هنوز ورودی نیست'}
+          label="ورود موفق"
+          value={faNumber(performance.loginSuccess)}
+          hint={
+            performance.lastLoginAt
+              ? formatRelativeTime(performance.lastLoginAt)
+              : 'هنوز ورودی نیست'
+          }
         />
-        <MetricCard title="ورود ناموفق" value={performance.loginFailure} icon={ShieldAlert} />
-        <MetricCard
-          title="آخرین عملیات"
-          value={performance.lastActivityAt ? formatRelativeTime(performance.lastActivityAt) : 'هنوز عملیاتی نیست'}
-          valueLocale={false}
+        <StatCell
+          icon={ShieldAlert}
+          label="ورود ناموفق"
+          value={faNumber(performance.loginFailure)}
+          tone={performance.loginFailure > 0 ? 'danger' : 'default'}
+        />
+        <StatCell
           icon={Clock}
+          label="آخرین عملیات"
+          value={
+            performance.lastActivityAt
+              ? formatRelativeTime(performance.lastActivityAt)
+              : 'هنوز عملیاتی نیست'
+          }
         />
       </div>
 
@@ -274,24 +371,28 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
           {performance.byAction.slice(0, 8).map((row) => (
             <span
               key={row.action}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1 text-xs text-gray-700 dark:text-gray-200"
+              className="inline-flex min-h-8 items-center gap-2 rounded-lg bg-(--color-bg) px-3 text-sm text-(--color-text)"
             >
               {row.label}
-              <span className="font-semibold tabular-nums">{row.count.toLocaleString('fa-IR')}</span>
+              <span className="font-semibold tabular-nums text-wibe-secondary">
+                {faNumber(row.count)}
+              </span>
             </span>
           ))}
         </div>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <AdminCard hover={false} className="space-y-4">
-          <div className="flex items-center gap-2">
-            <KeyRound className="h-4 w-4 text-violet-600" />
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">حساب و دسترسی</h2>
-          </div>
+      <AdminCard hover={false} className="space-y-6" padding="default">
+        <div className="flex items-center gap-2">
+          <KeyRound className="size-4 text-primary" strokeWidth={1.5} />
+          <h2 className="text-base font-semibold leading-snug text-(--color-text)">
+            حساب، نقش و دسترسی
+          </h2>
+        </div>
 
+        <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">نام نمایشی</span>
+            <span className="text-sm font-medium text-(--color-text)">نام نمایشی</span>
             <input
               value={form.name}
               onChange={(event) => patchForm({ name: event.target.value })}
@@ -301,23 +402,7 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">توضیحات</span>
-            <textarea
-              value={form.adminNote}
-              onChange={(event) => patchForm({ adminNote: event.target.value })}
-              rows={3}
-              maxLength={500}
-              placeholder="مثلاً مسئول کامنت‌های شب"
-              className={INPUT}
-            />
-            <p className="mt-1 text-xs text-gray-400">
-              فقط در پنل دیده می‌شود. {form.adminNote.length.toLocaleString('fa-IR')} از{' '}
-              {(500).toLocaleString('fa-IR')}
-            </p>
-          </label>
-
-          <label className="block">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">رمز جدید</span>
+            <span className="text-sm font-medium text-(--color-text)">رمز جدید</span>
             <input
               type="password"
               value={form.password}
@@ -325,97 +410,116 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
               placeholder="خالی بماند، رمز عوض نمی‌شود"
               className={INPUT}
               autoComplete="new-password"
+              dir="ltr"
             />
           </label>
+        </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-800 dark:text-gray-100">
-              <Shield className="h-4 w-4 text-violet-600" />
-              نقش و سطح دسترسی
-            </div>
-            <RoleTemplatePicker templates={assignableRoles} value={form.role} onChange={applyRole} />
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-dashed border-gray-200 dark:border-gray-600 p-3">
-              <input
-                type="checkbox"
-                checked={form.useCustomPermissions}
-                onChange={(event) => {
-                  const checked = event.target.checked;
-                  patchForm({
-                    useCustomPermissions: checked,
-                    adminPermissions: checked
-                      ? form.adminPermissions.length > 0
-                        ? form.adminPermissions
-                        : [...(selectedTemplate?.permissions ?? [])]
-                      : [],
-                  });
-                }}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
-              />
-              <span>
-                <span className="block text-sm font-medium">دسترسی سفارشی</span>
-                <span className="block text-xs text-gray-500 mt-0.5">
-                  به‌جای قالب نقش، دسترسی هر بخش را خودتان انتخاب کنید
-                </span>
-              </span>
-            </label>
-            {form.useCustomPermissions ? (
-              <div className="space-y-2">
-                <p className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <SlidersHorizontal className="h-3.5 w-3.5" />
-                  {form.adminPermissions.length.toLocaleString('fa-IR')} دسترسی انتخاب شده
-                </p>
-                <PermissionPicker
-                  groups={permissionGroups}
-                  selected={form.adminPermissions}
-                  onChange={(adminPermissions) => patchForm({ adminPermissions })}
-                />
-              </div>
-            ) : null}
+        <label className="block">
+          <span className="text-sm font-medium text-(--color-text)">توضیحات</span>
+          <textarea
+            value={form.adminNote}
+            onChange={(event) => patchForm({ adminNote: event.target.value })}
+            rows={2}
+            maxLength={500}
+            placeholder="مثلاً مسئول کامنت‌های شب"
+            className={INPUT}
+          />
+          <p className="mt-1 text-sm text-wibe-secondary">
+            فقط در پنل دیده می‌شود · {faNumber(form.adminNote.length)} از {faNumber(500)}
+          </p>
+        </label>
+
+        <div className="space-y-3 border-t border-(--color-border) pt-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-(--color-text)">
+            <Shield className="size-4 text-primary" strokeWidth={1.5} />
+            نقش و سطح دسترسی
           </div>
-
-          <label className="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-600 px-4 py-3 cursor-pointer">
+          <RoleTemplatePicker
+            templates={assignableRoles}
+            value={form.role}
+            onChange={applyRole}
+          />
+          <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-dashed border-(--color-border) p-3">
             <input
               type="checkbox"
-              checked={form.isActive}
-              onChange={(event) => patchForm({ isActive: event.target.checked })}
-              className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+              checked={form.useCustomPermissions}
+              onChange={(event) => {
+                const checked = event.target.checked;
+                patchForm({
+                  useCustomPermissions: checked,
+                  adminPermissions: checked
+                    ? form.adminPermissions.length > 0
+                      ? form.adminPermissions
+                      : [...(selectedTemplate?.permissions ?? [])]
+                    : [],
+                });
+              }}
+              className="mt-1 size-4 rounded border-(--color-border) text-primary focus:ring-primary/30"
             />
-            <span className="text-sm">
-              <span className="font-medium text-gray-900 dark:text-white">حساب فعال</span>
-              <span className="block text-xs text-gray-500 mt-0.5">حساب غیرفعال نمی‌تواند وارد پنل شود</span>
+            <span>
+              <span className="block text-sm font-medium text-(--color-text)">
+                دسترسی سفارشی
+              </span>
+              <span className="mt-1 block text-sm text-wibe-secondary">
+                به‌جای قالب نقش، دسترسی هر بخش را خودتان انتخاب کنید
+              </span>
             </span>
           </label>
+          {form.useCustomPermissions ? (
+            <div className="space-y-2">
+              <p className="flex items-center gap-1 text-sm text-wibe-secondary">
+                <SlidersHorizontal className="size-4" strokeWidth={1.5} />
+                {faNumber(form.adminPermissions.length)} دسترسی انتخاب‌شده
+              </p>
+              <PermissionPicker
+                groups={permissionGroups}
+                selected={form.adminPermissions}
+                onChange={(adminPermissions) => patchForm({ adminPermissions })}
+              />
+            </div>
+          ) : null}
+        </div>
 
-          <button
-            type="button"
-            disabled={saving || !canSubmit}
-            onClick={save}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            ذخیره تغییرات
-          </button>
-        </AdminCard>
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-(--color-border) px-4 py-3">
+          <input
+            type="checkbox"
+            checked={form.isActive}
+            onChange={(event) => patchForm({ isActive: event.target.checked })}
+            className="size-4 rounded border-(--color-border) text-primary focus:ring-primary/30"
+          />
+          <span className="text-sm">
+            <span className="font-medium text-(--color-text)">حساب فعال</span>
+            <span className="mt-1 block text-sm text-wibe-secondary">
+              حساب غیرفعال نمی‌تواند وارد پنل شود
+            </span>
+          </span>
+        </label>
 
-        <AdminCard hover={false} className="space-y-4">
+        <div className="space-y-3 border-t border-(--color-border) pt-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">منوی قابل‌مشاهده</h2>
-            <p className="mt-1 text-xs text-gray-500">
-              همین آیتم‌ها در ساید این ادمین دیده می‌شود. پیش‌نمایش بر اساس فرم فعلی است و بعد از ذخیره اعمال می‌شود.
+            <h3 className="text-sm font-semibold text-(--color-text)">منوی قابل‌مشاهده</h3>
+            <p className="mt-1 text-sm text-wibe-secondary">
+              پیش‌نمایش بر اساس فرم فعلی؛ بعد از ذخیره در ساید اعمال می‌شود.
             </p>
           </div>
           {menu.length === 0 ? (
             <EmptyLine>با این دسترسی هیچ آیتمی در منو دیده نمی‌شود.</EmptyLine>
           ) : (
-            <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
               {menu.map((group) => (
-                <section key={group.id}>
-                  <h3 className="text-xs font-medium text-gray-500 mb-2">{group.label}</h3>
+                <section
+                  key={group.id}
+                  className="rounded-xl border border-(--color-border) bg-(--color-bg) p-3"
+                >
+                  <h4 className="mb-2 text-sm font-medium text-wibe-secondary">
+                    {group.label}
+                  </h4>
                   <ul className="flex flex-wrap gap-2">
                     {group.links.map((link) => (
                       <li
                         key={link.href}
-                        className="rounded-lg bg-gray-100 dark:bg-gray-700/60 px-2.5 py-1 text-sm text-gray-800 dark:text-gray-100"
+                        className="rounded-lg border border-(--color-border) bg-(--color-surface) px-2 py-1 text-sm text-(--color-text)"
                       >
                         {link.label}
                       </li>
@@ -425,71 +529,145 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
               ))}
             </div>
           )}
-        </AdminCard>
-      </div>
+        </div>
 
-      <AdminCard hover={false}>
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">تاریخچه ورود</h2>
-        <p className="mt-1 text-xs text-gray-500">۲۰ ورود آخر، موفق و ناموفق</p>
-        {logins.length === 0 ? (
-          <EmptyLine>هنوز ورودی برای این ادمین ثبت نشده.</EmptyLine>
-        ) : (
-          <ul className="mt-3 divide-y divide-gray-100 dark:divide-gray-700">
-            {logins.map((row) => (
-              <li key={row.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:gap-4">
-                <span
-                  className={`inline-flex w-fit rounded-md px-2 py-0.5 text-xs font-medium ${
-                    row.success
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
-                      : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
-                  }`}
-                >
-                  {row.success ? 'موفق' : 'ناموفق'}
-                </span>
-                <time className="text-sm text-gray-800 dark:text-gray-100" dateTime={row.createdAt}>
-                  {formatExact(row.createdAt)}
-                </time>
-                <span className="text-xs text-gray-500">{formatRelativeTime(row.createdAt)}</span>
-                <span className="font-mono text-xs text-gray-600 dark:text-gray-300 sm:ms-auto" dir="ltr">
-                  {row.ipAddress || '—'}
-                </span>
-                <span className="text-xs text-gray-500">{parseUserAgentShort(row.userAgent) || '—'}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-(--color-border) pt-4">
+          <button
+            type="button"
+            disabled={saving || !canSubmit}
+            onClick={save}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="size-4 animate-spin" strokeWidth={1.5} /> : null}
+            ذخیره تغییرات
+          </button>
+        </div>
       </AdminCard>
 
-      <AdminCard hover={false}>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">عملیات</h2>
-            <p className="mt-1 text-xs text-gray-500">۲۰ عمل آخر از لاگ تغییرات</p>
-          </div>
-          <Link
-            href={`/admin/audit?actorQuery=${encodeURIComponent(account.id)}`}
-            className="inline-flex min-h-11 items-center text-sm text-violet-700 hover:text-violet-900 dark:text-violet-300"
+      <AdminCard hover={false} padding="default">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            role="tablist"
+            aria-label="فعالیت ادمین"
+            className="flex gap-2 overflow-x-auto"
           >
-            مشاهده همه در لاگ
-          </Link>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activityTab === 'logins'}
+              onClick={() => setActivityTab('logins')}
+              className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-4 text-sm font-medium ${
+                activityTab === 'logins'
+                  ? 'bg-primary text-white'
+                  : 'border border-(--color-border) text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text)'
+              }`}
+            >
+              <Monitor className="size-4" strokeWidth={activityTab === 'logins' ? 2 : 1.5} />
+              تاریخچه ورود
+              <span className="tabular-nums opacity-80">{faNumber(logins.length)}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activityTab === 'ops'}
+              onClick={() => setActivityTab('ops')}
+              className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-4 text-sm font-medium ${
+                activityTab === 'ops'
+                  ? 'bg-primary text-white'
+                  : 'border border-(--color-border) text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text)'
+              }`}
+            >
+              <ClipboardList className="size-4" strokeWidth={activityTab === 'ops' ? 2 : 1.5} />
+              عملیات
+              <span className="tabular-nums opacity-80">{faNumber(operations.length)}</span>
+            </button>
+          </div>
+          {activityTab === 'ops' ? (
+            <Link
+              href={`/admin/audit?actorQuery=${encodeURIComponent(account.id)}`}
+              className="inline-flex min-h-11 items-center text-sm text-primary hover:underline"
+            >
+              مشاهده همه در لاگ
+            </Link>
+          ) : null}
         </div>
-        {operations.length === 0 ? (
+
+        {activityTab === 'logins' ? (
+          logins.length === 0 ? (
+            <EmptyLine>هنوز ورودی برای این ادمین ثبت نشده.</EmptyLine>
+          ) : (
+            <>
+              <p className="mt-3 text-sm text-wibe-secondary">
+                ۲۰ ورود آخر، موفق و ناموفق
+              </p>
+              <ul className="mt-2 divide-y divide-(--color-border)">
+                {logins.map((row) => (
+                  <li
+                    key={row.id}
+                    className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-4"
+                  >
+                    <span
+                      className={`inline-flex w-fit rounded-md px-2 py-0.5 text-sm font-medium ${
+                        row.success
+                          ? 'bg-emerald-50 text-emerald-800'
+                          : 'bg-red-50 text-red-800'
+                      }`}
+                    >
+                      {row.success ? 'موفق' : 'ناموفق'}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <time
+                        className="block text-sm text-(--color-text)"
+                        dateTime={row.createdAt}
+                      >
+                        {formatExact(row.createdAt)}
+                      </time>
+                      <p className="mt-1 text-sm text-wibe-secondary">
+                        {formatRelativeTime(row.createdAt)}
+                      </p>
+                    </div>
+                    <span
+                      className="font-mono text-sm text-wibe-secondary sm:text-end"
+                      dir="ltr"
+                    >
+                      {row.ipAddress || '—'}
+                    </span>
+                    <span className="text-sm text-wibe-secondary sm:max-w-56 sm:truncate">
+                      {parseUserAgentShort(row.userAgent) || '—'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )
+        ) : operations.length === 0 ? (
           <EmptyLine>هنوز عملیاتی برای این ادمین ثبت نشده.</EmptyLine>
         ) : (
-          <ul className="mt-3 divide-y divide-gray-100 dark:divide-gray-700">
-            {operations.map((row) => (
-              <li key={row.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:gap-3">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">{row.actionLabel}</span>
-                <span className="text-xs text-gray-500">
-                  {row.entityTypeLabel}
-                  {row.entityName ? ` · ${row.entityName}` : ''}
-                </span>
-                <time className="text-xs text-gray-500 sm:ms-auto" dateTime={row.createdAt}>
-                  {formatExact(row.createdAt)}
-                </time>
-              </li>
-            ))}
-          </ul>
+          <>
+            <p className="mt-3 text-sm text-wibe-secondary">۲۰ عمل آخر از لاگ تغییرات</p>
+            <ul className="mt-2 divide-y divide-(--color-border)">
+              {operations.map((row) => (
+                <li
+                  key={row.id}
+                  className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:gap-3"
+                >
+                  <span className="text-sm font-medium text-(--color-text)">
+                    {row.actionLabel}
+                  </span>
+                  <span className="text-sm text-wibe-secondary">
+                    {row.entityTypeLabel}
+                    {row.entityName ? ` · ${row.entityName}` : ''}
+                  </span>
+                  <time
+                    className="text-sm text-wibe-secondary sm:ms-auto"
+                    dateTime={row.createdAt}
+                  >
+                    {formatExact(row.createdAt)}
+                  </time>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </AdminCard>
     </div>
