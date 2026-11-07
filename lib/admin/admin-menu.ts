@@ -94,6 +94,22 @@ export type VisibleAdminMenuGroup = {
 
 const GROUP_ORDER: AdminMenuGroupId[] = ['main', 'intelligence', 'moderation', 'system'];
 
+/** اولین مسیر ادمین که این دسترسی‌ها اجازه می‌دهند — برای CTA صفحهٔ عدم‌دسترسی */
+export function firstAccessibleAdminHref(
+  canAccess: (permission: Permission) => boolean
+): string | null {
+  for (const entry of ADMIN_MENU) {
+    if (entry.children?.length) {
+      for (const child of entry.children) {
+        if (canAccess(child.permission)) return child.href;
+      }
+      continue;
+    }
+    if (canAccess(entry.permission)) return entry.href;
+  }
+  return null;
+}
+
 /** آیتم‌هایی از ساید که با این دسترسی‌ها دیده می‌شوند */
 export function visibleAdminMenu(permissions: readonly string[]): VisibleAdminMenuGroup[] {
   const allowed = new Set(permissions);

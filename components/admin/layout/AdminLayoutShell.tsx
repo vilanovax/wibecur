@@ -7,45 +7,50 @@ import QuickCreateFab from '@/components/admin/layout/QuickCreateFab';
 import { SidebarProvider } from '@/components/admin/layout/SidebarContext';
 import AdminPermissionGuard from '@/components/admin/AdminPermissionGuard';
 import AdminReadOnlyBanner from '@/components/admin/AdminReadOnlyBanner';
+import AdminSessionGate from '@/components/admin/AdminSessionGate';
 
 /**
  * صفحه access-denied بدون سایدبار/هدر سنگین — جلوگیری از خطا و حلقه redirect
  */
 function AccessDeniedShell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="admin-panel min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir"
-      dir="rtl"
-    >
-      <div className="max-w-lg mx-auto px-4 py-12">{children}</div>
-    </div>
+    <AdminSessionGate>
+      <div
+        className="admin-panel min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir"
+        dir="rtl"
+      >
+        <div className="mx-auto max-w-lg px-4 py-12">{children}</div>
+      </div>
+    </AdminSessionGate>
   );
 }
 
 function AdminPanelShell({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider>
-      <div
-        className="admin-panel min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir"
-        dir="rtl"
-      >
-        {/* بدون min-width ثابت — محتوا واکنش‌گرا reflow می‌شود و کل صفحه اسکرول افقی نمی‌خورد.
-            اجزای عریض (مثل جدول رادار) overflow داخلی خودشان را دارند. */}
-        <div className="min-w-0 flex min-h-screen">
-          <Sidebar />
-          <div className="flex-1 min-w-0 flex flex-col">
-            <AdminHeader />
-            <main className="flex-1 min-w-0 transition-all duration-300 bg-transparent">
-              <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6">
-                <AdminReadOnlyBanner />
-                <AdminPermissionGuard>{children}</AdminPermissionGuard>
-              </div>
-            </main>
+    <AdminSessionGate>
+      <SidebarProvider>
+        <div
+          className="admin-panel min-h-screen bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 font-vazir"
+          dir="rtl"
+        >
+          {/* بدون min-width ثابت — محتوا واکنش‌گرا reflow می‌شود و کل صفحه اسکرول افقی نمی‌خورد.
+              اجزای عریض (مثل جدول رادار) overflow داخلی خودشان را دارند. */}
+          <div className="flex min-h-screen min-w-0">
+            <Sidebar />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <AdminHeader />
+              <main className="min-w-0 flex-1 bg-transparent transition-all duration-300">
+                <div className="mx-auto flex max-w-350 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+                  <AdminReadOnlyBanner />
+                  <AdminPermissionGuard>{children}</AdminPermissionGuard>
+                </div>
+              </main>
+            </div>
           </div>
+          <QuickCreateFab />
         </div>
-        <QuickCreateFab />
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
+    </AdminSessionGate>
   );
 }
 

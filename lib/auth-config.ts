@@ -14,6 +14,7 @@ import {
   applyAdminJwtRow,
   clearAdminSessionClaims,
 } from '@/lib/auth/apply-admin-jwt';
+import { shouldUseSecureAuthCookies } from '@/lib/auth/secure-cookies';
 
 const config: NextAuthConfig = {
   trustHost: true,
@@ -252,18 +253,19 @@ const config: NextAuthConfig = {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  useSecureCookies: process.env.NODE_ENV === 'production',
+  // روی http://localhost کوکی __Secure- ست/ارسال نمی‌شود → API ادمین ۴۰۱ می‌دهد.
+  // فقط وقتی URL احراز هویت واقعاً HTTPS است (یا AUTH_SECURE_COOKIES=true) امن کن.
+  useSecureCookies: shouldUseSecureAuthCookies(),
   cookies: {
     sessionToken: {
-      name:
-        process.env.NODE_ENV === 'production'
-          ? '__Secure-authjs.session-token'
-          : 'authjs.session-token',
+      name: shouldUseSecureAuthCookies()
+        ? '__Secure-authjs.session-token'
+        : 'authjs.session-token',
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: shouldUseSecureAuthCookies(),
       },
     },
   },
