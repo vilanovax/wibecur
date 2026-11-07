@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sniffImageFormat, validateImage } from './image-validator';
+import { readWebpDimensions, sniffImageFormat, validateImage } from './image-validator';
 import { getSharp } from './get-sharp';
 
 describe('sniffImageFormat', () => {
@@ -22,6 +22,25 @@ describe('sniffImageFormat', () => {
   it('detects png signature', () => {
     const buf = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
     expect(sniffImageFormat(buf)).toBe('png');
+  });
+});
+
+describe('readWebpDimensions', () => {
+  it('reads dimensions from a real sharp webp', async () => {
+    const sharp = await getSharp();
+    const webp = await sharp({
+      create: {
+        width: 160,
+        height: 68,
+        channels: 3,
+        background: { r: 10, g: 20, b: 30 },
+      },
+    })
+      .webp({ quality: 80 })
+      .toBuffer();
+
+    const dims = readWebpDimensions(Buffer.from(webp));
+    expect(dims).toEqual({ width: 160, height: 68 });
   });
 });
 

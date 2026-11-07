@@ -69,36 +69,43 @@ export default function ImageUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
+    const mime = (file.type || '').toLowerCase();
+    if (mime && !mime.startsWith('image/') && mime !== 'application/octet-stream') {
       alert('لطفاً یک فایل تصویری انتخاب کنید');
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('حجم فایل نباید بیشتر از 5 مگابایت باشد');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('حجم فایل نباید بیشتر از ۱۰ مگابایت باشد');
       return;
     }
 
     setUploading(true);
 
     try {
-      // Create FormData
       const formData = new FormData();
       formData.append('file', file);
 
-      // Upload to server
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
         body: formData,
       });
 
-      if (!res.ok) {
-        throw new Error('خطا در آپلود تصویر');
+      if (res.status === 413) {
+        throw new Error(
+          'حجم فایل برای سرور زیاد است. تصویر را کوچک‌تر یا به‌صورت WebP/JPG ذخیره کنید.'
+        );
       }
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === 'string' && data.error
+            ? data.error
+            : 'خطا در آپلود تصویر'
+        );
+      }
+
       onChange(data.url);
     } catch (error: any) {
       alert(error.message || 'خطا در آپلود تصویر');

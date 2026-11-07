@@ -67,6 +67,11 @@ export default function MediaSlotRow({
         form.set('file', file);
         form.set('purpose', UPLOAD_PURPOSE[slot.kind]);
         const uploaded = await fetch('/api/admin/upload', { method: 'POST', body: form });
+        if (uploaded.status === 413) {
+          throw new Error(
+            'حجم فایل برای سرور زیاد است. تصویر را کوچک‌تر یا به‌صورت WebP/JPG ذخیره کنید.'
+          );
+        }
         const fileData = (await uploaded.json()) as {
           error?: string;
           url?: string;

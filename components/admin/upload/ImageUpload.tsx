@@ -179,7 +179,8 @@ export default function ImageUpload({
   };
 
   const uploadFile = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
+    const mime = (file.type || '').toLowerCase();
+    if (mime && !mime.startsWith('image/') && mime !== 'application/octet-stream') {
       alert('لطفاً یک فایل تصویری انتخاب کنید');
       return;
     }
@@ -196,9 +197,18 @@ export default function ImageUpload({
       formData.append('purpose', uploadPurpose);
 
       const response = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+      if (response.status === 413) {
+        throw new Error(
+          `حجم فایل برای سرور زیاد است (حداکثر حدود ${maxMb}MB). تصویر را کوچک‌تر یا به‌صورت WebP/JPG ذخیره کنید.`
+        );
+      }
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.error || 'خطا در آپلود تصویر');
+        throw new Error(
+          typeof data.error === 'string' && data.error
+            ? data.error
+            : 'خطا در آپلود تصویر'
+        );
       }
       onChange(data.url);
       if (data.optimized && data.optimized.width && data.optimized.height) {

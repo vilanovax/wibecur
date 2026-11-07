@@ -3,7 +3,10 @@
 
 ARG DOCKER_MIRROR=docker-mirror.liara.ir
 FROM ${DOCKER_MIRROR}/library/node:20-alpine AS base
-RUN apk add --no-cache libc6-compat openssl vips
+# vips سیستمی نصب نشود — با باینری prebuilt sharp (@img/sharp-libvips-*) تداخل می‌کند
+# و اغلب decodeی WebP روی سرور را می‌شکند.
+RUN apk add --no-cache libc6-compat openssl
+ENV SHARP_IGNORE_GLOBAL_LIBVIPS=1
 WORKDIR /app
 
 FROM base AS deps
@@ -72,6 +75,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV NODE_OPTIONS=--max-http-header-size=16384
+ENV SHARP_IGNORE_GLOBAL_LIBVIPS=1
 
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
