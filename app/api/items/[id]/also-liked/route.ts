@@ -62,8 +62,10 @@ async function getAlsoLikedForItem(currentItemId: string) {
       where: {
         listId: { in: listIdsWithOverlap },
         id: { not: currentItemId },
+        deletedAt: null,
         lists: {
           isActive: true,
+          deletedAt: null,
           ...(categoryId ? { categoryId } : {}),
         },
         OR: [

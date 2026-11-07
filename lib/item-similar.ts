@@ -15,9 +15,11 @@ async function loadSimilarByCategory(
     prisma.items.findMany({
       where: {
         id: { not: currentItemId },
+        deletedAt: null,
         lists: {
           categoryId,
           isActive: true,
+          deletedAt: null,
         },
         OR: [
           { item_moderation: null },
@@ -122,7 +124,7 @@ export function getCachedSimilarItemsWithContext(
   const tagsKey = [...tags].map((t) => t.toLowerCase()).sort().join('|');
   return unstable_cache(
     () => loadSimilarByCategory(itemId, categoryId, tags),
-    ['similar-v2', itemId, categoryId, tagsKey],
+    ['similar-v3', itemId, categoryId, tagsKey],
     { revalidate: CACHE_SECONDS, tags: [`similar-${itemId}`] }
   )();
 }
@@ -130,7 +132,7 @@ export function getCachedSimilarItemsWithContext(
 export function getCachedSimilarItems(itemId: string): Promise<SimilarItem[] | null> {
   return unstable_cache(
     () => getSimilarItemsForItem(itemId),
-    [`similar-${itemId}`],
+    [`similar-v3-${itemId}`],
     { revalidate: CACHE_SECONDS, tags: [`similar-${itemId}`] }
   )();
 }
