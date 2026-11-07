@@ -1,6 +1,11 @@
 import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
+import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth/require-permission';
 import UsersPageClient from './UsersPageClient';
+import AdminsPageClient from '@/components/admin/admins/AdminsPageClient';
+import UsersAdminsTabs from '@/components/admin/users/UsersAdminsTabs';
 import { getCachedUsersIntelligenceData } from '@/lib/admin/users-intelligence-cached';
 import { parseUserSort } from '@/lib/admin/users-types';
 import { parseUserFilter } from '@/lib/admin/user-filter-utils';
@@ -26,6 +31,7 @@ async function UsersDataSection({
     hideBots?: string;
     filter?: string;
     sort?: string;
+    tab?: string;
   }>;
 }) {
   const {
@@ -59,13 +65,34 @@ export default async function AdminUsersPage({
     hideBots?: string;
     filter?: string;
     sort?: string;
+    tab?: string;
   }>;
 }) {
   await requireAdmin();
 
+  const params = await searchParams;
+  const tab = params.tab === 'admins' ? 'admins' : 'users';
+
+  if (tab === 'admins') {
+    const userOrRes = await requirePermission('manage_roles');
+    if (userOrRes instanceof NextResponse) {
+      redirect('/admin/access-denied?perm=manage_roles');
+    }
+
+    return (
+      <div className="space-y-4" dir="rtl">
+        <UsersAdminsTabs active="admins" />
+        <AdminsPageClient embedded />
+      </div>
+    );
+  }
+
   return (
-    <Suspense fallback={<UsersSkeleton />}>
-      <UsersDataSection searchParams={searchParams} />
-    </Suspense>
+    <div className="space-y-4" dir="rtl">
+      <UsersAdminsTabs active="users" />
+      <Suspense fallback={<UsersSkeleton />}>
+        <UsersDataSection searchParams={searchParams} />
+      </Suspense>
+    </div>
   );
 }

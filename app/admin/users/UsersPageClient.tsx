@@ -234,15 +234,7 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
   return (
     <>
       <div className="space-y-4">
-        <header>
-          <h1 className="text-2xl font-bold leading-snug text-(--color-text)">
-            مدیریت کاربران
-          </h1>
-          <UserPulseSummary data={data.pulse} />
-          <p className="mt-1 text-sm text-wibe-secondary">
-            برای جزئیات و تنظیم رمز روی ردیف کلیک کنید.
-          </p>
-        </header>
+        <UserPulseSummary data={data.pulse} />
 
         <SmartFilterBar
           value={filterKind}

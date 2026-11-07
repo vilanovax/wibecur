@@ -45,10 +45,6 @@ export const ADMIN_MENU: AdminMenuEntry[] = [
     label: 'کاربران',
     permission: 'manage_users',
     matchPrefixes: ['/admin/users', '/admin/admins'],
-    children: [
-      { href: '/admin/users', label: 'کاربران', permission: 'manage_users' },
-      { href: '/admin/admins', label: 'ادمین‌ها', permission: 'manage_roles' },
-    ],
   },
   { group: 'intelligence', href: '/admin/analytics', label: 'آنالیتیکس', permission: 'view_analytics' },
   {

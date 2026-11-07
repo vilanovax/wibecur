@@ -187,7 +187,10 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
   if (missing || !dossier || !form) {
     return (
       <div className="space-y-4" dir="rtl">
-        <Link href="/admin/admins" className="inline-flex min-h-11 items-center gap-1 text-sm text-gray-500">
+        <Link
+          href="/admin/users?tab=admins"
+          className="inline-flex min-h-11 items-center gap-1 text-sm text-gray-500"
+        >
           <ArrowRight className="h-4 w-4" />
           بازگشت به ادمین‌ها
         </Link>
@@ -205,7 +208,7 @@ export default function AdminDossierClient({ adminId }: { adminId: string }) {
     <div className="space-y-6" dir="rtl">
       <div>
         <Link
-          href="/admin/admins"
+          href="/admin/users?tab=admins"
           className="inline-flex min-h-11 items-center gap-1 text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
         >
           <ArrowRight className="h-4 w-4" />

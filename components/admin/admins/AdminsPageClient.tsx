@@ -165,7 +165,11 @@ function AdminRowCard({
   );
 }
 
-export default function AdminsPageClient() {
+export default function AdminsPageClient({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
   const { can, role: actorRole } = usePermissions();
   const canManage = can('manage_roles');
 
@@ -302,23 +306,31 @@ export default function AdminsPageClient() {
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-violet-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">مدیریت ادمین‌ها</h1>
+    <div className={embedded ? 'space-y-4' : 'space-y-6'} dir="rtl">
+      <div
+        className={`flex flex-wrap items-start gap-4 ${
+          embedded ? 'justify-end' : 'justify-between'
+        }`}
+      >
+        {!embedded ? (
+          <div>
+            <div className="flex items-center gap-2">
+              <Shield className="size-6 text-violet-600" strokeWidth={1.5} />
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                مدیریت ادمین‌ها
+              </h1>
+            </div>
+            <p className="mt-1 max-w-xl text-sm text-gray-500 dark:text-gray-400">
+              تعریف ادمین و باز کردن پرونده برای دسترسی، رمز، ورود و عملیات
+            </p>
           </div>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-xl">
-            تعریف ادمین و باز کردن پرونده برای دسترسی، رمز، ورود و عملیات
-          </p>
-        </div>
+        ) : null}
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-700 shadow-sm transition-colors"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-violet-700"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="size-4" strokeWidth={2} />
           ادمین جدید
         </button>
       </div>

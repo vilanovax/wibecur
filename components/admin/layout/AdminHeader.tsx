@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Bell, User, Settings, LogOut, ChevronLeft, Menu, PanelRightClose, PanelRightOpen, Trash2 } from 'lucide-react';
 import { useSidebar } from './SidebarContext';
 import { signOut, useSession } from 'next-auth/react';
@@ -121,8 +121,10 @@ function getBreadcrumb(pathname: string | null): { href: string; label: string }
         label = segments[i];
       }
     }
-    if (out[out.length - 1]?.href !== acc) {
-      out.push({ href: acc, label });
+    const href =
+      acc === '/admin/admins' ? '/admin/users?tab=admins' : acc;
+    if (out[out.length - 1]?.href !== href) {
+      out.push({ href, label });
     }
   }
   return out;
@@ -140,6 +142,7 @@ type NotificationItem = {
 
 export default function AdminHeader() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { collapsed, setCollapsed, setMobileOpen } = useSidebar();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -151,7 +154,16 @@ export default function AdminHeader() {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
-  const breadcrumbs = getBreadcrumb(pathname);
+  const breadcrumbs = useMemo(() => {
+    if (pathname === '/admin/users' && searchParams.get('tab') === 'admins') {
+      return [
+        { href: '/admin/dashboard', label: 'داشبورد' },
+        { href: '/admin/users', label: 'کاربران' },
+        { href: '/admin/users?tab=admins', label: 'ادمین‌ها' },
+      ];
+    }
+    return getBreadcrumb(pathname);
+  }, [pathname, searchParams]);
 
   const fetchNotifications = useCallback(async () => {
     setNotificationsLoading(true);

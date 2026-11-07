@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Plus, List, Package, Tag, Star } from 'lucide-react';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
 import clsx from 'clsx';
@@ -70,7 +70,11 @@ export default function QuickCreateFab() {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const items = getFabItems(pathname);
+  const onAdminsHub =
+    !!pathname?.startsWith('/admin/admins') ||
+    (pathname === '/admin/users' && searchParams.get('tab') === 'admins');
 
   useOutsideClick(containerRef, () => setOpen(false), open);
 
@@ -79,7 +83,7 @@ export default function QuickCreateFab() {
     pathname?.startsWith('/admin/pulse') ||
     pathname?.startsWith('/admin/system') ||
     pathname?.startsWith('/admin/trash') ||
-    pathname?.startsWith('/admin/admins')
+    onAdminsHub
   ) {
     return null;
   }

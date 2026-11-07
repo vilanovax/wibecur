@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from '@/components/admin/layout/Sidebar';
 import AdminHeader from '@/components/admin/layout/AdminHeader';
@@ -38,7 +39,9 @@ function AdminPanelShell({ children }: { children: React.ReactNode }) {
           <div className="flex min-h-screen min-w-0">
             <Sidebar />
             <div className="flex min-w-0 flex-1 flex-col">
-              <AdminHeader />
+              <Suspense fallback={null}>
+                <AdminHeader />
+              </Suspense>
               <main className="min-w-0 flex-1 bg-transparent transition-all duration-300">
                 <div className="mx-auto flex max-w-350 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
                   <AdminReadOnlyBanner />
@@ -47,7 +50,9 @@ function AdminPanelShell({ children }: { children: React.ReactNode }) {
               </main>
             </div>
           </div>
-          <QuickCreateFab />
+          <Suspense fallback={null}>
+            <QuickCreateFab />
+          </Suspense>
         </div>
       </SidebarProvider>
     </AdminSessionGate>
