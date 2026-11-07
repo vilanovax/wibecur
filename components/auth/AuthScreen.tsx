@@ -33,6 +33,9 @@ interface AuthScreenProps {
   mode: AuthMode;
   callbackUrl: string;
   signupSource?: SignupSource;
+  /** بازیابی شماره بعد از submit ناخواستهٔ HTML (GET با ?tel=) */
+  initialPhone?: string;
+  initialName?: string;
 }
 
 const SIGNUP_SOURCES: SignupSource[] = [
@@ -59,12 +62,18 @@ function defaultAvatarId(): string {
   return DEFAULT_PACK_AVATARS.find((avatar) => avatar.id === 'vibe')?.id ?? DEFAULT_PACK_AVATARS[0]?.id ?? 'vibe';
 }
 
-export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' }: AuthScreenProps) {
+export default function AuthScreen({
+  mode,
+  callbackUrl,
+  signupSource = 'direct',
+  initialPhone = '',
+  initialName = '',
+}: AuthScreenProps) {
   const router = useRouter();
   const isRegister = mode === 'register';
 
-  const [phone, setPhone] = useState('');
-  const [name, setName] = useState('');
+  const [phone, setPhone] = useState(() => digitsFromPhoneInput(initialPhone));
+  const [name, setName] = useState(() => initialName.trim().slice(0, 80));
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -82,6 +91,20 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
     const timer = window.setTimeout(() => setResendSeconds((s) => Math.max(0, s - 1)), 1000);
     return () => window.clearTimeout(timer);
   }, [resendSeconds]);
+
+  // اگر مرورگر قبل از hydrate فرم را GET کرده، شماره را از query نگه دار و URL را پاک کن.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('tel') && !url.searchParams.has('name')) return;
+    url.searchParams.delete('tel');
+    url.searchParams.delete('name');
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    window.history.replaceState(window.history.state, '', next);
+    if (initialPhone && !validatePhoneInput(digitsFromPhoneInput(initialPhone))) {
+      setNotice('شماره از قبل پر شده — برای دریافت کد، دکمه را دوباره بزن.');
+    }
+  }, [initialPhone]);
 
   const handlePhoneChange = (value: string) => {
     setPhone(digitsFromPhoneInput(value));
@@ -121,11 +144,13 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
     const phoneError = validatePhoneInput(phone);
     if (phoneError) {
       showFieldError('phone', phoneError);
+      setStep('form');
       return false;
     }
 
     setLoading(true);
     clearFeedback();
+    setNotice('در حال ارسال کد تأیید…');
 
     try {
       const res = await fetch('/api/auth/otp/send', {
@@ -145,14 +170,17 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
       const json = await res.json().catch(() => null);
 
       if (!res.ok || !json?.success) {
+        setNotice('');
         const retry = Number(json?.data?.retryAfterSeconds);
         if (Number.isFinite(retry) && retry > 0) {
           setResendSeconds(retry);
         }
-        if (fieldLooksLikePhone(json?.error)) {
-          showFieldError('phone', String(json.error));
+        const message = String(json?.error || 'ارسال کد ناموفق بود. دوباره تلاش کن.');
+        if (fieldLooksLikePhone(message)) {
+          showFieldError('phone', message);
+          setStep('form');
         } else {
-          setError(json?.error || 'ارسال کد ناموفق بود. دوباره تلاش کن.');
+          setError(message);
         }
         return false;
       }
@@ -161,13 +189,15 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
       setResendSeconds(Number.isFinite(retry) && retry > 0 ? retry : 60);
       setStep('otp');
       setOtp('');
-      setNotice('کد تأیید به شماره موبایلت پیامک شد.');
+      let successNotice = 'کد تأیید به شماره موبایلت پیامک شد. کد ۵ رقمی را وارد کن.';
       if (typeof json?.data?.devCode === 'string' && process.env.NODE_ENV !== 'production') {
-        setNotice(`کد تأیید (حالت توسعه): ${fa(json.data.devCode)}`);
+        successNotice = `کد تأیید (حالت توسعه): ${fa(json.data.devCode)}`;
       }
+      setNotice(successNotice);
       return true;
     } catch {
-      setError('خطایی رخ داد. دوباره تلاش کن.');
+      setNotice('');
+      setError('ارتباط با سرور برقرار نشد. اتصال اینترنت را بررسی کن و دوباره تلاش کن.');
       return false;
     } finally {
       setLoading(false);
@@ -176,6 +206,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
   const handleFormContinue = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     clearFeedback();
 
     const phoneError = validatePhoneInput(phone);
@@ -194,6 +225,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     clearFeedback();
 
     const otpError = validateOtpInput(otp);
@@ -231,6 +263,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
 
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     clearFeedback();
 
     const passwordError = validateAuthPassword(password);
@@ -304,7 +337,13 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
         />
 
         <AuthFormCard>
-          <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+          <form
+            method="post"
+            action="#"
+            onSubmit={onSubmit}
+            className="flex flex-col gap-4"
+            noValidate
+          >
             {step === 'form' ? (
               <>
                 {isRegister ? (
@@ -320,6 +359,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                       onChange={(e) => setName(e.target.value)}
                       placeholder="مثلاً رامین"
                       autoComplete="name"
+                      disabled={loading}
                     />
                   </>
                 ) : null}
@@ -338,6 +378,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
                   required
                   dir="ltr"
                   autoFocus
+                  disabled={loading}
                   error={fieldErrorTarget === 'phone' ? fieldError : undefined}
                 />
               </>
@@ -508,11 +549,7 @@ export default function AuthScreen({ mode, callbackUrl, signupSource = 'direct' 
               </>
             ) : null}
 
-            {notice ? (
-              <p role="status" className="wibe-caption text-muted-foreground">
-                {notice}
-              </p>
-            ) : null}
+            {notice ? <AuthStatusNotice message={notice} tone={error ? 'muted' : 'success'} /> : null}
 
             {error ? <AuthErrorAlert message={error} /> : null}
 
@@ -644,7 +681,31 @@ function AuthErrorAlert({ message }: { message: string }) {
   return (
     <div
       role="alert"
+      aria-live="assertive"
       className="rounded-xl border border-destructive/30 bg-destructive/10 px-4! py-3! wibe-small text-destructive"
+    >
+      {message}
+    </div>
+  );
+}
+
+function AuthStatusNotice({
+  message,
+  tone = 'success',
+}: {
+  message: string;
+  tone?: 'success' | 'muted';
+}) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className={cn(
+        'rounded-xl px-4! py-3! wibe-small',
+        tone === 'success'
+          ? 'border border-border bg-muted text-foreground'
+          : 'text-muted-foreground'
+      )}
     >
       {message}
     </div>

@@ -14,7 +14,17 @@ function RegisterContent() {
   const searchParams = useSearchParams();
   const callbackUrl = safeCallbackUrl(searchParams.get('callbackUrl'));
   const signupSource = resolveSignupSource(searchParams.get('source'));
-  return <AuthScreen mode="register" callbackUrl={callbackUrl} signupSource={signupSource} />;
+  const initialPhone = searchParams.get('tel') ?? searchParams.get('phone') ?? '';
+  const initialName = searchParams.get('name') ?? '';
+  return (
+    <AuthScreen
+      mode="register"
+      callbackUrl={callbackUrl}
+      signupSource={signupSource}
+      initialPhone={initialPhone}
+      initialName={initialName}
+    />
+  );
 }
 
 export default function RegisterPage() {

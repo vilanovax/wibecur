@@ -6,7 +6,7 @@ import HorizontalScrollFade from '@/components/shared/HorizontalScrollFade';
 export type CategoryFilter = 'newest' | 'viral' | 'saves' | 'nearby' | 'cheap' | 'luxury' | 'outdoor';
 
 const FILTERS: { id: CategoryFilter; label: string }[] = [
-  { id: 'newest', label: 'جدید' },
+  { id: 'newest', label: 'تازه‌ترین' },
   { id: 'viral', label: 'وایرال' },
   { id: 'saves', label: 'بیشترین ذخیره' },
   { id: 'nearby', label: 'نزدیک من' },

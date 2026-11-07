@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Filter, Bookmark, Flame, Search, Globe } from 'lucide-react';
+import { Filter, Bookmark, Flame, Search, Globe, Plus } from 'lucide-react';
 import type { ListsBrowseList } from '@/lib/lists-browse-shared';
 import ListCardCompact from '@/components/mobile/lists/ListCardCompact';
 import WibeEmptyState from '@/components/shared/WibeEmptyState';
@@ -92,10 +92,13 @@ const VIBE_CHIPS: { value: VibeFilter; label: string }[] = [
 
 const BROWSE_MODES: { value: BrowseMode; label: string }[] = [
   { value: 'trending', label: 'ترند' },
-  { value: 'newest', label: 'جدید' },
+  // «جدید» شبیه ساخت لیست بود؛ تازه‌ترین = مرتب‌سازی زمانی
+  { value: 'newest', label: 'تازه‌ترین' },
   { value: 'popular', label: 'محبوب' },
   { value: 'saved', label: 'ذخیره‌شده' },
 ];
+
+const CREATE_LIST_HREF = '/explore?openCreate=1';
 
 function matchVibe(
   list: ListWithCategory,
@@ -831,6 +834,10 @@ export default function ListsPageClient({
   const toolbarBtnFocus =
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
 
+  const createListHref = isGuest
+    ? `/login?callbackUrl=${encodeURIComponent(CREATE_LIST_HREF)}`
+    : CREATE_LIST_HREF;
+
   return (
     <div className="w-full min-w-0 space-y-0 pb-6 lg:pb-4">
       <JsonLdBreadcrumb items={uiBreadcrumbToSchema(breadcrumbItems)} />
@@ -893,6 +900,15 @@ export default function ListsPageClient({
                 <Filter className="h-4 w-4" />
                 <span className="text-sm font-medium">فیلتر</span>
               </Button>
+              <Link
+                href={createListHref}
+                aria-label="ساخت لیست شخصی"
+                title="ساخت لیست"
+                className={`inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-3 text-sm font-semibold text-brand-foreground shadow-control transition-colors hover:bg-brand/90 ${toolbarBtnFocus}`}
+              >
+                <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
+                <span>ساخت لیست</span>
+              </Link>
             </div>
           </div>
 
@@ -1007,7 +1023,7 @@ export default function ListsPageClient({
             icon="📋"
             title="هنوز لیستی اینجا نیست"
             description="از صفحه خانه چند وایب ذخیره کن یا اولین لیستت را خودت بساز."
-            primaryAction={{ label: 'ساخت لیست', href: '/explore?openCreate=1' }}
+            primaryAction={{ label: 'ساخت لیست', href: createListHref }}
             secondaryAction={{ label: 'رفتن به خانه', href: '/' }}
           />
         ) : searchLoading && isSearchActive ? (
@@ -1026,6 +1042,7 @@ export default function ListsPageClient({
               }))
             }
             hasFilters={hasAdvancedFilters || filterState.categories.size > 0}
+            createHref={createListHref}
           />
         ) : sortedLists.length === 0 ? (
           <SearchEmptyState
@@ -1041,6 +1058,7 @@ export default function ListsPageClient({
               }))
             }
             hasFilters={hasAdvancedFilters || filterState.categories.size > 0}
+            createHref={createListHref}
           />
         ) : useSectionLayout ? (
           <>
@@ -1288,11 +1306,13 @@ function SearchEmptyState({
   onClear,
   onResetFilters,
   hasFilters,
+  createHref = CREATE_LIST_HREF,
 }: {
   query: string;
   onClear: () => void;
   onResetFilters: () => void;
   hasFilters: boolean;
+  createHref?: string;
 }) {
   const trimmed = normalizeSearchQuery(query);
   return (
@@ -1310,7 +1330,7 @@ function SearchEmptyState({
       secondaryAction={
         hasFilters ? { label: 'پاک کردن فیلترها', onClick: onResetFilters } : undefined
       }
-      tertiaryAction={{ label: 'ساخت لیست جدید', href: '/explore?openCreate=1' }}
+      tertiaryAction={{ label: 'ساخت لیست جدید', href: createHref }}
     />
   );
 }

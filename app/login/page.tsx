@@ -13,7 +13,10 @@ function safeCallbackUrl(raw: string | null): string {
 function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = safeCallbackUrl(searchParams.get('callbackUrl'));
-  return <AuthScreen mode="login" callbackUrl={callbackUrl} />;
+  const initialPhone = searchParams.get('tel') ?? searchParams.get('phone') ?? '';
+  return (
+    <AuthScreen mode="login" callbackUrl={callbackUrl} initialPhone={initialPhone} />
+  );
 }
 
 export default function LoginPage() {
