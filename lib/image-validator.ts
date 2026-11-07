@@ -74,18 +74,12 @@ async function readImageMetadata(buffer: Buffer): Promise<Metadata> {
     try {
       return await sharp(buffer, { failOn: 'truncated', animated: false }).metadata();
     } catch {
-      // آخرین تلاش: decode اجباری با re-encode
+      // آخرین تلاش: decode اجباری با re-encode سپس metadata واقعی
       try {
         const decoded = await sharp(buffer, { failOn: 'none', animated: true })
           .rotate()
-          .toBuffer({ resolveWithObject: true });
-        return {
-          ...decoded.info,
-          format: decoded.info.format,
-          width: decoded.info.width,
-          height: decoded.info.height,
-          channels: decoded.info.channels,
-        } as Metadata;
+          .toBuffer();
+        return await sharp(decoded).metadata();
       } catch {
         throw firstError;
       }
@@ -141,7 +135,7 @@ export async function validateImage(
           width: dims.width,
           height: dims.height,
           channels: 3,
-        } as Metadata;
+        } as unknown as Metadata;
       }
     }
 
@@ -153,7 +147,7 @@ export async function validateImage(
         width: 1,
         height: 1,
         channels: sniffed === 'png' ? 4 : 3,
-      } as Metadata;
+      } as unknown as Metadata;
     }
 
     if (!metadata) {
