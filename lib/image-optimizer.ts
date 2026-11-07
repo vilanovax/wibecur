@@ -295,7 +295,7 @@ export async function optimizeImageDetailed(
 
   try {
     const sharp = await getSharp();
-    const metadata = await sharp(normalized).metadata();
+    const metadata = await sharp(normalized, { failOn: 'none', animated: true }).metadata();
     const width = metadata.width || 0;
     const height = metadata.height || 0;
 
@@ -355,7 +355,9 @@ export async function optimizeImageDetailed(
       );
     } catch {
       const sharp = await getSharp();
-      const metadata = await sharp(normalized).metadata().catch(() => null);
+      const metadata = await sharp(normalized, { failOn: 'none', animated: true })
+        .metadata()
+        .catch(() => null);
       const { ext, contentType } = formatMeta(metadata?.format);
       return buildResult(normalized, contentType, ext, originalSize, true, {
         width: metadata?.width,

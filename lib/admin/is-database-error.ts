@@ -9,7 +9,9 @@ export function isDatabaseConnectionError(error: unknown): boolean {
     msg.includes('Connection refused') ||
     msg.includes('ECONNREFUSED') ||
     msg.includes('ETIMEDOUT') ||
-    msg.includes('Connection timed out')
+    msg.includes('Connection timed out') ||
+    msg.includes("Can't assign requested address") ||
+    msg.includes('AddrNotAvailable')
   );
 }
 

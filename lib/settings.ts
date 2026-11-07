@@ -42,30 +42,25 @@ function defaultSettingsFallback(): SettingsRow {
 }
 
 /**
- * Get or create settings (singleton) — بدون کش
+ * Get or create settings (singleton) — بدون کش.
+ * روی خطای اتصال throw می‌کند تا unstable_cache، کانفیگ خالی را کش نکند
+ * (کش‌شدن fallback باعث ۵۰۰ آپلود Object Storage تا چند دقیقه می‌شد).
  */
 async function loadSettings() {
-  try {
-    let settings = await prisma.settings.findUnique({
-      where: { id: 'settings' },
+  let settings = await prisma.settings.findUnique({
+    where: { id: 'settings' },
+  });
+
+  if (!settings) {
+    settings = await prisma.settings.create({
+      data: {
+        id: 'settings',
+        updatedAt: new Date(),
+      },
     });
-
-    if (!settings) {
-      settings = await prisma.settings.create({
-        data: {
-          id: 'settings',
-          updatedAt: new Date(),
-        },
-      });
-    }
-
-    return settings;
-  } catch (error) {
-    if (isDatabaseConnectionError(error)) {
-      return defaultSettingsFallback();
-    }
-    throw error;
   }
+
+  return settings;
 }
 
 /**
@@ -81,7 +76,7 @@ const getCachedSettings = unstable_cache(loadSettings, ['site-settings'], {
  * Get or create settings (singleton).
  * - `cache()` React: dedupe داخل یک request (مثلاً چند صدا در layout).
  * - `unstable_cache`: dedupe بین request‌ها تا کوئری DB از مسیر بحرانی حذف شود.
- * - خارج از Next request (اسکریپت‌ها): مستقیم از DB بدون cache.
+ * - خطای اتصال DB هرگز کش نمی‌شود؛ فقط همان request به fallback می‌رود.
  */
 export const getSettings = cache(async () => {
   try {
@@ -89,7 +84,19 @@ export const getSettings = cache(async () => {
   } catch (error) {
     const msg = String((error as Error)?.message ?? error ?? '');
     if (msg.includes('incrementalCache')) {
-      return loadSettings();
+      try {
+        return await loadSettings();
+      } catch (inner) {
+        if (isDatabaseConnectionError(inner)) return defaultSettingsFallback();
+        throw inner;
+      }
+    }
+    if (isDatabaseConnectionError(error)) {
+      try {
+        return await loadSettings();
+      } catch {
+        return defaultSettingsFallback();
+      }
     }
     throw error;
   }

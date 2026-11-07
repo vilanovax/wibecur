@@ -64,10 +64,20 @@ export async function POST(request: NextRequest) {
 
     const uploaded = await uploadImageBufferDetailed(buffer, file.type, folder, profile);
 
-    if (!uploaded?.url) {
+    if (!uploaded.ok) {
+      console.error('[admin/upload] storage failed', {
+        purpose,
+        profile,
+        folder,
+        code: uploaded.code,
+        error: uploaded.error,
+      });
       return NextResponse.json(
-        { error: 'خطا در آپلود فایل به Object Storage' },
-        { status: 500 }
+        {
+          error: uploaded.error || 'خطا در آپلود فایل به Object Storage',
+          errorCode: uploaded.code,
+        },
+        { status: uploaded.code === 'storage_not_configured' ? 503 : 500 }
       );
     }
 

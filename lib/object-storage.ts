@@ -33,16 +33,53 @@ function sleep(ms: number) {
 
 function formatStorageUploadError(error: unknown): string {
   const msg = String((error as Error)?.message ?? error ?? '');
-  if (msg.includes('ECONNREFUSED')) {
+  const name = String((error as { name?: string })?.name ?? '');
+  const code = String((error as { Code?: string; code?: string })?.Code
+    ?? (error as { code?: string })?.code
+    ?? '');
+  if (msg.includes('ECONNREFUSED') || code === 'ECONNREFUSED') {
     return 'اتصال به ParsPack برقرار نشد — لطفاً چند لحظه بعد دوباره تلاش کنید.';
   }
-  if (msg.includes('ETIMEDOUT') || msg.includes('timeout')) {
+  if (msg.includes('ETIMEDOUT') || msg.includes('timeout') || name === 'TimeoutError') {
     return 'زمان اتصال به ParsPack تمام شد — دوباره تلاش کنید.';
   }
-  if (msg.includes('NetworkingError') || msg.includes('ENOTFOUND')) {
+  if (msg.includes('NetworkingError') || msg.includes('ENOTFOUND') || code === 'ENOTFOUND') {
     return 'خطای شبکه در اتصال به ParsPack.';
   }
+  if (
+    code === 'InvalidAccessKeyId' ||
+    code === 'SignatureDoesNotMatch' ||
+    msg.includes('InvalidAccessKeyId') ||
+    msg.includes('SignatureDoesNotMatch')
+  ) {
+    return 'کلید دسترسی ParsPack نامعتبر است — Access Key و Secret Key را در تنظیمات بررسی کنید.';
+  }
+  if (code === 'AccessDenied' || msg.includes('AccessDenied') || msg.includes('Access Denied')) {
+    return 'دسترسی آپلود به باکت ParsPack رد شد — دسترسی کلید و policy باکت را بررسی کنید.';
+  }
+  if (code === 'NoSuchBucket' || msg.includes('NoSuchBucket')) {
+    return 'باکت ParsPack پیدا نشد — نام باکت را در تنظیمات بررسی کنید.';
+  }
   return msg || 'خطا در آپلود به ParsPack';
+}
+
+function isRetryableStorageError(error: unknown): boolean {
+  const msg = String((error as Error)?.message ?? '');
+  const name = String((error as { name?: string })?.name ?? '');
+  const httpStatus = Number((error as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode ?? 0);
+  return (
+    msg.includes('ECONNREFUSED') ||
+    msg.includes('ETIMEDOUT') ||
+    msg.includes('timeout') ||
+    msg.includes('socket hang up') ||
+    msg.includes('ECONNRESET') ||
+    msg.includes('SlowDown') ||
+    msg.includes('ServiceUnavailable') ||
+    name === 'TimeoutError' ||
+    httpStatus === 503 ||
+    httpStatus === 500 ||
+    httpStatus === 429
+  );
 }
 
 async function withStorageRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
@@ -52,13 +89,7 @@ async function withStorageRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<
       return await fn();
     } catch (error) {
       lastError = error;
-      const msg = String((error as Error)?.message ?? '');
-      const retryable =
-        msg.includes('ECONNREFUSED') ||
-        msg.includes('ETIMEDOUT') ||
-        msg.includes('timeout') ||
-        msg.includes('socket hang up');
-      if (!retryable || i === attempts - 1) break;
+      if (!isRetryableStorageError(error) || i === attempts - 1) break;
       await sleep(400 * (i + 1));
     }
   }
@@ -85,47 +116,71 @@ async function getS3Client() {
   });
 }
 
+async function putObjectToBucket(
+  client: S3Client,
+  uploadParams: {
+    Bucket: string;
+    Key: string;
+    Body: Buffer;
+    ContentType: string;
+  }
+): Promise<void> {
+  // ParsPack معمولاً با bucket policy عمومی است و ACL را پشتیبانی نمی‌کند —
+  // اول بدون ACL؛ اگر سرور ACL خواست، یک‌بار با public-read تکرار کن.
+  await withStorageRetry(async () => {
+    try {
+      const upload = new Upload({ client, params: uploadParams });
+      await upload.done();
+    } catch (err: unknown) {
+      const msg = String((err as Error)?.message ?? '');
+      const wantsAcl =
+        msg.includes('AccessControlList') ||
+        msg.includes('ACL') ||
+        msg.includes('public-read');
+      if (!wantsAcl) throw err;
+      const upload = new Upload({
+        client,
+        params: { ...uploadParams, ACL: 'public-read' as const },
+      });
+      await upload.done();
+    }
+  });
+}
+
 async function uploadBufferToStorage(
   buffer: Buffer,
-  contentType: string,
+  _contentType: string,
   folder: string,
   profile: ImageProfile
-): Promise<{ url: string; optimization: Awaited<ReturnType<typeof optimizeImageDetailed>> } | null> {
+): Promise<{ url: string; optimization: Awaited<ReturnType<typeof optimizeImageDetailed>> }> {
   const client = await getS3Client();
   const config = await getObjectStorageConfig();
-  if (!client || !config) return null;
+  if (!client || !config) {
+    const { checkObjectStorageReady } = await import('./object-storage-readiness');
+    const readiness = await checkObjectStorageReady();
+    throw new Error(readiness.error || 'ParsPack Object Storage پیکربندی نشده است');
+  }
 
   const optimized = await optimizeImageDetailed(buffer, { profile });
+  if (!optimized.buffer?.length) {
+    throw new Error('بهینه‌سازی تصویر خروجی خالی برگرداند');
+  }
+
   const filename = `${crypto.randomUUID()}${optimized.ext}`;
   const key = buildStorageObjectKey(folder, filename);
 
-  if (isDev) {
-    console.log('Uploading to ParsPack:', key, {
-      profile,
-      bytes: optimized.optimizedBytes,
-      dimensions: `${optimized.width ?? '?'}x${optimized.height ?? '?'}`,
-    });
-  }
+  console.info('[storage] uploading', {
+    key,
+    profile,
+    bytes: optimized.optimizedBytes,
+    dimensions: `${optimized.width ?? '?'}x${optimized.height ?? '?'}`,
+  });
 
-  const uploadParams = {
+  await putObjectToBucket(client, {
     Bucket: config.bucketName,
     Key: key,
     Body: optimized.buffer,
     ContentType: optimized.contentType,
-  };
-
-  await withStorageRetry(async () => {
-    try {
-      const upload = new Upload({
-        client,
-        params: { ...uploadParams, ACL: 'public-read' },
-      });
-      await upload.done();
-    } catch (aclErr: unknown) {
-      if (isDev) console.warn('ACL upload failed, retrying without ACL:', (aclErr as Error).message);
-      const upload = new Upload({ client, params: uploadParams });
-      await upload.done();
-    }
   });
 
   return {
@@ -148,15 +203,7 @@ export async function uploadWebpBuffer(buffer: Buffer, folder: string): Promise<
     ContentType: 'image/webp',
   };
 
-  await withStorageRetry(async () => {
-    try {
-      const upload = new Upload({ client, params: { ...uploadParams, ACL: 'public-read' } });
-      await upload.done();
-    } catch {
-      const upload = new Upload({ client, params: uploadParams });
-      await upload.done();
-    }
-  });
+  await putObjectToBucket(client, uploadParams);
 
   return buildStoragePublicUrl(config, key);
 }
@@ -247,14 +294,6 @@ export async function uploadImageFromUrlDetailed(
       profile ?? profileForFolder(folder)
     );
 
-    if (!publicUrl) {
-      return {
-        ok: false,
-        code: 'upload_failed',
-        error: 'خطا در آپلود به ParsPack',
-      };
-    }
-
     if (isDev) console.log('Image uploaded:', publicUrl.url);
     return { ok: true, url: publicUrl.url };
   } catch (error: unknown) {
@@ -276,24 +315,26 @@ export async function uploadImageFromUrl(
   return result.ok ? result.url : null;
 }
 
+export type UploadImageBufferDetailedResult =
+  | {
+      ok: true;
+      url: string;
+      optimization: Awaited<ReturnType<typeof optimizeImageDetailed>>;
+    }
+  | {
+      ok: false;
+      code: 'storage_not_configured' | 'upload_failed';
+      error: string;
+    };
+
 export async function uploadImageBuffer(
   buffer: Buffer,
   contentType: string = 'image/jpeg',
   folder: string = 'images',
   profile?: ImageProfile
 ): Promise<string | null> {
-  try {
-    const result = await uploadBufferToStorage(
-      buffer,
-      contentType,
-      folder,
-      profile ?? profileForFolder(folder)
-    );
-    return result?.url ?? null;
-  } catch (error: unknown) {
-    console.error('Error uploading image:', formatStorageUploadError(error));
-    return null;
-  }
+  const result = await uploadImageBufferDetailed(buffer, contentType, folder, profile);
+  return result.ok ? result.url : null;
 }
 
 export async function uploadImageBufferDetailed(
@@ -301,17 +342,25 @@ export async function uploadImageBufferDetailed(
   contentType: string = 'image/jpeg',
   folder: string = 'images',
   profile?: ImageProfile
-) {
+): Promise<UploadImageBufferDetailedResult> {
   try {
-    return await uploadBufferToStorage(
+    const uploaded = await uploadBufferToStorage(
       buffer,
       contentType,
       folder,
       profile ?? profileForFolder(folder)
     );
+    return { ok: true, url: uploaded.url, optimization: uploaded.optimization };
   } catch (error: unknown) {
-    console.error('Error uploading image:', formatStorageUploadError(error));
-    return null;
+    const message = formatStorageUploadError(error);
+    console.error('[storage] uploadImageBufferDetailed failed:', message, error);
+    const notConfigured =
+      message.includes('پیکربندی نشده') || message.includes('کامل نیست');
+    return {
+      ok: false,
+      code: notConfigured ? 'storage_not_configured' : 'upload_failed',
+      error: message,
+    };
   }
 }
 
@@ -610,13 +659,18 @@ export async function ensureImageInLiara(
   if (isOurStorageUrl(normalized) && options?.forceOptimize) {
     const existing = await getObjectByPublicUrl(normalized);
     if (existing?.buffer?.length) {
-      const reuploaded = await uploadBufferToStorage(
-        existing.buffer,
-        existing.contentType || 'image/png',
-        folder,
-        profile
-      );
-      return reuploaded?.url ?? normalized;
+      try {
+        const reuploaded = await uploadBufferToStorage(
+          existing.buffer,
+          existing.contentType || 'image/png',
+          folder,
+          profile
+        );
+        return reuploaded.url;
+      } catch (error) {
+        console.error('[storage] forceOptimize reupload failed:', formatStorageUploadError(error));
+        return normalized;
+      }
     }
     return normalized;
   }
