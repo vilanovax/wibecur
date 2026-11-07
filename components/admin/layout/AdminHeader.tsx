@@ -384,7 +384,7 @@ export default function AdminHeader() {
         <div className="flex items-center gap-2">
           <RoleBadge
             role={session?.user?.role as string}
-            className="!bg-indigo-100 dark:!bg-indigo-900/40 !text-indigo-700 dark:!text-indigo-200 !border-0 px-3 py-1 rounded-full"
+            className="bg-indigo-100! dark:bg-indigo-900/40! text-indigo-700! dark:text-indigo-200! border-0! px-3 py-1 rounded-full"
           />
         </div>
 

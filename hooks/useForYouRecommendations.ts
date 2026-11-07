@@ -92,21 +92,23 @@ export function useForYouRecommendations(options?: { enabled?: boolean }) {
   );
 }
 
+/**
+ * بج کوتاهِ «چرا پیشنهاد شد» — بدون نام دسته (تکراری و truncate روی کارت).
+ */
 export function getForYouReasonLabel(
   list: ForYouList,
   isPersonalized: boolean
 ): string | null {
-  if (isPersonalized) {
-    if (list.reasonType === 'similar') {
-      return '🔗 مشابه ذخیره‌های تو';
-    }
-    if (list.reasonType === 'category' && list.categories?.name) {
-      const icon = list.categories.icon ? `${list.categories.icon} ` : '';
-      return `${icon}پیشنهاد در ${list.categories.name}`;
-    }
+  if (!isPersonalized) return null;
+
+  if (list.reasonType === 'similar') {
+    return 'مشابه ذخیره‌ها';
   }
-  if (list.categories?.name) {
-    return `${list.categories.icon ?? ''} ${list.categories.name}`.trim();
+  if (list.reasonType === 'category') {
+    return 'بر اساس علاقه‌ات';
+  }
+  if (list.reasonType === 'popular') {
+    return 'محبوب در وایب';
   }
   return null;
 }

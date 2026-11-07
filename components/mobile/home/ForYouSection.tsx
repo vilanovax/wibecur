@@ -123,7 +123,7 @@ export default function ForYouSection({ embedded = false, fetchEnabled: fetchEna
             key={list.id}
             list={list}
             badge={badgeFor(list)}
-            badgeClassName="max-w-32 truncate bg-brand text-brand-foreground"
+            badgeClassName="bg-brand text-brand-foreground"
             homeSection="for_you"
           />
         ))}
