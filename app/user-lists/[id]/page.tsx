@@ -57,12 +57,17 @@ async function UserListDetailContent({ id }: { id: string }) {
       currentUserId = userFromEmail?.id ?? null;
     }
 
-    if (!list || !list.isActive || list.deletedAt) {
+    if (!list || list.deletedAt) {
       notFound();
     }
 
     const ownerRole = list.users?.role;
     const isOwner = currentUserId === list.userId;
+
+    // پیش‌نویس (isActive=false) فقط برای صاحب لیست باز است — نه soft-404 برای owner
+    if (!list.isActive && !isOwner) {
+      notFound();
+    }
 
     // Public curated/admin lists stay on /lists/[slug]; block here unless owner.
     if (list.isPublic && ownerRole && ownerRole !== 'USER' && !isOwner) {

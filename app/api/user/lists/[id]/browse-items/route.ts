@@ -46,7 +46,11 @@ export async function GET(
       where: { id: listId },
       select: { id: true, userId: true, deletedAt: true, isActive: true },
     });
-    if (!list || !list.isActive || list.deletedAt) {
+    if (!list || list.deletedAt) {
+      return NextResponse.json({ success: false, error: 'لیست یافت نشد' }, { status: 404 });
+    }
+    const isOwner = list.userId === userId;
+    if (!list.isActive && !isOwner) {
       return NextResponse.json({ success: false, error: 'لیست یافت نشد' }, { status: 404 });
     }
 

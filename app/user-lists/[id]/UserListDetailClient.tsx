@@ -316,6 +316,25 @@ export default function UserListDetailClient({
           </section>
 
           <div className="space-y-4 px-4">
+            {isOwner && list.isActive === false ? (
+              <Card className="space-y-2 border-warning/30 bg-warning/10 p-4">
+                <p className="text-sm font-medium text-foreground">این لیست هنوز پیش‌نویس است</p>
+                <p className="wibe-caption text-muted-foreground">
+                  از تنظیمات می‌توانی توضیحات و کاور بگذاری و بعد از تکمیل، عمومی‌اش کنی. تا وقتی
+                  خصوصی است، یک جای سقف لیست‌های خصوصی را اشغال می‌کند.
+                </p>
+                <Button
+                  type="button"
+                  variant="brand"
+                  size="lg"
+                  className="min-h-11 w-full"
+                  onClick={() => setShowSettings(true)}
+                >
+                  تکمیل و تنظیمات
+                </Button>
+              </Card>
+            ) : null}
+
             {pendingCollaboration && (
               <Card className="space-y-3 border-brand/20 bg-brand/5 p-4">
                 <p className="text-sm text-foreground">

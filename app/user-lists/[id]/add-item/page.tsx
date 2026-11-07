@@ -51,7 +51,13 @@ export default async function AddItemPage({
     })
   );
 
-  if (!list || !list.isActive) {
+  if (!list) {
+    notFound();
+  }
+
+  const isOwner = Boolean(currentUserId && currentUserId === list.userId);
+  // پیش‌نویس فقط برای صاحب لیست قابل افزودن آیتم است
+  if (!list.isActive && !isOwner) {
     notFound();
   }
 
