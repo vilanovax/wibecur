@@ -9,6 +9,7 @@ import PWAProvider from '@/components/providers/PWAProvider';
 import ChunkLoadRecovery from '@/components/providers/ChunkLoadRecovery';
 import CapacitorProvider from '@/components/providers/CapacitorProvider';
 import MainContainer from '@/components/providers/MainContainer';
+import SkipToMain from '@/components/shared/SkipToMain';
 import { SiteBrandingProvider } from '@/contexts/SiteBrandingContext';
 import { getSiteBrandingForLayout, getSiteLogoUrl } from '@/lib/site-branding';
 import { serializeJsonLd } from '@/lib/json-ld';
@@ -143,9 +144,7 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
         />
-        <a href="#main" className="skip-link">
-          رفتن به محتوای اصلی
-        </a>
+        <SkipToMain />
         <SessionProvider>
           <QueryProvider>
             <SiteBrandingProvider logoUrl={logoUrl} logoDisplayUrl={logoDisplayUrl}>

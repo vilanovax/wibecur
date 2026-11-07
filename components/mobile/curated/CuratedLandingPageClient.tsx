@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
 import ExploreSmartHero from './ExploreSmartHero';
@@ -59,8 +59,9 @@ export default function CuratedLandingPageClient({
   /** @deprecated دسته‌ها به لینک آرام /lists منتقل شدند */
   categoriesSlot?: ReactNode;
 }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const [searchQuery, setSearchQuery] = useState('');
   const searchEnabled = searchQuery.trim().length >= SEARCH_MIN_LENGTH;
   const search = useUnifiedSearchQuery(searchQuery, { enabled: searchEnabled });
@@ -147,14 +148,27 @@ export default function CuratedLandingPageClient({
   }, []);
 
   useEffect(() => {
-    if (searchParams.get('openCreate') === '1') {
-      setIsCreateFormOpen(true);
-      setCreateCategoryHint(searchParams.get('category'));
-      if (typeof window !== 'undefined') {
-        window.history.replaceState({}, '', '/explore');
-      }
+    if (searchParams.get('openCreate') !== '1') return;
+    if (sessionStatus === 'loading') return;
+
+    const category = searchParams.get('category');
+    const returnPath = category
+      ? `/explore?openCreate=1&category=${encodeURIComponent(category)}`
+      : '/explore?openCreate=1';
+
+    if (!session?.user?.id) {
+      router.replace(
+        `/login?callbackUrl=${encodeURIComponent(returnPath)}&source=create_list`
+      );
+      return;
     }
-  }, [searchParams]);
+
+    setIsCreateFormOpen(true);
+    setCreateCategoryHint(category);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, '', '/explore');
+    }
+  }, [searchParams, session?.user?.id, sessionStatus, router]);
 
   const createForm = isCreateFormOpen ? (
     <CreateListFormLazy

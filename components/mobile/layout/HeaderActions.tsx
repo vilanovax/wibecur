@@ -98,6 +98,7 @@ export default function HeaderActions({
   const profileHref = session?.user
     ? '/profile'
     : `/login?callbackUrl=${encodeURIComponent(pathname || '/')}`;
+  const registerHref = `/register?callbackUrl=${encodeURIComponent(pathname || '/')}`;
 
   const updatePosition = useCallback(() => {
     const el = buttonRef.current;
@@ -276,16 +277,41 @@ export default function HeaderActions({
             {!hideNotifications && <NotificationSheet center={notifications} />}
           </>
         ) : (
-          <Link href={profileHref} className={avatarButtonClass} aria-label="ورود به حساب">
-            <span className={avatarInnerClass}>
-              <AccountAvatar
-                profile={profile}
-                userName={userName}
-                isDark={isDark}
-                isGuest={isGuest}
-              />
-            </span>
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <Link
+              href={profileHref}
+              className={`inline-flex h-11 min-h-11 items-center gap-2 rounded-full pe-3 ps-0.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 ${
+                isDark ? 'hover:bg-foreground/80' : 'hover:bg-muted'
+              }`}
+              aria-label="ورود به حساب"
+            >
+              <span className={avatarInnerClass}>
+                <AccountAvatar
+                  profile={profile}
+                  userName={userName}
+                  isDark={isDark}
+                  isGuest={isGuest}
+                />
+              </span>
+              <span
+                className={`pe-1 text-sm font-semibold ${
+                  isDark ? 'text-white' : 'text-foreground'
+                }`}
+              >
+                ورود
+              </span>
+            </Link>
+            <Link
+              href={registerHref}
+              className={`inline-flex h-11 min-h-11 items-center rounded-full px-3 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 ${
+                isDark
+                  ? 'bg-white/10 text-white hover:bg-white/20'
+                  : 'bg-brand/10 text-brand hover:bg-brand/15'
+              }`}
+            >
+              ثبت‌نام
+            </Link>
+          </div>
         ))}
     </div>
   );

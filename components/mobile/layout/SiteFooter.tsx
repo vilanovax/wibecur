@@ -85,7 +85,7 @@ export default function SiteFooter({ variant = 'desktop' }: SiteFooterProps) {
           <div className="flex flex-col items-center gap-2 text-center lg:items-start lg:text-start">
             <SiteLogo variant="nav" href="/" />
             <p className="max-w-xs text-sm text-muted-foreground">
-              کشف و اشتراک‌گذاری لیست‌های کیوریتد
+              کشف و اشتراک لیست‌های پیشنهادی فیلم، کتاب و کافه
             </p>
           </div>
 

@@ -326,7 +326,7 @@ export default function AuthScreen({
 
   return (
     <AuthShell mode={isRegister ? 'register' : 'login'}>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 lg:gap-6">
         <AuthBrandHeader
           title={isRegister ? 'ساخت حساب' : 'ورود'}
           subtitle={
@@ -346,24 +346,7 @@ export default function AuthScreen({
           >
             {step === 'form' ? (
               <>
-                {isRegister ? (
-                  <>
-                    <RegisterAvatarPicker value={avatarId} onChange={setAvatarId} />
-                    <AuthField
-                      id="auth-name"
-                      label="نام"
-                      hint="اختیاری — در پروفایل نمایش داده می‌شود"
-                      type="text"
-                      name="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="مثلاً رامین"
-                      autoComplete="name"
-                      disabled={loading}
-                    />
-                  </>
-                ) : null}
-
+                {/* موبایل SE: شماره + CTA اول؛ آواتار/نام اختیاری پایین‌تر */}
                 <AuthField
                   id="auth-phone"
                   label="شماره موبایل"
@@ -583,6 +566,25 @@ export default function AuthScreen({
               </AuthPrimaryButton>
             ) : null}
 
+            {step === 'form' && isRegister ? (
+              <div className="flex flex-col gap-3 border-t border-border pt-4">
+                <p className="wibe-caption text-muted-foreground">اختیاری — بعداً هم می‌شود عوض کرد</p>
+                <AuthField
+                  id="auth-name"
+                  label="نام"
+                  hint="در پروفایل نمایش داده می‌شود"
+                  type="text"
+                  name="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="مثلاً رامین"
+                  autoComplete="name"
+                  disabled={loading}
+                />
+                <RegisterAvatarPicker value={avatarId} onChange={setAvatarId} />
+              </div>
+            ) : null}
+
             {step === 'method' && loading ? (
               <div className="flex min-h-11 items-center justify-center gap-2 wibe-small text-muted-foreground">
                 <Loader2 className="size-5 animate-spin" aria-hidden />
@@ -728,7 +730,7 @@ function AuthPrimaryButton({
       size="lg"
       disabled={loading}
       aria-busy={loading}
-      className="w-full"
+      className="min-h-12 w-full focus-visible:ring-2 focus-visible:ring-brand/40"
     >
       {loading ? (
         <>

@@ -39,9 +39,12 @@ export default function AuthShell({ children, mode = 'login' }: AuthShellProps) 
 
       <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-6xl flex-col lg:flex-row lg:items-stretch">
         {/* فرم اول در DOM → در RTL سمت شروع (راست) */}
-        <div className="flex w-full flex-1 flex-col px-4! pt-4! pb-[max(1.5rem,env(safe-area-inset-bottom))]! lg:max-w-md lg:px-8! lg:pt-8! lg:pb-8! xl:max-w-lg">
+        <div className="flex w-full flex-1 flex-col px-4! pt-2! pb-[max(1.5rem,env(safe-area-inset-bottom))]! lg:max-w-md lg:px-8! lg:pt-8! lg:pb-8! xl:max-w-lg">
           <div className="flex w-full max-w-sm flex-1 flex-col self-center lg:max-w-none">
-            <div className="flex flex-1 flex-col justify-center py-4! lg:py-0!">{children}</div>
+            {/* موبایل: فرم از بالا تا فیلد+CTA بالای fold بماند؛ دسکتاپ وسط‌چین */}
+            <div className="flex flex-1 flex-col justify-start py-2! lg:justify-center lg:py-0!">
+              {children}
+            </div>
           </div>
         </div>
 
@@ -97,8 +100,8 @@ function AuthVisualPane({ isRegister }: { isRegister: boolean }) {
     <aside
       className={cn(
         'relative shrink-0 overflow-hidden',
-        // موبایل: order-first می‌آورد بالا؛ دسکتاپ کنار فرم (سمت پایان در RTL)
-        'order-first h-44 w-full pt-[env(safe-area-inset-top)] sm:h-52',
+        // موبایل: نوار کوتاه تا فیلد موبایل و CTA بالای fold بمانند؛ دسکتاپ ستون کامل
+        'order-first h-28 w-full pt-[env(safe-area-inset-top)] sm:h-36',
         'lg:order-none lg:h-auto lg:min-h-dvh lg:w-auto lg:flex-1 lg:pt-0',
       )}
       aria-label="نمای محصول وایب"
@@ -160,18 +163,18 @@ function AuthVisualPane({ isRegister }: { isRegister: boolean }) {
           aria-hidden
         />
 
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-4! text-primary-foreground sm:p-5! lg:gap-3 lg:p-8!">
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-3! text-primary-foreground sm:gap-2 sm:p-5! lg:gap-3 lg:p-8!">
           <div className="flex items-center gap-2">
-            <div className="flex size-10 items-center justify-center rounded-2xl bg-brand lg:size-12">
+            <div className="flex size-8 items-center justify-center rounded-xl bg-brand sm:size-10 sm:rounded-2xl lg:size-12">
               <Bookmark
-                className="size-5 fill-brand-foreground text-brand-foreground lg:size-6"
+                className="size-4 fill-brand-foreground text-brand-foreground sm:size-5 lg:size-6"
                 strokeWidth={2}
                 aria-hidden
               />
             </div>
             <p className="wibe-h3 text-primary-foreground">وایب</p>
           </div>
-          <p className="max-w-xs text-pretty wibe-small text-primary-foreground/85 lg:wibe-body">
+          <p className="hidden max-w-xs text-pretty wibe-small text-primary-foreground/85 sm:block lg:wibe-body">
             {isRegister
               ? 'لیست‌های خوب را ذخیره کن و کشف را از جایی که دوست داری شروع کن.'
               : 'لیست‌های خوب را پیدا کن، ذخیره کن، بعداً برگرد.'}

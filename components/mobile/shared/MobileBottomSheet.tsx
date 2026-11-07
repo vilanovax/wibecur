@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { MOBILE_SHELL_MAX_WIDTH_CLASS } from '@/lib/layout-tokens';
+import { attachFocusTrap } from '@/lib/focus-trap';
 
 export interface MobileBottomSheetProps {
   isOpen: boolean;
@@ -58,6 +59,11 @@ export default function MobileBottomSheet({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose, escapeToClose]);
 
+  useEffect(() => {
+    if (!isOpen || !sheetRef.current) return;
+    return attachFocusTrap(sheetRef.current);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const widthClass = constrainToMobileShell
@@ -85,8 +91,9 @@ export default function MobileBottomSheet({
         ref={sheetRef}
         role="dialog"
         aria-modal="true"
+        tabIndex={-1}
         dir="rtl"
-        className={`relative flex flex-col rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-overlay ${widthClass} animate-in slide-in-from-bottom duration-300`}
+        className={`relative flex flex-col rounded-t-xl border-t border-border bg-popover text-popover-foreground shadow-overlay outline-none ${widthClass} animate-in slide-in-from-bottom duration-300`}
         style={{ maxHeight }}
         onClick={(e) => e.stopPropagation()}
       >

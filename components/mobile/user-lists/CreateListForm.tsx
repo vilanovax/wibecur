@@ -112,6 +112,16 @@ export default function CreateListForm({
 
       const data = await res.json();
 
+      if (res.status === 401) {
+        throw new Error('برای ساخت لیست اول وارد حساب شو.');
+      }
+      if (res.status === 403) {
+        throw new Error(
+          typeof data.error === 'string' && data.error.includes('مبدأ')
+            ? 'نشست منقضی شده؛ صفحه را تازه کن و دوباره وارد شو.'
+            : data.error || 'دسترسی مجاز نیست.'
+        );
+      }
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'خطا در ایجاد لیست');
       }

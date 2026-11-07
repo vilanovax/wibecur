@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
 import HomeStartStrip from '@/components/mobile/home/HomeStartStrip';
+import HomeProductIntro from '@/components/mobile/home/HomeProductIntro';
 import HomeMoodRowSection from '@/components/mobile/home/HomeMoodRowSection';
 import TrendingThisWeekCarousel from '@/components/mobile/home/TrendingThisWeekCarousel';
 import HomeFeedSection from '@/components/mobile/home/HomeFeedSection';
@@ -45,6 +46,7 @@ export default function HomeDesktopView({
 
   return (
     <div className="flex flex-col gap-6 xl:gap-7">
+      <HomeProductIntro />
       <HomeStartStrip initialCategories={initialCategories} />
 
       <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.55fr)] xl:items-stretch xl:gap-5">

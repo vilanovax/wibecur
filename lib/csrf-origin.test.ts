@@ -112,4 +112,31 @@ describe('rejectIfCsrfOriginInvalid', () => {
     );
     expect(rejected?.status).toBe(403);
   });
+
+  it('allows loopback Origin even when NEXTAUTH_URL is production', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXTAUTH_URL', 'https://wibecur.ir');
+    expect(
+      rejectIfCsrfOriginInvalid(
+        req({ origin: 'http://127.0.0.1:3005' }),
+        '/api/user/profile'
+      )
+    ).toBeNull();
+    expect(
+      rejectIfCsrfOriginInvalid(
+        req({ origin: 'http://localhost:3005' }),
+        '/api/user/profile'
+      )
+    ).toBeNull();
+  });
+
+  it('still rejects non-loopback foreign Origin in production', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXTAUTH_URL', 'https://wibecur.ir');
+    const rejected = rejectIfCsrfOriginInvalid(
+      req({ origin: 'https://evil.example' }),
+      '/api/user/profile'
+    );
+    expect(rejected?.status).toBe(403);
+  });
 });

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import CreateListForm from '@/components/mobile/user-lists/CreateListForm';
@@ -77,6 +78,9 @@ function CreateActionCard({
 
 export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session, status: sessionStatus } = useSession();
+  const isLoggedIn = Boolean(session?.user?.id);
   const [expanded, setExpanded] = useState(false);
   const [createFormOpen, setCreateFormOpen] = useState(false);
   const [categoryHint, setCategoryHint] = useState<string | null>(null);
@@ -103,7 +107,22 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
     onClose();
   };
 
+  const requireLoginForCreate = () => {
+    if (sessionStatus === 'loading') return true;
+    if (isLoggedIn) return false;
+    const returnPath = '/explore?openCreate=1';
+    handleClose();
+    router.push(`/login?callbackUrl=${encodeURIComponent(returnPath)}&source=create_list`);
+    return true;
+  };
+
+  const handleExpandCreate = () => {
+    if (requireLoginForCreate()) return;
+    setExpanded(true);
+  };
+
   const handleCategorySelect = (slug: string) => {
+    if (requireLoginForCreate()) return;
     setCategoryHint(slug);
     setExpanded(false);
     setCreateFormOpen(true);
@@ -131,11 +150,12 @@ export default function CreateSheet({ isOpen, onClose }: CreateSheetProps) {
           {!expanded ? (
             <button
               type="button"
-              onClick={() => setExpanded(true)}
+              onClick={handleExpandCreate}
               className="
                 flex min-h-12 w-full origin-center items-center gap-3 rounded-surface bg-brand/5
                 p-4 text-start transition duration-200
                 hover:bg-brand/10 active:scale-95
+                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30
               "
             >
               <span className="text-2xl shrink-0 leading-none" aria-hidden>

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { attachFocusTrap } from '@/lib/focus-trap';
 
 const MAX_WIDTH_CLASS = {
   sm: 'max-w-md',
@@ -39,6 +40,7 @@ export default function DesktopDialog({
   closeOnBackdrop = true,
 }: DesktopDialogProps) {
   const backdropRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -61,6 +63,11 @@ export default function DesktopDialog({
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose, escapeToClose]);
 
+  useEffect(() => {
+    if (!isOpen || !dialogRef.current) return;
+    return attachFocusTrap(dialogRef.current);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const dialog = (
@@ -81,11 +88,13 @@ export default function DesktopDialog({
         }}
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'desktop-dialog-title' : undefined}
+        tabIndex={-1}
         dir="rtl"
-        className={`relative flex w-full ${MAX_WIDTH_CLASS[maxWidth]} max-h-[90vh] flex-col rounded-surface border border-border bg-popover text-popover-foreground shadow-overlay animate-in zoom-in-95 duration-200`}
+        className={`relative flex w-full ${MAX_WIDTH_CLASS[maxWidth]} max-h-[90vh] flex-col rounded-surface border border-border bg-popover text-popover-foreground shadow-overlay outline-none animate-in zoom-in-95 duration-200`}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || subtitle || headerAction) && (

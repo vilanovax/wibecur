@@ -83,6 +83,18 @@ export function rejectIfCsrfOriginInvalid(
     return null;
   }
 
+  // لوکال (`next start` روی :3005 و غیره) — Origin حلقه‌باز حتی اگر NEXTAUTH_URL دامنهٔ پرود باشد
+  if (
+    candidate === 'localhost' ||
+    candidate.startsWith('localhost:') ||
+    candidate === '127.0.0.1' ||
+    candidate.startsWith('127.0.0.1:') ||
+    candidate === '[::1]' ||
+    candidate.startsWith('[::1]:')
+  ) {
+    return null;
+  }
+
   // production بدون allowlist پیکربندی‌شده → fail-closed
   if (allowed.size === 0) {
     if (isProduction) {

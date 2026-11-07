@@ -38,7 +38,7 @@ export default function MainContainer({
 
   if (isAdmin) {
     return (
-      <div id="main" role="main" className="min-h-screen w-full">
+      <div id="main" role="main" tabIndex={-1} className="min-h-screen w-full outline-none">
         {children}
       </div>
     );
@@ -46,7 +46,13 @@ export default function MainContainer({
 
   if (isAuth || isMaintenance) {
     return (
-      <div id="main" role="main" data-theme="paper" className="min-h-screen w-full bg-background text-foreground">
+      <div
+        id="main"
+        role="main"
+        tabIndex={-1}
+        data-theme="paper"
+        className="min-h-screen w-full bg-background text-foreground outline-none"
+      >
         {children}
       </div>
     );
@@ -60,7 +66,8 @@ export default function MainContainer({
         <div
           id="main"
           role="main"
-          className={`flex min-w-0 flex-1 flex-col bg-transparent ${DESKTOP_CONTENT_PADDING_CLASS} ${DESKTOP_CONTENT_PADDING_TOP_CLASS} ${CONSUMER_PAGE_PADDING_BOTTOM_CLASS}`}
+          tabIndex={-1}
+          className={`flex min-w-0 flex-1 flex-col bg-transparent outline-none ${DESKTOP_CONTENT_PADDING_CLASS} ${DESKTOP_CONTENT_PADDING_TOP_CLASS} ${CONSUMER_PAGE_PADDING_BOTTOM_CLASS}`}
         >
           {children}
           <DesktopSiteFooter />

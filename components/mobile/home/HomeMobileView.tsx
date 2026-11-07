@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 import HomeStartStrip from '@/components/mobile/home/HomeStartStrip';
+import HomeProductIntro from '@/components/mobile/home/HomeProductIntro';
 import QuickCategoryChips from '@/components/mobile/home/QuickCategoryChips';
 import HomeHeroSpotlightSlot from '@/components/mobile/home/HomeHeroSpotlightSlot';
 import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
@@ -42,6 +43,7 @@ export default function HomeMobileView({
 
   return (
     <div className="flex flex-col">
+      <HomeProductIntro />
       <HomeStartStrip initialCategories={initialCategories} />
       <HomeHeroSpotlightSlot ssrFeaturedId={ssrFeaturedId}>
         {heroSpotlight}
