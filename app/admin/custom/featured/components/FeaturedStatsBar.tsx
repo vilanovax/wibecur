@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
-import { fa } from '@/lib/utils';
+import { fa, faNumber } from '@/lib/utils';
 import type { WeeklyReport } from './featured-weekly-types';
 import { addDays, getMonday } from './featured-weekly-types';
 
@@ -85,27 +85,16 @@ export default function FeaturedStatsBar({
     (report.avgCTR > 0 || report.avgSaveLift != null || report.bestPerformer != null);
   const weekSlots = report?.totalSlots ?? 0;
 
-  const summaryParts = [
-    hasActiveSlot ? 'اسلات زنده' : 'لیست جایگزین',
-    `${upcomingCount.toLocaleString('fa-IR')} در صف`,
-    loading
-      ? '…'
-      : `${weekSlots.toLocaleString('fa-IR')} اسلات این هفته`,
-  ];
-  if (!loading && report?.bestPerformer?.listTitle) {
-    summaryParts.push(`بهترین: ${report.bestPerformer.listTitle}`);
-  }
-  if (pastCount > 0) {
-    summaryParts.push(`${pastCount.toLocaleString('fa-IR')} در تاریخچه`);
-  }
-
   return (
-    <section className="space-y-3" dir="rtl">
+    <section
+      className="rounded-2xl border border-(--color-border) bg-(--color-surface) p-4"
+      dir="rtl"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-(--color-text)">عملکرد هفته</p>
+          <p className="text-sm font-semibold text-(--color-text)">عملکرد هفته</p>
           {weekLabel ? (
-            <p className="mt-0.5 text-sm text-wibe-secondary">{weekLabel}</p>
+            <p className="mt-1 text-sm text-wibe-secondary">{weekLabel}</p>
           ) : null}
         </div>
         <div className="flex items-center gap-2">
@@ -140,30 +129,43 @@ export default function FeaturedStatsBar({
         </div>
       </div>
 
-      <p className="text-sm leading-relaxed text-wibe-secondary">
-        {summaryParts.join(' · ')}
+      <p className="mt-3 text-sm leading-relaxed text-wibe-secondary">
+        {hasActiveSlot ? 'اسلات زنده' : 'لیست جایگزین'}
+        {' · '}
+        {faNumber(upcomingCount)} در صف
+        {' · '}
+        {loading ? '…' : `${faNumber(weekSlots)} اسلات این هفته`}
+        {pastCount > 0 ? ` · ${faNumber(pastCount)} در تاریخچه` : ''}
       </p>
 
       {hasSignal && report ? (
-        <div className="flex flex-wrap gap-x-6 gap-y-2 rounded-xl border border-(--color-border) bg-(--color-surface) px-4 py-3 text-sm">
+        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
           <span>
             <span className="text-wibe-secondary">نرخ کلیک </span>
-            <span className="font-semibold text-(--color-text)">
+            <span className="font-semibold tabular-nums text-(--color-text)">
               {pct(report.avgCTR * 100, 2)}
             </span>
           </span>
           {report.avgSaveLift != null && (
             <span>
               <span className="text-wibe-secondary">رشد ذخیره </span>
-              <span className="font-semibold text-(--color-text)">
+              <span className="font-semibold tabular-nums text-(--color-text)">
                 {pct(report.avgSaveLift)}
               </span>
             </span>
           )}
+          {report.bestPerformer?.listTitle ? (
+            <span>
+              <span className="text-wibe-secondary">بهترین </span>
+              <span className="font-semibold text-(--color-text)">
+                {report.bestPerformer.listTitle}
+              </span>
+            </span>
+          ) : null}
         </div>
       ) : !loading ? (
-        <p className="text-sm leading-relaxed text-wibe-secondary">
-          برای این هفته هنوز نرخ کلیک یا رشد ذخیره‌ای ثبت نشده.
+        <p className="mt-3 text-sm text-wibe-secondary">
+          هنوز سیگنال کلیک یا ذخیره برای این هفته ثبت نشده.
         </p>
       ) : null}
     </section>

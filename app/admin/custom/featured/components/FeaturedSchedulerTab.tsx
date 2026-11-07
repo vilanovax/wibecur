@@ -54,6 +54,7 @@ export default function FeaturedSchedulerTab({
           fallbackList={fallbackList}
           formatDate={formatDate}
           remainingText={remainingText}
+          performance={initialPerformance}
           onEdit={onEditCurrent}
           onRemove={onRemoveCurrent}
           onAddClick={onAddSlot}
@@ -62,6 +63,15 @@ export default function FeaturedSchedulerTab({
         <div className="lg:hidden">
           <FeaturedMobilePreview list={previewList} mode={previewMode} />
         </div>
+
+        {current && (
+          <FeaturedPerformanceSection
+            slotId={current.id}
+            metricsInStrip
+            initialPerformance={initialPerformance}
+            initialRecommendations={initialRecommendations}
+          />
+        )}
 
         {upcoming.length > 0 ? (
           <section className="space-y-3">
@@ -93,17 +103,9 @@ export default function FeaturedSchedulerTab({
             className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-(--color-border) px-3 text-sm text-wibe-secondary hover:border-primary hover:text-primary"
           >
             <Plus className="size-4" strokeWidth={1.5} />
-            زمان‌بندی اسلات بعدی
+            زمان‌بندی اسلات بعدی — صف خالی است
           </button>
         ) : null}
-
-        {current && (
-          <FeaturedPerformanceSection
-            slotId={current.id}
-            initialPerformance={initialPerformance}
-            initialRecommendations={initialRecommendations}
-          />
-        )}
 
         <FeaturedHistoryAccordion past={past} formatDate={formatDate} />
       </div>

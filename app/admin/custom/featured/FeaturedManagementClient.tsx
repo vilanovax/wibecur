@@ -121,8 +121,11 @@ function FeaturedManagementInner({
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const ensureListsLoaded = useCallback(async () => {
-    if (listsLoadedRef.current) return;
+  const [listsLoading, setListsLoading] = useState(false);
+
+  const ensureListsLoaded = useCallback(async (force = false) => {
+    if (listsLoadedRef.current && !force) return;
+    setListsLoading(true);
     try {
       const listRes = await fetch(`/api/admin/custom/featured/lists?t=${Date.now()}`);
       const listJson = await listRes.json();
@@ -134,6 +137,8 @@ function FeaturedManagementInner({
       }
     } catch {
       /* ignore — wizard can retry via refresh */
+    } finally {
+      setListsLoading(false);
     }
   }, []);
 
@@ -287,9 +292,9 @@ function FeaturedManagementInner({
     (listId?: string) => {
       if (listId) setFormListId(listId);
       setAddModalOpen(true);
-      void ensureListsLoaded();
+      void ensureListsLoaded(!listsLoadedRef.current || (data?.lists.length ?? 0) === 0);
     },
-    [ensureListsLoaded]
+    [ensureListsLoaded, data?.lists.length]
   );
 
   const openEditModal = (slot: SlotItem) => {
@@ -490,6 +495,7 @@ function FeaturedManagementInner({
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
         lists={data.lists}
+        listsLoading={listsLoading}
         formCategorySlug={formCategorySlug}
         formListId={formListId}
         formStartDate={formStartDate}
@@ -508,6 +514,7 @@ function FeaturedManagementInner({
         onPreset={handlePreset}
         onSubmit={handleAddSlot}
         formatDate={formatDate}
+        onRetryLists={() => void ensureListsLoaded(true)}
       />
 
       <DeleteSlotDialog
