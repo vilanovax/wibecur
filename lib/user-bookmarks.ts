@@ -14,6 +14,7 @@ const BOOKMARK_LIST_SELECT = {
       slug: true,
       icon: true,
       iconImage: true,
+      coverDisplayMode: true,
     },
   },
 } as const;
