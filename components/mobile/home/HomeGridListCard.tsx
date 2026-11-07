@@ -2,15 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bookmark } from 'lucide-react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
-import HomeListSaveControl from '@/components/mobile/home/HomeListSaveControl';
 import type { HomeListCreator } from '@/types/home-data';
 import { trackHomeSectionClick, type HomeSectionId } from '@/lib/analytics';
 import { Card } from '@/components/ui/card';
 import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
 
-/** نشانگر ذخیره‌شده — وضعیت اولیهٔ کنترل ذخیره */
+/** نشانگر ذخیره‌شده برای سکشن‌های پروفایل/خانه — دیگر روی کارت نمایش داده نمی‌شود */
 export const SAVED_LIST_BADGE = '__saved_list_bookmark__';
 
 export interface HomeGridListCardList {
@@ -33,8 +31,6 @@ interface HomeGridListCardProps {
   badge?: string | null;
   badgeClassName?: string;
   homeSection?: HomeSectionId;
-  /** ذخیرهٔ سریع روی کارت — پیش‌فرض روشن */
-  showSave?: boolean;
   /** فقط اولین کارت نزدیک LCP */
   priority?: boolean;
   fetchPriority?: 'high' | 'low' | 'auto';
@@ -46,14 +42,12 @@ export default function HomeGridListCard({
   badge,
   badgeClassName = 'bg-brand text-brand-foreground',
   homeSection,
-  showSave = true,
   priority = false,
   fetchPriority,
 }: HomeGridListCardProps) {
   const router = useRouter();
   const href = `/lists/${list.slug}`;
-  const isSavedBadge = badge === SAVED_LIST_BADGE;
-  const textBadge = badge && !isSavedBadge ? badge : null;
+  const textBadge = badge && badge !== SAVED_LIST_BADGE ? badge : null;
   const resolvedFetchPriority = priority ? 'high' : (fetchPriority ?? 'low');
   const coverMode = normalizeCoverDisplayMode(list.categories?.coverDisplayMode);
   const showCoverScrim = coverMode === 'ui';
@@ -86,14 +80,6 @@ export default function HomeGridListCard({
                 : 'aspect-5/4 sm:aspect-4/3 lg:aspect-16/10 lg:max-h-44'
             }`}
           >
-            {!showSave && isSavedBadge ? (
-              <span
-                className="absolute inset-s-2 top-2 z-10 flex size-11 items-center justify-center rounded-full bg-brand text-brand-foreground shadow-sm"
-                aria-label="ذخیره‌شده"
-              >
-                <Bookmark className="h-3.5 w-3.5 fill-current" strokeWidth={1.75} aria-hidden />
-              </span>
-            ) : null}
             {textBadge ? (
               <span
                 className={`absolute inset-e-2 top-2 z-10 rounded-pill px-2 py-0.5 wibe-caption font-semibold shadow-sm ${badgeClassName}`}
@@ -137,18 +123,6 @@ export default function HomeGridListCard({
           ) : null}
         </Card>
       </Link>
-      {showSave ? (
-        <div className="absolute inset-s-2 top-2 z-10">
-          <HomeListSaveControl
-            listId={list.id}
-            listSlug={list.slug}
-            categorySlug={list.categories?.slug}
-            saveCount={list.saveCount}
-            initialIsBookmarked={isSavedBadge}
-            analyticsSource={homeSection ? `home_${homeSection}` : 'home_card'}
-          />
-        </div>
-      ) : null}
     </div>
   );
 }

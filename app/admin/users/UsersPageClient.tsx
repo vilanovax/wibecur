@@ -233,19 +233,16 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
 
   return (
     <>
-      <div>
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-(--color-text) mb-2">
-              مدیریت کاربران
-            </h1>
-            <p className="text-sm text-wibe-secondary">
-              جستجو و فیلتر کاربران. عدد روی هر فیلتر همان تعداد فهرست است.
-            </p>
-          </div>
-        </div>
-
-        <UserPulseSummary data={data.pulse} />
+      <div className="space-y-4">
+        <header>
+          <h1 className="text-2xl font-bold leading-snug text-(--color-text)">
+            مدیریت کاربران
+          </h1>
+          <UserPulseSummary data={data.pulse} />
+          <p className="mt-1 text-sm text-wibe-secondary">
+            برای جزئیات و تنظیم رمز روی ردیف کلیک کنید.
+          </p>
+        </header>
 
         <SmartFilterBar
           value={filterKind}
@@ -262,8 +259,7 @@ export default function UsersPageClient({ data }: UsersPageClientProps) {
           onClearFilters={handleClearFilters}
         />
 
-        {/* حین ناوبری سرور (فیلتر/جستجو/مرتب) جدول کم‌رنگ و غیرفعال می‌شود تا فریزِ بی‌بازخورد نباشد */}
-        <p className="mb-3 text-sm text-wibe-secondary tabular-nums">
+        <p className="text-sm text-wibe-secondary tabular-nums">
           {faNumber(data.totalCount)} کاربر
           {filterKind !== 'all' && (
             <> در {USER_FILTER_PILLS.find((p) => p.value === filterKind)?.label}</>

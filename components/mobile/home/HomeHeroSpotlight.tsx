@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { Sparkles, ChevronLeft } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import HomeHeroBannerLink from '@/components/mobile/home/HomeHeroBannerLink';
-import HomeHeroSaveButton from '@/components/mobile/home/HomeHeroSaveButton';
 import { useHomeData } from '@/contexts/HomeDataContext';
 import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
 
@@ -166,12 +165,6 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
           {description}
         </p>
       ) : null}
-      <HomeHeroSaveButton
-        listId={list.id}
-        listSlug={list.slug}
-        categorySlug={categorySlug}
-        saveCount={list.saveCount}
-      />
       </div>
     </section>
   );

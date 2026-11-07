@@ -75,6 +75,17 @@ const nextConfig = {
           { key: 'Service-Worker-Allowed', value: '/' },
         ],
       },
+      // Turbopack گاهی همان نام runtime را بین rebuildها نگه می‌دارد؛
+      // immutable یک‌ساله → مرورگر JS قدیمی را می‌گیرد و chunkهای جدید ۴۰۴ می‌شوند.
+      {
+        source: '/_next/static/chunks/turbopack-:chunk.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
     ];
   },
   images: {

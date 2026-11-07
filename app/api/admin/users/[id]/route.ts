@@ -25,6 +25,7 @@ export async function GET(
           role: true,
           isActive: true,
           emailVerified: true,
+          password: true,
           createdAt: true,
           updatedAt: true,
           _count: {
@@ -51,10 +52,13 @@ export async function GET(
       );
     }
 
+    const { password, ...safeUser } = user;
+
     return NextResponse.json({
       success: true,
       data: {
-        ...user,
+        ...safeUser,
+        hasPassword: Boolean(password),
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
         emailVerified: user.emailVerified?.toISOString() || null,

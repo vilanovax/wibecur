@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, X } from 'lucide-react';
+import { Bot, Search, X } from 'lucide-react';
 import {
   USER_FILTER_PILLS,
   type UserFilterKind,
@@ -41,7 +41,7 @@ export default function SmartFilterBar({
   onClearFilters,
 }: SmartFilterBarProps) {
   return (
-    <div className="mb-6 space-y-4">
+    <div className="space-y-3">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -52,57 +52,62 @@ export default function SmartFilterBar({
         <label htmlFor="admin-user-search" className="sr-only">
           جستجوی کاربر
         </label>
-        <input
-          id="admin-user-search"
-          type="search"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="نام، ایمیل یا نام کاربری"
-          className="min-h-11 min-w-0 flex-1 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text) placeholder:text-(--color-text-subtle) focus:outline-none focus:ring-2 focus:ring-(--primary)"
-        />
+        <div className="relative min-w-0 flex-1 basis-full sm:basis-56">
+          <Search
+            className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-wibe-secondary"
+            strokeWidth={1.5}
+          />
+          <input
+            id="admin-user-search"
+            type="search"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="نام، موبایل یا نام کاربری"
+            className="min-h-11 w-full rounded-xl border border-(--color-border) bg-(--color-surface) pe-3 ps-10 text-sm text-(--color-text) placeholder:text-wibe-secondary focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+        </div>
         <button
           type="submit"
-          className="min-h-11 rounded-xl bg-primary px-4 text-sm font-medium text-white hover:opacity-90"
+          className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-medium text-white hover:opacity-90"
         >
           جستجو
         </button>
-        <label className="inline-flex min-h-11 items-center gap-2">
-          <span className="text-sm text-wibe-secondary">مرتب‌سازی</span>
-          <select
-            value={sort}
-            onChange={(e) => onSortChange(e.target.value as UserSortKind)}
-            aria-label="مرتب‌سازی"
-            className="min-h-11 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text) focus:outline-none focus:ring-2 focus:ring-(--primary)"
-          >
-            {USER_SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <select
+          value={sort}
+          onChange={(e) => onSortChange(e.target.value as UserSortKind)}
+          aria-label="مرتب‌سازی"
+          className="min-h-11 min-w-0 flex-1 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm text-(--color-text) focus:outline-none focus:ring-2 focus:ring-primary/30 sm:flex-none"
+        >
+          {USER_SORT_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
       </form>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {USER_FILTER_PILLS.map((pill) => {
           const selected = value === pill.value;
           const count = filterCounts[pill.value];
+          const empty = count === 0 && pill.value !== 'all';
           return (
             <button
               key={pill.value}
               type="button"
               onClick={() => onChange(pill.value)}
               aria-pressed={selected}
-              className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-4 text-sm font-medium ${
+              disabled={empty}
+              className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                 selected
                   ? 'bg-primary text-white'
-                  : 'bg-(--color-bg) text-wibe-secondary hover:text-(--color-text)'
+                  : 'border border-(--color-border) bg-(--color-surface) text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text)'
               }`}
             >
               {pill.label}
               <span
-                className={`tabular-nums text-xs ${
-                  selected ? 'text-white/80' : 'text-(--color-text-subtle)'
+                className={`tabular-nums text-sm ${
+                  selected ? 'text-white/80' : 'text-wibe-secondary'
                 }`}
               >
                 {faNumber(count)}
@@ -110,16 +115,18 @@ export default function SmartFilterBar({
             </button>
           );
         })}
+      </div>
 
-        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm text-wibe-secondary">
           <input
             type="checkbox"
             checked={hideBots}
             onChange={(e) => onHideBotsChange(e.target.checked)}
-            className="rounded border-(--color-border) text-primary focus:ring-(--primary)"
+            className="size-4 rounded border-(--color-border) text-primary focus:ring-primary/30"
           />
-          <Bot className="h-4 w-4 text-wibe-secondary" strokeWidth={1.5} />
-          <span>مخفی کردن بات‌ها</span>
+          <Bot className="size-4" strokeWidth={1.5} />
+          <span>مخفی‌کردن بات‌ها</span>
         </label>
 
         {hasActiveFilters && (
@@ -128,8 +135,8 @@ export default function SmartFilterBar({
             onClick={onClearFilters}
             className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm text-wibe-secondary hover:bg-(--color-bg) hover:text-(--color-text)"
           >
-            <X className="h-4 w-4" strokeWidth={1.5} />
-            پاک کردن فیلترها
+            <X className="size-4" strokeWidth={1.5} />
+            پاک‌کردن فیلترها
           </button>
         )}
       </div>

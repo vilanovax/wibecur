@@ -548,16 +548,6 @@ export default function ListsPageClient({
     }));
   };
 
-  const handleBookmarkToggle = useCallback((listId: string, isBookmarked: boolean) => {
-    setBookmarkedIds((prev) => {
-      const next = new Set(prev);
-      if (isBookmarked) next.add(listId);
-      else next.delete(listId);
-      return next;
-    });
-  }, []);
-
-
   const hasAdvancedFilters =
     [...filterState.vibes].some((v) => v !== 'trending' && v !== 'saved') ||
     filterState.creatorType !== 'all' ||
@@ -1064,8 +1054,6 @@ export default function ListsPageClient({
                 lists: sectionLists,
                 viewMode: displayViewMode,
                 previewCount: sectionPreviewCount,
-                bookmarkedIds,
-                onBookmarkToggle: handleBookmarkToggle,
                 onShowAllCategory: handleShowAllCategory,
                 prioritizeFirstCover: index === 0 && !showFeatured,
               };
@@ -1120,11 +1108,7 @@ export default function ListsPageClient({
                   <div className="mt-2 h-24 animate-pulse rounded-xl bg-muted" aria-hidden />
                 }
               >
-                <ListsSimilarRow
-                  lists={pageSimilarLists}
-                  bookmarkedIds={bookmarkedIds}
-                  onBookmarkToggle={handleBookmarkToggle}
-                />
+                <ListsSimilarRow lists={pageSimilarLists} />
               </HomeDeferredMount>
             )}
           </>
@@ -1173,8 +1157,6 @@ export default function ListsPageClient({
                 <FlatListResults
                   lists={visibleFlatLists}
                   viewMode={displayViewMode}
-                  bookmarkedIds={bookmarkedIds}
-                  onBookmarkToggle={handleBookmarkToggle}
                 />
                 <InfiniteScrollSentinel
                   hasMore={hasMoreFlat}
@@ -1183,11 +1165,7 @@ export default function ListsPageClient({
                 />
 
                 {!hasMoreFlat && flatSimilarLists.length > 0 && (
-                  <ListsSimilarRow
-                    lists={flatSimilarLists}
-                    bookmarkedIds={bookmarkedIds}
-                    onBookmarkToggle={handleBookmarkToggle}
-                  />
+                  <ListsSimilarRow lists={flatSimilarLists} />
                 )}
               </>
             )}
@@ -1222,14 +1200,10 @@ export default function ListsPageClient({
 function FlatListResults({
   lists,
   viewMode,
-  bookmarkedIds,
-  onBookmarkToggle,
   highlightQuery,
 }: {
   lists: ListWithCategory[];
   viewMode: ViewMode;
-  bookmarkedIds?: Set<string>;
-  onBookmarkToggle?: (listId: string, isBookmarked: boolean) => void;
   highlightQuery?: string;
 }) {
   const cardVariant = resolveListCardVariant(viewMode);
@@ -1242,8 +1216,6 @@ function FlatListResults({
           list={list}
           variant={cardVariant}
           showCreator={false}
-          isBookmarked={bookmarkedIds?.has(list.id)}
-          onBookmarkToggle={onBookmarkToggle}
           highlightQuery={highlightQuery}
           searchResultIndex={highlightQuery ? index : undefined}
           priority={index === 0}

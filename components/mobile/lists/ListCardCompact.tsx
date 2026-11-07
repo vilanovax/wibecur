@@ -2,14 +2,12 @@
 
 import { memo } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { Sparkles, Bookmark } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Sparkles } from 'lucide-react';
 import ListCoverImage from '@/components/shared/ListCoverImage';
 import ListCategoryIconTile from '@/components/shared/ListCategoryIconTile';
 import { Card } from '@/components/ui/card';
 import UserAvatar from '@/components/shared/UserAvatar';
-import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
 import { getDisplayListTitle } from '@/lib/list-display-title';
 import SearchHighlight from '@/components/mobile/search/SearchHighlight';
 import { trackSearchResultClick } from '@/lib/analytics';
@@ -42,19 +40,9 @@ interface ListCardCompactProps {
   list: ListWithCreator;
   variant?: 'grid' | 'compact' | 'mini';
   showCreator?: boolean;
-  isBookmarked?: boolean;
-  onBookmarkToggle?: (listId: string, isBookmarked: boolean) => void;
   highlightQuery?: string;
   /** موقعیت در نتایج جستجو (برای آنالیتیکس) */
   searchResultIndex?: number;
-  /**
-   * وضعیت لاگین کاربر. اگر والد (مثلاً گرید) این را یک‌بار پاس بدهد،
-   * هیچ useSession در سطح کارت صدا زده نمی‌شود → حذف N اشتراک context در گریدها.
-   * اگر undefined باشد، کارت خودش از useSession می‌خواند (سازگاری با کد قبلی).
-   */
-  isLoggedIn?: boolean;
-  /** نمایش دکمهٔ ذخیره روی کارت — پیش‌فرض خاموش برای UI خلوت‌تر */
-  showBookmark?: boolean;
   /** پر کردن ارتفاع والد (چیدمان trio / row-span) */
   fillHeight?: boolean;
   /** کارت تمام‌عرض ردیف — نسبت افقی‌تر برای پوستر baked */
@@ -106,102 +94,18 @@ function CreatorRow({ list }: { list: ListWithCreator }) {
   );
 }
 
-type InlineBookmarkProps = {
-  listId: string;
-  listSlug?: string;
-  categorySlug?: string | null;
-  saveCount: number;
-  isBookmarked?: boolean;
-  onToggle?: (listId: string, isBookmarked: boolean) => void;
-  size?: 'sm' | 'xs';
-  className?: string;
-  isLoggedIn?: boolean;
-  analyticsSource?: string;
-};
-
-/** هستهٔ خالص — بدون خواندن context؛ قابل memo. */
-function InlineBookmarkView({
-  listId,
-  listSlug,
-  categorySlug,
-  saveCount,
-  isBookmarked,
-  onToggle,
-  size = 'sm',
-  className = '',
-  loggedIn,
-  analyticsSource = 'list_card',
-}: Omit<InlineBookmarkProps, 'isLoggedIn'> & { loggedIn: boolean }) {
-  const pathname = usePathname();
-  const loginHref = `/login?callbackUrl=${encodeURIComponent(pathname || '/')}&source=bookmark_gate`;
-  const btnClass =
-    size === 'xs'
-      ? 'flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-popover/95 text-muted-foreground shadow-sm backdrop-blur-sm'
-      : 'flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground';
-
-  if (!loggedIn) {
-    return (
-      <Link
-        href={loginHref}
-        onClick={(e) => e.stopPropagation()}
-        className={`${btnClass} ${className}`}
-        aria-label="ورود برای ذخیره لیست"
-      >
-        <Bookmark className="h-4 w-4 opacity-70 lg:h-3.5 lg:w-3.5" strokeWidth={1.75} />
-      </Link>
-    );
-  }
-
-  return (
-    <div className={`shrink-0 ${className}`} onClick={(e) => e.stopPropagation()}>
-      <BookmarkButton
-        listId={listId}
-        initialIsBookmarked={isBookmarked}
-        initialBookmarkCount={saveCount}
-        size="sm"
-        className={btnClass}
-        analytics={{
-          listSlug,
-          categorySlug,
-          source: analyticsSource,
-        }}
-        onToggle={(bookmarked) => onToggle?.(listId, bookmarked)}
-      />
-    </div>
-  );
-}
-
-/** نسخه‌ای که خودش session را می‌خواند — فقط وقتی والد isLoggedIn نداده باشد. */
-function InlineBookmarkAuto(props: Omit<InlineBookmarkProps, 'isLoggedIn'>) {
-  const { data: session } = useSession();
-  return <InlineBookmarkView {...props} loggedIn={!!session?.user} />;
-}
-
-function InlineBookmark({ isLoggedIn, ...rest }: InlineBookmarkProps) {
-  // اگر والد وضعیت لاگین را داده باشد، هیچ subscription به session ساخته نمی‌شود.
-  if (typeof isLoggedIn === 'boolean') {
-    return <InlineBookmarkView {...rest} loggedIn={isLoggedIn} />;
-  }
-  return <InlineBookmarkAuto {...rest} />;
-}
-
 function ListCardCompact({
   list,
   variant = 'compact',
   showCreator = false,
-  isBookmarked,
-  onBookmarkToggle,
   highlightQuery,
   searchResultIndex,
-  isLoggedIn,
-  showBookmark = false,
   fillHeight = false,
   wide = false,
   priority = false,
   fetchPriority,
 }: ListCardCompactProps) {
   const router = useRouter();
-  const saveCount = list.saveCount ?? 0;
   const categorySlug = list.categories?.slug ?? null;
   const coverMode = normalizeCoverDisplayMode(list.categories?.coverDisplayMode);
   const showCoverScrim = coverMode === 'ui';
@@ -261,19 +165,6 @@ function ListCardCompact({
             </h3>
           </div>
         </div>
-        {showBookmark ? (
-          <InlineBookmark
-            listId={list.id}
-            listSlug={list.slug}
-            categorySlug={categorySlug}
-            saveCount={saveCount}
-            isBookmarked={isBookmarked}
-            onToggle={onBookmarkToggle}
-            isLoggedIn={isLoggedIn}
-            size="xs"
-            className="pointer-events-auto absolute bottom-2 inset-e-2 z-2"
-          />
-        ) : null}
       </Card>
     );
   }
@@ -295,7 +186,7 @@ function ListCardCompact({
             iconImage={list.categories?.iconImage}
             size="md"
           />
-          <div className={`flex min-w-0 flex-1 flex-col justify-center py-0.5 ${showBookmark ? 'pe-12 lg:pe-11' : ''}`}>
+          <div className="flex min-w-0 flex-1 flex-col justify-center py-0.5">
             {badges.length > 0 && (
               <div className="mb-0.5 flex flex-wrap gap-1">
                 {badges.map((b) => (
@@ -315,18 +206,6 @@ function ListCardCompact({
             {showCreator && <CreatorRow list={list} />}
           </div>
         </div>
-        {showBookmark ? (
-          <InlineBookmark
-            listId={list.id}
-            listSlug={list.slug}
-            categorySlug={categorySlug}
-            saveCount={saveCount}
-            isBookmarked={isBookmarked}
-            onToggle={onBookmarkToggle}
-            isLoggedIn={isLoggedIn}
-            className="pointer-events-auto absolute bottom-2.5 inset-e-2.5 z-2 lg:transition-transform lg:group-hover:scale-110"
-          />
-        ) : null}
       </Card>
     );
   }
@@ -399,9 +278,7 @@ function ListCardCompact({
           </span>
         </div>
         {showCoverTitle ? (
-          <div
-            className={`absolute inset-x-0 bottom-0 p-2.5 text-start max-lg:pb-2 lg:p-3 ${showBookmark ? 'pe-14 lg:pe-12' : ''}`}
-          >
+          <div className="absolute inset-x-0 bottom-0 p-2.5 text-start max-lg:pb-2 lg:p-3">
             <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-background lg:text-base lg:font-bold">
               {renderTitle('')}
             </h3>
@@ -409,26 +286,11 @@ function ListCardCompact({
         ) : null}
       </div>
       {showTitleBelow ? (
-        <div className={`pointer-events-none relative z-1 px-2.5 py-2 text-start ${showBookmark ? 'pe-12' : ''}`}>
+        <div className="pointer-events-none relative z-1 px-2.5 py-2 text-start">
           <h3 className="line-clamp-2 wibe-small font-semibold leading-snug text-foreground lg:text-base">
             {renderTitle('')}
           </h3>
         </div>
-      ) : null}
-      {showBookmark ? (
-        <InlineBookmark
-          listId={list.id}
-          listSlug={list.slug}
-          categorySlug={categorySlug}
-          saveCount={saveCount}
-          isBookmarked={isBookmarked}
-          onToggle={onBookmarkToggle}
-          isLoggedIn={isLoggedIn}
-          size="xs"
-          className={`pointer-events-auto absolute inset-e-2 z-2 lg:inset-e-2.5 lg:opacity-95 lg:transition-colors lg:group-hover:scale-110 lg:group-hover:opacity-100 ${
-            showTitleBelow ? 'bottom-2 lg:bottom-2.5' : 'bottom-2 lg:bottom-2.5'
-          }`}
-        />
       ) : null}
     </Card>
   );

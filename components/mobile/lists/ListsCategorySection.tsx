@@ -27,8 +27,6 @@ interface ListsCategorySectionProps {
   /** @deprecated نادیده گرفته می‌شود — layout با CSS واکنش‌گراست */
   isDesktop?: boolean;
   previewCount?: number;
-  bookmarkedIds?: Set<string>;
-  onBookmarkToggle?: (listId: string, isBookmarked: boolean) => void;
   onShowAllCategory?: (categoryId: string, categorySlug?: string) => void;
   /** کارت اول LCP است (وقتی بنر منتخب نیست) */
   prioritizeFirstCover?: boolean;
@@ -45,8 +43,6 @@ export default function ListsCategorySection({
   lists,
   viewMode,
   previewCount = LISTS_SECTION_PREVIEW_DESKTOP,
-  bookmarkedIds,
-  onBookmarkToggle,
   onShowAllCategory,
   prioritizeFirstCover = false,
 }: ListsCategorySectionProps) {
@@ -135,8 +131,6 @@ export default function ListsCategorySection({
                 list={list}
                 variant={cardVariant}
                 showCreator={false}
-                isBookmarked={bookmarkedIds?.has(list.id)}
-                onBookmarkToggle={onBookmarkToggle}
                 wide={isWideLead}
                 priority={prioritizeFirstCover && index === 0}
                 fetchPriority={prioritizeFirstCover && index === 0 ? undefined : 'low'}

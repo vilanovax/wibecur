@@ -1,7 +1,6 @@
 import { Sparkles, ChevronLeft } from 'lucide-react';
 import HomeHeroImpressionTracker from '@/components/mobile/home/HomeHeroClientActions';
 import HomeHeroBannerLink from '@/components/mobile/home/HomeHeroBannerLink';
-import HomeHeroSaveButton from '@/components/mobile/home/HomeHeroSaveButton';
 import HeroCoverImage from '@/components/shared/HeroCoverImage';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
@@ -156,12 +155,6 @@ export default function HomeHeroSpotlightServer({
           {description}
         </p>
       ) : null}
-      <HomeHeroSaveButton
-        listId={list.id}
-        listSlug={list.slug}
-        categorySlug={categorySlug}
-        saveCount={list.saveCount}
-      />
       </div>
     </section>
   );

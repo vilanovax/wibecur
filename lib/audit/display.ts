@@ -18,6 +18,7 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   USER_RESTORE: 'بازیابی کاربر',
   USER_ROLE_CHANGE: 'تغییر نقش کاربر',
   USER_SHADOW_BAN: 'سایه‌بن کاربر',
+  USER_PASSWORD_SET: 'تنظیم رمز عبور کاربر',
   REPORT_RESOLVE: 'رسیدگی گزارش',
   COMMENT_DELETE: 'حذف نظر',
   COMMENT_PENALTY: 'جریمه نظر',

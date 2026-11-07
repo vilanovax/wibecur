@@ -3,14 +3,15 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { BarChart3, MoreVertical, Power, ShieldCheck } from 'lucide-react';
+import { BarChart3, MoreVertical, Power, ShieldCheck, UserRound } from 'lucide-react';
 import type { UserIntelligenceRow } from '@/lib/admin/users-types';
 
 const MENU_WIDTH = 220;
-const MENU_ESTIMATED_HEIGHT = 160;
+const MENU_ESTIMATED_HEIGHT = 200;
 
 type UserRowActionMenuProps = {
   user: UserIntelligenceRow;
+  onOpenDetail?: (user: UserIntelligenceRow) => void;
   onToggleActiveRequest: (user: UserIntelligenceRow) => void;
   onUnrestrictCommentRequest?: (user: UserIntelligenceRow) => void;
   togglingId: string | null;
@@ -27,6 +28,7 @@ function canLiftCommentRestriction(user: UserIntelligenceRow): boolean {
 
 export default function UserRowActionMenu({
   user,
+  onOpenDetail,
   onToggleActiveRequest,
   onUnrestrictCommentRequest,
   togglingId,
@@ -99,13 +101,27 @@ export default function UserRowActionMenu({
             style={{ top: menuPos.top, left: menuPos.left, width: MENU_WIDTH }}
             dir="rtl"
           >
+            {onOpenDetail && (
+              <button
+                type="button"
+                role="menuitem"
+                className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
+                onClick={() => {
+                  setOpen(false);
+                  onOpenDetail(user);
+                }}
+              >
+                <UserRound className="size-4 shrink-0" strokeWidth={1.5} />
+                جزئیات و رمز
+              </button>
+            )}
             <Link
               href={`/admin/analytics?user=${user.id}`}
               role="menuitem"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-(--color-text) hover:bg-(--color-bg)"
+              className="flex min-h-11 items-center gap-2 px-3 text-sm text-(--color-text) hover:bg-(--color-bg)"
               onClick={() => setOpen(false)}
             >
-              <BarChart3 className="w-4 h-4 shrink-0" />
+              <BarChart3 className="size-4 shrink-0" strokeWidth={1.5} />
               آنالیتیکس
             </Link>
             {canLiftCommentRestriction(user) && onUnrestrictCommentRequest && (
@@ -113,13 +129,13 @@ export default function UserRowActionMenu({
                 type="button"
                 role="menuitem"
                 disabled={liftingCommentId === user.id}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
+                className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
                 onClick={() => {
                   setOpen(false);
                   onUnrestrictCommentRequest(user);
                 }}
               >
-                <ShieldCheck className="w-4 h-4 shrink-0" />
+                <ShieldCheck className="size-4 shrink-0" strokeWidth={1.5} />
                 رفع محدودیت کامنت
               </button>
             )}
@@ -127,13 +143,13 @@ export default function UserRowActionMenu({
               type="button"
               role="menuitem"
               disabled={togglingId === user.id}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+              className="flex min-h-11 w-full items-center gap-2 px-3 text-sm text-amber-700 hover:bg-amber-50 disabled:opacity-50"
               onClick={() => {
                 setOpen(false);
                 onToggleActiveRequest(user);
               }}
             >
-              <Power className="w-4 h-4 shrink-0" />
+              <Power className="size-4 shrink-0" strokeWidth={1.5} />
               {user.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی'}
             </button>
           </div>,
@@ -151,12 +167,12 @@ export default function UserRowActionMenu({
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="p-2 rounded-lg hover:bg-(--color-bg) transition-colors"
+        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl hover:bg-(--color-bg)"
         aria-label="منوی عملیات"
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        <MoreVertical className="w-4 h-4 text-wibe-secondary" />
+        <MoreVertical className="size-4 text-wibe-secondary" strokeWidth={1.5} />
       </button>
       {menu}
     </>

@@ -5,18 +5,23 @@ import {
   X,
   Loader2,
   PowerOff,
-  Star,
-  EyeOff,
   ExternalLink,
   ShieldCheck,
+  KeyRound,
 } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/format-relative-time';
 import UserAvatar from '@/components/shared/UserAvatar';
-import { getRoleLabel } from '@/lib/auth/roles';
-import { isAdminRole } from '@/lib/auth/roles';
+import { getRoleLabel, isAdminRole } from '@/lib/auth/roles';
 import { usePermissions } from '@/hooks/usePermissions';
 import { CommentRestrictionStatusBadge } from '@/components/admin/comments/UserPenaltyBadge';
 import type { CommentPermissionStatus } from '@/lib/comment-permission';
+import { PasswordInput } from '@/components/ui/password-input';
+import {
+  authEmailToPhone,
+  formatIranPhoneDisplay,
+  isPhoneAuthEmail,
+} from '@/lib/phone-auth';
+import { fa, faNumber } from '@/lib/utils';
 
 interface UserDetailModalProps {
   userId: string;
@@ -40,6 +45,7 @@ interface UserDetails {
   role: string;
   isActive: boolean;
   emailVerified: string | null;
+  hasPassword: boolean;
   createdAt: string;
   updatedAt: string;
   _count: {
@@ -61,28 +67,33 @@ function getInsightBadge(d: UserDetails): { label: string; className: string } {
   const created = new Date(d.createdAt);
   const isNew = (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24) < 30;
 
-  if (isNew && total < 3) return { label: 'کاربر جدید', className: 'bg-amber-100 text-amber-800' };
-  if (lists >= 5 || bookmarks >= 20 || total >= 30) return { label: 'سازنده فعال', className: 'bg-emerald-100 text-emerald-800' };
-  if (lists >= 1 || bookmarks >= 2) return { label: 'کاربر فعال', className: 'bg-blue-100 text-blue-800' };
-  return { label: 'کاربر جدید', className: 'bg-amber-100 text-amber-800' };
-}
-
-function getEngagementBadge(d: UserDetails): { label: string; className: string } {
-  const { lists, bookmarks } = d._count;
-  const ratio = lists > 0 ? bookmarks / lists : 0;
-
-  if (lists >= 3 && ratio >= 5) return { label: 'اثر بالا', className: 'bg-emerald-100 text-emerald-800' };
-  if (lists >= 1 || bookmarks >= 2) return { label: 'پایدار', className: 'bg-amber-100 text-amber-800' };
-  return { label: 'تعامل کم', className: 'bg-gray-100 text-wibe-secondary' };
+  if (isNew && total < 3) {
+    return { label: 'کاربر جدید', className: 'bg-amber-50 text-amber-800' };
+  }
+  if (lists >= 5 || bookmarks >= 20 || total >= 30) {
+    return { label: 'سازنده فعال', className: 'bg-emerald-50 text-emerald-800' };
+  }
+  if (lists >= 1 || bookmarks >= 2) {
+    return { label: 'کاربر فعال', className: 'bg-sky-50 text-sky-800' };
+  }
+  return { label: 'کاربر جدید', className: 'bg-amber-50 text-amber-800' };
 }
 
 function getRiskBadge(d: UserDetails): { label: string; className: string } {
-  const { user_violations, comment_reports } = d._count;
-  const total = user_violations + comment_reports;
+  const total = d._count.user_violations + d._count.comment_reports;
+  if (total >= 3) return { label: 'ریسک بالا', className: 'bg-red-50 text-red-800' };
+  if (total >= 1) {
+    return { label: 'نیاز به بررسی', className: 'bg-amber-50 text-amber-800' };
+  }
+  return { label: 'سالم', className: 'bg-emerald-50 text-emerald-800' };
+}
 
-  if (total >= 3) return { label: 'ریسک بالا', className: 'bg-red-100 text-red-800' };
-  if (total >= 1) return { label: 'نیاز به بررسی', className: 'bg-amber-100 text-amber-800' };
-  return { label: 'سالم', className: 'bg-emerald-100 text-emerald-800' };
+function accountContact(email: string): string {
+  if (isPhoneAuthEmail(email)) {
+    const phone = authEmailToPhone(email);
+    return phone ? formatIranPhoneDisplay(phone) : email;
+  }
+  return email;
 }
 
 export default function UserDetailModal({
@@ -94,15 +105,28 @@ export default function UserDetailModal({
 }: UserDetailModalProps) {
   const [user, setUser] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [commentStatus, setCommentStatus] = useState<CommentPermissionStatus | null>(null);
+  const [commentStatus, setCommentStatus] = useState<CommentPermissionStatus | null>(
+    null
+  );
   const [liftingComment, setLiftingComment] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const { can } = usePermissions();
 
   useEffect(() => {
-    if (isOpen && userId) fetchUserDetails();
+    if (isOpen && userId) {
+      void fetchUserDetails();
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordError(null);
+      setPasswordSuccess(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, userId]);
 
-  // بستن با Escape
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -162,276 +186,328 @@ export default function UserDetailModal({
     }
   };
 
-  if (!isOpen) return null;
-
-  const roleColors: Record<string, string> = {
-    USER: 'bg-gray-100 text-(--color-text)',
-    EDITOR: 'bg-blue-100 text-blue-800',
-    ADMIN: 'bg-red-100 text-red-800',
-    SUPER_ADMIN: 'bg-purple-100 text-purple-800',
-    MODERATOR: 'bg-amber-100 text-amber-800',
-    ANALYST: 'bg-sky-100 text-sky-800',
+  const handleSavePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setPasswordSaving(true);
+    setPasswordError(null);
+    setPasswordSuccess(null);
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword, confirmPassword }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || 'خطا در ذخیره رمز');
+      }
+      setPasswordSuccess(json.message || 'رمز ذخیره شد');
+      setNewPassword('');
+      setConfirmPassword('');
+      setUser((prev) => (prev ? { ...prev, hasPassword: true } : prev));
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'خطا در ذخیره رمز');
+    } finally {
+      setPasswordSaving(false);
+    }
   };
+
+  if (!isOpen) return null;
 
   const canToggleActive =
     user &&
     (can('suspend_user') || (isAdminRole(user.role) && can('manage_roles')));
+  const canSetPassword = can('manage_users');
 
-  const sectionCard = 'rounded-2xl border border-(--color-border) bg-(--color-surface) overflow-hidden';
+  const avgSaves =
+    user && user._count.lists > 0
+      ? user._count.bookmarks / user._count.lists
+      : null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-(--color-surface) rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-(--color-surface) shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="user-detail-title"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-(--color-surface) border-b border-(--color-border) px-5 py-4 flex items-center justify-between">
-          <h2 id="user-detail-title" className="text-lg font-bold text-(--color-text)">جزئیات کاربر</h2>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-3">
+          <h2
+            id="user-detail-title"
+            className="text-lg font-bold leading-snug text-(--color-text)"
+          >
+            جزئیات کاربر
+          </h2>
           <button
+            type="button"
             onClick={onClose}
             aria-label="بستن"
-            className="w-8 h-8 rounded-full hover:bg-(--color-bg) flex items-center justify-center transition-colors"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl hover:bg-(--color-bg)"
           >
-            <X className="w-5 h-5 text-wibe-secondary" />
+            <X className="size-5 text-wibe-secondary" strokeWidth={1.5} />
           </button>
         </div>
 
-        <div className="p-5">
+        <div className="space-y-4 p-4">
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <Loader2 className="size-8 animate-spin text-primary" strokeWidth={1.5} />
             </div>
           ) : user ? (
-            <div className="space-y-5">
-              {/* Header: Avatar + Name + Status + Last activity */}
-              <div className="flex items-start gap-4 pb-5 border-b border-(--color-border)">
+            <>
+              <div className="flex items-start gap-3">
                 <UserAvatar
                   src={user.image}
                   name={user.name}
                   email={user.email}
-                  size={64}
+                  size={56}
                 />
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-xl font-bold text-(--color-text)">
+                  <h3 className="text-lg font-bold leading-snug text-(--color-text)">
                     {user.name || 'بدون نام'}
                   </h3>
-                  <p className="text-sm text-wibe-secondary truncate">{user.email}</p>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <span className={`px-2.5 py-0.5 rounded-lg text-xs font-medium ${roleColors[user.role] ?? 'bg-gray-100 text-(--color-text)'}`}>
+                  <p className="mt-1 text-sm leading-relaxed text-wibe-secondary" dir="ltr">
+                    {accountContact(user.email)}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="rounded-md bg-(--color-bg) px-2 py-0.5 text-sm font-medium text-(--color-text)">
                       {getRoleLabel(user.role)}
                     </span>
                     <span
-                      className={`px-2.5 py-0.5 rounded-lg text-xs font-medium ${
-                        user.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                      className={`rounded-md px-2 py-0.5 text-sm font-medium ${
+                        user.isActive
+                          ? 'bg-emerald-50 text-emerald-800'
+                          : 'bg-red-50 text-red-800'
                       }`}
                     >
                       {user.isActive ? 'فعال' : 'غیرفعال'}
                     </span>
-                  </div>
-                  <p className="text-xs text-wibe-secondary mt-2">
-                    آخرین فعالیت:{' '}
-                    {formatRelativeTime(user.updatedAt)}
-                  </p>
-                  <p className="text-xs text-wibe-secondary">
-                    وضعیت:{' '}
-                    <span className={user.isActive ? 'text-emerald-600' : 'text-red-600'}>
-                      {user.isActive ? 'فعال اخیر' : 'غیرفعال'}
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-sm font-medium ${getInsightBadge(user).className}`}
+                    >
+                      {getInsightBadge(user).label}
                     </span>
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-sm font-medium ${
+                        user.hasPassword
+                          ? 'bg-sky-50 text-sky-800'
+                          : 'bg-amber-50 text-amber-800'
+                      }`}
+                    >
+                      {user.hasPassword ? 'دارای رمز' : 'بدون رمز'}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-wibe-secondary">
+                    آخرین فعالیت {formatRelativeTime(user.updatedAt)} · عضویت{' '}
+                    {new Date(user.createdAt).toLocaleDateString('fa-IR')}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Left: Activity + Quality */}
-                <div className="space-y-5">
-                  {/* Section 1: Activity */}
-                  <div className={sectionCard}>
-                    <div className="px-4 py-3 border-b border-(--color-border) bg-(--color-bg)">
-                      <h4 className="text-sm font-semibold text-(--color-text)">فعالیت و تعامل</h4>
-                    </div>
-                    <div className="p-4 space-y-3">
-                      <Row label="لیست‌ها" value={user._count.lists} />
-                      <Row label="ذخیره‌ها" value={user._count.bookmarks} />
-                      <Row label="کامنت‌ها" value={user._count.comments} />
-                      <Row label="لایک‌ها" value={user._count.list_likes} />
-                      <p className="text-xs text-wibe-secondary pt-1">
-                        عضویت: {new Date(user.createdAt).toLocaleDateString('fa-IR')}
-                      </p>
-                      <div className="pt-2">
-                        <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${getInsightBadge(user).className}`}>
-                          {getInsightBadge(user).label}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section 2: Quality Summary */}
-                  <div className={sectionCard}>
-                    <div className="px-4 py-3 border-b border-(--color-border) bg-(--color-bg)">
-                      <h4 className="text-sm font-semibold text-(--color-text)">خلاصه کیفیت</h4>
-                    </div>
-                    <div className="p-4 space-y-3">
-                      <Row
-                        label="میانگین ذخیره هر لیست"
-                        value={user._count.lists > 0 ? (user._count.bookmarks / user._count.lists).toFixed(1) : '۰'}
-                      />
-                      <Row
-                        label="نسبت ذخیره به لیست"
-                        value={
-                          user._count.lists > 0
-                            ? (user._count.bookmarks / user._count.lists).toFixed(1)
-                            : '—'
-                        }
-                      />
-                      <div className="pt-2">
-                        <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${getEngagementBadge(user).className}`}>
-                          {getEngagementBadge(user).label}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+              <section className="rounded-xl border border-(--color-border) p-4">
+                <h4 className="mb-3 text-sm font-semibold text-(--color-text)">
+                  فعالیت و کیفیت
+                </h4>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+                  <Stat label="لیست‌ها" value={faNumber(user._count.lists)} />
+                  <Stat label="ذخیره‌ها" value={faNumber(user._count.bookmarks)} />
+                  <Stat label="کامنت‌ها" value={faNumber(user._count.comments)} />
+                  <Stat label="لایک‌ها" value={faNumber(user._count.list_likes)} />
+                  <Stat
+                    label="میانگین ذخیره / لیست"
+                    value={
+                      avgSaves != null
+                        ? fa(avgSaves.toFixed(1).replace('.', '٫'))
+                        : '—'
+                    }
+                  />
+                  <Stat
+                    label="پیشنهادها"
+                    value={faNumber(
+                      user._count.suggested_items + user._count.suggested_lists
+                    )}
+                  />
                 </div>
+              </section>
 
-                {/* Right: Moderation + Actions */}
-                <div className="space-y-5">
-                  {/* Section 3: Moderation */}
-                  <div className={sectionCard}>
-                    <div className="px-4 py-3 border-b border-(--color-border) bg-(--color-bg)">
-                      <h4 className="text-sm font-semibold text-(--color-text)">مودریشن و ریسک</h4>
-                    </div>
-                    <div className="p-4 space-y-3">
-                      <Row label="ریپورت کامنت" value={user._count.comment_reports} />
-                      <Row label="تخلفات" value={user._count.user_violations} />
-                      {commentStatus && (
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-wibe-secondary text-sm">وضعیت کامنت</span>
-                          <CommentRestrictionStatusBadge status={commentStatus} />
-                        </div>
-                      )}
-                      <div className="pt-2">
-                        <span className={`inline-flex px-2 py-0.5 rounded-lg text-xs font-medium ${getRiskBadge(user).className}`}>
-                          {getRiskBadge(user).label}
-                        </span>
-                      </div>
-                    </div>
+              <section className="rounded-xl border border-(--color-border) p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-(--color-text)">
+                    مودریشن و ریسک
+                  </h4>
+                  <span
+                    className={`rounded-md px-2 py-0.5 text-sm font-medium ${getRiskBadge(user).className}`}
+                  >
+                    {getRiskBadge(user).label}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <Stat
+                    label="ریپورت کامنت"
+                    value={faNumber(user._count.comment_reports)}
+                  />
+                  <Stat
+                    label="تخلفات"
+                    value={faNumber(user._count.user_violations)}
+                  />
+                </div>
+                {commentStatus && (
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm text-wibe-secondary">وضعیت کامنت</span>
+                    <CommentRestrictionStatusBadge status={commentStatus} />
                   </div>
+                )}
+              </section>
 
-                  {/* Section 4: Actions */}
-                  <div className={sectionCard}>
-                    <div className="px-4 py-3 border-b border-(--color-border) bg-(--color-bg)">
-                      <h4 className="text-sm font-semibold text-(--color-text)">اکشن‌ها</h4>
+              {canSetPassword && (
+                <section className="rounded-xl border border-(--color-border) p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <KeyRound className="size-4 text-wibe-secondary" strokeWidth={1.5} />
+                    <h4 className="text-sm font-semibold text-(--color-text)">
+                      {user.hasPassword ? 'تغییر رمز عبور' : 'ایجاد رمز عبور'}
+                    </h4>
+                  </div>
+                  <p className="mb-3 text-sm leading-relaxed text-wibe-secondary">
+                    {user.hasPassword
+                      ? 'رمز فعلی کاربر عوض می‌شود؛ برای ورود بعدی همین رمز جدید را بدهد.'
+                      : 'این حساب هنوز رمز ندارد. با تنظیم رمز می‌تواند علاوه بر پیامک با رمز هم وارد شود.'}
+                  </p>
+                  <form onSubmit={handleSavePassword} className="space-y-3">
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-(--color-text)">
+                        رمز جدید
+                      </label>
+                      <PasswordInput
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="حداقل ۸ کاراکتر"
+                        strength
+                        required
+                        minLength={8}
+                        maxLength={64}
+                      />
                     </div>
-                    <div className="p-4 space-y-2">
-                      {user.username && (
-                        <a
-                          href={`/u/${encodeURIComponent(user.username)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-(--color-text) hover:bg-(--color-bg) transition-colors"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          مشاهده پروفایل
-                        </a>
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-(--color-text)">
+                        تکرار رمز جدید
+                      </label>
+                      <PasswordInput
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="همان رمز را دوباره وارد کنید"
+                        required
+                        minLength={8}
+                        maxLength={64}
+                      />
+                    </div>
+                    {passwordError && (
+                      <p className="text-sm text-red-700">{passwordError}</p>
+                    )}
+                    {passwordSuccess && (
+                      <p className="text-sm text-emerald-700">{passwordSuccess}</p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={
+                        passwordSaving ||
+                        newPassword.length < 8 ||
+                        confirmPassword.length < 8
+                      }
+                      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+                    >
+                      {passwordSaving && (
+                        <Loader2 className="size-4 animate-spin" strokeWidth={2} />
                       )}
+                      {user.hasPassword ? 'ذخیره رمز جدید' : 'تنظیم رمز'}
+                    </button>
+                  </form>
+                </section>
+              )}
+
+              <section className="space-y-2">
+                <h4 className="text-sm font-semibold text-(--color-text)">اکشن‌ها</h4>
+                <div className="flex flex-col gap-2">
+                  {user.username && (
+                    <a
+                      href={`/u/${encodeURIComponent(user.username)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-(--color-border) px-3 text-sm font-medium text-(--color-text) hover:bg-(--color-bg)"
+                    >
+                      <ExternalLink className="size-4" strokeWidth={1.5} />
+                      مشاهده پروفایل
+                    </a>
+                  )}
+                  {commentStatus &&
+                    (commentStatus === 'restricted' ||
+                      commentStatus === 'banned' ||
+                      user._count.user_violations > 0) && (
                       <button
                         type="button"
-                        disabled
-                        title="به‌زودی"
-                        className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-wibe-secondary opacity-50 cursor-not-allowed"
+                        onClick={handleLiftCommentRestriction}
+                        disabled={liftingComment}
+                        className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-emerald-200 px-3 text-sm font-medium text-emerald-800 hover:bg-emerald-50 disabled:opacity-50"
                       >
-                        <Star className="w-4 h-4" />
-                        ارتقا به کیوریتور (به‌زودی)
-                      </button>
-                      <button
-                        type="button"
-                        disabled
-                        title="به‌زودی"
-                        className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-wibe-secondary opacity-50 cursor-not-allowed"
-                      >
-                        <EyeOff className="w-4 h-4" />
-                        Shadow Ban (به‌زودی)
-                      </button>
-                      {commentStatus &&
-                        (commentStatus === 'restricted' ||
-                          commentStatus === 'banned' ||
-                          user._count.user_violations > 0) && (
-                          <button
-                            type="button"
-                            onClick={handleLiftCommentRestriction}
-                            disabled={liftingComment}
-                            className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-emerald-700 hover:bg-emerald-50 transition-colors border border-emerald-200 disabled:opacity-50"
-                          >
-                            {liftingComment ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <ShieldCheck className="w-4 h-4" />
-                            )}
-                            رفع محدودیت کامنت
-                          </button>
+                        {liftingComment ? (
+                          <Loader2 className="size-4 animate-spin" strokeWidth={2} />
+                        ) : (
+                          <ShieldCheck className="size-4" strokeWidth={1.5} />
                         )}
-                      {canToggleActive && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onToggleActiveRequest({
-                              id: user.id,
-                              name: user.name,
-                              email: user.email,
-                              isActive: user.isActive,
-                            })
-                          }
-                          className="flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors border border-red-200"
-                        >
-                          <PowerOff className="w-4 h-4" />
-                          {user.isActive ? 'غیرفعال کردن' : 'فعال کردن'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                        رفع محدودیت کامنت
+                      </button>
+                    )}
+                  {canToggleActive && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onToggleActiveRequest({
+                          id: user.id,
+                          name: user.name,
+                          email: user.email,
+                          isActive: user.isActive,
+                        })
+                      }
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-red-200 px-3 text-sm font-medium text-red-700 hover:bg-red-50"
+                    >
+                      <PowerOff className="size-4" strokeWidth={1.5} />
+                      {user.isActive ? 'غیرفعال کردن' : 'فعال کردن'}
+                    </button>
+                  )}
                 </div>
-              </div>
+              </section>
 
-              <div className="pt-2">
-                <button
-                  onClick={onClose}
-                  className="w-full py-2.5 rounded-xl border border-(--color-border) text-(--color-text) font-medium hover:bg-(--color-bg)"
-                >
-                  بستن
-                </button>
-              </div>
-            </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-(--color-border) text-sm font-medium text-(--color-text) hover:bg-(--color-bg)"
+              >
+                بستن
+              </button>
+            </>
           ) : (
-            <div className="text-center py-12 text-wibe-secondary">
+            <div className="py-12 text-center text-sm text-wibe-secondary">
               خطا در بارگذاری اطلاعات کاربر
             </div>
           )}
         </div>
       </div>
-
     </div>
   );
 }
 
-function Row({
-  label,
-  value,
-}: {
-  label: string;
-  value: number | string;
-}) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-center text-sm">
-      <span className="text-wibe-secondary">{label}</span>
-      <span className="font-medium tabular-nums text-(--color-text)">
-        {typeof value === 'number' ? value.toLocaleString('fa-IR') : value}
-      </span>
+    <div className="min-w-0">
+      <p className="text-sm text-wibe-secondary">{label}</p>
+      <p className="mt-0.5 text-sm font-semibold tabular-nums text-(--color-text)">
+        {value}
+      </p>
     </div>
   );
 }

@@ -7,8 +7,7 @@ type HomeTrendingCarouselServerProps = {
 };
 
 /**
- * RSC shell for mobile trending lane — cards are client (save control)
- * but first paint HTML streams from the server (no client data waterfall).
+ * RSC shell for mobile trending lane — first paint HTML streams from the server.
  */
 export default function HomeTrendingCarouselServer({
   lists,

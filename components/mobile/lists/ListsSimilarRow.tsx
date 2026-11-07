@@ -7,15 +7,11 @@ type ListItem = Parameters<typeof ListCardCompact>[0]['list'];
 interface ListsSimilarRowProps {
   lists: ListItem[];
   title?: string;
-  bookmarkedIds?: Set<string>;
-  onBookmarkToggle?: (listId: string, isBookmarked: boolean) => void;
 }
 
 export default function ListsSimilarRow({
   lists,
   title = 'پیشنهاد برای تو',
-  bookmarkedIds,
-  onBookmarkToggle,
 }: ListsSimilarRowProps) {
   if (lists.length === 0) return null;
 
@@ -31,8 +27,6 @@ export default function ListsSimilarRow({
             <ListCardCompact
               list={list}
               variant="compact"
-              isBookmarked={bookmarkedIds?.has(list.id)}
-              onBookmarkToggle={onBookmarkToggle}
               fetchPriority="low"
             />
           </div>

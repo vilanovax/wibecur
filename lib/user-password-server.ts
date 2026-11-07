@@ -144,3 +144,40 @@ export async function setUserPasswordWithOtp(
 
   return { ok: true, message: 'رمز عبور ذخیره شد. از این به بعد می‌توانی با رمز هم وارد شوی.' };
 }
+
+/** تعیین یا تغییر رمز کاربر توسط ادمین — بدون نیاز به رمز فعلی */
+export async function adminSetUserPassword(
+  userId: string,
+  input: { newPassword: string; confirmPassword: string },
+  client: PrismaClient = prisma
+): Promise<ChangeUserPasswordResult & { hadPassword?: boolean }> {
+  const newPassword = String(input.newPassword ?? '');
+  const confirmPassword = String(input.confirmPassword ?? '');
+
+  const pairError = validateNewPasswordPair(newPassword, confirmPassword);
+  if (pairError) return pairError;
+
+  const user = await client.users.findUnique({
+    where: { id: userId },
+    select: { id: true, password: true, deletedAt: true },
+  });
+
+  if (!user || user.deletedAt) {
+    return { ok: false, error: 'کاربر یافت نشد', status: 404 };
+  }
+
+  const hadPassword = Boolean(user.password);
+  const hashed = bcrypt.hashSync(newPassword, 12);
+  await client.users.update({
+    where: { id: user.id },
+    data: { password: hashed, updatedAt: new Date() },
+  });
+
+  return {
+    ok: true,
+    message: hadPassword
+      ? 'رمز عبور کاربر تغییر کرد'
+      : 'رمز عبور برای کاربر تنظیم شد',
+    hadPassword,
+  };
+}

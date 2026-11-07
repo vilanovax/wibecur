@@ -6,6 +6,7 @@ import UmamiAnalytics from '@/components/analytics/UmamiAnalytics';
 import SessionProvider from '@/components/providers/SessionProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import PWAProvider from '@/components/providers/PWAProvider';
+import ChunkLoadRecovery from '@/components/providers/ChunkLoadRecovery';
 import CapacitorProvider from '@/components/providers/CapacitorProvider';
 import MainContainer from '@/components/providers/MainContainer';
 import { SiteBrandingProvider } from '@/contexts/SiteBrandingContext';
@@ -150,6 +151,7 @@ export default async function RootLayout({
             <SiteBrandingProvider logoUrl={logoUrl} logoDisplayUrl={logoDisplayUrl}>
               <SearchProvider>
                 <PWAProvider>
+                  <ChunkLoadRecovery />
                   <CapacitorProvider>
                     <MainContainer>{children}</MainContainer>
                   </CapacitorProvider>
