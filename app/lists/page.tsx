@@ -29,6 +29,7 @@ async function ListsContent({
   searchParams: Promise<{
     category?: string;
     tag?: string;
+    genre?: string;
     q?: string;
     mode?: string;
   }>;
@@ -44,6 +45,7 @@ async function ListsContent({
         categories={data.categories}
         initialCategory={data.initialCategory}
         initialSearch={data.initialSearch}
+        initialGenre={data.initialGenre}
         initialMode={data.initialMode}
         initialSort={data.initialSort}
         initialCategoryId={data.initialCategoryId}
@@ -75,6 +77,7 @@ export default function ListsPage({
   searchParams: Promise<{
     category?: string;
     tag?: string;
+    genre?: string;
     q?: string;
     mode?: string;
   }>;

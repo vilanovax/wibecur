@@ -281,16 +281,43 @@ export async function DELETE(
       );
     }
 
-    // Delete list (cascade will handle related data)
+    if (existingList.deletedAt) {
+      return NextResponse.json(
+        { error: 'این لیست قبلاً حذف شده است' },
+        { status: 400 }
+      );
+    }
+
+    // فهرست‌های تحریریه (دارای دسته) فقط از پنل ادمین حذف می‌شوند —
+    // حذف سخت از API کاربر قبلاً پیش‌نویس‌های ادمین را با cascade نابود کرد.
+    if (existingList.categoryId) {
+      return NextResponse.json(
+        {
+          error:
+            'این فهرست تحریریه‌ای است و از اینجا حذف نمی‌شود. از پنل ادمین به زباله‌دان منتقلش کنید.',
+          code: 'EDITORIAL_LIST',
+        },
+        { status: 403 }
+      );
+    }
+
+    // Soft-delete: جایگاه‌ها و کاتالوگ حفظ می‌شوند؛ بازیابی از زباله‌دان ادمین ممکن است.
+    const now = new Date();
     await dbQuery(() =>
-      prisma.lists.delete({
+      prisma.lists.update({
         where: { id },
+        data: {
+          deletedAt: now,
+          deletedById: userId,
+          deleteReason: 'user_delete',
+          isActive: false,
+        },
       })
     );
 
     return NextResponse.json({
       success: true,
-      message: 'لیست با موفقیت حذف شد',
+      message: 'لیست حذف شد',
     });
   } catch (error: any) {
     console.error('Error deleting user list:', error);

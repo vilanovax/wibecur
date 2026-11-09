@@ -91,7 +91,7 @@ export default function CategoryTrendingSectionServer({
         </div>
         {categorySlug ? (
           <Link
-            href={`/lists?category=${categorySlug}`}
+            href={`/lists?category=${categorySlug}&mode=newest`}
             className="inline-flex h-11 shrink-0 items-center"
           >
             <span className="text-sm font-medium text-brand">مشاهده همه</span>

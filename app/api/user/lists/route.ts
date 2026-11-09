@@ -101,8 +101,14 @@ export async function POST(request: NextRequest) {
     try {
       list = await dbQuery(() =>
         prisma.$transaction(async (tx) => {
+          // فقط لیست‌های شخصی (بدون دستهٔ تحریریه) سقف ۳تایی را پر می‌کنند
           const privateListsCount = await tx.lists.count({
-            where: { userId, isPublic: false },
+            where: {
+              userId,
+              isPublic: false,
+              categoryId: null,
+              deletedAt: null,
+            },
           });
           if (privateListsCount >= maxPersonalLists) {
             throw Object.assign(new Error('MAX_PERSONAL_LISTS'), {

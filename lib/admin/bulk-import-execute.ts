@@ -10,6 +10,7 @@ import {
   type BulkImportImageContext,
 } from '@/lib/admin/bulk-import-image';
 import {
+  isStrongCatalogExternalKey,
   resolveBulkImportMatchesBatch,
   resolveBulkImportCatalogId,
 } from '@/lib/admin/bulk-import-resolve';
@@ -21,6 +22,7 @@ import {
   isCatalogInList,
   updateCatalogItem,
 } from '@/lib/catalog-items';
+import { normalizeSuggestionTitle } from '@/lib/suggestion-utils';
 import {
   carryCatalogPlacementMetadata,
   extractBulkImportEntryKind,
@@ -66,6 +68,23 @@ export type BulkImportExecuteResult = {
 };
 
 const IMPORT_CONCURRENCY = 5;
+
+/** کلید پایدار برای جلوگیری از ساخت کاتالوگ تکراری در یک batch موازی */
+function importCatalogDedupeKey(
+  categorySlug: string,
+  row: BulkImportPayloadItem,
+  match: { externalKey: string | null; catalogId: string | null }
+): string {
+  const directId = row.catalogItemId?.trim();
+  if (directId) return `id:${directId}`;
+  if (match.catalogId) return `id:${match.catalogId}`;
+  if (match.externalKey) {
+    const prefix = isStrongCatalogExternalKey(match.externalKey) ? 'strong' : 'key';
+    return `${prefix}:${match.externalKey}`;
+  }
+  const title = row.title?.trim() || '';
+  return `title:${categorySlug}:${normalizeSuggestionTitle(title)}`;
+}
 
 async function resolveRowImageForImport(
   row: BulkImportPayloadItem,
@@ -243,6 +262,8 @@ async function importOneRow(
     imageCtx: BulkImportImageContext;
     overwriteExistingData: boolean;
     match: Awaited<ReturnType<typeof resolveBulkImportMatchesBatch>>[number];
+    /** قفل مشترک batch برای resolve/create کاتالوگ */
+    catalogLocks: Map<string, Promise<string>>;
   }
 ): Promise<BulkImportRowResult> {
   const titleRaw = row.title?.trim();
@@ -333,23 +354,26 @@ async function importOneRow(
     }
 
     const match = ctx.match;
+    const dedupeKey = importCatalogDedupeKey(ctx.categorySlug, row, match);
 
-    const directCatalogId = row.catalogItemId?.trim();
-    let catalogId =
-      (directCatalogId &&
-        (await db.catalog_items.findUnique({
-          where: { id: directCatalogId },
-          select: { id: true },
-        }))?.id) ||
-      match.catalogId ||
-      (await resolveBulkImportCatalogId(db, ctx.categorySlug, {
-        ...row,
-        catalogItemId: directCatalogId,
-      }));
+    const resolveCatalogId = async (): Promise<{ id: string; existedBefore: boolean }> => {
+      const directCatalogId = row.catalogItemId?.trim();
+      const existingId =
+        (directCatalogId &&
+          (await db.catalog_items.findUnique({
+            where: { id: directCatalogId },
+            select: { id: true },
+          }))?.id) ||
+        match.catalogId ||
+        (await resolveBulkImportCatalogId(db, ctx.categorySlug, {
+          ...row,
+          catalogItemId: directCatalogId,
+        }));
 
-    const existingCatalog = !!catalogId;
+      if (existingId) {
+        return { id: existingId, existedBefore: true };
+      }
 
-    if (!catalogId) {
       let finalImage: string | null = null;
       if (row.imageUrl?.trim()) {
         finalImage = await resolveRowImageForImport(row, metaRecord, ctx.imageCtx);
@@ -363,8 +387,27 @@ async function importOneRow(
         categorySlug: ctx.categorySlug,
         metadata: metaRecord as Prisma.InputJsonValue,
       });
-      catalogId = catalog.id;
-    } else if (ctx.overwriteExistingData) {
+      return { id: catalog.id, existedBefore: false };
+    };
+
+    let catalogId: string;
+    let existingCatalog: boolean;
+    const inflight = ctx.catalogLocks.get(dedupeKey);
+    if (inflight) {
+      catalogId = await inflight;
+      existingCatalog = true;
+    } else {
+      let resolved!: { id: string; existedBefore: boolean };
+      const pending = (async () => {
+        resolved = await resolveCatalogId();
+        return resolved.id;
+      })();
+      ctx.catalogLocks.set(dedupeKey, pending);
+      catalogId = await pending;
+      existingCatalog = resolved.existedBefore;
+    }
+
+    if (existingCatalog && ctx.overwriteExistingData) {
       await overwriteCatalogFromImportRow(
         db,
         catalogId,
@@ -373,7 +416,7 @@ async function importOneRow(
         ctx.categorySlug,
         ctx.imageCtx
       );
-    } else if (row.imageUrl?.trim()) {
+    } else if (existingCatalog && row.imageUrl?.trim()) {
       await ensureCatalogImageFromImport(db, catalogId, row, metaRecord, ctx.imageCtx);
     }
 
@@ -393,11 +436,29 @@ async function importOneRow(
     }
 
     const order = row.order ?? assignedOrder;
-    const item = await addCatalogItemToList(db, {
-      catalogItemId: catalogId,
-      listId: ctx.listId,
-      order,
-    });
+    let item: { id: string };
+    try {
+      item = await addCatalogItemToList(db, {
+        catalogItemId: catalogId,
+        listId: ctx.listId,
+        order,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      // مسابقهٔ موازی روی همان کاتالوگ در همین لیست
+      if (msg.includes('قبلاً در این لیست') || msg.includes('Unique constraint')) {
+        return {
+          index,
+          title,
+          status: 'updated',
+          catalogItemId: catalogId,
+          listCount: match.listCount,
+          updated: true,
+          message: 'از قبل در این لیست است — از ساخت تکراری جلوگیری شد',
+        };
+      }
+      throw err;
+    }
 
     if (existingCatalog) {
       const listCount = match.listCount > 0 ? match.listCount : undefined;
@@ -480,6 +541,7 @@ export async function executeBulkImportForList(
   const assignedOrders = items.map((row) => row.order ?? orderCursor++);
   const imageCtx = await createBulkImportImageContext();
   const matches = await resolveBulkImportMatchesBatch(db, categorySlug, listId, items);
+  const catalogLocks = new Map<string, Promise<string>>();
 
   const rowResults = await mapWithConcurrency(items, IMPORT_CONCURRENCY, (row, index) =>
     importOneRow(db, index, row, assignedOrders[index], {
@@ -488,6 +550,7 @@ export async function executeBulkImportForList(
       imageCtx,
       overwriteExistingData,
       match: matches[index],
+      catalogLocks,
     })
   );
 
@@ -526,7 +589,7 @@ export async function executeBulkImportForList(
 
   if (placementsAdded > 0 || updated > 0 || created > 0 || linked > 0) {
     revalidateListDetailCache(list.slug);
-    revalidateCategoryCache(list.categoryId);
+    revalidateCategoryCache(list.categoryId, list.categories.slug);
     revalidateHomeCache();
   }
 

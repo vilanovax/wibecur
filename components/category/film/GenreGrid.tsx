@@ -32,7 +32,7 @@ export default function GenreGrid({ categorySlug }: GenreGridProps) {
         {FILM_GENRES.map((genre) => (
           <Link
             key={genre.slug}
-            href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(genre.label)}`}
+            href={`/lists?category=${categorySlug}&mode=newest&genre=${encodeURIComponent(genre.label)}`}
             className="flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-900 border border-gray-800 active:scale-[0.96] transition-transform min-h-22.5"
           >
             <span

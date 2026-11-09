@@ -12,6 +12,7 @@ export const LIST_FILTER_KINDS: ListFilterKind[] = [
   'zero_save',
   'featured',
   'no_cover',
+  'inactive',
 ];
 
 export function parseListFilterParam(raw?: string | null): ListFilterKind {
@@ -62,6 +63,8 @@ export function countListsForFilter(
       return lists.filter((l) => l.isFeatured).length;
     case 'no_cover':
       return lists.filter((l) => listHasMissingCover(l)).length;
+    case 'inactive':
+      return lists.filter((l) => !l.isActive).length;
     default:
       return lists.length;
   }
@@ -81,6 +84,7 @@ export function countAllListFilters(
     zero_save: 0,
     featured: 0,
     no_cover: 0,
+    inactive: 0,
   };
 
   for (const l of lists) {
@@ -92,6 +96,7 @@ export function countAllListFilters(
     if (l.saveCount === 0) counts.zero_save += 1;
     if (l.isFeatured) counts.featured += 1;
     if (listHasMissingCover(l)) counts.no_cover += 1;
+    if (!l.isActive) counts.inactive += 1;
   }
 
   return counts;

@@ -43,6 +43,7 @@ export function filterListsByQuery<
   T extends {
     title: string;
     description?: string | null;
+    tags?: string[] | null;
     categories?: { name?: string | null } | null;
   },
 >(lists: T[], query: string): T[] {
@@ -53,7 +54,13 @@ export function filterListsByQuery<
     const title = normalizeSearchQuery(list.title).toLowerCase();
     const desc = normalizeSearchQuery(list.description ?? '').toLowerCase();
     const category = normalizeSearchQuery(list.categories?.name ?? '').toLowerCase();
-    return title.includes(q) || desc.includes(q) || category.includes(q);
+    const tags = (list.tags ?? []).map((t) => normalizeSearchQuery(t).toLowerCase());
+    return (
+      title.includes(q) ||
+      desc.includes(q) ||
+      category.includes(q) ||
+      tags.some((t) => t.includes(q) || q.includes(t))
+    );
   });
 }
 

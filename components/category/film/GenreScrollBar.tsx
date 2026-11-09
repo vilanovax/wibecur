@@ -11,7 +11,7 @@ interface GenreScrollBarProps {
   inset?: boolean;
 }
 
-/** ژانرها — از تگ‌های DB + fallback */
+/** ژانرها — فیلتر واقعی لیست‌ها (نه جستجوی متنی) */
 export default function GenreScrollBar({ categorySlug, genres, inset = false }: GenreScrollBarProps) {
   const chips: FilmGenreChip[] =
     genres && genres.length > 0
@@ -25,7 +25,7 @@ export default function GenreScrollBar({ categorySlug, genres, inset = false }: 
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-xs font-semibold text-muted-foreground">ژانرها</p>
         <Link
-          href={`/lists?category=${categorySlug}`}
+          href={`/lists?category=${categorySlug}&mode=newest`}
           className="inline-flex h-11 items-center text-xs font-medium"
         >
           <span className="text-brand">همه لیست‌ها</span>
@@ -38,7 +38,7 @@ export default function GenreScrollBar({ categorySlug, genres, inset = false }: 
         {chips.map((genre) => (
           <Link
             key={`${genre.slug}-${genre.label}`}
-            href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(genre.label)}`}
+            href={`/lists?category=${categorySlug}&mode=newest&genre=${encodeURIComponent(genre.label)}`}
             className="flex h-11 shrink-0 snap-start items-center gap-1.5 rounded-full border border-border bg-popover px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
             <span>{genre.icon}</span>

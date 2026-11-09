@@ -82,7 +82,7 @@ export default function TrendingListsSection({
         <CategorySectionTitle title={title} subtitle={subtitle} iconVariant="trending" className="mb-0" />
         {categorySlug && (
           <Link
-            href={`/lists?category=${categorySlug}`}
+            href={`/lists?category=${categorySlug}&mode=newest`}
             className="inline-flex min-h-11 shrink-0 items-center"
           >
             <span className="text-sm font-medium text-brand">مشاهده همه</span>

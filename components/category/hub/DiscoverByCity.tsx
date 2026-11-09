@@ -43,7 +43,7 @@ export default function DiscoverByCity({
           return (
             <Link
               key={city}
-              href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(city)}`}
+              href={`/lists?category=${categorySlug}&mode=newest&tag=${encodeURIComponent(city)}`}
               className="relative rounded-2xl overflow-hidden aspect-4/3 bg-wibe-surface active:scale-[0.98] transition-transform shadow-sm"
             >
               <ImageWithFallback

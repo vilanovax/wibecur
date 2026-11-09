@@ -67,6 +67,8 @@ function filterLists(lists: ListIntelligenceRow[], filter: ListFilterKind): List
       return lists.filter((l) => l.isFeatured);
     case 'no_cover':
       return lists.filter((l) => listHasMissingCover(l));
+    case 'inactive':
+      return lists.filter((l) => !l.isActive);
     default:
       return lists;
   }
@@ -113,6 +115,7 @@ const EMPTY_COUNTS: Record<ListFilterKind, number> = {
   zero_save: 0,
   featured: 0,
   no_cover: 0,
+  inactive: 0,
 };
 
 export default function ListsIntelligenceClient({

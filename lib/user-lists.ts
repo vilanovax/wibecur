@@ -85,9 +85,11 @@ export function buildUserListsWhere(
   userId: string,
   filter: UserListFilter = 'all'
 ): Prisma.listsWhereInput {
+  // categoryId != null → فهرست تحریریهٔ ادمین؛ در پروفایل/سقف خصوصی کاربر نمی‌آید
   const base: Prisma.listsWhereInput = {
     userId,
     deletedAt: null,
+    categoryId: null,
   };
 
   if (filter === 'public') {

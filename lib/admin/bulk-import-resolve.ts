@@ -6,7 +6,7 @@ import {
   findCatalogByExternalKey,
   findCatalogByTitleMatch,
 } from '@/lib/catalog-items';
-import { catalogTitlesMatch } from '@/lib/suggestion-utils';
+import { catalogTitlesMatch, normalizeSuggestionTitle } from '@/lib/suggestion-utils';
 
 export type BulkImportMatchKind = 'new' | 'existing_catalog' | 'already_in_list' | 'lightweight';
 
@@ -351,6 +351,37 @@ export async function resolveBulkImportMatchesBatch(
     const { title } = rowKeys[i];
     const catalog = title ? catalogByTitle.get(title) : undefined;
     if (catalog) catalogByRowIndex.set(i, catalog);
+  }
+
+  // ردیف‌های بدون کاتالوگ که عنوان/کلید یکسان دارند را به هم گره بزن
+  // تا در preview همه «جدید» جدا دیده نشوند وقتی یکی پیدا شده
+  const byStrongKey = new Map<string, CatalogRef>();
+  const byNormTitle = new Map<string, CatalogRef>();
+  for (let i = 0; i < rowKeys.length; i++) {
+    const catalog = catalogByRowIndex.get(i);
+    if (!catalog) continue;
+    const { externalKey, title } = rowKeys[i];
+    if (externalKey && isStrongCatalogExternalKey(externalKey)) {
+      byStrongKey.set(externalKey, catalog);
+    }
+    const norm = normalizeSuggestionTitle(title);
+    if (norm) byNormTitle.set(norm, catalog);
+  }
+  for (let i = 0; i < rowKeys.length; i++) {
+    if (catalogByRowIndex.has(i)) continue;
+    const { externalKey, title } = rowKeys[i];
+    if (externalKey && isStrongCatalogExternalKey(externalKey)) {
+      const hit = byStrongKey.get(externalKey);
+      if (hit) {
+        catalogByRowIndex.set(i, hit);
+        continue;
+      }
+    }
+    const norm = normalizeSuggestionTitle(title);
+    const hit = norm ? byNormTitle.get(norm) : undefined;
+    if (hit && catalogTitlesMatch(title, hit.title)) {
+      catalogByRowIndex.set(i, hit);
+    }
   }
 
   const allCatalogIds = [...new Set([...catalogByRowIndex.values()].map((c) => c.id))];

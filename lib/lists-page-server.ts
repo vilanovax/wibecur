@@ -1,5 +1,8 @@
 /**
- * Server loader for /lists — aligned with client default browse mode (trending).
+ * Server loader for /lists.
+ * Default browse mode is trending for the open catalog; when a category is
+ * deep-linked without mode (e.g. «همه لیست‌ها»), use newest so the full
+ * category is shown — not the tiny trending subset.
  * Perf: correct sort on SSR avoids immediate client refetch of 120 rows.
  */
 
@@ -28,16 +31,20 @@ export type ListsPageBootstrap = {
   categories: ListsPageCategory[];
   initialCategory?: string;
   initialSearch?: string;
+  /** فیلتر ژانر از چیپ‌های صفحه فیلم — جدا از جستجوی متنی */
+  initialGenre?: string;
   initialMode: ListsBrowseMode;
   initialSort: ListsBrowseSort;
   initialCategoryId: string | null;
   initialTrendingIds: string[];
 };
 
-function parseBrowseMode(raw?: string): ListsBrowseMode {
+function parseBrowseMode(raw?: string, opts?: { hasCategory?: boolean }): ListsBrowseMode {
   if (raw === 'newest' || raw === 'popular' || raw === 'saved' || raw === 'trending') {
     return raw;
   }
+  // /lists?category=film → catalog of that category, not «۴ لیست ترند»
+  if (opts?.hasCategory) return 'newest';
   return 'trending';
 }
 
@@ -83,11 +90,17 @@ function mapCategories(
 async function loadListsPageBootstrap(params: {
   category?: string;
   tag?: string;
+  genre?: string;
   q?: string;
   mode?: string;
 }): Promise<ListsPageBootstrap> {
-  const initialMode = parseBrowseMode(params.mode);
+  const initialMode = parseBrowseMode(params.mode, {
+    hasCategory: Boolean(params.category || params.genre),
+  });
   const initialSort = browseModeToSort(initialMode);
+  // ژانر فقط از genre= (چیپ فیلم). tag= هنوز برای شهر/کافه → سرچ متنی
+  const initialGenre = (params.genre || '').trim() || undefined;
+  const initialSearch = (params.q || params.tag || '').trim() || undefined;
   const needsTrendingIds = initialMode === 'trending';
   const trendingPromise = needsTrendingIds
     ? getCachedGlobalTrending(24)
@@ -102,6 +115,7 @@ async function loadListsPageBootstrap(params: {
         limit: LISTS_SSR_LIMIT,
         sort: initialSort,
         categoryId: null,
+        genre: initialGenre ?? null,
       }),
       trendingPromise,
     ]);
@@ -111,7 +125,8 @@ async function loadListsPageBootstrap(params: {
       totalListCount: browseResult.pagination.total,
       categories: mapCategories(categoryRows),
       initialCategory: params.category,
-      initialSearch: params.q || params.tag,
+      initialSearch,
+      initialGenre,
       initialMode,
       initialSort,
       initialCategoryId: null,
@@ -130,6 +145,7 @@ async function loadListsPageBootstrap(params: {
       limit: LISTS_SSR_LIMIT,
       sort: initialSort,
       categoryId: initialCategoryId,
+      genre: initialGenre ?? null,
     }),
     trendingPromise,
   ]);
@@ -139,7 +155,8 @@ async function loadListsPageBootstrap(params: {
     totalListCount: browseResult.pagination.total,
     categories,
     initialCategory: params.category,
-    initialSearch: params.q || params.tag,
+    initialSearch,
+    initialGenre,
     initialMode,
     initialSort,
     initialCategoryId,

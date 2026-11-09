@@ -259,7 +259,7 @@ export default function MediaSlotRow({
         checked={selected}
         onChange={(event) => onSelectedChange(event.target.checked)}
         aria-label={`انتخاب ${slot.title}`}
-        className="size-4 accent-(--primary)"
+        className="size-4 accent-primary"
       />
     </label>
   ) : null;

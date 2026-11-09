@@ -114,7 +114,7 @@ export default function TrendingPosterGrid({
           className="mb-0"
         />
         <Link
-          href={`/lists?category=${categorySlug}`}
+          href={`/lists?category=${categorySlug}&mode=newest`}
           className="inline-flex shrink-0 pb-0.5 text-sm font-medium text-primary transition-colors hover:text-primary-dark"
         >
           مشاهده همه

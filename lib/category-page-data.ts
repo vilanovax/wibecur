@@ -21,7 +21,7 @@ import { pickCategoryNewLists } from '@/lib/category-page-lists';
 import { resolveListCover } from '@/lib/resolve-list-cover';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import { LOCATION_CITIES } from '@/types/category-page';
-import { buildFilmGenreChips } from '@/lib/film-genres';
+import { buildFilmGenreChips, countListIdsByGenre } from '@/lib/film-genres';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 
 function mapListCover(
@@ -728,26 +728,26 @@ async function getFilmGenres(
   prisma: PrismaClient,
   categoryId: string
 ) {
-  const lists = await prisma.lists.findMany({
+  // ژانر واقعی از metadata آیتم‌هاست؛ تگ لیست‌ها اغلب خالی بود و چیپ فالبک بی‌داده می‌ساخت.
+  const items = await prisma.items.findMany({
     where: {
-      categoryId,
-      isActive: true,
-      isPublic: true,
-      users: { role: { not: 'USER' } },
+      deletedAt: null,
+      lists: {
+        categoryId,
+        isActive: true,
+        isPublic: true,
+        deletedAt: null,
+        users: { role: { not: 'USER' } },
+      },
     },
-    select: { tags: true },
+    select: {
+      listId: true,
+      metadata: true,
+    },
+    take: 8000,
   });
 
-  const tagCounts = new Map<string, number>();
-  for (const list of lists) {
-    for (const raw of list.tags ?? []) {
-      const label = typeof raw === 'string' ? raw.trim() : '';
-      if (!label) continue;
-      tagCounts.set(label, (tagCounts.get(label) ?? 0) + 1);
-    }
-  }
-
-  return buildFilmGenreChips(tagCounts);
+  return buildFilmGenreChips(countListIdsByGenre(items));
 }
 
 async function getNewLists(

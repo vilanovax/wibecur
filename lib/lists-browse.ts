@@ -43,6 +43,7 @@ export const listsBrowseSelect = {
   saveCount: true,
   itemCount: true,
   createdAt: true,
+  tags: true,
   categories: {
     select: {
       id: true,
@@ -89,7 +90,43 @@ function serializeBrowseList(
     saveCount: list.saveCount,
     itemCount: list.itemCount,
     createdAt: list.createdAt.toISOString(),
+    tags: list.tags ?? [],
     categories: list.categories,
+  };
+}
+
+/** فیلتر لیست‌هایی که ژانر را در تگ یا metadata آیتم دارند */
+export function genreBrowseWhere(genre: string): Prisma.listsWhereInput {
+  const label = genre.trim();
+  if (!label) return {};
+
+  const itemMetaOr: Prisma.itemsWhereInput[] = [
+    {
+      deletedAt: null,
+      metadata: {
+        path: ['genre'],
+        string_contains: label,
+        mode: 'insensitive',
+      },
+    },
+  ];
+
+  if (label === 'ایرانی' || label === 'ایران') {
+    itemMetaOr.push({
+      deletedAt: null,
+      metadata: {
+        path: ['country'],
+        string_contains: 'ایران',
+        mode: 'insensitive',
+      },
+    });
+  }
+
+  return {
+    OR: [
+      { tags: { has: label } },
+      { items: { some: { OR: itemMetaOr } } },
+    ],
   };
 }
 
@@ -98,17 +135,20 @@ export type FetchListsBrowseParams = {
   limit?: number;
   sort?: ListsBrowseSort;
   categoryId?: string | null;
+  genre?: string | null;
 };
 
 async function loadListsBrowse(
   safeOffset: number,
   safeLimit: number,
   sort: ListsBrowseSort,
-  categoryId: string | null
+  categoryId: string | null,
+  genre: string | null = null
 ): Promise<ListsBrowseResult> {
   const where: Prisma.listsWhereInput = {
     ...publicCuratedListWhere,
     ...(categoryId ? { categoryId } : {}),
+    ...(genre ? genreBrowseWhere(genre) : {}),
   };
 
   const [total, rows] = await Promise.all([
@@ -142,14 +182,16 @@ async function fetchListsBrowseUncached({
   limit = LISTS_BROWSE_DEFAULT_LIMIT,
   sort = 'newest',
   categoryId = null,
+  genre = null,
 }: FetchListsBrowseParams = {}): Promise<ListsBrowseResult> {
   const safeLimit = Math.min(Math.max(limit, 1), LISTS_BROWSE_MAX_LIMIT);
   const safeOffset = Math.max(offset, 0);
   const cacheCategoryKey = categoryId ?? 'all';
+  const cacheGenreKey = genre?.trim() || 'none';
 
   return unstable_cache(
-    () => loadListsBrowse(safeOffset, safeLimit, sort, categoryId),
-    ['lists-browse-v2', String(safeOffset), String(safeLimit), sort, cacheCategoryKey],
+    () => loadListsBrowse(safeOffset, safeLimit, sort, categoryId, genre?.trim() || null),
+    ['lists-browse-v3', String(safeOffset), String(safeLimit), sort, cacheCategoryKey, cacheGenreKey],
     { revalidate: 60, tags: [LISTS_BROWSE_CACHE_TAG] }
   )();
 }

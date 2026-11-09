@@ -1,9 +1,10 @@
-import { revalidateTag } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { LISTS_BROWSE_CACHE_TAG } from '@/lib/lists-browse-shared';
 
 /**
  * تگ‌های کش صفحات عمومی و توابع باطل‌سازی — برای تازگی بدون اتکای صرف به TTL.
- * بعد از هر ویرایش محتوا، تگ مربوطه revalidate می‌شود تا کاربر نسخهٔ به‌روز ببیند.
+ * بعد از هر ویرایش محتوا، تگ مربوطه + مسیر صفحه revalidate می‌شود تا
+ * هم Data Cache و هم Full Route Cache (ISR) تازه شوند.
  */
 
 export const HOME_CACHE_TAG = 'home';
@@ -16,32 +17,52 @@ export const itemDetailCacheTag = (itemId: string) => `item-${itemId}`;
 export const publicProfileCacheTag = (username: string) =>
   `public-profile-${username.toLowerCase()}`;
 
+function safeRevalidatePath(path: string, type?: 'page' | 'layout'): void {
+  try {
+    if (type) revalidatePath(path, type);
+    else revalidatePath(path);
+  } catch {
+    // خارج از request scope (اسکریپت/تست) — tag کافی است
+  }
+}
+
 /** هوم + ترند + browse لیست‌ها — بعد از تغییری که ترکیب عمومی را عوض می‌کند. */
 export function revalidateHomeCache(): void {
   revalidateTag(HOME_CACHE_TAG, 'max');
   revalidateTag(TRENDING_CACHE_TAG, 'max');
   revalidateTag(LISTS_BROWSE_CACHE_TAG, 'max');
+  safeRevalidatePath('/');
+  safeRevalidatePath('/lists');
+  safeRevalidatePath('/explore');
 }
 
 /** صفحهٔ جزئیات یک لیست خاص. */
 export function revalidateListDetailCache(slug: string | null | undefined): void {
   if (!slug) return;
   revalidateTag(listDetailCacheTag(slug), 'max');
+  safeRevalidatePath(`/lists/${slug}`);
 }
 
 /** صفحهٔ جزئیات یک آیتم. */
 export function revalidateItemDetailCache(itemId: string | null | undefined): void {
   if (!itemId) return;
   revalidateTag(itemDetailCacheTag(itemId), 'max');
+  safeRevalidatePath(`/items/${itemId}`);
 }
 
 /** دادهٔ صفحهٔ یک دستهٔ خاص. */
-export function revalidateCategoryCache(categoryId: string | null | undefined): void {
-  if (!categoryId) return;
-  revalidateTag(categoryCacheTag(categoryId), 'max');
+export function revalidateCategoryCache(
+  categoryId: string | null | undefined,
+  categorySlug?: string | null
+): void {
+  if (!categoryId && !categorySlug) return;
+  if (categoryId) revalidateTag(categoryCacheTag(categoryId), 'max');
+  safeRevalidatePath('/categories', 'layout');
+  if (categorySlug) safeRevalidatePath(`/categories/${categorySlug}`);
 }
 
 /** منوی چیپس دسته‌ها (روی همهٔ صفحات مشترک است). */
 export function revalidateCategoryMenuCache(): void {
   revalidateTag('category-menu', 'max');
+  safeRevalidatePath('/categories', 'layout');
 }

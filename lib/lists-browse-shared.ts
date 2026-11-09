@@ -29,6 +29,8 @@ export type ListsBrowseList = {
   saveCount: number;
   itemCount: number;
   createdAt: string;
+  /** ژانر/برچسب همگام‌شده از آیتم‌ها — برای فیلتر ژانر */
+  tags?: string[];
   categories: {
     id: string;
     name: string;

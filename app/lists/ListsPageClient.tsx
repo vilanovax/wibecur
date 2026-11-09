@@ -68,6 +68,8 @@ interface ListsPageClientProps {
   categories: ListsPageCategory[];
   initialCategory?: string;
   initialSearch?: string;
+  /** ژانر از چیپ صفحه فیلم — فیلتر لیست، نه سرچ متنی */
+  initialGenre?: string;
   initialMode?: string;
   /** Sort used for SSR browse payload — skip client refetch when still matching */
   initialSort?: ListsBrowseSort;
@@ -258,6 +260,7 @@ export default function ListsPageClient({
   categories,
   initialCategory,
   initialSearch,
+  initialGenre,
   initialMode,
   initialSort = 'rising',
   initialCategoryId = null,
@@ -289,6 +292,7 @@ export default function ListsPageClient({
     categories: resolvedCategoryId ? new Set([resolvedCategoryId]) : new Set(),
   }));
   const [searchQuery, setSearchQuery] = useState(initialSearch ?? '');
+  const [genreFilter, setGenreFilter] = useState(initialGenre?.trim() ?? '');
   const search = useUnifiedSearchQuery(searchQuery);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
@@ -323,6 +327,7 @@ export default function ListsPageClient({
         const creatorMatch = matchCreatorType(list, state.creatorType);
         const itemCountMatch = (list.itemCount ?? 0) >= state.minItemCount;
         const ratingMatch = matchMinRating(list, state.minRating);
+        // فیلتر ژانر سمت سرور (/api/lists/browse?genre=) اعمال می‌شود
         return categoryMatch && vibeMatch && creatorMatch && itemCountMatch && ratingMatch;
       });
     };
@@ -493,6 +498,11 @@ export default function ListsPageClient({
     if (q) params.set('q', q);
     else params.delete('q');
 
+    // تگ قدیمی را پاک کن؛ ژانر پارامتر جداست
+    params.delete('tag');
+    if (genreFilter) params.set('genre', genreFilter);
+    else params.delete('genre');
+
     if (browseMode !== 'trending') params.set('mode', browseMode);
     else params.delete('mode');
 
@@ -510,7 +520,7 @@ export default function ListsPageClient({
     if (next !== current) {
       router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
     }
-  }, [searchQuery, browseMode, filterState.categories, activeCategories, router, pathname]);
+  }, [searchQuery, genreFilter, browseMode, filterState.categories, activeCategories, router, pathname]);
 
   const filteredLists = isSearchActive
     ? searchFiltered
@@ -561,6 +571,7 @@ export default function ListsPageClient({
 
   const useSectionLayout =
     !searchQuery.trim() &&
+    !genreFilter &&
     !hasAdvancedFilters &&
     browseMode !== 'saved' &&
     !singleCategoryFilter &&
@@ -589,6 +600,9 @@ export default function ListsPageClient({
       if (serverBrowseCategoryId) {
         params.set('categoryId', serverBrowseCategoryId);
       }
+      if (genreFilter) {
+        params.set('genre', genreFilter);
+      }
 
       const res = await fetch(`/api/lists/browse?${params.toString()}`);
       const data = await res.json();
@@ -614,18 +628,20 @@ export default function ListsPageClient({
     hasMoreRemote,
     isLoadingRemote,
     serverBrowseCategoryId,
+    genreFilter,
   ]);
 
   useEffect(() => {
     remoteFetchLock.current = false;
-  }, [filterState.sortBy, serverBrowseCategoryId, browseMode]);
+  }, [filterState.sortBy, serverBrowseCategoryId, browseMode, genreFilter]);
 
   useEffect(() => {
-    // SSR already loaded matching sort/category — avoid refetching 120 rows on first paint
+    // SSR already loaded matching sort/category/genre — avoid refetching on first paint
     const ssrMatches =
       browseMode !== 'saved' &&
       filterState.sortBy === initialSort &&
-      (serverBrowseCategoryId ?? null) === (initialCategoryId ?? null);
+      (serverBrowseCategoryId ?? null) === (initialCategoryId ?? null) &&
+      genreFilter === (initialGenre?.trim() ?? '');
 
     if (ssrMatches) {
       setAllLists(initialLists);
@@ -646,6 +662,9 @@ export default function ListsPageClient({
     });
     if (serverBrowseCategoryId) {
       params.set('categoryId', serverBrowseCategoryId);
+    }
+    if (genreFilter) {
+      params.set('genre', genreFilter);
     }
 
     fetch(`/api/lists/browse?${params.toString()}`)
@@ -670,15 +689,17 @@ export default function ListsPageClient({
     filterState.sortBy,
     serverBrowseCategoryId,
     browseMode,
+    genreFilter,
     initialLists,
     totalListCount,
     initialSort,
     initialCategoryId,
+    initialGenre,
   ]);
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [filterState, searchQuery, browseMode, viewMode]);
+  }, [filterState, searchQuery, genreFilter, browseMode, viewMode]);
 
   const canRemotePaginate =
     !isSearchActive &&
@@ -815,6 +836,7 @@ export default function ListsPageClient({
       : filterState.categories.size > 1
         ? `${filterState.categories.size.toLocaleString('fa-IR')} دسته`
         : 'همه دسته‌ها',
+    ...(genreFilter ? [`ژانر ${genreFilter}`] : []),
   ];
 
   const guestSavedGate = browseMode === 'saved' && isGuest;
@@ -875,13 +897,29 @@ export default function ListsPageClient({
             <span className="text-sm font-medium">سراسری</span>
           </Button>
         </div>
+        {genreFilter ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="inline-flex h-11 items-center gap-1.5 rounded-full border border-brand/30 bg-brand/10 px-4 text-sm font-medium text-brand">
+              ژانر: {genreFilter}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-11 px-3 text-sm"
+              onClick={() => setGenreFilter('')}
+            >
+              پاک کردن ژانر
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {showBrowseToolbar && (
         <>
           <div className="sticky top-14 z-20 border-b border-border bg-background/95 backdrop-blur-md lg:top-14">
             <div className="flex items-center gap-1.5 px-4 py-2 lg:gap-2 lg:px-0">
-              <div className="min-w-0 flex-1 overflow-x-auto scrollbar-hide">
+              <div className="min-w-0 flex-1 overflow-x-auto overscroll-x-contain scrollbar-hide">
                 <SegmentedControl
                   aria-label="مرتب‌سازی کاتالوگ"
                   value={browseMode}
@@ -898,7 +936,7 @@ export default function ListsPageClient({
                 aria-label="فیلتر نمایش"
               >
                 <Filter className="h-4 w-4" />
-                <span className="text-sm font-medium">فیلتر</span>
+                <span className="text-sm font-medium max-lg:hidden">فیلتر</span>
               </Button>
               <Link
                 href={createListHref}
@@ -907,7 +945,7 @@ export default function ListsPageClient({
                 className={`inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-3 text-sm font-semibold text-brand-foreground shadow-control transition-colors hover:bg-brand/90 ${toolbarBtnFocus}`}
               >
                 <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
-                <span>ساخت لیست</span>
+                <span className="max-lg:hidden">ساخت لیست</span>
               </Link>
             </div>
           </div>
@@ -1046,18 +1084,22 @@ export default function ListsPageClient({
           />
         ) : sortedLists.length === 0 ? (
           <SearchEmptyState
-            query={searchQuery}
-            onClear={() => setSearchQuery('')}
-            onResetFilters={() =>
+            query={searchQuery.trim() || genreFilter}
+            onClear={() => {
+              setSearchQuery('');
+              setGenreFilter('');
+            }}
+            onResetFilters={() => {
+              setGenreFilter('');
               setFilterState((s) => ({
                 ...s,
                 ...browseModeToFilter(browseMode),
                 creatorType: 'all',
                 minItemCount: 0,
                 minRating: 0,
-              }))
-            }
-            hasFilters={hasAdvancedFilters || filterState.categories.size > 0}
+              }));
+            }}
+            hasFilters={hasAdvancedFilters || filterState.categories.size > 0 || Boolean(genreFilter)}
             createHref={createListHref}
           />
         ) : useSectionLayout ? (

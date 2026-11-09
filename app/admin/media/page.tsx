@@ -183,7 +183,7 @@ export default async function MediaLibraryPage({
               href={pageHref(item, q, missing, 1, view, state, heaviest, issue)}
               className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-sm ${
                 active
-                  ? 'border-(--primary) bg-primary text-white'
+                  ? 'border-primary bg-primary text-white'
                   : 'border-(--color-border) bg-(--color-surface) text-(--color-text)'
               }`}
             >
@@ -254,7 +254,7 @@ export default async function MediaLibraryPage({
             href={pageHref(filter, q, !missing, 1, view, state, false, null)}
             className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${
             missing
-              ? 'border-(--primary) bg-primary text-white'
+              ? 'border-primary bg-primary text-white'
               : 'border-(--color-border) bg-(--color-surface) text-(--color-text)'
           }`}
         >
@@ -265,7 +265,7 @@ export default async function MediaLibraryPage({
             aria-pressed={heaviest}
             className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${
               heaviest
-                ? 'border-(--primary) bg-primary text-white'
+                ? 'border-primary bg-primary text-white'
                 : 'border-(--color-border) bg-(--color-surface) text-(--color-text)'
             }`}
           >
@@ -284,7 +284,7 @@ export default async function MediaLibraryPage({
               aria-pressed={selected}
               className={`inline-flex min-h-11 items-center rounded-full border px-3 text-sm ${
                 selected
-                  ? 'border-(--primary) bg-primary text-white'
+                  ? 'border-primary bg-primary text-white'
                   : 'border-(--color-border) bg-(--color-surface) text-(--color-text)'
               }`}
             >

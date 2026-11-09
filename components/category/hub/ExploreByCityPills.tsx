@@ -32,7 +32,7 @@ export default function ExploreByCityPills({
         {LOCATION_CITIES.map((city) => (
           <Link
             key={city}
-            href={`/lists?category=${categorySlug}&tag=${encodeURIComponent(city)}`}
+            href={`/lists?category=${categorySlug}&mode=newest&tag=${encodeURIComponent(city)}`}
             className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-popover px-4 text-sm font-medium text-foreground transition-transform active:scale-[0.98]"
           >
             <span>{city}</span>
@@ -44,7 +44,7 @@ export default function ExploreByCityPills({
           </Link>
         ))}
         <Link
-          href={`/lists?category=${categorySlug}`}
+          href={`/lists?category=${categorySlug}&mode=newest`}
           className="inline-flex h-11 items-center gap-1 rounded-full bg-brand px-4 text-sm font-semibold text-brand-foreground"
         >
           همه شهرها

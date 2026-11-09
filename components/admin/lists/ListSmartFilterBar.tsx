@@ -14,7 +14,8 @@ export type ListFilterKind =
   | 'needs_review'
   | 'zero_save'
   | 'featured'
-  | 'no_cover';
+  | 'no_cover'
+  | 'inactive';
 
 const FILTER_LABELS: Record<ListFilterKind, string> = {
   all: 'همه',
@@ -26,11 +27,13 @@ const FILTER_LABELS: Record<ListFilterKind, string> = {
   zero_save: 'بدون ذخیره',
   featured: 'Featured',
   no_cover: 'بدون کاور',
+  inactive: 'پیش‌نویس',
 };
 
 const secondaryPills: { value: ListFilterKind; label: string }[] = [
   { value: 'trending_top', label: '۱۰ برتر' },
   { value: 'needs_review', label: 'نیازمند بررسی' },
+  { value: 'inactive', label: 'پیش‌نویس' },
   { value: 'zero_save', label: 'بدون ذخیره' },
   { value: 'no_cover', label: 'بدون کاور' },
 ];

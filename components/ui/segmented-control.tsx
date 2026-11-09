@@ -65,9 +65,10 @@ export function SegmentedControl({ options, value, defaultValue, onChange, size 
         list.current?.querySelector<HTMLElement>(`[data-value="${CSS.escape(next.value)}"]`)?.focus();
       }}
       className={cn(
-        // Equal-width columns; fr tracks in an inline grid grow to the widest label.
-        "relative isolate auto-cols-fr grid-flow-col rounded-[calc(var(--shape-control)+2px)] bg-muted p-0.5",
-        fullWidth ? "grid w-full" : "inline-grid",
+        // fullWidth: equal fr columns. Otherwise max-content so labels never
+        // collapse/overlap inside a tight flex + overflow-x parent (mobile lists).
+        "relative isolate grid-flow-col rounded-[calc(var(--shape-control)+2px)] bg-muted p-0.5",
+        fullWidth ? "grid w-full auto-cols-fr" : "inline-grid w-max max-w-none auto-cols-max",
         className,
       )}
     >
@@ -92,7 +93,7 @@ export function SegmentedControl({ options, value, defaultValue, onChange, size 
             tabIndex={on ? 0 : -1}
             onClick={() => select(o.value)}
             className={cn(
-              "relative cursor-pointer rounded-control font-medium whitespace-nowrap transition-colors duration-(--motion) ease-motion",
+              "relative shrink-0 cursor-pointer rounded-control font-medium whitespace-nowrap transition-colors duration-(--motion) ease-motion",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
               "disabled:cursor-not-allowed disabled:opacity-40",
               size === "sm" ? "h-11 px-3 text-sm" : "h-11 px-3.5 text-sm",

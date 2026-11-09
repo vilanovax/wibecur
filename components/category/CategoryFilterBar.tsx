@@ -32,7 +32,7 @@ export default function CategoryFilterBar({
   };
 
   return (
-    <div className="sticky top-[57px] z-10 -mx-4 border-b border-wibe bg-wibe-surface px-4 pb-2">
+    <div className="sticky top-14.25 z-10 -mx-4 border-b border-wibe bg-wibe-surface px-4 pb-2">
       <HorizontalScrollFade
         surface="surface"
         innerClassName="flex gap-2 py-3 -mx-1"

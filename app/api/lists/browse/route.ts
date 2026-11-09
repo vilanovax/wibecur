@@ -20,12 +20,14 @@ export async function GET(request: NextRequest) {
       ? (sortParam as ListsBrowseSort)
       : 'newest';
     const categoryId = searchParams.get('categoryId');
+    const genre = searchParams.get('genre');
 
     const result = await fetchListsBrowse({
       offset: Number.isFinite(offset) ? offset : 0,
       limit: Number.isFinite(limit) ? limit : LISTS_BROWSE_DEFAULT_LIMIT,
       sort,
       categoryId,
+      genre,
     });
 
     const response = NextResponse.json({ success: true, ...result });

@@ -166,6 +166,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['کتاب', 'book', 'رمان', 'novel'],
   ['کافه', 'cafe', 'coffee', 'قهوه'],
   ['جاسوسی', 'جاسوس', 'spy', 'espionage', 'spies'],
+  ['ایرانی', 'ایران', 'iran', 'iranian', 'persian', 'پارسی'],
 ];
 
 const STOP_WORDS = new Set(['و', 'در', 'با', 'از', 'به', 'the', 'a', 'an', 'of']);
@@ -823,6 +824,7 @@ export function buildExtendedListSearchOrClauses(
               { metadata: metadataStringContains(term, ['genre']) },
               { metadata: metadataStringContains(term, ['director']) },
               { metadata: metadataStringContains(term, ['author']) },
+              { metadata: metadataStringContains(term, ['country']) },
               { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
               {
                 catalog_items: {
@@ -830,6 +832,7 @@ export function buildExtendedListSearchOrClauses(
                     { title: { contains: term, mode: 'insensitive' } },
                     { description: { contains: term, mode: 'insensitive' } },
                     { metadata: metadataStringContains(term, ['genre']) },
+                    { metadata: metadataStringContains(term, ['country']) },
                     { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
                   ],
                 },

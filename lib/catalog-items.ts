@@ -281,6 +281,35 @@ export async function findCatalogByTitleMatch(
   const searchToken = primarySuggestionTitle(title);
   if (searchToken.length < 2) return null;
 
+  // مستقیم روی catalog_items — حتی قبل از ساخته شدن جایگاه (ضد race ایمپورت موازی)
+  const directCatalogs = await catalogDb(prisma).findMany({
+    where: {
+      title: { contains: searchToken, mode: 'insensitive' },
+      ...(categorySlug ? { categorySlug } : {}),
+    },
+    take: 40,
+    orderBy: { updatedAt: 'desc' },
+  });
+  for (const catalog of directCatalogs) {
+    if (catalogTitlesMatch(title, catalog.title)) {
+      return catalog;
+    }
+  }
+
+  // اگر categorySlug تنگ بود و چیزی پیدا نشد، بدون فیلتر دسته هم یک‌بار چک کن
+  if (categorySlug && directCatalogs.length === 0) {
+    const anyCategory = await catalogDb(prisma).findMany({
+      where: { title: { contains: searchToken, mode: 'insensitive' } },
+      take: 40,
+      orderBy: { updatedAt: 'desc' },
+    });
+    for (const catalog of anyCategory) {
+      if (catalogTitlesMatch(title, catalog.title)) {
+        return catalog;
+      }
+    }
+  }
+
   const candidates = await prisma.items.findMany({
     where: {
       catalogItemId: { not: null },
