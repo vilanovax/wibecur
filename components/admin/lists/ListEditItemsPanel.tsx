@@ -66,6 +66,9 @@ export default function ListEditItemsPanel({ listId, initialItems }: ListEditIte
       setReorderLoading(true);
       try {
         await persistItemOrder(listId, next);
+        const withOrders = next.map((item, order) => ({ ...item, order }));
+        itemsRef.current = withOrders;
+        setItems(withOrders);
         setToast({ message: 'ترتیب آیتم‌ها ذخیره شد', type: 'success' });
       } catch (err: unknown) {
         setToast({

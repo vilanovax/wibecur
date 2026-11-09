@@ -514,17 +514,32 @@ export type AddToListOptions = {
   catalogItemId: string;
   listId: string;
   order?: number;
+  /**
+   * insert — درج در موقعیت (با شیفت)؛ مقادیر بزرگ‌تر از انتها به انتهای لیست چسبانده می‌شوند.
+   * absolute — همان عدد ذخیره‌ای (برای import موازی با ترتیب ازپیش‌یکتا).
+   */
+  orderMode?: 'insert' | 'absolute';
   listNote?: string | null;
   commentsEnabled?: boolean;
   maxComments?: number | null;
 };
 
 /** جایگاه درج در لیست؛ در صورت نیاز آیتم‌های بعدی را جابه‌جا می‌کند */
-async function resolveInsertOrder(
+export async function resolveInsertOrder(
   prisma: PrismaClient,
   listId: string,
-  requestedOrder: number | undefined
+  requestedOrder: number | undefined,
+  orderMode: 'insert' | 'absolute' = 'insert'
 ): Promise<number> {
+  if (
+    orderMode === 'absolute' &&
+    requestedOrder !== undefined &&
+    requestedOrder !== null &&
+    !Number.isNaN(Number(requestedOrder))
+  ) {
+    return Math.max(0, Math.floor(Number(requestedOrder)));
+  }
+
   const maxOrder = await prisma.items.aggregate({
     where: { listId, deletedAt: null },
     _max: { order: true },
@@ -572,7 +587,12 @@ export async function addCatalogItemToList(
     throw new Error('این آیتم قبلاً در این لیست وجود دارد');
   }
 
-  const order = await resolveInsertOrder(prisma, listId, opts.order);
+  const order = await resolveInsertOrder(
+    prisma,
+    listId,
+    opts.order,
+    opts.orderMode ?? 'insert'
+  );
 
   const denorm = denormalizedItemFieldsFromCatalog(catalog);
   const placementMetadata = catalogRefMetadata(catalog, denorm.metadata);

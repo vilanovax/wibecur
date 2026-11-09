@@ -22,15 +22,23 @@ function safeRevalidatePath(path: string, type?: 'page' | 'layout'): void {
     if (type) revalidatePath(path, type);
     else revalidatePath(path);
   } catch {
-    // خارج از request scope (اسکریپت/تست) — tag کافی است
+    // خارج از request scope (اسکریپت/تست)
+  }
+}
+
+function safeRevalidateTag(tag: string): void {
+  try {
+    revalidateTag(tag, 'max');
+  } catch {
+    // خارج از request scope (اسکریپت/تست)
   }
 }
 
 /** هوم + ترند + browse لیست‌ها — بعد از تغییری که ترکیب عمومی را عوض می‌کند. */
 export function revalidateHomeCache(): void {
-  revalidateTag(HOME_CACHE_TAG, 'max');
-  revalidateTag(TRENDING_CACHE_TAG, 'max');
-  revalidateTag(LISTS_BROWSE_CACHE_TAG, 'max');
+  safeRevalidateTag(HOME_CACHE_TAG);
+  safeRevalidateTag(TRENDING_CACHE_TAG);
+  safeRevalidateTag(LISTS_BROWSE_CACHE_TAG);
   safeRevalidatePath('/');
   safeRevalidatePath('/lists');
   safeRevalidatePath('/explore');
@@ -39,14 +47,14 @@ export function revalidateHomeCache(): void {
 /** صفحهٔ جزئیات یک لیست خاص. */
 export function revalidateListDetailCache(slug: string | null | undefined): void {
   if (!slug) return;
-  revalidateTag(listDetailCacheTag(slug), 'max');
+  safeRevalidateTag(listDetailCacheTag(slug));
   safeRevalidatePath(`/lists/${slug}`);
 }
 
 /** صفحهٔ جزئیات یک آیتم. */
 export function revalidateItemDetailCache(itemId: string | null | undefined): void {
   if (!itemId) return;
-  revalidateTag(itemDetailCacheTag(itemId), 'max');
+  safeRevalidateTag(itemDetailCacheTag(itemId));
   safeRevalidatePath(`/items/${itemId}`);
 }
 
@@ -56,13 +64,13 @@ export function revalidateCategoryCache(
   categorySlug?: string | null
 ): void {
   if (!categoryId && !categorySlug) return;
-  if (categoryId) revalidateTag(categoryCacheTag(categoryId), 'max');
+  if (categoryId) safeRevalidateTag(categoryCacheTag(categoryId));
   safeRevalidatePath('/categories', 'layout');
   if (categorySlug) safeRevalidatePath(`/categories/${categorySlug}`);
 }
 
 /** منوی چیپس دسته‌ها (روی همهٔ صفحات مشترک است). */
 export function revalidateCategoryMenuCache(): void {
-  revalidateTag('category-menu', 'max');
+  safeRevalidateTag('category-menu');
   safeRevalidatePath('/categories', 'layout');
 }

@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import { Prisma, type PrismaClient } from '@prisma/client';
 import {
   revalidateCategoryCache,
   revalidateListDetailCache,
@@ -66,21 +66,21 @@ export async function reorderListItems(
   }
 
   const now = new Date();
-  // دو پاس تا برخورد یکتایی احتمالی روی (listId, order) رخ ندهد
-  await prisma.$transaction(async (tx) => {
-    for (let i = 0; i < unique.length; i++) {
-      await tx.items.update({
-        where: { id: unique[i] },
-        data: { order: -(i + 1), updatedAt: now },
-      });
-    }
-    for (let i = 0; i < unique.length; i++) {
-      await tx.items.update({
-        where: { id: unique[i] },
-        data: { order: i, updatedAt: now },
-      });
-    }
-  });
+  // یک UPDATE دسته‌ای — بدون unique روی (listId, order) نیازی به دو پاس منفی نیست
+  // و برای لیست‌های بزرگ timeout تراکنش ترتیبی رخ نمی‌دهد.
+  const valueRows = unique.map(
+    (id, i) => Prisma.sql`(${id}, ${i}::int)`
+  );
+  await prisma.$executeRaw`
+    UPDATE items AS i
+    SET
+      "order" = v.ord,
+      "updatedAt" = ${now}
+    FROM (VALUES ${Prisma.join(valueRows)}) AS v(id, ord)
+    WHERE i.id = v.id
+      AND i."listId" = ${listId}
+      AND i."deletedAt" IS NULL
+  `;
 
   revalidateListDetailCache(list.slug);
   revalidateCategoryCache(list.categoryId);
@@ -90,4 +90,27 @@ export async function reorderListItems(
     orderedIds: unique,
     itemCount: unique.length,
   };
+}
+
+/**
+ * ترتیب زندهٔ لیست را به ۰…n-۱ یکتا و متراکم می‌کند
+ * (پایدار نسبت به order فعلی، سپس createdAt، سپس id).
+ */
+export async function renormalizeListItemOrders(
+  prisma: PrismaClient,
+  listId: string
+): Promise<ReorderListItemsResult> {
+  const live = await prisma.items.findMany({
+    where: { listId, deletedAt: null },
+    select: { id: true },
+    orderBy: [{ order: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+  });
+  if (live.length === 0) {
+    return { listId, orderedIds: [], itemCount: 0 };
+  }
+  return reorderListItems(
+    prisma,
+    listId,
+    live.map((row) => row.id)
+  );
 }

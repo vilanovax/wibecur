@@ -137,6 +137,10 @@ export default function ListWorkspaceItemsPanel({
       setReorderLoading(true);
       try {
         await persistItemOrder(listId, next);
+        const withOrders = next.map((item, order) => ({ ...item, order }));
+        itemsRef.current = withOrders;
+        setItems(withOrders);
+        onItemsUpdated?.();
         setToast({ message: 'ترتیب آیتم‌ها ذخیره شد', type: 'success' });
       } catch (err: unknown) {
         setToast({
@@ -147,7 +151,7 @@ export default function ListWorkspaceItemsPanel({
         setReorderLoading(false);
       }
     },
-    [listId]
+    [listId, onItemsUpdated]
   );
 
   const moveByStep = async (index: number, delta: -1 | 1) => {

@@ -41,6 +41,7 @@ import {
   revalidateCategoryCache,
   revalidateHomeCache,
 } from '@/lib/public-cache';
+import { renormalizeListItemOrders } from '@/lib/admin/reorder-list-items';
 
 export type BulkImportRowResult = {
   index: number;
@@ -68,6 +69,38 @@ export type BulkImportExecuteResult = {
 };
 
 const IMPORT_CONCURRENCY = 5;
+
+/**
+ * به ازای هر ردیف JSON یک order یکتا می‌سازد (از max موجود + ۱).
+ * اگر در JSON فیلد order باشد فقط برای مرتب‌سازی نسبی ردیف‌ها استفاده می‌شود.
+ */
+export function assignDenseImportOrders(
+  items: BulkImportPayloadItem[],
+  currentMaxOrder: number
+): number[] {
+  const indexed = items.map((row, index) => ({ row, index }));
+  const anyExplicit = items.some(
+    (r) => r.order != null && Number.isFinite(Number(r.order))
+  );
+  if (anyExplicit) {
+    indexed.sort((a, b) => {
+      const ao = a.row.order;
+      const bo = b.row.order;
+      const aMissing = ao == null || !Number.isFinite(Number(ao));
+      const bMissing = bo == null || !Number.isFinite(Number(bo));
+      if (aMissing && bMissing) return a.index - b.index;
+      if (aMissing) return 1;
+      if (bMissing) return -1;
+      return Number(ao) - Number(bo) || a.index - b.index;
+    });
+  }
+  let cursor = currentMaxOrder + 1;
+  const assigned: number[] = new Array(items.length);
+  for (const { index } of indexed) {
+    assigned[index] = cursor++;
+  }
+  return assigned;
+}
 
 /** کلید پایدار برای جلوگیری از ساخت کاتالوگ تکراری در یک batch موازی */
 function importCatalogDedupeKey(
@@ -328,7 +361,6 @@ async function importOneRow(
         return { index, title, status: 'error', message: 'برای link، externalUrl الزامی است' };
       }
 
-      const order = row.order ?? assignedOrder;
       const storedImage = await resolveRowImageForImport(row, metaRecord, ctx.imageCtx);
       const imageUrl = storedImage || row.imageUrl?.trim() || null;
       const item = await createLightweightListItem(db, {
@@ -337,7 +369,7 @@ async function importOneRow(
         imageUrl,
         externalUrl: row.externalUrl?.trim() || null,
         listId: ctx.listId,
-        order,
+        order: assignedOrder,
         metadata: metaRecord as Prisma.InputJsonValue,
         entryKind,
       });
@@ -435,13 +467,14 @@ async function importOneRow(
       };
     }
 
-    const order = row.order ?? assignedOrder;
     let item: { id: string };
     try {
       item = await addCatalogItemToList(db, {
         catalogItemId: catalogId,
         listId: ctx.listId,
-        order,
+        order: assignedOrder,
+        // یکتایی ترتیب در batch موازی؛ بدون clamp به nextAppend
+        orderMode: 'absolute',
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
@@ -537,8 +570,9 @@ export async function executeBulkImportForList(
     where: { listId, deletedAt: null },
     _max: { order: true },
   });
-  let orderCursor = (maxOrderAgg._max.order ?? -1) + 1;
-  const assignedOrders = items.map((row) => row.order ?? orderCursor++);
+  // ترتیب فیلد order در JSON فقط برای مرتب‌سازی ورودی است؛ جایگاه‌های جدید
+  // همیشه اعداد یکتای متراکم می‌گیرند تا concurrency=۵ ترتیب تکراری نسازد.
+  const assignedOrders = assignDenseImportOrders(items, maxOrderAgg._max.order ?? -1);
   const imageCtx = await createBulkImportImageContext();
   const matches = await resolveBulkImportMatchesBatch(db, categorySlug, listId, items);
   const catalogLocks = new Map<string, Promise<string>>();
@@ -585,6 +619,11 @@ export async function executeBulkImportForList(
       categoryName: list.categories?.name,
       listTitle: list.title,
     }).catch(console.error);
+  }
+
+  if (placementsAdded > 0) {
+    // تضمین یکتایی ۰…n-۱ حتی اگر ردیفی وسط راه skip شده باشد
+    await renormalizeListItemOrders(db, listId);
   }
 
   if (placementsAdded > 0 || updated > 0 || created > 0 || linked > 0) {
