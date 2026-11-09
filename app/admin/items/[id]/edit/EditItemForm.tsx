@@ -55,6 +55,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
+  const [propagateToCatalog, setPropagateToCatalog] = useState(false);
   const [error, setError] = useState('');
   const [generatingDesc, setGeneratingDesc] = useState(false);
   const [fetchingFromImdb, setFetchingFromImdb] = useState(false);
@@ -337,6 +338,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
           ...formData,
           title,
           description,
+          propagateToCatalog: hasCatalog ? propagateToCatalog : false,
           metadata: (() => {
             const meta: Record<string, unknown> = {
               ...(formData.metadata as Record<string, unknown>),
@@ -451,12 +453,26 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
           dir="rtl"
         >
           <Info className="w-5 h-5 shrink-0 mt-0.5 text-violet-600" />
-          <div>
+          <div className="space-y-2 min-w-0">
             <p className="font-semibold">کاتالوگ مشترک · {entryKindBadgeLabel('catalog_ref')}</p>
-            <p className="text-xs mt-0.5 text-violet-800/90 dark:text-violet-300/90">
-              تغییر عنوان و تصویر در{' '}
-              <strong>{catalogUsageCount || 1}</strong> لیست اعمال می‌شود.
+            <p className="text-xs text-violet-800/90 dark:text-violet-300/90" dir="ltr">
+              جایگاه: {item.id} · کاتالوگ: {item.catalogItemId}
             </p>
+            <p className="text-xs text-violet-800/90 dark:text-violet-300/90">
+              به‌صورت پیش‌فرض فقط همین لیست عوض می‌شود. این کاتالوگ در{' '}
+              <strong>{catalogUsageCount || 1}</strong> لیست است.
+            </p>
+            <label className="flex items-start gap-2 text-xs cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-0.5 rounded border-violet-300 text-violet-700 focus:ring-violet-500"
+                checked={propagateToCatalog}
+                onChange={(e) => setPropagateToCatalog(e.target.checked)}
+              />
+              <span>
+                اعمال روی کاتالوگ و همهٔ لیست‌ها (عنوان/تصویر/توضیح مشترک)
+              </span>
+            </label>
           </div>
         </div>
       )}

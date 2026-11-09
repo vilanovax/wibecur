@@ -78,6 +78,18 @@ export default async function ItemDetailPage({
     notFound();
   }
 
+  // جایگاه یتیم / لیست غیرعمومی یا حذف‌شده نباید به‌عنوان عضویت عمومی دیده شود
+  const parentList = item.lists;
+  if (
+    !parentList ||
+    parentList.deletedAt ||
+    !parentList.isActive ||
+    !parentList.isPublic ||
+    (parentList.categories && !parentList.categories.isActive)
+  ) {
+    notFound();
+  }
+
   if (item.lists.itemDetailEnabled === false && item.lists.slug) {
     redirect(`/lists/${item.lists.slug}`);
   }

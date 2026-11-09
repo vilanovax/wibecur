@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ListPlus, Loader2, Globe, ArrowLeft, Trash2 } from 'lucide-react';
 import BottomSheet from '@/components/mobile/shared/BottomSheet';
 import { Alert } from '@/components/ui/alert';
@@ -44,6 +45,7 @@ export default function CreateListForm({
   onSuccess,
   categoryHint = null,
 }: CreateListFormProps) {
+  const router = useRouter();
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -58,6 +60,13 @@ export default function CreateListForm({
 
   const atLimit = currentListsCount >= maxPersonalLists;
   const remaining = Math.max(0, maxPersonalLists - currentListsCount);
+  const anyReadyToPublish = ceilingLists.some(
+    (list) =>
+      list.isActive !== false &&
+      list.itemCount >= minItemsForPublic &&
+      Boolean(list.description?.trim()) &&
+      Boolean(list.coverImage?.trim())
+  );
   const titlePlaceholder =
     (categoryHint && TITLE_PLACEHOLDERS[categoryHint]) || 'مثلاً: فیلم‌های آخر هفته';
 
@@ -135,7 +144,9 @@ export default function CreateListForm({
 
     if (atLimit) {
       setError(
-        `حداکثر ${fa(maxPersonalLists)} لیست خصوصی مجاز است. یکی را حذف کن یا پس از تکمیل، عمومی‌اش کن.`
+        anyReadyToPublish
+          ? `حداکثر ${fa(maxPersonalLists)} لیست خصوصی مجاز است. یکی را حذف کن یا اگر کامل است عمومی‌اش کن.`
+          : `حداکثر ${fa(maxPersonalLists)} لیست خصوصی مجاز است. برای جا باز کردن یکی را حذف کن.`
       );
       return;
     }
@@ -165,23 +176,27 @@ export default function CreateListForm({
         throw new Error(data.error || 'خطا در ایجاد لیست');
       }
 
+      const newListId =
+        typeof data.data?.id === 'string' ? data.data.id : null;
       setToastMessage(data.message || 'لیست با موفقیت ایجاد شد');
       setShowToast(true);
       track('list_create', {
-        list_id: data.data?.id ?? '',
+        list_id: newListId ?? '',
         type: 'personal',
       });
       setTitle('');
       void fetchUserListsCount();
       dispatchListsUpdated({
-        listId: data.data?.id,
+        listId: newListId ?? undefined,
         title: trimmed,
       });
 
-      setTimeout(() => {
-        onClose();
+      onClose();
+      if (newListId) {
+        router.push(`/user-lists/${newListId}`);
+      } else {
         onSuccess?.();
-      }, 900);
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'خطا در ایجاد لیست');
     } finally {
@@ -208,8 +223,17 @@ export default function CreateListForm({
               ) : null}
 
               <Alert variant="warning" title="جا برای لیست جدید نیست">
-                برای آزاد کردن یک جا، یکی از لیست‌های زیر را حذف کن یا پس از تکمیل
-                (توضیحات، کاور، حداقل {fa(minItemsForPublic)} آیتم) عمومی‌اش کن.
+                {anyReadyToPublish ? (
+                  <>
+                    برای آزاد کردن یک جا یکی را حذف کن، یا لیستی را که توضیحات، کاور و حداقل{' '}
+                    {fa(minItemsForPublic)} آیتم دارد عمومی کن.
+                  </>
+                ) : (
+                  <>
+                    برای آزاد کردن یک جا یکی از لیست‌های زیر را حذف کن. عمومی کردن فقط وقتی ممکن
+                    است که لیست توضیحات، کاور و حداقل {fa(minItemsForPublic)} آیتم داشته باشد.
+                  </>
+                )}
               </Alert>
 
               <ul className="flex flex-col gap-2">

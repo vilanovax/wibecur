@@ -252,7 +252,19 @@ export default function NewListForm({ categories: categoryList }: NewListFormPro
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5 items-start">
-        <form id="list-new-form" onSubmit={handleSubmit} className="space-y-4 min-w-0">
+        <form
+          id="list-new-form"
+          onSubmit={(e) => {
+            // Enter در مرحلهٔ ۱ نباید لیست خالی بسازد — فقط دکمهٔ «ایجاد لیست» در مرحلهٔ ۲
+            if (step < 2) {
+              e.preventDefault();
+              if (step1Valid) setStep(2);
+              return;
+            }
+            void handleSubmit(e);
+          }}
+          className="space-y-4 min-w-0"
+        >
           <ListNewFormStepper
             current={step}
             completedThrough={completedThrough}

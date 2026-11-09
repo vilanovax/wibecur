@@ -8,6 +8,7 @@ import BookCoverSearchModal from '@/components/admin/items/BookCoverSearchModal'
 import MoviePosterSearchModal from '@/components/admin/items/MoviePosterSearchModal';
 import type { BookCoverSearchSource } from '@/lib/book-cover-search';
 import type { MoviePosterSearchSource } from '@/lib/movie-poster-search';
+import { MAX_RAW_UPLOAD_SIZE } from '@/lib/image-config';
 import {
   buildGoogleImageSearchQuery,
   buildMoviePosterSearchQuery,
@@ -75,8 +76,9 @@ export default function ImageUpload({
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert('حجم فایل نباید بیشتر از ۱۰ مگابایت باشد');
+    const maxMb = Math.max(1, Math.round(MAX_RAW_UPLOAD_SIZE / (1024 * 1024)));
+    if (file.size > MAX_RAW_UPLOAD_SIZE) {
+      alert(`حجم فایل نباید بیشتر از ${maxMb} مگابایت باشد`);
       return;
     }
 
@@ -93,7 +95,7 @@ export default function ImageUpload({
 
       if (res.status === 413) {
         throw new Error(
-          'حجم فایل برای سرور زیاد است. تصویر را کوچک‌تر یا به‌صورت WebP/JPG ذخیره کنید.'
+          `حجم فایل برای سرور زیاد است (حداکثر حدود ${maxMb}MB). تصویر را کوچک‌تر یا به‌صورت WebP/JPG ذخیره کنید.`
         );
       }
 

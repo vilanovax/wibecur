@@ -16,6 +16,8 @@ import {
   Link2,
   BookOpen,
   Coffee,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import BookCoverItemsModal from '@/components/admin/items/BookCoverItemsModal';
 import CafeCoverItemsModal from '@/components/admin/items/CafeCoverItemsModal';
@@ -41,17 +43,18 @@ interface ListWorkspaceItemsPanelProps {
 
 type ViewMode = 'grid' | 'list';
 
-async function persistItemOrder(items: ListWorkspaceItem[]) {
-  const results = await Promise.all(
-    items.map((item, i) =>
-      fetch(`/api/admin/items/${item.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: i }),
-      })
-    )
-  );
-  if (results.some((r) => !r.ok)) throw new Error('reorder failed');
+async function persistItemOrder(listId: string, items: ListWorkspaceItem[]) {
+  const res = await fetch(`/api/admin/lists/${listId}/reorder`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderedIds: items.map((item) => item.id) }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      typeof data.error === 'string' ? data.error : 'خطا در ذخیره ترتیب'
+    );
+  }
 }
 
 function normalizeSearch(text: string): string {
@@ -87,6 +90,8 @@ export default function ListWorkspaceItemsPanel({
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editingOrderValue, setEditingOrderValue] = useState('');
 
   useEffect(() => {
     setItems(sortedInitial);
@@ -127,20 +132,61 @@ export default function ListWorkspaceItemsPanel({
     setDragIndex(index);
   };
 
+  const commitOrder = useCallback(
+    async (next: ListWorkspaceItem[]) => {
+      setReorderLoading(true);
+      try {
+        await persistItemOrder(listId, next);
+        setToast({ message: 'ترتیب آیتم‌ها ذخیره شد', type: 'success' });
+      } catch (err: unknown) {
+        setToast({
+          message: err instanceof Error ? err.message : 'خطا در ذخیره ترتیب',
+          type: 'error',
+        });
+      } finally {
+        setReorderLoading(false);
+      }
+    },
+    [listId]
+  );
+
+  const moveByStep = async (index: number, delta: -1 | 1) => {
+    if (searchQuery || reorderLoading) return;
+    const to = index + delta;
+    if (to < 0 || to >= itemsRef.current.length) return;
+    const next = [...itemsRef.current];
+    const [removed] = next.splice(index, 1);
+    next.splice(to, 0, removed);
+    itemsRef.current = next;
+    setItems(next);
+    await commitOrder(next);
+  };
+
+  const applyNumericOrder = async (itemId: string, raw: string) => {
+    if (searchQuery || reorderLoading) return;
+    const parsed = Number.parseInt(raw.trim(), 10);
+    if (!Number.isFinite(parsed) || parsed < 1) {
+      setToast({ message: 'شماره ترتیب باید ۱ یا بیشتر باشد', type: 'error' });
+      return;
+    }
+    const from = itemsRef.current.findIndex((i) => i.id === itemId);
+    if (from < 0) return;
+    const to = Math.min(Math.max(parsed - 1, 0), itemsRef.current.length - 1);
+    if (from === to) return;
+    const next = [...itemsRef.current];
+    const [removed] = next.splice(from, 1);
+    next.splice(to, 0, removed);
+    itemsRef.current = next;
+    setItems(next);
+    await commitOrder(next);
+  };
+
   const handleDragEnd = async () => {
     if (dragIndex === null) return;
     setDragIndex(null);
     if (!orderChangedRef.current) return;
     orderChangedRef.current = false;
-    setReorderLoading(true);
-    try {
-      await persistItemOrder(itemsRef.current);
-      setToast({ message: 'ترتیب آیتم‌ها ذخیره شد', type: 'success' });
-    } catch {
-      setToast({ message: 'خطا در ذخیره ترتیب', type: 'error' });
-    } finally {
-      setReorderLoading(false);
-    }
+    await commitOrder(itemsRef.current);
   };
 
   const removeItemsFromState = (ids: string[]) => {
@@ -634,17 +680,89 @@ export default function ListWorkspaceItemsPanel({
               >
                 {renderSelectButton(item.id)}
                 {renderDragHandle(globalIndex)}
-                <span className="text-xs font-bold text-wibe-secondary w-6 tabular-nums text-center shrink-0">
-                  {(globalIndex + 1).toLocaleString('fa-IR')}
-                </span>
+                <div className="flex flex-col shrink-0">
+                  <button
+                    type="button"
+                    disabled={reorderLoading || Boolean(searchQuery) || globalIndex === 0}
+                    onClick={() => void moveByStep(globalIndex, -1)}
+                    className="p-0.5 rounded text-wibe-secondary hover:bg-(--color-bg) disabled:opacity-30"
+                    aria-label="جابه‌جایی به بالا"
+                    title="بالا"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={
+                      reorderLoading ||
+                      Boolean(searchQuery) ||
+                      globalIndex === items.length - 1
+                    }
+                    onClick={() => void moveByStep(globalIndex, 1)}
+                    className="p-0.5 rounded text-wibe-secondary hover:bg-(--color-bg) disabled:opacity-30"
+                    aria-label="جابه‌جایی به پایین"
+                    title="پایین"
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                {editingOrderId === item.id ? (
+                  <input
+                    type="number"
+                    min={1}
+                    max={items.length}
+                    dir="ltr"
+                    autoFocus
+                    value={editingOrderValue}
+                    onChange={(e) => setEditingOrderValue(e.target.value)}
+                    onBlur={() => {
+                      const value = editingOrderValue;
+                      setEditingOrderId(null);
+                      void applyNumericOrder(item.id, value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const value = editingOrderValue;
+                        setEditingOrderId(null);
+                        void applyNumericOrder(item.id, value);
+                      }
+                      if (e.key === 'Escape') setEditingOrderId(null);
+                    }}
+                    disabled={reorderLoading || Boolean(searchQuery)}
+                    className="w-12 h-7 rounded border border-(--color-border) bg-(--color-surface) text-center text-xs tabular-nums"
+                    aria-label="شماره ترتیب"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    disabled={reorderLoading || Boolean(searchQuery)}
+                    onClick={() => {
+                      setEditingOrderId(item.id);
+                      setEditingOrderValue(String(globalIndex + 1));
+                    }}
+                    className="text-xs font-bold text-wibe-secondary w-8 h-7 rounded border border-transparent hover:border-(--color-border) tabular-nums text-center shrink-0"
+                    title="تغییر شماره ترتیب"
+                  >
+                    {(globalIndex + 1).toLocaleString('fa-IR')}
+                  </button>
+                )}
                 <div className="relative h-12 w-9 shrink-0 overflow-hidden rounded-lg border border-(--color-border-muted) bg-gray-100">
                   {renderThumbnail(item)}
                 </div>
-                <div className="flex-1 min-w-0 flex items-center gap-2">
-                  <p className="text-sm font-semibold text-(--color-text) truncate min-w-0">
-                    {item.title}
+                <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <p className="text-sm font-semibold text-(--color-text) truncate min-w-0">
+                      {item.title}
+                    </p>
+                    {renderEntryLink(item)}
+                  </div>
+                  <p className="text-[10px] text-wibe-secondary truncate" dir="ltr">
+                    جایگاه: {item.id.slice(0, 10)}…
+                    {item.catalogItemId
+                      ? ` · کاتالوگ: ${item.catalogItemId.slice(0, 10)}…`
+                      : ' · بدون کاتالوگ'}
                   </p>
-                  {renderEntryLink(item)}
                 </div>
                 {renderItemActions(item)}
               </li>

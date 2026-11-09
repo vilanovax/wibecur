@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/auth';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { getListIntelligenceForEdit } from '@/lib/admin/trending-debug';
 import EditListForm from './EditListForm';
 
@@ -28,6 +28,13 @@ export default async function EditListPage({
         items: {
           where: { deletedAt: null },
           orderBy: { order: 'asc' },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            order: true,
+            catalogItemId: true,
+          },
         },
       },
     }),
@@ -40,6 +47,10 @@ export default async function EditListPage({
 
   if (!list) {
     notFound();
+  }
+
+  if (list.deletedAt) {
+    redirect(`/admin/trash?tab=lists&highlight=${list.id}`);
   }
 
   const serializedList = JSON.parse(JSON.stringify(list));

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { Settings, Trash2, Share2, LayoutGrid, Rows3 } from 'lucide-react';
 import BookmarkButton from '@/components/mobile/lists/BookmarkButton';
@@ -82,6 +83,7 @@ export default function UserListDetailClient({
   itemsTotal,
   pendingCollaboration = null,
 }: UserListDetailClientProps) {
+  const router = useRouter();
   const [items, setItems] = useState(list.items);
   const [hasMore, setHasMore] = useState(itemsHasMore);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -460,12 +462,14 @@ export default function UserListDetailClient({
                 description="اولین آیتم را اضافه کن تا این لیست جان بگیرد"
                 action={
                   canAddItems ? (
-                    <Link
-                      href={`/user-lists/${list.id}/add-item`}
-                      className="inline-flex h-12 items-center justify-center rounded-control bg-brand px-6"
+                    <Button
+                      type="button"
+                      variant="brand"
+                      size="lg"
+                      onClick={() => router.push(`/user-lists/${list.id}/add-item`)}
                     >
-                      <span className="text-base font-semibold text-brand-foreground">افزودن اولین آیتم</span>
-                    </Link>
+                      افزودن اولین آیتم
+                    </Button>
                   ) : undefined
                 }
               />

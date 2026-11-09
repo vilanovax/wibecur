@@ -4,7 +4,7 @@ import { getListIntelligenceForEdit } from '@/lib/admin/trending-debug';
 import { resolveAdminItemThumbnail } from '@/lib/resolve-admin-item-image';
 import { toAdminStorageImageSrc } from '@/lib/liara-image-url';
 import { normalizeImageUrlForStorage } from '@/lib/image-url-sanitize';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 export type ListWorkspaceItem = {
   id: string;
@@ -95,6 +95,9 @@ export async function getListWorkspaceData(listId: string): Promise<ListWorkspac
   ]);
 
   if (!list) notFound();
+  if (list.deletedAt) {
+    redirect(`/admin/trash?tab=lists&highlight=${list.id}`);
+  }
 
   const items: ListWorkspaceItem[] = list.items.map((item) => {
     const meta =
@@ -134,7 +137,8 @@ export async function getListWorkspaceData(listId: string): Promise<ListWorkspac
     list: {
       ...list,
       createdAt: list.createdAt.toISOString(),
-      deletedAt: list.deletedAt?.toISOString() ?? null,
+      // بعد از گارد redirect، deletedAt حتماً null است
+      deletedAt: null,
     },
     items,
     intelligence,

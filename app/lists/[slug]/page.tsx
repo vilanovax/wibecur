@@ -4,7 +4,8 @@ import Header from '@/components/mobile/layout/Header';
 import BottomNav from '@/components/mobile/layout/BottomNav';
 import { prepareListDetailForClient } from '@/lib/list-detail-serialize';
 import { prisma } from '@/lib/prisma';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/lib/auth-config';
 import ListDetailClient from './ListDetailClient';
 import { getCachedListPagePlacements } from '@/lib/sponsored-placements';
 import HomeLcpPreload from '@/components/mobile/home/HomeLcpPreload';
@@ -132,11 +133,28 @@ export default async function ListDetailPage({
 
   const list = await getListBySlug(slug);
 
-  if (!list || !list.isActive || !list.isPublic) notFound();
+  if (!list) notFound();
 
-  if (list.categories && !list.categories.isActive) notFound();
+  const categoryOk = !list.categories || list.categories.isActive;
+  const isCatalogVisible =
+    list.isActive && list.isPublic && categoryOk && list.users?.role !== 'USER';
 
-  if (list.users?.role === 'USER') notFound();
+  if (!isCatalogVisible) {
+    // مالک لیست خصوصی / پیش‌نویس / لیست کاربری نباید به ۴۰۴ بخورد
+    const session = await auth();
+    let currentUserId = session?.user?.id ?? null;
+    if (!currentUserId && session?.user?.email) {
+      const userFromEmail = await prisma.users.findUnique({
+        where: { email: session.user.email },
+        select: { id: true },
+      });
+      currentUserId = userFromEmail?.id ?? null;
+    }
+    if (currentUserId && currentUserId === list.userId) {
+      redirect(`/user-lists/${list.id}`);
+    }
+    notFound();
+  }
 
   // شمارش بازدید از مسیر رندر جدا شد (beacon کلاینت → POST /api/lists/[id]/view)
   // تا صفحه static/ISR بماند و write روی هر revalidation انجام نشود.

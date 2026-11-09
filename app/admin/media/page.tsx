@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List, Upload } from 'lucide-react';
 import { requireAdmin } from '@/lib/auth';
 import { hasPermission } from '@/lib/auth/has-permission';
 import { loadHeaviestMedia, loadIssueMedia, loadMediaLibrary } from '@/lib/admin/media-library';
@@ -140,6 +140,13 @@ export default async function MediaLibraryPage({
             خروجی JSON
           </a>
           <MediaImportPanel />
+          <Link
+            href="/admin/tools/image-upload"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-(--color-border) bg-(--color-surface) px-3 text-sm font-semibold text-(--color-text)"
+          >
+            <Upload className="size-4" aria-hidden />
+            آپلود و کپی لینک
+          </Link>
         </div>
       </header>
 

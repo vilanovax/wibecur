@@ -43,25 +43,37 @@ export async function updateItemTip(
 
   const metaRecord = (validation.data ?? {}) as Record<string, unknown>;
 
-  if (item.catalogItemId) {
-    await prisma.catalog_items.update({
-      where: { id: item.catalogItemId },
-      data: {
-        metadata: metaRecord as Prisma.InputJsonValue,
-        updatedAt: new Date(),
-      },
-    });
-    await syncPlacementsFromCatalog(prisma, item.catalogItemId);
-    return;
-  }
+  // نکتهٔ جایگاه فقط روی همین لیست می‌ماند تا sync کاتالوگ بقیه را نسوزاند
+  const { withPlacementOverrides } = await import('@/lib/admin/placement-overrides');
+  const placementMeta = item.catalogItemId
+    ? withPlacementOverrides(metaRecord, ['tip'])
+    : metaRecord;
 
   await prisma.items.update({
     where: { id: itemId },
     data: {
-      metadata: metaRecord as Prisma.InputJsonValue,
+      metadata: placementMeta as Prisma.InputJsonValue,
       updatedAt: new Date(),
     },
   });
+
+  // اگر کاتالوگ هنوز tip ندارد، یک‌بار برای پیش‌فرض کاتالوگ هم ست کن (بدون sync اجباری روی overrideها)
+  if (item.catalogItemId && trimmed) {
+    const catalogTip =
+      catalogMeta.tip != null && String(catalogMeta.tip).trim()
+        ? String(catalogMeta.tip).trim()
+        : '';
+    if (!catalogTip) {
+      await prisma.catalog_items.update({
+        where: { id: item.catalogItemId },
+        data: {
+          metadata: { ...catalogMeta, tip: trimmed } as Prisma.InputJsonValue,
+          updatedAt: new Date(),
+        },
+      });
+      await syncPlacementsFromCatalog(prisma, item.catalogItemId);
+    }
+  }
 }
 
 /** تبدیل placement id یا catalog id به کلید پایدار «انجام شد» */

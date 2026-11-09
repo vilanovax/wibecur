@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
       if ((error as { code?: string })?.code === 'MAX_PERSONAL_LISTS') {
         return NextResponse.json(
           {
-            error: `شما نمی‌توانید بیشتر از ${maxPersonalLists} لیست خصوصی ایجاد کنید. لطفاً یکی از لیست‌های قبلی را حذف کنید یا آن را عمومی کنید.`,
+            error: `شما نمی‌توانید بیشتر از ${maxPersonalLists} لیست خصوصی ایجاد کنید. برای جا باز کردن یکی را حذف کنید؛ عمومی کردن فقط بعد از تکمیل (توضیحات، کاور و حداقل تعداد آیتم) ممکن است.`,
           },
           { status: 400 }
         );

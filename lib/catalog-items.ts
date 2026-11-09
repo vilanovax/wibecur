@@ -386,16 +386,39 @@ export async function syncPlacementsFromCatalog(
   });
   if (!catalog) return;
 
-  const patch = denormalizedItemFieldsFromCatalog(catalog);
-  const placementMetadata = catalogRefMetadata(catalog, patch.metadata);
-  await prisma.items.updateMany({
+  const { mergeCatalogIntoPlacement } = await import('@/lib/admin/placement-overrides');
+
+  const placements = await prisma.items.findMany({
     where: { catalogItemId },
-    data: {
-      ...patch,
-      metadata: placementMetadata as Prisma.InputJsonValue,
-      updatedAt: new Date(),
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      imageUrl: true,
+      externalUrl: true,
+      metadata: true,
     },
   });
+
+  const now = new Date();
+  for (const placement of placements) {
+    const merged = mergeCatalogIntoPlacement({
+      catalog,
+      placement,
+      catalogRefMetadata,
+    });
+    await prisma.items.update({
+      where: { id: placement.id },
+      data: {
+        title: merged.title,
+        description: merged.description,
+        imageUrl: merged.imageUrl,
+        externalUrl: merged.externalUrl,
+        metadata: merged.metadata as Prisma.InputJsonValue,
+        updatedAt: now,
+      },
+    });
+  }
 }
 
 export async function isCatalogInList(

@@ -282,6 +282,9 @@ export default function CatalogPageClient({
     nextMultiListOnly = multiListOnly
   ) => {
     setLoading(true);
+    setMessage('');
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 45000);
     try {
       const p = new URLSearchParams({ page: String(nextPage), perPage: '24' });
       if (nextQ.trim()) p.set('q', nextQ.trim());
@@ -291,28 +294,40 @@ export default function CatalogPageClient({
         p.set('placementListId', activePlacementListId);
       }
       if (nextMultiListOnly) p.set('multiList', '1');
-      const res = await fetch(`/api/admin/catalog-items?${p}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setRows(data.rows);
-      setTotal(data.total);
-      setPage(data.page);
-      setTotalPages(data.totalPages);
+      const res = await fetch(`/api/admin/catalog-items?${p}`, {
+        signal: controller.signal,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'خطا در بارگذاری کاتالوگ');
+      setRows(data.rows ?? []);
+      setTotal(data.total ?? 0);
+      setPage(data.page ?? nextPage);
+      setTotalPages(data.totalPages ?? 1);
       setSelectedIds(new Set());
       void refreshFilterMeta(nextCategory, nextListId);
     } catch (e: unknown) {
-      setMessage(e instanceof Error ? e.message : 'خطا');
+      if (e instanceof DOMException && e.name === 'AbortError') {
+        setMessage('بارگذاری کاتالوگ طولانی شد. دوباره تلاش کن یا فیلتر را ساده‌تر کن.');
+      } else {
+        setMessage(e instanceof Error ? e.message : 'خطا در بارگذاری کاتالوگ');
+      }
     } finally {
+      window.clearTimeout(timeoutId);
       setLoading(false);
     }
   };
 
   const loadDuplicates = async () => {
     setLoading(true);
+    setMessage('');
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 45000);
     try {
-      const res = await fetch('/api/admin/catalog-items/duplicates');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const res = await fetch('/api/admin/catalog-items/duplicates', {
+        signal: controller.signal,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'خطا در بارگذاری تکراری‌ها');
       const g = data.groups ?? [];
       setGroups(g);
       setDupCount(g.length);
@@ -322,8 +337,13 @@ export default function CatalogPageClient({
       }
       setMergeTarget((prev) => ({ ...defaults, ...prev }));
     } catch (e: unknown) {
-      setMessage(e instanceof Error ? e.message : 'خطا');
+      if (e instanceof DOMException && e.name === 'AbortError') {
+        setMessage('بارگذاری تکراری‌ها طولانی شد. دوباره تلاش کن.');
+      } else {
+        setMessage(e instanceof Error ? e.message : 'خطا در بارگذاری تکراری‌ها');
+      }
     } finally {
+      window.clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -975,20 +995,37 @@ export default function CatalogPageClient({
 
               {loading ? (
                 <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                  <p className="px-4 py-3 text-xs text-wibe-secondary border-b border-gray-100">
+                    در حال بارگذاری کاتالوگ…
+                  </p>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                     <div key={i} className="h-16 border-b border-gray-100 bg-gray-50 last:border-b-0" />
                   ))}
                 </div>
               ) : rows.length === 0 ? (
                 <div className="text-center py-16 px-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50">
-                  <p className="text-wibe-secondary mb-3">هنوز در کاتالوگ چیزی نیست یا نتیجه‌ای پیدا نشد.</p>
-                  <Link
-                    href="/admin/lists?view=catalog&mode=place"
-                    className="inline-flex items-center gap-2 text-sm font-bold text-violet-600 hover:underline"
-                  >
-                    <Plus className="w-4 h-4" />
-                    افزودن از کاتالوگ
-                  </Link>
+                  <p className="text-wibe-secondary mb-3">
+                    {message
+                      ? message
+                      : 'هنوز در کاتالوگ چیزی نیست یا نتیجه‌ای پیدا نشد.'}
+                  </p>
+                  {message ? (
+                    <button
+                      type="button"
+                      onClick={() => void loadBrowse(page, query, category, listId, multiListOnly)}
+                      className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700"
+                    >
+                      تلاش دوباره
+                    </button>
+                  ) : (
+                    <Link
+                      href="/admin/lists?view=catalog&mode=place"
+                      className="inline-flex items-center gap-2 text-sm font-bold text-violet-600 hover:underline"
+                    >
+                      <Plus className="w-4 h-4" />
+                      افزودن از کاتالوگ
+                    </Link>
+                  )}
                 </div>
               ) : (
                 <ul className="overflow-hidden rounded-xl border border-gray-200 bg-white">

@@ -173,7 +173,27 @@ export async function PUT(
       );
     }
 
-    if (catalogItemId && !isLightweightPlacement) {
+    // ویرایش جایگاه به‌صورت پیش‌فرض فقط همین لیست را عوض می‌کند تا بقیهٔ لیست‌ها نسوزند.
+    // برای به‌روزرسانی کاتالوگ سراسری: body.propagateToCatalog === true
+    const propagateToCatalog = body.propagateToCatalog === true;
+    const overrideFields: Array<'title' | 'imageUrl' | 'description' | 'tip'> = [];
+    if (title !== undefined && title !== existingItem.title) overrideFields.push('title');
+    if (description !== undefined && description !== existingItem.description) {
+      overrideFields.push('description');
+    }
+    if (finalImageUrl !== undefined && finalImageUrl !== existingItem.imageUrl) {
+      overrideFields.push('imageUrl');
+    }
+    const prevTip =
+      existingItem.metadata != null &&
+      typeof existingItem.metadata === 'object' &&
+      !Array.isArray(existingItem.metadata)
+        ? String((existingItem.metadata as Record<string, unknown>).tip ?? '')
+        : '';
+    const nextTip = typeof metaRecord.tip === 'string' ? metaRecord.tip : '';
+    if (nextTip !== prevTip) overrideFields.push('tip');
+
+    if (catalogItemId && !isLightweightPlacement && propagateToCatalog) {
       await prisma.catalog_items.update({
         where: { id: catalogItemId },
         data: {
@@ -190,18 +210,20 @@ export async function PUT(
       await syncPlacementsFromCatalog(prisma, catalogItemId);
     }
 
+    const { withPlacementOverrides } = await import('@/lib/admin/placement-overrides');
+    const placementMeta =
+      catalogItemId && !isLightweightPlacement && !propagateToCatalog && overrideFields.length > 0
+        ? withPlacementOverrides(metaRecord, overrideFields)
+        : metaRecord;
+
     const item = await prisma.items.update({
       where: { id },
       data: {
-        ...(isLightweightPlacement || !catalogItemId
-          ? {
-              title,
-              description,
-              ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
-              externalUrl,
-              metadata: metaRecord as Prisma.InputJsonValue,
-            }
-          : {}),
+        title: title ?? existingItem.title,
+        description: description !== undefined ? description : existingItem.description,
+        ...(finalImageUrl !== undefined && { imageUrl: finalImageUrl }),
+        ...(externalUrl !== undefined && { externalUrl }),
+        metadata: placementMeta as Prisma.InputJsonValue,
         ...(listNote !== undefined && { listNote: listNote?.trim() || null }),
         order,
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
