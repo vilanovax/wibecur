@@ -23,7 +23,10 @@ import {
   updateCatalogItem,
   updateLightweightListItem,
 } from '@/lib/catalog-items';
-import { catalogTitlesMatch } from '@/lib/suggestion-utils';
+import {
+  catalogTitlesMatch,
+  normalizeSuggestionTitle,
+} from '@/lib/suggestion-utils';
 import {
   carryCatalogPlacementMetadata,
   extractBulkImportEntryKind,
