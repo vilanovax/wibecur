@@ -553,7 +553,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
           </section>
         )}
 
-        <div className={`grid grid-cols-1 gap-6 items-start ${isLightweightMode ? '' : 'xl:grid-cols-[1fr_320px]'}`}>
+        <div className="grid grid-cols-1 gap-6 items-start xl:grid-cols-[1fr_320px]">
           {/* ستون اصلی */}
           <div className="space-y-6 min-w-0">
             {/* اطلاعات اصلی */}
@@ -806,8 +806,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
             </section>
           </div>
 
-          {/* ستون تصویر — sticky در دسکتاپ */}
-          {!isLightweightMode && (
+          {/* ستون تصویر — sticky در دسکتاپ (شامل tip / ورودی سبک) */}
           <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-5 xl:sticky xl:top-4">
             <h2 className="text-sm font-semibold text-admin-text-primary dark:text-white uppercase tracking-wider border-b border-admin-border dark:border-gray-600 pb-2 mb-4">
               تصویر آیتم
@@ -848,7 +847,6 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
               onSwitchToUrlTab={() => setMediaTab('url')}
             />
           </section>
-          )}
         </div>
       </form>
 

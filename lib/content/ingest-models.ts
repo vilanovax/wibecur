@@ -115,9 +115,11 @@ const cafeItemSchema = z
     metadata: z
       .object({
         address: z.string().trim().min(1, 'آدرس الزامی است'),
-        priceRange: z.enum(PRICE_RANGES, {
-          errorMap: () => ({ message: 'بازه قیمت باید یکی از $، $$، $$$ یا $$$$ باشد' }),
-        }),
+        priceRange: z
+          .enum(PRICE_RANGES, {
+            errorMap: () => ({ message: 'بازه قیمت باید یکی از $، $$، $$$ یا $$$$ باشد' }),
+          })
+          .optional(),
         cuisine: z.string().trim().optional(),
         phone: z.string().trim().optional(),
         instagram: z.string().trim().optional(),
@@ -383,7 +385,7 @@ export function renderIngestModels() {
       },
       cafe: {
         when: 'slug دسته شامل cafe یا restaurant یا food است. نمونه: cafe',
-        required: ['title', 'metadata.address', 'metadata.priceRange یکی از $ $$ $$$ $$$$'],
+        required: ['title', 'metadata.address'],
         optional: ['tip', 'imageUrl', 'metadata.cuisine', 'metadata.phone', 'metadata.instagram', 'metadata.website', 'metadata.mapsUrl'],
         example: INGEST_EXAMPLES.cafe,
       },

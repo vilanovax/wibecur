@@ -519,8 +519,7 @@ export default function NewItemForm({
           </div>
         </section>
 
-        {/* 2. Media (Tabbed) — فقط برای موجودیت کاتالوگ */}
-        {!isLightweightMode && (
+        {/* 2. Media (Tabbed) — کاتالوگ و tip / ورودی سبک */}
         <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6">
           <h2 className="text-sm font-semibold text-admin-text-primary dark:text-white uppercase tracking-wider border-b border-admin-border dark:border-gray-600 pb-2 mb-4">
             تصویر آیتم
@@ -552,16 +551,15 @@ export default function NewItemForm({
             title={formData.title}
             categoryName={selectedList?.categories?.name}
             onModalOpenChange={setImageSearchModalOpen}
-              displayMode={mediaTab}
-              previewVariant="poster"
-              enableMoviePosterSources={isFilmCategory}
-              enableBookCoverSources={isBookCategory}
-              metadata={(formData.metadata as Record<string, unknown>) ?? null}
-              categorySlug={selectedList?.categories?.slug}
-              onSwitchToUrlTab={() => setMediaTab('url')}
-            />
+            displayMode={mediaTab}
+            previewVariant="poster"
+            enableMoviePosterSources={isFilmCategory}
+            enableBookCoverSources={isBookCategory}
+            metadata={(formData.metadata as Record<string, unknown>) ?? null}
+            categorySlug={selectedList?.categories?.slug}
+            onSwitchToUrlTab={() => setMediaTab('url')}
+          />
         </section>
-        )}
 
         {/* 3. Extended Metadata (Collapsible) */}
         {selectedList?.categories?.slug && !isLightweightMode && (

@@ -92,9 +92,13 @@ export const CafeMetadataSchema = z
     ...tipField,
     ...catalogPlacementFields,
     address: z.string().min(1, 'آدرس الزامی است'),
-    priceRange: z.enum(['$', '$$', '$$$', '$$$$'], {
-      errorMap: () => ({ message: 'بازه قیمت الزامی است' }),
-    }),
+    // اختیاری — بعضی رستوران‌ها منبع قیمت معتبر ندارند
+    priceRange: z
+      .enum(['$', '$$', '$$$', '$$$$'], {
+        errorMap: () => ({ message: 'بازه قیمت باید یکی از $، $$، $$$ یا $$$$ باشد' }),
+      })
+      .optional()
+      .nullable(),
     cuisine: z.string().optional(),
     phone: z
       .string()
@@ -173,7 +177,9 @@ export function getMetadataSchema(categorySlug: string) {
     case 'books':
       return BookMetadataSchema;
     case 'cafe':
+    case 'cafes':
     case 'restaurant':
+    case 'restaurants':
       return CafeMetadataSchema;
     default:
       if (isMixedCategorySlug(categorySlug)) {

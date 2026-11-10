@@ -32,6 +32,10 @@ const baseRawSchema = z.object({
   tip: z.string().optional().nullable(),
   entryKind: z.enum(ENTRY_KINDS).optional().nullable(),
   catalogItemId: z.string().trim().min(1).optional().nullable(),
+  /** شناسهٔ جایگاه زندهٔ لیست — برای آپدیت tip/سبک بدون ساخت تکراری */
+  liveItemId: z.string().trim().min(1).optional().nullable(),
+  /** alias سازگار با بعضی exportها */
+  itemId: z.string().trim().min(1).optional().nullable(),
   metadata: z.record(z.unknown()).optional().nullable(),
 });
 
@@ -49,6 +53,7 @@ export type BulkImportRow = {
   externalUrl: string;
   order?: number;
   catalogItemId?: string;
+  liveItemId?: string;
   metadata: Record<string, unknown>;
   match?: BulkImportMatch;
 };
@@ -63,8 +68,19 @@ export type BulkImportPayloadItem = {
   entryKind?: EntryKind;
   /** اتصال مستقیم به کاتالوگ موجود — بر تطبیق عنوان/کلید اولویت دارد */
   catalogItemId?: string;
+  /** آپدیت جایگاه موجود (tip/سبک) به‌جای ساخت تکراری */
+  liveItemId?: string;
+  itemId?: string;
   metadata?: Record<string, unknown>;
 };
+
+/** شناسهٔ جایگاه از liveItemId یا itemId */
+export function resolveBulkImportLiveItemId(
+  row: Pick<BulkImportPayloadItem, 'liveItemId' | 'itemId'>
+): string | undefined {
+  const live = row.liveItemId?.trim() || row.itemId?.trim();
+  return live || undefined;
+}
 
 export function extractBulkImportEntryKind(
   categorySlug: string,
@@ -360,6 +376,11 @@ export function validateBulkImportRow(
     typeof data.catalogItemId === 'string' && data.catalogItemId.trim()
       ? data.catalogItemId.trim()
       : undefined;
+  const liveItemId = resolveBulkImportLiveItemId({
+    liveItemId:
+      typeof data.liveItemId === 'string' ? data.liveItemId : undefined,
+    itemId: typeof data.itemId === 'string' ? data.itemId : undefined,
+  });
 
   return {
     id: `row-${index}-${title.slice(0, 12)}`,
@@ -373,6 +394,7 @@ export function validateBulkImportRow(
     externalUrl,
     order: data.order,
     catalogItemId,
+    liveItemId,
     metadata: storedMetadata,
   };
 }
@@ -548,9 +570,9 @@ export function getBulkImportJsonHint(categorySlug: string, list?: BulkImportLis
     case 'book':
       return `tip (اختیاری) · metadata: author, genre, isbn${listPart}`;
     case 'cafe':
-      return `title · description · imageUrl · tip · metadata.address (الزامی) · metadata.priceRange ($|$$|$$$|$$$$) · cuisine · phone · instagram · website · mapsUrl${listPart}`;
+      return `title · description · imageUrl · tip · metadata.address (الزامی) · metadata.priceRange اختیاری ($|$$|$$$|$$$$) · cuisine · phone · instagram · website · mapsUrl${listPart}`;
     default:
-      return `فرمت: { "items": [...] } · entryKind: tip (سبک، بدون کاتلگ) یا بدون entryKind / catalog_ref (کاتالوگ) · catalogItemId برای اتصال مستقیم · title · description · tip · metadata.tags (حداکثر ۸)${listPart}`;
+      return `فرمت: { "items": [...] } · entryKind: tip (سبک، بدون کاتالوگ) · آپدیت با liveItemId یا عنوان یکسان در همان لیست · یا بدون entryKind / catalog_ref (کاتالوگ) · catalogItemId برای اتصال مستقیم · title · description · tip · metadata.tags (حداکثر ۸)${listPart}`;
   }
 }
 

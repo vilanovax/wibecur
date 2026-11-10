@@ -51,11 +51,10 @@ function DuplicateGroupCard({
 }) {
   const [selectedSources, setSelectedSources] = useState<Set<string>>(new Set());
 
+  // پیش‌فرض خالی — ادغام فقط با انتخاب صریح (جلوگیری از ادغام نتایج نامرتبط)
   useEffect(() => {
-    setSelectedSources(
-      new Set(group.catalogs.map((c) => c.id).filter((id) => id !== targetId))
-    );
-  }, [group.groupKey, group.catalogs, targetId]);
+    setSelectedSources(new Set());
+  }, [group.groupKey, targetId]);
 
   const target = group.catalogs.find((c) => c.id === targetId) ?? group.catalogs[0];
   const sourceIds = [...selectedSources].filter((id) => id !== targetId);
@@ -94,6 +93,26 @@ function DuplicateGroupCard({
               می‌شود
             </p>
           )}
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="min-h-11 rounded-lg border border-(--color-border) px-3 text-xs text-wibe-secondary hover:bg-(--color-bg)"
+              onClick={() =>
+                setSelectedSources(
+                  new Set(group.catalogs.map((c) => c.id).filter((id) => id !== targetId))
+                )
+              }
+            >
+              انتخاب همه
+            </button>
+            <button
+              type="button"
+              className="min-h-11 rounded-lg border border-(--color-border) px-3 text-xs text-wibe-secondary hover:bg-(--color-bg)"
+              onClick={() => setSelectedSources(new Set())}
+            >
+              هیچ‌کدام
+            </button>
+          </div>
         </div>
         <button
           type="button"

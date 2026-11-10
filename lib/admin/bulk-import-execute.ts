@@ -21,13 +21,15 @@ import {
   createLightweightListItem,
   isCatalogInList,
   updateCatalogItem,
+  updateLightweightListItem,
 } from '@/lib/catalog-items';
-import { normalizeSuggestionTitle } from '@/lib/suggestion-utils';
+import { catalogTitlesMatch } from '@/lib/suggestion-utils';
 import {
   carryCatalogPlacementMetadata,
   extractBulkImportEntryKind,
   isBulkImportLightweightRow,
   mergeItemTipIntoMetadata,
+  resolveBulkImportLiveItemId,
 } from '@/lib/admin/bulk-import';
 import {
   isLightweightEntryKind,
@@ -100,6 +102,20 @@ export function assignDenseImportOrders(
     assigned[index] = cursor++;
   }
   return assigned;
+}
+
+/** پیدا کردن tip/سبک موجود در همان لیست با عنوان (بدون liveItemId) */
+async function findLightweightItemIdByTitle(
+  db: PrismaClient,
+  listId: string,
+  title: string
+): Promise<string | null> {
+  const candidates = await db.items.findMany({
+    where: { listId, deletedAt: null, catalogItemId: null },
+    select: { id: true, title: true },
+  });
+  const hit = candidates.find((c) => catalogTitlesMatch(c.title, title));
+  return hit?.id ?? null;
 }
 
 /** کلید پایدار برای جلوگیری از ساخت کاتالوگ تکراری در یک batch موازی */
@@ -363,6 +379,39 @@ async function importOneRow(
 
       const storedImage = await resolveRowImageForImport(row, metaRecord, ctx.imageCtx);
       const imageUrl = storedImage || row.imageUrl?.trim() || null;
+      const liveItemId =
+        resolveBulkImportLiveItemId(row) ||
+        (await findLightweightItemIdByTitle(db, ctx.listId, title));
+
+      if (liveItemId) {
+        try {
+          const updated = await updateLightweightListItem(db, {
+            itemId: liveItemId,
+            listId: ctx.listId,
+            title,
+            description: row.description?.trim() || null,
+            imageUrl,
+            externalUrl: row.externalUrl?.trim() || null,
+            metadata: metaRecord as Prisma.InputJsonValue,
+            entryKind,
+          });
+          return {
+            index,
+            title,
+            status: 'updated',
+            itemId: updated.id,
+            updated: true,
+            lightweight: true,
+            message: resolveBulkImportLiveItemId(row)
+              ? 'جایگاه سبک با liveItemId به‌روز شد'
+              : 'جایگاه سبک هم‌عنوان در این لیست به‌روز شد',
+          };
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'خطا در آپدیت جایگاه سبک';
+          return { index, title, status: 'error', message: msg };
+        }
+      }
+
       const item = await createLightweightListItem(db, {
         title,
         description: row.description?.trim() || null,

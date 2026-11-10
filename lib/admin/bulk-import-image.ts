@@ -75,7 +75,7 @@ export async function resolveDownloadUrlForBulkImport(
   return omdbPoster || unwrapped;
 }
 
-/** تصویر import — unwrap پروکسی، fallback OMDb، آپلود ParsPack */
+/** تصویر import — unwrap پروکسی، fallback OMDb، Castando برای TMDB، آپلود ParsPack */
 export async function resolveBulkImportImageForStorage(
   imageUrlRaw: string | null | undefined,
   metadata: Record<string, unknown>,
@@ -86,6 +86,22 @@ export async function resolveBulkImportImageForStorage(
   if (!downloadUrl) return undefined;
 
   if (isOurStorageUrl(downloadUrl)) return downloadUrl;
+
+  // مسیر قوی‌تر با کاندیدهای Castando/TMDB — ensureImageInLiara مستقیم اغلب TMDB را null می‌کند
+  const { importExternalImageToStorage } = await import(
+    '@/lib/admin/import-external-image-to-storage'
+  );
+  const imported = await importExternalImageToStorage(
+    downloadUrl,
+    folder,
+    metadata,
+    ctx,
+    undefined,
+    { preferCastandoProxy: isTmdbImageUrl(downloadUrl) }
+  );
+  if (imported.ok && imported.url && !isTmdbImageUrl(imported.url)) {
+    return imported.url;
+  }
 
   const stored = await ensureImageInLiara(downloadUrl, folder);
   if (!stored) return undefined;

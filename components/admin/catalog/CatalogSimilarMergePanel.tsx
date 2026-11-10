@@ -42,11 +42,9 @@ export default function CatalogSimilarMergePanel({
     setMergeTargetId(items[0]?.id ?? '');
   }, [items, fixedTargetId]);
 
+  // پیش‌فرض خالی — فقط موارد تیک‌خورده ادغام می‌شوند
   useEffect(() => {
-    const next = new Set(
-      displayItems.map((item) => item.id).filter((id) => id !== targetId)
-    );
-    setSelectedSourceIds(next);
+    setSelectedSourceIds(new Set());
   }, [displayItems, targetId]);
 
   const targetTitle =
@@ -115,6 +113,29 @@ export default function CatalogSimilarMergePanel({
         <p className="text-xs text-wibe-secondary">
           فقط موارد تیک‌خورده در مقصد ادغام می‌شوند.
         </p>
+      )}
+
+      {displayItems.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="min-h-11 rounded-lg border border-(--color-border) px-3 text-xs text-wibe-secondary hover:bg-(--color-bg)"
+            onClick={() =>
+              setSelectedSourceIds(
+                new Set(displayItems.map((item) => item.id).filter((id) => id !== targetId))
+              )
+            }
+          >
+            انتخاب همه
+          </button>
+          <button
+            type="button"
+            className="min-h-11 rounded-lg border border-(--color-border) px-3 text-xs text-wibe-secondary hover:bg-(--color-bg)"
+            onClick={() => setSelectedSourceIds(new Set())}
+          >
+            هیچ‌کدام
+          </button>
+        </div>
       )}
 
       <ul className="space-y-2" role={fixedTargetId ? undefined : 'radiogroup'}>

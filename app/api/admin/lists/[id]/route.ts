@@ -73,14 +73,48 @@ export async function PUT(
       }
     }
 
+    const coverInput =
+      coverImage !== undefined && typeof coverImage === 'string' ? coverImage.trim() : undefined;
+    const horizontalInput =
+      horizontalImage !== undefined && typeof horizontalImage === 'string'
+        ? horizontalImage.trim()
+        : undefined;
+
     const finalCoverImage =
-      coverImage !== undefined
-        ? await ensureImageInLiara(coverImage, 'lists', { profile: 'coverList' })
+      coverInput !== undefined
+        ? coverInput
+          ? await ensureImageInLiara(coverInput, 'lists', { profile: 'coverList' })
+          : null
         : undefined;
     const finalHorizontalImage =
-      horizontalImage !== undefined
-        ? await ensureImageInLiara(horizontalImage, 'lists', { profile: 'coverListHorizontal' })
+      horizontalInput !== undefined
+        ? horizontalInput
+          ? await ensureImageInLiara(horizontalInput, 'lists', {
+              profile: 'coverListHorizontal',
+            })
+          : null
         : undefined;
+
+    if (coverInput && !finalCoverImage) {
+      return NextResponse.json(
+        {
+          error:
+            'کاور آپلود شد ولی ذخیره نشد. دوباره آپلود کنید یا چند لحظه بعد تلاش کنید.',
+          code: 'COVER_PERSIST_FAILED',
+        },
+        { status: 422 }
+      );
+    }
+    if (horizontalInput && !finalHorizontalImage) {
+      return NextResponse.json(
+        {
+          error:
+            'بنر افقی آپلود شد ولی ذخیره نشد. دوباره آپلود کنید یا چند لحظه بعد تلاش کنید.',
+          code: 'BANNER_PERSIST_FAILED',
+        },
+        { status: 422 }
+      );
+    }
 
     const list = await prisma.lists.update({
       where: { id },

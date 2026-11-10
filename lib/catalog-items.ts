@@ -680,6 +680,97 @@ export type LightweightListItemInput = {
   entryKind?: EntryKind;
 };
 
+/**
+ * آپدیت جایگاه سبک موجود در همان لیست (بدون کاتالوگ).
+ * برای JSON import با liveItemId / itemId.
+ */
+export async function updateLightweightListItem(
+  prisma: PrismaClient,
+  opts: {
+    itemId: string;
+    listId: string;
+    title: string;
+    description?: string | null;
+    imageUrl?: string | null;
+    externalUrl?: string | null;
+    metadata?: Prisma.InputJsonValue;
+    entryKind?: EntryKind;
+    /** اگر true باشد فقط فیلدهای غیرخالی ورودی جایگزین می‌شوند */
+    patchNonEmpty?: boolean;
+  }
+) {
+  const existing = await prisma.items.findFirst({
+    where: {
+      id: opts.itemId,
+      listId: opts.listId,
+      deletedAt: null,
+      catalogItemId: null,
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      imageUrl: true,
+      externalUrl: true,
+      metadata: true,
+    },
+  });
+  if (!existing) {
+    throw new Error('جایگاه سبک در این لیست یافت نشد');
+  }
+
+  const entryKind = opts.entryKind ?? 'tip';
+  if (!isLightweightEntryKind(entryKind)) {
+    throw new Error('نوع ورودی برای آیتم سبک نامعتبر است');
+  }
+
+  const incomingMeta =
+    opts.metadata != null &&
+    typeof opts.metadata === 'object' &&
+    !Array.isArray(opts.metadata)
+      ? (opts.metadata as Record<string, unknown>)
+      : {};
+  const prevMeta =
+    existing.metadata != null &&
+    typeof existing.metadata === 'object' &&
+    !Array.isArray(existing.metadata)
+      ? (existing.metadata as Record<string, unknown>)
+      : {};
+
+  const patchNonEmpty = opts.patchNonEmpty !== false;
+  const nextTitle = opts.title.trim() || existing.title;
+  const nextDescription = patchNonEmpty
+    ? opts.description?.trim() || existing.description
+    : opts.description?.trim() || null;
+  const nextImage = patchNonEmpty
+    ? opts.imageUrl?.trim() || existing.imageUrl
+    : opts.imageUrl?.trim() || null;
+  const nextExternal = patchNonEmpty
+    ? opts.externalUrl?.trim() || existing.externalUrl
+    : opts.externalUrl?.trim() || null;
+
+  const meta = {
+    ...prevMeta,
+    ...incomingMeta,
+    entryKind,
+  };
+
+  return prisma.items.update({
+    where: { id: existing.id },
+    data: {
+      title: nextTitle,
+      description: nextDescription,
+      imageUrl: nextImage,
+      externalUrl: nextExternal,
+      metadata: meta as Prisma.InputJsonValue,
+      updatedAt: new Date(),
+    },
+    include: {
+      lists: { include: { categories: true } },
+    },
+  });
+}
+
 /** ورودی سبک در لیست — بدون کاتالوگ (tip/fact/link) */
 export async function createLightweightListItem(
   prisma: PrismaClient,
@@ -1153,11 +1244,13 @@ export async function getCatalogItemDetail(prisma: PrismaClient, id: string) {
     where: { id },
     include: {
       items: {
+        where: { deletedAt: null },
         orderBy: { order: 'asc' },
         select: {
           id: true,
           listId: true,
           order: true,
+          deletedAt: true,
           lists: { select: { id: true, title: true, slug: true } },
         },
       },
@@ -1165,13 +1258,15 @@ export async function getCatalogItemDetail(prisma: PrismaClient, id: string) {
   });
   if (!catalog) return null;
 
-  const placements: CatalogDetailPlacement[] = catalog.items.map((i) => ({
-    itemId: i.id,
-    listId: i.listId,
-    listTitle: i.lists.title,
-    listSlug: i.lists.slug,
-    order: i.order,
-  }));
+  const placements: CatalogDetailPlacement[] = catalog.items
+    .filter((i) => !i.deletedAt)
+    .map((i) => ({
+      itemId: i.id,
+      listId: i.listId,
+      listTitle: i.lists.title,
+      listSlug: i.lists.slug,
+      order: i.order,
+    }));
 
   return {
     id: catalog.id,
