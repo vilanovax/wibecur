@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import Image from 'next/image';
 import { isOurStorageUrl, isLegacyLiaraStorageUrl } from '@/lib/object-storage-config';
 import { unwrapStoredImageProxy } from '@/lib/image-url-sanitize';
@@ -23,6 +23,7 @@ interface ImageWithFallbackProps {
   src: string;
   alt: string;
   className?: string;
+  style?: CSSProperties;
   fallbackIcon?: string;
   fallbackClassName?: string;
   placeholderSize?: 'cover' | 'square';
@@ -71,6 +72,7 @@ export default function ImageWithFallback({
   src,
   alt,
   className = '',
+  style,
   fallbackIcon = '📋',
   fallbackClassName = '',
   placeholderSize = 'cover',
