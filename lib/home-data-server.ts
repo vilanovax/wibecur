@@ -46,6 +46,8 @@ async function computeHomePageData(): Promise<HomeData> {
           description: true,
           coverImage: true,
           horizontalImage: true,
+          coverFocusX: true,
+          coverFocusY: true,
           saveCount: true,
           itemCount: true,
           likeCount: true,
@@ -119,6 +121,8 @@ async function computeHomePageData(): Promise<HomeData> {
     description?: string | null;
     coverImage?: string | null;
     horizontalImage?: string | null;
+    coverFocusX?: number | null;
+    coverFocusY?: number | null;
     saveCount?: number | null;
     itemCount?: number | null;
     likeCount?: number | null;
@@ -157,6 +161,8 @@ async function computeHomePageData(): Promise<HomeData> {
       coverImage: images.coverImage,
       horizontalImage: l.horizontalImage,
       bannerImage: images.bannerImage,
+      coverFocusX: l.coverFocusX ?? 50,
+      coverFocusY: l.coverFocusY ?? 50,
       saveCount: l.saveCount ?? 0,
       itemCount: l.itemCount ?? 0,
       likes: l.likeCount ?? 0,

@@ -329,6 +329,10 @@ model lists {
   description          String?
   coverImage           String?
   horizontalImage      String? // بنر افقی — featured و جزئیات لیست
+  /// نقطهٔ فوکوس کراپ هیرو (۰–۱۰۰) — object-position افقی
+  coverFocusX          Float                 @default(50)
+  /// نقطهٔ فوکوس کراپ هیرو (۰–۱۰۰) — object-position عمودی
+  coverFocusY          Float                 @default(50)
   categoryId           String?
   userId               String
   tags                 String[]              @default([]) // برای Similar Lists هوشمند

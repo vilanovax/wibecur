@@ -18,6 +18,8 @@ export type FeaturedSlotResult = {
     description: string | null;
     coverImage: string | null;
     horizontalImage: string | null;
+    coverFocusX?: number;
+    coverFocusY?: number;
     saveCount: number;
     itemCount: number;
     likeCount: number;
@@ -42,6 +44,8 @@ const featuredListSelect = {
   description: true,
   coverImage: true,
   horizontalImage: true,
+  coverFocusX: true,
+  coverFocusY: true,
   saveCount: true,
   itemCount: true,
   likeCount: true,

@@ -16,6 +16,9 @@ export interface HomeListData {
   horizontalImage?: string | null;
   /** URL نهایی برای بنر/هیرو افقی */
   bannerImage?: string;
+  /** فوکوس کراپ هیرو (۰–۱۰۰) */
+  coverFocusX?: number;
+  coverFocusY?: number;
   saveCount: number;
   itemCount: number;
   likes: number;
