@@ -43,6 +43,10 @@ type Props = {
   onSubmit: (e: React.FormEvent) => void;
   formatDate: (s: string) => string;
   onRetryLists?: () => void;
+  onCoverFocusSaved?: (
+    listId: string,
+    focus: { coverFocusX: number; coverFocusY: number }
+  ) => void;
 };
 
 function getCategorySlug(c: ListOption['categories']): string | undefined {
@@ -55,9 +59,13 @@ function getCategoryName(c: ListOption['categories']): string {
 
 function toPreviewList(l: ListOption): PreviewList {
   return {
+    id: l.id,
     title: l.title,
     description: l.description,
     coverImage: l.coverImage,
+    horizontalImage: l.horizontalImage,
+    coverFocusX: l.coverFocusX ?? 50,
+    coverFocusY: l.coverFocusY ?? 50,
     saveCount: l.saveCount,
     itemCount: l.itemCount,
     badge: l.badge,
@@ -90,6 +98,7 @@ export default function AddSlotWizardModal({
   onSubmit,
   formatDate,
   onRetryLists,
+  onCoverFocusSaved,
 }: Props) {
   const [step, setStep] = useState<1 | 2>(1);
   const [listSearch, setListSearch] = useState('');
@@ -523,6 +532,7 @@ export default function AddSlotWizardModal({
             <FeaturedMobilePreview
               list={selectedList ? toPreviewList(selectedList) : null}
               mode="preview"
+              onFocusSaved={onCoverFocusSaved}
             />
           </div>
         </div>

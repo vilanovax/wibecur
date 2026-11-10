@@ -6,6 +6,7 @@ import ListCoverImage from '@/components/shared/ListCoverImage';
 import HomeHeroBannerLink from '@/components/mobile/home/HomeHeroBannerLink';
 import { useHomeData } from '@/contexts/HomeDataContext';
 import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
+import { coverFocusStyle } from '@/lib/cover-focus';
 
 function trackFeaturedImpressionOnce(slotId: string) {
   try {
@@ -86,7 +87,8 @@ export default function HomeHeroSpotlight({ fillHeight = false }: { fillHeight?:
           title={list.title}
           slug={list.slug}
           categorySlug={categorySlug}
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04] lg:object-[center_35%]"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+          style={coverFocusStyle(list)}
           fallbackIcon={list.categories?.icon ?? '📚'}
           fallbackClassName="pointer-events-none flex h-full w-full min-h-56 items-center justify-center bg-foreground text-5xl lg:min-h-0"
           priority

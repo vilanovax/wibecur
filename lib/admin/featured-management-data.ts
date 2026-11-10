@@ -29,6 +29,9 @@ const listSelect = {
   slug: true,
   description: true,
   coverImage: true,
+  horizontalImage: true,
+  coverFocusX: true,
+  coverFocusY: true,
   saveCount: true,
   itemCount: true,
   badge: true,
@@ -74,6 +77,9 @@ type ListRow = {
   slug: string;
   description: string | null;
   coverImage: string | null;
+  horizontalImage?: string | null;
+  coverFocusX?: number;
+  coverFocusY?: number;
   saveCount: number;
   itemCount: number;
   badge: string | null;
@@ -102,6 +108,9 @@ function toListOption(l: ListRow): FeaturedListOption {
     slug: l.slug,
     description: l.description,
     coverImage: l.coverImage,
+    horizontalImage: l.horizontalImage ?? null,
+    coverFocusX: l.coverFocusX ?? 50,
+    coverFocusY: l.coverFocusY ?? 50,
     saveCount: l.saveCount,
     itemCount: l.itemCount,
     badge: l.badge,

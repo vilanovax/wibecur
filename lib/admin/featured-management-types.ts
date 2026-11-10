@@ -8,6 +8,9 @@ export type FeaturedListOption = {
   slug: string;
   description: string | null;
   coverImage: string | null;
+  horizontalImage?: string | null;
+  coverFocusX?: number;
+  coverFocusY?: number;
   saveCount: number;
   itemCount: number;
   badge: string | null;

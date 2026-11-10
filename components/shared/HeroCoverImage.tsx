@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 
 type HeroCoverImageProps = {
@@ -12,6 +13,7 @@ type HeroCoverImageProps = {
   priority?: boolean;
   sizes?: string;
   className?: string;
+  style?: CSSProperties;
 };
 
 /**
@@ -27,6 +29,7 @@ export default function HeroCoverImage({
   priority = false,
   sizes = '100vw',
   className = 'absolute inset-0 h-full w-full object-cover object-center',
+  style,
 }: HeroCoverImageProps) {
   return (
     <ImageWithFallback
@@ -36,6 +39,7 @@ export default function HeroCoverImage({
       placeholderSize="cover"
       sizes={sizes}
       className={className}
+      style={style}
       fallbackIcon={fallbackIcon}
       fallbackClassName="flex h-full w-full min-h-48 items-center justify-center bg-linear-to-br from-neutral-800 to-neutral-950 text-5xl lg:text-7xl"
       categorySlug={categorySlug}

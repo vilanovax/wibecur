@@ -4,6 +4,7 @@ import HomeHeroBannerLink from '@/components/mobile/home/HomeHeroBannerLink';
 import HeroCoverImage from '@/components/shared/HeroCoverImage';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 import { normalizeCoverDisplayMode } from '@/lib/admin/category-form-constants';
+import { coverFocusStyle } from '@/lib/cover-focus';
 import type { FeaturedListData } from '@/types/home-data';
 
 type HomeHeroSpotlightServerProps = {
@@ -77,7 +78,8 @@ export default function HomeHeroSpotlightServer({
             categorySlug={categorySlug}
             listSlug={list.slug}
             listTitle={list.title}
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.04] lg:object-[center_35%]"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            style={coverFocusStyle(list)}
           />
         ) : (
           <div className="pointer-events-none flex h-full w-full min-h-56 items-center justify-center bg-foreground text-5xl lg:min-h-0">

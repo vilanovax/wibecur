@@ -180,6 +180,7 @@ export default function ImageWithFallback({
         width={width}
         height={height}
         className={className}
+        style={style}
         onError={handleError}
         priority={priority}
         fetchPriority={resolvedFetchPriority}
@@ -200,6 +201,7 @@ export default function ImageWithFallback({
         fill
         sizes={sizes}
         className={className}
+        style={style}
         onError={handleError}
         priority={priority}
         fetchPriority={resolvedFetchPriority}
@@ -221,6 +223,7 @@ export default function ImageWithFallback({
       width={intrinsicW}
       height={intrinsicH}
       className={className}
+      style={style}
       onError={handleError}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={resolvedFetchPriority}

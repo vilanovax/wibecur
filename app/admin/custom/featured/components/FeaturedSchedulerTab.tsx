@@ -8,6 +8,7 @@ import FeaturedPerformanceSection from './FeaturedPerformanceSection';
 import FeaturedHistoryAccordion from './FeaturedHistoryAccordion';
 import type { SlotItem } from '../FeaturedManagementClient';
 import type { FeaturedSlotPerformance } from '@/lib/admin/featured-management-types';
+import type { CoverFocus } from '@/lib/cover-focus';
 
 type Props = {
   current: SlotItem | null;
@@ -24,6 +25,7 @@ type Props = {
   onAddSlot: () => void;
   onEditSlot: (slot: SlotItem) => void;
   onDeleteSlot: (id: string) => void;
+  onCoverFocusSaved?: (listId: string, focus: CoverFocus) => void;
   initialPerformance?: FeaturedSlotPerformance | null;
   initialRecommendations?: string[];
 };
@@ -43,6 +45,7 @@ export default function FeaturedSchedulerTab({
   onAddSlot,
   onEditSlot,
   onDeleteSlot,
+  onCoverFocusSaved,
   initialPerformance = null,
   initialRecommendations = [],
 }: Props) {
@@ -61,7 +64,11 @@ export default function FeaturedSchedulerTab({
         />
 
         <div className="lg:hidden">
-          <FeaturedMobilePreview list={previewList} mode={previewMode} />
+          <FeaturedMobilePreview
+            list={previewList}
+            mode={previewMode}
+            onFocusSaved={onCoverFocusSaved}
+          />
         </div>
 
         {current && (
@@ -111,7 +118,11 @@ export default function FeaturedSchedulerTab({
       </div>
 
       <div className="hidden lg:block">
-        <FeaturedMobilePreview list={previewList} mode={previewMode} />
+        <FeaturedMobilePreview
+          list={previewList}
+          mode={previewMode}
+          onFocusSaved={onCoverFocusSaved}
+        />
       </div>
     </div>
   );

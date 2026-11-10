@@ -60,14 +60,45 @@ function getRemainingText(slot: SlotItem): string | null {
 
 function listToPreview(l: ListOption): PreviewList {
   return {
+    id: l.id,
     title: l.title,
     description: l.description,
     coverImage: l.coverImage,
+    horizontalImage: l.horizontalImage,
+    coverFocusX: l.coverFocusX ?? 50,
+    coverFocusY: l.coverFocusY ?? 50,
     saveCount: l.saveCount,
     itemCount: l.itemCount,
     badge: l.badge,
     coverDisplayMode: l.categories?.coverDisplayMode ?? null,
     categorySlug: l.categories?.slug ?? null,
+  };
+}
+
+function patchListFocusInData(
+  data: Data,
+  listId: string,
+  coverFocusX: number,
+  coverFocusY: number
+): Data {
+  const patch = (l: ListOption): ListOption =>
+    l.id === listId ? { ...l, coverFocusX, coverFocusY } : l;
+  const patchSlot = (s: SlotItem | null): SlotItem | null =>
+    s && s.listId === listId
+      ? {
+          ...s,
+          list: { ...s.list, coverFocusX, coverFocusY },
+        }
+      : s;
+  return {
+    ...data,
+    current: patchSlot(data.current),
+    upcoming: data.upcoming.map((s) => patchSlot(s)!),
+    lists: data.lists.map(patch),
+    fallbackListDetail:
+      data.fallbackListDetail?.id === listId
+        ? { ...data.fallbackListDetail, coverFocusX, coverFocusY }
+        : data.fallbackListDetail,
   };
 }
 
@@ -363,6 +394,22 @@ function FeaturedManagementInner({
 
   const now = new Date();
 
+  const handleCoverFocusSaved = useCallback(
+    (listId: string, focus: { coverFocusX: number; coverFocusY: number }) => {
+      setData((prev) =>
+        prev
+          ? patchListFocusInData(
+              prev,
+              listId,
+              focus.coverFocusX,
+              focus.coverFocusY
+            )
+          : prev
+      );
+    },
+    []
+  );
+
   const handlePreset = useCallback((preset: DurationPreset) => {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
@@ -438,7 +485,12 @@ function FeaturedManagementInner({
     const full = data.lists.find((l) => l.id === data.fallbackList!.id);
     previewList = full
       ? listToPreview(full)
-      : { title: data.fallbackList.title, saveCount: 0, itemCount: 0 };
+      : {
+          id: data.fallbackList.id,
+          title: data.fallbackList.title,
+          saveCount: 0,
+          itemCount: 0,
+        };
     previewMode = 'fallback';
   }
 
@@ -473,6 +525,7 @@ function FeaturedManagementInner({
             (data.current?.id === id ? data.current : null);
           requestDelete(id, slot?.list.title ?? 'اسلات');
         }}
+        onCoverFocusSaved={handleCoverFocusSaved}
         initialPerformance={data.currentPerformance}
         initialRecommendations={data.currentRecommendations}
       />
@@ -515,6 +568,7 @@ function FeaturedManagementInner({
         onSubmit={handleAddSlot}
         formatDate={formatDate}
         onRetryLists={() => void ensureListsLoaded(true)}
+        onCoverFocusSaved={handleCoverFocusSaved}
       />
 
       <DeleteSlotDialog

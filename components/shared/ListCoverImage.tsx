@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import { resolveListBannerImage } from '@/lib/list-display-images';
 
@@ -13,6 +14,7 @@ export interface ListCoverImageProps {
   slug?: string | null;
   categorySlug?: string | null;
   className?: string;
+  style?: CSSProperties;
   fallbackIcon?: string;
   fallbackClassName?: string;
   priority?: boolean;
@@ -32,6 +34,7 @@ export default function ListCoverImage({
   slug,
   categorySlug,
   className = '',
+  style,
   fallbackIcon = '📋',
   fallbackClassName = '',
   priority = false,
@@ -56,6 +59,7 @@ export default function ListCoverImage({
       src={src}
       alt={title}
       className={className}
+      style={style}
       fallbackIcon={fallbackIcon}
       fallbackClassName={fallbackClassName}
       categorySlug={categorySlug}
