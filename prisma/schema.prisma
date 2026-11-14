@@ -48,6 +48,8 @@ model categories {
   isActive             Boolean               @default(true)
   commentsEnabled      Boolean               @default(true) // فعال/غیرفعال کردن کامنت برای دسته
   trendingWeight       Float                 @default(1) // ضریب وزن در الگوریتم ترندینگ (0.8 | 1.0 | 1.2 | 1.4)
+  /// دستهٔ مادر — یک سطح (مثلاً «کودک و نوجوان» زیر «کتاب»)
+  parentId             String?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime
   deletedAt            DateTime?
@@ -57,8 +59,11 @@ model categories {
   suggested_lists      suggested_lists[]
   sponsored_placements sponsored_placement[]
   deletedBy            users?                @relation("CategoryDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  parent               categories?           @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children             categories[]          @relation("CategoryHierarchy")
 
   @@index([deletedAt])
+  @@index([parentId])
 }
 
 model comment_likes {
