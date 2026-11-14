@@ -267,7 +267,6 @@ describe('ingest models', () => {
       'lifestyle'
     );
     expect(row.valid).toBe(true);
-    expect(row.entryKind).toBeUndefined();
     expect(row.metadata.entryKind).toBeUndefined();
     expect(isBulkImportLightweightRow('lifestyle', { metadata: row.metadata })).toBe(
       false
@@ -281,7 +280,8 @@ describe('ingest models', () => {
       'lifestyle'
     );
     expect(row.valid).toBe(true);
-    expect(isBulkImportLightweightRow('lifestyle', { entryKind: row.entryKind, metadata: row.metadata })).toBe(
+    expect(row.metadata.entryKind).toBeUndefined();
+    expect(isBulkImportLightweightRow('lifestyle', { metadata: row.metadata })).toBe(
       false
     );
   });
