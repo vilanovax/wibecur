@@ -271,18 +271,39 @@ curl -sS -X POST "$BASE/api/ingest/lists/commit" "${AUTH[@]}" \
 
 ---
 
-## ۶) هنوز آماده نیست
+## ۶) جست‌وجوی کاتالوگ (جلوگیری از تکرار)
+
+قبل از ساخت آیتم تازه، کاتالوگ را چک کنید:
+
+```bash
+# با عنوان
+curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
+  "$BASE/api/ingest/catalog?q=Dune&mediaType=movie" | jq .
+
+# با IMDb
+curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
+  "$BASE/api/ingest/catalog?imdbId=tt15239678" | jq .
+```
+
+حداقل یکی از `q` (۲+ کاراکتر) یا `imdbId` لازم است.  
+`mediaType` اختیاری: `movie` | `book` | `podcast` | `app` | `cafe`.
+
+هر نتیجه: `catalogItemId`، `title`، `type`، `imdbId`، `mediaType`، `categorySlug`، `listCount`.  
+اگر پیدا شد، در ingest از `catalog_ref` + همان `catalogItemId` استفاده کنید.
+
+---
+
+## ۷) هنوز آماده نیست
 
 این‌ها را هنوز از API بات نخواهید (فعلاً پنل / اسکریپت جدا):
 
 - آپلود تصویر اختصاصی (`POST /images`)
-- جست‌وجوی کاتالوگ با IMDb/عنوان (`GET /catalog?q=&imdbId=&mediaType=`)
 - لاگ ممیزی بات (`GET /log`)
 - فیلد `position` مطلق هنگام افزودن (فعلاً `PUT .../order`)
 
 ---
 
-## ۷) خطاهای رایج
+## ۸) خطاهای رایج
 
 | کد / وضعیت | معنی | کار شما |
 |------------|------|---------|

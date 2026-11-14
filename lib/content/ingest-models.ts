@@ -519,7 +519,8 @@ export function renderIngestModels() {
       'خواندن لیست: GET /lists/{id|slug} بدون کش؛ حتی غیرفعال/خصوصی؛ همهٔ فیلدهای ردیف شامل tip و metadata.',
       'حذف کاتالوگ و merge و catalog_and_all خارج از API بات است.',
       'لینک بین‌دسته‌ای با catalog_ref + catalogItemId مجاز است.',
-      'جست‌وجوی کاتالوگ و آپلود تصویر اختصاصی و لاگ ممیزی هنوز آماده نیست.',
+      'جست‌وجوی کاتالوگ: GET /catalog?q=&imdbId=&mediaType= — شناسه، عنوان، type.',
+      'آپلود تصویر اختصاصی و لاگ ممیزی هنوز آماده نیست.',
       'PATCH placement: metadata.mapsUrl و website و author پذیرفته می‌شوند (فقط همین ردیف).',
     ],
     commands: {
@@ -532,6 +533,11 @@ export function renderIngestModels() {
       auth: 'Authorization: Bearer <INGEST_TOKEN>',
       categories: { method: 'GET', path: '/api/ingest/categories' },
       models: { method: 'GET', path: '/api/ingest/models' },
+      catalogLookup: {
+        method: 'GET',
+        path: '/api/ingest/catalog?q=&imdbId=&mediaType=&limit=',
+        body: 'حداقل q یا imdbId؛ پاسخ items[{ catalogItemId, title, type, imdbId, mediaType, categorySlug, listCount }]',
+      },
       preview: {
         method: 'POST',
         path: '/api/ingest/lists',
