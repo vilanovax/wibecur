@@ -96,7 +96,7 @@ export async function runIngestCommit(
   }
 
   const report = await ingestListDocument(db, record.document, { dryRun: false });
-  const withMode = { ...report, mode: INGEST_LIST_MODE_ADD_ONLY as const };
+  const withMode = { ...report, mode: INGEST_LIST_MODE_ADD_ONLY };
   await markIngestPreviewCommitted(record.previewId, withMode);
   return {
     ...withMode,
