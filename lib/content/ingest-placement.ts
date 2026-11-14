@@ -46,15 +46,28 @@ export type IngestPlacementResult =
 export type IngestPlacementRemoveResult =
   | {
       ok: true;
-      removed: true;
+      dryRun: boolean;
+      /** در dryRun همیشه false؛ در اجرا true */
+      removed: boolean;
+      /** فقط در dryRun: اگر commit شود این ردیف برداشته می‌شود */
+      wouldRemove?: boolean;
       /** کاتالوگ و لیست‌های دیگر دست نخورده‌اند */
       catalogUntouched: true;
       placementId: string;
       listId: string;
       catalogItemId: string | null;
+      itemCountBefore: number;
+      itemCountAfter: number;
+      /** معادل itemCountAfter — سازگاری با کلاینت‌های قبلی */
       itemCount: number;
     }
   | { ok: false; status: number; code: string; error: string };
+
+export type RemoveIngestPlacementOptions = {
+  /** اگر بیاید باید با listId واقعی placement یکی باشد */
+  listId?: string;
+  dryRun?: boolean;
+};
 
 function asMeta(value: unknown): Record<string, unknown> {
   if (value != null && typeof value === 'object' && !Array.isArray(value)) {
@@ -309,10 +322,12 @@ export async function getIngestPlacement(
  */
 export async function removeIngestPlacement(
   db: PrismaClient,
-  placementId: string
+  placementId: string,
+  options?: RemoveIngestPlacementOptions
 ): Promise<IngestPlacementRemoveResult> {
+  const dryRun = options?.dryRun === true;
   const existing = await db.items.findFirst({
-    where: { id: placementId },
+    where: { id: placementId, deletedAt: null },
     select: {
       id: true,
       listId: true,
@@ -324,15 +339,48 @@ export async function removeIngestPlacement(
     return { ok: false, status: 404, code: 'not_found', error: 'placement پیدا نشد' };
   }
 
+  if (options?.listId && options.listId !== existing.listId) {
+    return {
+      ok: false,
+      status: 404,
+      code: 'not_found',
+      error: 'این placement در این لیست نیست',
+    };
+  }
+
+  const itemCountBefore = await db.items.count({
+    where: { listId: existing.listId, deletedAt: null },
+  });
+  const itemCountAfter = Math.max(0, itemCountBefore - 1);
+
+  if (dryRun) {
+    return {
+      ok: true,
+      dryRun: true,
+      removed: false,
+      wouldRemove: true,
+      catalogUntouched: true,
+      placementId: existing.id,
+      listId: existing.listId,
+      catalogItemId: existing.catalogItemId,
+      itemCountBefore,
+      itemCountAfter,
+      itemCount: itemCountAfter,
+    };
+  }
+
   try {
     const result = await removeItemFromList(db, existing.listId, existing.id);
     return {
       ok: true,
+      dryRun: false,
       removed: true,
       catalogUntouched: true,
       placementId: result.removedId,
       listId: result.listId,
       catalogItemId: result.catalogItemId,
+      itemCountBefore,
+      itemCountAfter: result.itemCount,
       itemCount: result.itemCount,
     };
   } catch (error) {

@@ -63,8 +63,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
 /**
  * DELETE /api/ingest/placements/:placementId
+ * مسیر کوتاه — مسیر توصیه‌شده:
+ * DELETE /api/ingest/lists/:listId/placements/:placementId
  * فقط از همین لیست برمی‌دارد؛ کاتالوگ دست نمی‌خورد.
- * هدر Idempotency-Key اجباری است.
+ * dryRun:true بدون Idempotency-Key؛ اجرا با Idempotency-Key.
  */
 export async function DELETE(request: Request, { params }: RouteParams) {
   const { placementId } = await params;
@@ -80,8 +82,26 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     }
   }
 
+  const dryRun =
+    raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? (raw as { dryRun?: unknown }).dryRun === true
+      : false;
+
+  if (dryRun) {
+    const denied = await requireIngestAuth(request);
+    if (denied) return denied;
+    const result = await removeIngestPlacement(prisma, placementId, { dryRun: true });
+    if (!result.ok) {
+      return NextResponse.json(
+        { ok: false, code: result.code, error: result.error },
+        { status: result.status }
+      );
+    }
+    return NextResponse.json({ ok: true, data: result });
+  }
+
   return runIngestWrite(request, path, raw, async () => {
-    const result = await removeIngestPlacement(prisma, placementId);
+    const result = await removeIngestPlacement(prisma, placementId, { dryRun: false });
     if (!result.ok) {
       return {
         status: result.status,

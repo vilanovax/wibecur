@@ -129,20 +129,71 @@ describe('removeIngestPlacement', () => {
           catalogItemId: 'cat1',
           lists: { deletedAt: null },
         }),
+        count: vi.fn().mockResolvedValue(5),
       },
     };
 
-    const result = await removeIngestPlacement(prisma as never, 'p1');
+    const result = await removeIngestPlacement(prisma as never, 'p1', { listId: 'L1' });
     expect(result).toEqual({
       ok: true,
+      dryRun: false,
       removed: true,
       catalogUntouched: true,
       placementId: 'p1',
       listId: 'L1',
       catalogItemId: 'cat1',
+      itemCountBefore: 5,
+      itemCountAfter: 4,
       itemCount: 4,
     });
     expect(removeItemFromList).toHaveBeenCalledWith(prisma, 'L1', 'p1');
+  });
+
+  it('supports dryRun with before/after counts and does not write', async () => {
+    const prisma = {
+      items: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: 'p1',
+          listId: 'L1',
+          catalogItemId: 'cat1',
+          lists: { deletedAt: null },
+        }),
+        count: vi.fn().mockResolvedValue(14),
+      },
+    };
+
+    const result = await removeIngestPlacement(prisma as never, 'p1', {
+      listId: 'L1',
+      dryRun: true,
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      dryRun: true,
+      removed: false,
+      wouldRemove: true,
+      catalogUntouched: true,
+      itemCountBefore: 14,
+      itemCountAfter: 13,
+      itemCount: 13,
+    });
+    expect(removeItemFromList).not.toHaveBeenCalled();
+  });
+
+  it('rejects listId mismatch', async () => {
+    const prisma = {
+      items: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: 'p1',
+          listId: 'L1',
+          catalogItemId: null,
+          lists: { deletedAt: null },
+        }),
+        count: vi.fn(),
+      },
+    };
+    const result = await removeIngestPlacement(prisma as never, 'p1', { listId: 'OTHER' });
+    expect(result).toMatchObject({ ok: false, status: 404, code: 'not_found' });
+    expect(prisma.items.count).not.toHaveBeenCalled();
   });
 
   it('returns not_found when placement is missing', async () => {

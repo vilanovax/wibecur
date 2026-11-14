@@ -51,6 +51,8 @@
 | Idempotency ۲۴ ساعت | ✅ |
 | PATCH placement (`scope:placement` فقط) | ✅ |
 | DELETE placement (فقط از همین لیست) | ✅ |
+| DELETE تو در تو `/lists/{id}/placements/{id}` + dryRun + before/after | ✅ |
+| GET list برای بات (بدون کش؛ غیرفعال/خصوصی OK) | ✅ |
 | `mode: add_only` صریح روی POST lists | ✅ |
 | پیش‌نمایش: `itemCountBefore` / `itemCountAfter` + `catalogItemId`/`catalogTitle` | ✅ |
 | فیلد سریال: `metadata.tmdbId` / `creator` / `episodes` | ✅ |

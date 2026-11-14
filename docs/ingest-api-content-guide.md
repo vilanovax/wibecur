@@ -150,7 +150,8 @@ curl -sS -X POST "$BASE/api/ingest/lists/commit" \
 | کافه | `metadata.address` اجباری؛ `priceRange` اختیاری |
 | lifestyle | فقط `tip` یا `catalog_ref` (+ `catalogItemId`)؛ یا بدون entryKind برای آیتم تازه |
 | حذف کاتالوگ / merge | از این API ممکن نیست |
-| برداشتن از یک لیست | با `DELETE` روی placement — بخش ۳ |
+| برداشتن از یک لیست | `DELETE /lists/{listId}/placements/{placementId}` — بخش ۳ |
+| خواندن لیست | `GET /lists/{id|slug}` — بخش ۳ب |
 
 ---
 
@@ -166,9 +167,16 @@ curl -sS -X PATCH "$BASE/api/ingest/placements/PLACEMENT_ID" \
   -d '{
     "scope": "placement",
     "tip": "نکتهٔ تازه",
-    "imageUrl": "https://…/poster.webp"
+    "imageUrl": "https://…/poster.webp",
+    "metadata": {
+      "mapsUrl": "https://balad.ir/p/…",
+      "website": "https://example.ir",
+      "author": "نام نویسنده"
+    }
   }'
 ```
+
+`metadata.mapsUrl`، `metadata.website` (لایف‌استایل) و `metadata.author` (کتاب) پذیرفته می‌شوند — فقط روی همین ردیف.
 
 خواندن یک ردیف:
 
@@ -183,15 +191,40 @@ curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
 
 ### برداشتن فقط از همین لیست
 
-کاتالوگ دست نمی‌خورد؛ فقط این ردیف از لیست جدا می‌شود:
+مسیر توصیه‌شده (مرورگر / بات):
 
 ```bash
-curl -sS -X DELETE "$BASE/api/ingest/placements/PLACEMENT_ID" \
+# پیش‌نمایش
+curl -sS -X DELETE "$BASE/api/ingest/lists/LIST_ID/placements/PLACEMENT_ID" \
   -H "Authorization: Bearer $WIBE_INGEST_KEY" \
-  -H "Idempotency-Key: elenor-remove-PLACEMENT_ID"
+  -H "Content-Type: application/json" \
+  -d '{"dryRun":true}' | jq .
+
+# اجرا
+curl -sS -X DELETE "$BASE/api/ingest/lists/LIST_ID/placements/PLACEMENT_ID" \
+  -H "Authorization: Bearer $WIBE_INGEST_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: elenor-remove-LIST_ID-PLACEMENT_ID" \
+  -d '{"dryRun":false}'
 ```
 
-در پاسخ موفق: `removed: true` و `catalogUntouched: true`.
+کاتالوگ دست نمی‌خورد. در پاسخ: `catalogUntouched: true`، `itemCountBefore`، `itemCountAfter`.  
+`dryRun:true` بدون `Idempotency-Key`؛ اجرا با کلید اجباری.  
+مسیر کوتاه `DELETE /placements/{id}` هنوز کار می‌کند.
+
+---
+
+## ۳ب) خواندن مستقیم یک لیست
+
+بدون کش عمومی؛ حتی اگر لیست `isActive:false` یا خصوصی باشد (زباله‌دان نه):
+
+```bash
+curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
+  -H "Cache-Control: no-cache" \
+  "$BASE/api/ingest/lists/LIST_ID_OR_SLUG" | jq .
+```
+
+هر ردیف شامل `placementId`، `catalogItemId`، `entryKind`، `tip`، و `metadata` کامل (از جمله `author`، `mapsUrl`، `website`) است.
 
 ---
 
@@ -243,8 +276,9 @@ curl -sS -X POST "$BASE/api/ingest/lists/commit" "${AUTH[@]}" \
 این‌ها را هنوز از API بات نخواهید (فعلاً پنل / اسکریپت جدا):
 
 - آپلود تصویر اختصاصی (`POST /images`)
-- جست‌وجوی کاتالوگ با IMDb/عنوان (`catalog/lookup`)
-- لاگ ممیزی بات
+- جست‌وجوی کاتالوگ با IMDb/عنوان (`GET /catalog?q=&imdbId=&mediaType=`)
+- لاگ ممیزی بات (`GET /log`)
+- فیلد `position` مطلق هنگام افزودن (فعلاً `PUT .../order`)
 
 ---
 
@@ -253,7 +287,7 @@ curl -sS -X POST "$BASE/api/ingest/lists/commit" "${AUTH[@]}" \
 | کد / وضعیت | معنی | کار شما |
 |------------|------|---------|
 | `401` | کلید اشتباه | کلید را چک کنید |
-| `idempotency_key_required` | هدر جا افتاده | برای commit / patch / delete / order بفرستید |
+| `idempotency_key_required` | هدر جا افتاده | برای commit / patch / delete واقعی / order بفرستید |
 | `preview_expired` / `410` | preview کهنه | دوباره preview |
 | `preview_stale` / `409` | لیست عوض شده | دوباره preview |
 | `forbidden_scope` / `403` | مثلاً ویژه یا catalog_and_all | آن فیلد را برندارید |
