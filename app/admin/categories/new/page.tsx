@@ -20,6 +20,7 @@ import { isValidCategorySlug } from '@/lib/admin/category-intelligence-shared';
 import { slugifyCategoryName } from '@/lib/admin/category-slug';
 import { useCategorySlugCheck } from '@/hooks/useCategorySlugCheck';
 import Toast from '@/components/shared/Toast';
+import type { CategoryParentOption } from '@/components/admin/categories/CategoryFormIdentity';
 
 export default function NewCategoryPage() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function NewCategoryPage() {
   const [slugAutoMode, setSlugAutoMode] = useState(true);
   const [orderAuto, setOrderAuto] = useState(true);
   const [suggestedOrder, setSuggestedOrder] = useState<number | null>(null);
+  const [parentOptions, setParentOptions] = useState<CategoryParentOption[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -44,6 +46,7 @@ export default function NewCategoryPage() {
     order: 0,
     isActive: false,
     trendingWeight: 1.0 as WeightValue,
+    parentId: '',
   });
 
   useEffect(() => {
@@ -57,6 +60,34 @@ export default function NewCategoryPage() {
         }
       } catch {
         // fallback: order 0
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/categories?includeInactive=true');
+        const data = await res.json();
+        if (cancelled || !res.ok || !Array.isArray(data)) return;
+        const roots = data
+          .filter(
+            (c: { deletedAt?: string | null; parentId?: string | null }) =>
+              !c.deletedAt && !c.parentId
+          )
+          .map((c: CategoryParentOption) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            icon: c.icon,
+          }));
+        setParentOptions(roots);
+      } catch {
+        // بدون گزینه‌های مادر هم فرم کار می‌کند
       }
     })();
     return () => {
@@ -131,6 +162,7 @@ export default function NewCategoryPage() {
           iconImage: formData.iconImage || null,
           heroImage: formData.heroImage || null,
           layoutType: formData.layoutType || null,
+          parentId: formData.parentId || null,
         }),
       });
 
@@ -250,10 +282,12 @@ export default function NewCategoryPage() {
                     name: formData.name,
                     slug: formData.slug,
                     icon: formData.icon,
+                    iconImage: formData.iconImage,
                     color: formData.color,
                     accentColor: formData.accentColor,
                     description: formData.description,
                     heroImage: formData.heroImage,
+                    parentId: formData.parentId,
                   }}
                   onChange={(patch) => setFormData((prev) => ({ ...prev, ...patch }))}
                   onNameChange={handleNameChange}
@@ -263,6 +297,7 @@ export default function NewCategoryPage() {
                   slugCheck={slugCheck}
                   onApplySlugSuggestion={handleApplySuggestion}
                   showInlinePreview={false}
+                  parentOptions={parentOptions}
                 />
               </div>
             </section>

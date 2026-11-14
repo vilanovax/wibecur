@@ -10,6 +10,7 @@ import {
   getCategorySaveGrowthMap,
   getCategoryUniqueItemCountMap,
 } from '@/lib/admin/category-intelligence';
+import { listCategoryParentOptions } from '@/lib/admin/category-parent';
 
 export default async function EditCategoryPage({
   params,
@@ -43,11 +44,36 @@ export default async function EditCategoryPage({
   }
 
   const metrics = computeCategoryListMetrics(category.lists);
-  const [growthMap, uniqueItemMap] = await Promise.all([
+  const [growthMap, uniqueItemMap, parentOptionsRaw] = await Promise.all([
     getCategorySaveGrowthMap(prisma, [id]),
     getCategoryUniqueItemCountMap(prisma, [id]),
+    listCategoryParentOptions(prisma, { excludeId: id }),
   ]);
   const growth = growthMap.get(id) ?? { percent: 0, recent: 0, previous: 0 };
+
+  let parentOptions = parentOptionsRaw;
+  if (
+    category.parentId &&
+    !parentOptionsRaw.some((opt) => opt.id === category.parentId)
+  ) {
+    const currentParent = await dbQuery(() =>
+      prisma.categories.findUnique({
+        where: { id: category.parentId! },
+        select: { id: true, name: true, slug: true, icon: true, deletedAt: true },
+      })
+    );
+    if (currentParent && !currentParent.deletedAt) {
+      parentOptions = [
+        {
+          id: currentParent.id,
+          name: currentParent.name,
+          slug: currentParent.slug,
+          icon: currentParent.icon,
+        },
+        ...parentOptionsRaw,
+      ];
+    }
+  }
 
   const analytics = {
     listCount: category.lists.length,
@@ -70,6 +96,7 @@ export default async function EditCategoryPage({
         category={category}
         analytics={analytics}
         canEditWeight={canEditWeight}
+        parentOptions={JSON.parse(JSON.stringify(parentOptions))}
       />
     </div>
   );

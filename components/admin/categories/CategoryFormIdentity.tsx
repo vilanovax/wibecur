@@ -8,6 +8,13 @@ import CategoryHeroImageField from '@/components/admin/categories/CategoryHeroIm
 import CategoryIconImageField from '@/components/admin/categories/CategoryIconImageField';
 import CategoryIcon from '@/components/shared/CategoryIcon';
 
+export type CategoryParentOption = {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+};
+
 export type CategoryIdentityValues = {
   name: string;
   slug: string;
@@ -17,6 +24,7 @@ export type CategoryIdentityValues = {
   accentColor: string;
   description: string;
   heroImage?: string;
+  parentId?: string;
 };
 
 interface CategoryFormIdentityProps {
@@ -33,6 +41,8 @@ interface CategoryFormIdentityProps {
   onApplySlugSuggestion?: (slug: string) => void;
   /** در ویرایش، کاور در بخش «ظاهر صفحه» مدیریت می‌شود */
   showHeroImage?: boolean;
+  /** دسته‌های ریشه برای انتخاب مادر (یک سطح) */
+  parentOptions?: CategoryParentOption[];
 }
 
 const inputClass =
@@ -50,6 +60,7 @@ export default function CategoryFormIdentity({
   slugCheck,
   onApplySlugSuggestion,
   showHeroImage = true,
+  parentOptions = [],
 }: CategoryFormIdentityProps) {
   const slugValid = useMemo(() => isValidCategorySlug(values.slug), [values.slug]);
 
@@ -78,6 +89,31 @@ export default function CategoryFormIdentity({
             className={inputClass}
             placeholder="مثال: فیلم و سریال"
           />
+        </div>
+
+        <div>
+          <label htmlFor="parentId" className="mb-1 block text-sm font-medium text-(--color-text)">
+            دستهٔ مادر
+            <span className="ms-2 text-xs font-normal text-wibe-secondary">(اختیاری)</span>
+          </label>
+          <select
+            id="parentId"
+            name="parentId"
+            value={values.parentId || ''}
+            onChange={(e) => onChange({ parentId: e.target.value || '' })}
+            className={inputClass}
+            disabled={parentOptions.length === 0 && !values.parentId}
+          >
+            <option value="">— بدون مادر (سطح اول) —</option>
+            {parentOptions.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {opt.icon} {opt.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-wibe-secondary">
+            مثلاً «کتاب‌های کودک» زیر «کودک و نوجوان». فقط یک سطح پشتیبانی می‌شود.
+          </p>
         </div>
 
         <div>

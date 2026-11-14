@@ -23,6 +23,7 @@ import {
   normalizeCoverDisplayMode,
   type CoverDisplayMode,
 } from '@/lib/admin/category-form-constants';
+import type { CategoryParentOption } from '@/components/admin/categories/CategoryFormIdentity';
 
 function toWeightValue(n: number | null | undefined): WeightValue {
   if (n == null || !Number.isFinite(n)) return 1.0;
@@ -55,6 +56,7 @@ type FormState = {
   isActive: boolean;
   commentsEnabled: boolean;
   trendingWeight: WeightValue;
+  parentId: string;
 };
 
 function buildInitialForm(category: categories): FormState {
@@ -75,6 +77,7 @@ function buildInitialForm(category: categories): FormState {
     isActive: category.isActive,
     commentsEnabled: (category as { commentsEnabled?: boolean }).commentsEnabled ?? true,
     trendingWeight: toWeightValue((category as { trendingWeight?: number }).trendingWeight),
+    parentId: (category as { parentId?: string | null }).parentId || '',
   };
 }
 
@@ -82,12 +85,14 @@ interface CategoryEditFormProps {
   category: categories;
   analytics: CategoryAnalytics;
   canEditWeight?: boolean;
+  parentOptions?: CategoryParentOption[];
 }
 
 export default function CategoryEditForm({
   category,
   analytics,
   canEditWeight = true,
+  parentOptions = [],
 }: CategoryEditFormProps) {
   const router = useRouter();
   const initialForm = useMemo(() => buildInitialForm(category), [category]);
@@ -169,6 +174,7 @@ export default function CategoryEditForm({
           isActive: formData.isActive,
           commentsEnabled: formData.commentsEnabled,
           trendingWeight: formData.trendingWeight,
+          parentId: formData.parentId || null,
         }),
       });
       if (!res.ok) {
@@ -295,10 +301,12 @@ export default function CategoryEditForm({
                   name: formData.name,
                   slug: formData.slug,
                   icon: formData.icon,
+                  iconImage: formData.iconImage,
                   color: formData.color,
                   accentColor: formData.accentColor,
                   description: formData.description,
                   heroImage: formData.heroImage,
+                  parentId: formData.parentId,
                 }}
                 onChange={(patch) => setFormData((p) => ({ ...p, ...patch }))}
                 onSlugChange={handleSlugChange}
@@ -306,6 +314,7 @@ export default function CategoryEditForm({
                 onApplySlugSuggestion={handleApplySuggestion}
                 showInlinePreview={false}
                 showHeroImage={false}
+                parentOptions={parentOptions}
               />
               {slugChanged && (
                 <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50/80 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">

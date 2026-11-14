@@ -91,8 +91,11 @@ export default function ListWorkspaceClient({ data }: ListWorkspaceClientProps) 
                 </span>
               )}
               {!list.isActive && (
-                <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
-                  غیرفعال
+                <span
+                  className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900"
+                  title="پیش‌نویس/غیرفعال — هنوز در زباله‌دان نیست و قابل ویرایش است"
+                >
+                  پیش‌نویس
                 </span>
               )}
             </div>

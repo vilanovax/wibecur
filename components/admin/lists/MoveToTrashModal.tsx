@@ -60,8 +60,19 @@ export default function MoveToTrashModal({
         <p className="text-sm text-wibe-secondary mb-2">
           این لیست <strong className="text-(--color-text)">{row.saveCount.toLocaleString('fa-IR')}</strong> ذخیره دارد.
         </p>
-        <p className="text-sm text-wibe-secondary mb-4">
+        <p className="text-sm text-wibe-secondary mb-2">
           رتبه فعلی: <strong className="text-(--color-text)">#{row.rank}</strong>
+        </p>
+        <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+          این کار حذف دائمی نیست. لیست در «زباله‌دان» دیده می‌شود و صفحهٔ ویرایشش دیگر باز نمی‌شود
+          تا بازگردانی کنید. حذف دائمی فقط از داخل زباله‌دان ممکن است.
+          {!row.isActive ? (
+            <>
+              {' '}
+              الان این لیست پیش‌نویس/غیرفعال است — فقط «غیرفعال» بودنش یعنی در زباله‌دان نیست؛ با تأیید
+              اینجا واقعاً به زباله‌دان می‌رود.
+            </>
+          ) : null}
         </p>
         <label className="block text-sm font-medium text-(--color-text) mb-2">
           دلیل (اختیاری)

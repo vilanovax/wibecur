@@ -527,10 +527,21 @@ export default function EditListForm({ list, categories, intelligence }: EditLis
         </button>
         {dangerOpen && (
           <div className="px-4 pb-4 pt-0 border-t border-red-200">
-            <p className="text-sm text-red-700 mb-3 mt-3">
+            <p className="text-sm text-red-700 mb-2 mt-3">
               انتقال به زباله‌دان — <strong>{list.saveCount.toLocaleString('fa-IR')} ذخیره</strong> و آیتم‌ها موقتاً
               مخفی می‌شوند.
             </p>
+            <p className="mb-3 text-xs leading-relaxed text-red-700/90">
+              «غیرفعال / پیش‌نویس» با زباله‌دان فرق دارد: پیش‌نویس فقط از اپ مخفی است و هنوز قابل ویرایش
+              می‌ماند. زباله‌دان یعنی soft-delete — در تب زباله‌دان دیده می‌شود و ویرایش مستقیم بسته می‌شود.
+              حذف دائمی فقط از زباله‌دان ادمین انجام می‌شود.
+            </p>
+            {!formData.isActive && (
+              <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                این لیست الان پیش‌نویس/غیرفعال است و در زباله‌دان نیست. اگر می‌خواهید از لیست فعال‌ها و
+                پیش‌نویس‌ها خارج شود، «انتقال به زباله‌دان» را بزنید.
+              </p>
+            )}
             <button
               type="button"
               onClick={() => setTrashOpen(true)}

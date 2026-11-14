@@ -68,6 +68,7 @@ export async function POST(
         isActive: false,
         commentsEnabled: source.commentsEnabled,
         trendingWeight: 1,
+        parentId: source.parentId,
         updatedAt: new Date(),
       },
     });

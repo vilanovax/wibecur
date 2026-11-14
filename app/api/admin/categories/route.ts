@@ -10,6 +10,7 @@ import {
 import { revalidateAdminListsAndCategoriesCache } from '@/lib/admin/admin-cache';
 import { finalizeCategoryHeroImage } from '@/lib/admin/finalize-category-hero-image';
 import { finalizeCategoryIconImage } from '@/lib/admin/finalize-category-icon-image';
+import { resolveCategoryParentId } from '@/lib/admin/category-parent';
 
 const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;
 function normalizeTrendingWeight(value: unknown): number {
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
       heroImage,
       layoutType,
       coverDisplayMode,
+      parentId,
     } = body;
 
     // Validate required fields
@@ -46,6 +48,11 @@ export async function POST(request: NextRequest) {
         { error: 'نام، slug و آیکون الزامی هستند' },
         { status: 400 }
       );
+    }
+
+    const parentResult = await resolveCategoryParentId(prisma, { parentId });
+    if (!parentResult.ok) {
+      return NextResponse.json({ error: parentResult.error }, { status: 400 });
     }
 
     const weight = normalizeTrendingWeight(trendingWeight);
@@ -91,6 +98,7 @@ export async function POST(request: NextRequest) {
         order: order || 0,
         isActive: isActive !== undefined ? isActive : false,
         trendingWeight: weight,
+        parentId: parentResult.parentId,
         updatedAt: new Date(),
       },
     });

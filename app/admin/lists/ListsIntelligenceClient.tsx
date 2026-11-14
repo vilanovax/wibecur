@@ -406,10 +406,15 @@ export default function ListsIntelligenceClient({
                   : '/admin/lists'
               }
               className={tabClass(!isTrashView)}
+              title="لیست‌های زنده؛ شامل پیش‌نویس/غیرفعال — نه زباله‌دان"
             >
-              فعال‌ها
+              لیست‌ها
             </Link>
-            <Link href="/admin/lists?trash=true" className={tabClass(isTrashView)}>
+            <Link
+              href="/admin/lists?trash=true"
+              className={tabClass(isTrashView)}
+              title="فقط soft-delete؛ حذف دائمی از همین‌جا"
+            >
               زباله‌دان
             </Link>
           </div>
@@ -492,8 +497,9 @@ export default function ListsIntelligenceClient({
                 : '/admin/lists'
             }
             className={tabClass(!isTrashView)}
+            title="لیست‌های زنده؛ شامل پیش‌نویس — نه زباله‌دان"
           >
-            فعال‌ها
+            لیست‌ها
           </Link>
           <Link href="/admin/lists?trash=true" className={tabClass(isTrashView)}>
             زباله‌دان
@@ -503,7 +509,14 @@ export default function ListsIntelligenceClient({
 
       {isTrashView && lists.length > 0 && (
         <p className="text-sm text-wibe-secondary px-1">
-          {lists.length.toLocaleString('fa-IR')} لیست — قابل بازگردانی
+          {lists.length.toLocaleString('fa-IR')} لیست در زباله‌دان — قابل بازگردانی؛ پیش‌نویس‌های
+          فقط‌غیرفعال اینجا نیستند
+        </p>
+      )}
+      {isTrashView && lists.length === 0 && (
+        <p className="text-sm text-wibe-secondary px-1">
+          زباله‌دان خالی است. لیست‌های پیش‌نویس (غیرفعال بدون soft-delete) اینجا دیده نمی‌شوند —
+          در تب «لیست‌ها» با فیلتر غیرفعال پیدا می‌شوند.
         </p>
       )}
 

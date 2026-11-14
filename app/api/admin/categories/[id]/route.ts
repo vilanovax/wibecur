@@ -20,6 +20,7 @@ import {
 } from '@/lib/admin/category-trash';
 import { finalizeCategoryHeroImage } from '@/lib/admin/finalize-category-hero-image';
 import { finalizeCategoryIconImage } from '@/lib/admin/finalize-category-icon-image';
+import { resolveCategoryParentId } from '@/lib/admin/category-parent';
 
 const ALLOWED_WEIGHTS = [0.8, 1.0, 1.2, 1.4] as const;
 function normalizeTrendingWeight(value: unknown): number {
@@ -54,6 +55,7 @@ export async function PUT(
       heroImage,
       layoutType,
       coverDisplayMode,
+      parentId,
     } = body;
 
     // Validate required fields
@@ -74,6 +76,14 @@ export async function PUT(
         { error: 'دسته‌بندی یافت نشد' },
         { status: 404 }
       );
+    }
+
+    const parentResult = await resolveCategoryParentId(prisma, {
+      categoryId: id,
+      parentId,
+    });
+    if (!parentResult.ok) {
+      return NextResponse.json({ error: parentResult.error }, { status: 400 });
     }
 
     const existingWeight = existingCategory.trendingWeight ?? 1;
@@ -134,6 +144,7 @@ export async function PUT(
         isActive: isActive !== undefined ? isActive : true,
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
         trendingWeight: wantsWeight,
+        parentId: parentResult.parentId,
       },
     });
 
