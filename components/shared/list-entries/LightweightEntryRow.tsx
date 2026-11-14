@@ -1,6 +1,7 @@
 'use client';
 
 import { ExternalLink } from 'lucide-react';
+import ImageWithFallback from '@/components/shared/ImageWithFallback';
 import ListItemQuickActions from '@/components/mobile/lists/ListItemQuickActions';
 import {
   entryKindBadgeLabel,
@@ -16,6 +17,8 @@ export type LightweightEntryItem = {
   id: string;
   title: string;
   description?: string | null;
+  imageUrl?: string | null;
+  displayImageUrl?: string | null;
   externalUrl?: string | null;
   listNote?: string | null;
   metadata?: Record<string, unknown> | null;
@@ -43,6 +46,11 @@ function factTypeLabel(metadata?: Record<string, unknown> | null): string | null
   return FACT_TYPE_LABELS[raw as FactType] ?? raw;
 }
 
+function resolveThumb(item: LightweightEntryItem): string | null {
+  const raw = item.displayImageUrl?.trim() || item.imageUrl?.trim() || '';
+  return raw || null;
+}
+
 function EntryBody({
   item,
   index,
@@ -53,6 +61,7 @@ function EntryBody({
   body,
   factLabel,
   hasLink,
+  thumbSrc,
 }: {
   item: LightweightEntryItem;
   index: number;
@@ -63,6 +72,7 @@ function EntryBody({
   body: string;
   factLabel: string | null;
   hasLink: boolean;
+  thumbSrc: string | null;
 }) {
   return (
     <>
@@ -75,15 +85,33 @@ function EntryBody({
         {(index + 1).toLocaleString('fa-IR')}
       </div>
 
-      {!hideEntryKindChrome && (
+      {thumbSrc ? (
         <div
-          className={`flex size-11 shrink-0 items-center justify-center rounded-surface bg-warning/10 text-lg ${
-            compact ? '' : 'lg:size-12'
+          className={`relative aspect-square shrink-0 overflow-hidden rounded-surface bg-muted ${
+            compact ? 'size-11' : hideEntryKindChrome ? 'size-14' : 'size-12 lg:size-14'
           }`}
-          aria-hidden
         >
-          {entryKindIcon(entryKind)}
+          <ImageWithFallback
+            src={thumbSrc}
+            alt=""
+            className="size-full object-cover"
+            preferStoredImage
+            fallbackIcon={entryKindIcon(entryKind)}
+            fallbackClassName="flex size-full items-center justify-center text-lg"
+          />
+          <span className="sr-only">تصویر آیتم</span>
         </div>
+      ) : (
+        !hideEntryKindChrome && (
+          <div
+            className={`flex size-11 shrink-0 items-center justify-center rounded-surface bg-warning/10 text-lg ${
+              compact ? '' : 'lg:size-12'
+            }`}
+            aria-hidden
+          >
+            {entryKindIcon(entryKind)}
+          </div>
+        )
       )}
 
       <div className="min-w-0 flex-1">
@@ -157,6 +185,7 @@ export default function LightweightEntryRow({
   const factLabel = entryKind === 'fact' ? factTypeLabel(item.metadata) : null;
   const hasLink = Boolean(item.externalUrl?.trim());
   const quickActions = buildListItemQuickActions(item.metadata, categorySlug);
+  const thumbSrc = resolveThumb(item);
 
   const shellClass = `rounded-surface border border-border bg-popover text-start shadow-sm transition-colors ${
     compact ? 'p-2.5' : hideEntryKindChrome ? 'p-3.5 lg:p-4' : 'p-3 lg:p-3.5'
@@ -172,6 +201,7 @@ export default function LightweightEntryRow({
     body,
     factLabel,
     hasLink,
+    thumbSrc,
   };
 
   if (quickActions.length > 0) {

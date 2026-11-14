@@ -2,11 +2,12 @@ import {
   normalizeInstagramUrl,
   normalizeMapsUrl,
   normalizePhoneNumber,
+  normalizeWebsiteUrl,
   phoneToTelHref,
 } from '@/lib/cafe-metadata';
 import { isLocationCategorySlug } from '@/lib/category-layout';
 
-export type ListItemQuickActionKey = 'phone' | 'maps' | 'instagram';
+export type ListItemQuickActionKey = 'phone' | 'maps' | 'instagram' | 'website';
 
 export type ListItemQuickAction = {
   key: ListItemQuickActionKey;
@@ -23,12 +24,24 @@ function resolveMapsUrl(metadata: Record<string, unknown> | null | undefined): s
   return address ? normalizeMapsUrl(address) : undefined;
 }
 
-/** اکشن‌های سریع کارت — فقط برای دسته‌های مکان‌محور */
+function hasPlaceSignals(metadata: Record<string, unknown> | null | undefined): boolean {
+  if (!metadata) return false;
+  return Boolean(
+    (typeof metadata.mapsUrl === 'string' && metadata.mapsUrl.trim()) ||
+      (typeof metadata.address === 'string' && metadata.address.trim()) ||
+      (typeof metadata.website === 'string' && metadata.website.trim()) ||
+      (typeof metadata.phone === 'string' && metadata.phone.trim()) ||
+      (typeof metadata.instagram === 'string' && metadata.instagram.trim())
+  );
+}
+
+/** اکشن‌های سریع کارت — دسته‌های مکان‌محور، یا هر آیتمی با سیگنال مکان در metadata */
 export function buildListItemQuickActions(
   metadata: Record<string, unknown> | null | undefined,
   categorySlug?: string | null
 ): ListItemQuickAction[] {
-  if (!categorySlug || !isLocationCategorySlug(categorySlug)) return [];
+  const locationCategory = Boolean(categorySlug && isLocationCategorySlug(categorySlug));
+  if (!locationCategory && !hasPlaceSignals(metadata)) return [];
 
   const actions: ListItemQuickAction[] = [];
 
@@ -52,6 +65,18 @@ export function buildListItemQuickActions(
     });
   }
 
+  const website = normalizeWebsiteUrl(
+    typeof metadata?.website === 'string' ? metadata.website : undefined
+  );
+  if (website) {
+    actions.push({
+      key: 'website',
+      href: website,
+      label: 'وب‌سایت',
+      ariaLabel: 'باز کردن وب‌سایت',
+    });
+  }
+
   const instagram = normalizeInstagramUrl(
     typeof metadata?.instagram === 'string' ? metadata.instagram : undefined
   );
@@ -71,7 +96,8 @@ export function itemHasMapLocation(
   metadata: Record<string, unknown> | null | undefined,
   categorySlug?: string | null
 ): boolean {
-  if (!categorySlug || !isLocationCategorySlug(categorySlug)) return false;
+  const locationCategory = Boolean(categorySlug && isLocationCategorySlug(categorySlug));
+  if (!locationCategory && !hasPlaceSignals(metadata)) return false;
   return Boolean(resolveMapsUrl(metadata));
 }
 

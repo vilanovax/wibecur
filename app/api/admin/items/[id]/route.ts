@@ -25,6 +25,25 @@ import {
   revalidateItemDetailCache,
 } from '@/lib/public-cache';
 import { recountListItemCount } from '@/lib/list-item-count';
+import { reorderListItems } from '@/lib/admin/reorder-list-items';
+
+/** جابه‌جایی یک آیتم به جایگاه ۱‌بنیان در لیست زنده */
+async function moveItemToListPosition(
+  listId: string,
+  itemId: string,
+  positionOneBased: number
+): Promise<void> {
+  const live = await prisma.items.findMany({
+    where: { listId, deletedAt: null },
+    select: { id: true },
+    orderBy: [{ order: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+  });
+  if (live.length === 0) return;
+  const without = live.map((row) => row.id).filter((id) => id !== itemId);
+  const index = Math.min(Math.max(Math.trunc(positionOneBased) - 1, 0), without.length);
+  without.splice(index, 0, itemId);
+  await reorderListItems(prisma, listId, without);
+}
 
 /** تازه‌سازی کش صفحهٔ لیستِ والدِ یک آیتم (با یک کوئری سبک برای slug). */
 async function revalidateItemParentList(
@@ -92,6 +111,7 @@ export async function PUT(
       imageUrl,
       externalUrl,
       order,
+      listPosition,
       metadata,
       commentsEnabled,
       maxComments,
@@ -225,7 +245,7 @@ export async function PUT(
         ...(externalUrl !== undefined && { externalUrl }),
         metadata: placementMeta as Prisma.InputJsonValue,
         ...(listNote !== undefined && { listNote: listNote?.trim() || null }),
-        order,
+        ...(typeof listPosition !== 'number' && typeof order === 'number' ? { order } : {}),
         commentsEnabled: commentsEnabled !== undefined ? commentsEnabled : true,
         maxComments: maxComments !== undefined ? maxComments : null,
         listId: targetListId,
@@ -236,6 +256,15 @@ export async function PUT(
         catalog_items: true,
       },
     });
+
+    if (
+      typeof listPosition === 'number' &&
+      Number.isFinite(listPosition) &&
+      listPosition >= 1 &&
+      !existingItem.deletedAt
+    ) {
+      await moveItemToListPosition(targetListId, id, listPosition);
+    }
 
     if (targetListId !== previousListId && !existingItem.deletedAt) {
       await Promise.all([

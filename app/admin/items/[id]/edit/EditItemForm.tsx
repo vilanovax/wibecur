@@ -26,6 +26,7 @@ import { resolveAdminItemThumbnail } from '@/lib/resolve-admin-item-image';
 import EntryKindSelector from '@/components/admin/items/EntryKindSelector';
 import {
   entryKindBadgeLabel,
+  isLifestyleCategory,
   isLightweightEntryKind,
   isMixedListCategory,
   resolveEntryKind,
@@ -104,12 +105,15 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
   const categorySlug = selectedList?.categories?.slug;
   const isFilm = isFilmCategory(categorySlug);
   const isBook = isBookCategory(categorySlug);
+  const isLifestyle = isLifestyleCategory(categorySlug);
   const isMixedList = isMixedListCategory(categorySlug);
   const hasCatalog = Boolean(item.catalogItemId);
   const isLightweightMode =
     isMixedList && !hasCatalog && isLightweightEntryKind(entryKind);
   const backHref = `/admin/lists/${formData.listId}`;
   const catalogUsageCount = item.catalog_items?._count?.items ?? 0;
+  /** جایگاه ۱‌بنیان برای UI — در DB فیلد order صفر‌بنیان است */
+  const listPosition = Math.max(1, Number(formData.order) + 1);
 
   useEffect(() => {
     if (!isMixedList || hasCatalog) return;
@@ -338,6 +342,7 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
           ...formData,
           title,
           description,
+          listPosition: Math.max(1, Number(formData.order) + 1),
           propagateToCatalog: hasCatalog ? propagateToCatalog : false,
           metadata: (() => {
             const meta: Record<string, unknown> = {
@@ -655,10 +660,48 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
                   />
                 </div>
               )}
+
+              {isLightweightMode && (
+                <ItemTipField
+                  value={String((formData.metadata as Record<string, unknown>)?.tip ?? '')}
+                  onChange={(tip) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      metadata: {
+                        ...(prev.metadata as Record<string, unknown>),
+                        tip,
+                      },
+                    }))
+                  }
+                />
+              )}
+
+              <div>
+                <label htmlFor="listPosition" className="mb-2 block text-sm font-medium text-admin-text-primary dark:text-white">
+                  جایگاه در لیست
+                </label>
+                <input
+                  type="number"
+                  id="listPosition"
+                  name="listPosition"
+                  min={1}
+                  dir="ltr"
+                  value={listPosition}
+                  onChange={(e) => {
+                    const raw = Number.parseInt(e.target.value, 10);
+                    const next = Number.isFinite(raw) && raw >= 1 ? raw - 1 : 0;
+                    setFormData((prev) => ({ ...prev, order: next }));
+                  }}
+                  className={inputClass}
+                />
+                <p className="mt-1 text-xs text-wibe-secondary">
+                  عدد ۱ یعنی اول لیست. با ذخیره، ترتیب بقیهٔ آیتم‌ها هم اصلاح می‌شود.
+                </p>
+              </div>
             </section>
 
-            {/* اطلاعات تکمیلی — تاشو */}
-            {categorySlug && !isLightweightMode && (
+            {/* اطلاعات تکمیلی — تاشو (کاتالوگ) یا مکان لایف‌استایل در ورودی سبک */}
+            {categorySlug && (!isLightweightMode || isLifestyle) && (
               <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 overflow-hidden">
                 <button
                   type="button"
@@ -667,7 +710,11 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
                 >
                   <span className="text-sm font-semibold text-admin-text-primary dark:text-white">
                     اطلاعات تکمیلی{' '}
-                    {isFilm ? 'فیلم/سریال' : selectedList?.categories?.name || 'آیتم'}
+                    {isFilm
+                      ? 'فیلم/سریال'
+                      : isLifestyle
+                        ? 'مکان'
+                        : selectedList?.categories?.name || 'آیتم'}
                   </span>
                   {metadataOpen ? (
                     <ChevronUp className="w-5 h-5 text-admin-text-tertiary" />
@@ -687,19 +734,22 @@ export default function EditItemForm({ item, lists }: EditItemFormProps) {
                       onChange={(metadata) => setFormData((prev) => ({ ...prev, metadata }))}
                       hideTitle
                       layout="grid"
+                      placeFieldsOnly={isLightweightMode && isLifestyle}
                     />
-                    <ItemTipField
-                      value={String((formData.metadata as Record<string, unknown>)?.tip ?? '')}
-                      onChange={(tip) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          metadata: {
-                            ...(prev.metadata as Record<string, unknown>),
-                            tip,
-                          },
-                        }))
-                      }
-                    />
+                    {!isLightweightMode && (
+                      <ItemTipField
+                        value={String((formData.metadata as Record<string, unknown>)?.tip ?? '')}
+                        onChange={(tip) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            metadata: {
+                              ...(prev.metadata as Record<string, unknown>),
+                              tip,
+                            },
+                          }))
+                        }
+                      />
+                    )}
                   </div>
                 </div>
               </section>

@@ -20,6 +20,7 @@ import {
 import CatalogItemPicker from '@/components/admin/items/CatalogItemPicker';
 import EntryKindSelector from '@/components/admin/items/EntryKindSelector';
 import {
+  isLifestyleCategory,
   isLightweightEntryKind,
   isMixedListCategory,
   type EntryKind,
@@ -86,6 +87,7 @@ export default function NewItemForm({
     selectedList?.categories?.slug === 'film' ||
     selectedList?.categories?.slug === 'movies';
   const isBookCategory = isBookCategorySlug(selectedList?.categories?.slug);
+  const isLifestyle = isLifestyleCategory(selectedList?.categories?.slug);
   const isMixedList = isMixedListCategory(selectedList?.categories?.slug);
   const isLightweightMode = isMixedList && isLightweightEntryKind(entryKind);
 
@@ -561,8 +563,25 @@ export default function NewItemForm({
           />
         </section>
 
+        {isLightweightMode && (
+          <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 p-6">
+            <ItemTipField
+              value={String((formData.metadata as Record<string, unknown>)?.tip ?? '')}
+              onChange={(tip) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  metadata: {
+                    ...(prev.metadata as Record<string, unknown>),
+                    tip,
+                  },
+                }))
+              }
+            />
+          </section>
+        )}
+
         {/* 3. Extended Metadata (Collapsible) */}
-        {selectedList?.categories?.slug && !isLightweightMode && (
+        {selectedList?.categories?.slug && (!isLightweightMode || isLifestyle) && (
           <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-admin-border dark:border-gray-600 overflow-hidden">
             <button
               type="button"
@@ -570,7 +589,14 @@ export default function NewItemForm({
               className="w-full flex items-center justify-between px-6 py-4 text-right hover:bg-admin-muted/50 dark:hover:bg-gray-700/30 transition-colors"
             >
               <span className="text-sm font-semibold text-admin-text-primary dark:text-white">
-                اطلاعات تکمیلی {selectedList.categories.slug === 'movie' || selectedList.categories.slug === 'film' || selectedList.categories.slug === 'movies' ? 'فیلم/سریال' : 'آیتم'}
+                اطلاعات تکمیلی{' '}
+                {selectedList.categories.slug === 'movie' ||
+                selectedList.categories.slug === 'film' ||
+                selectedList.categories.slug === 'movies'
+                  ? 'فیلم/سریال'
+                  : isLifestyle
+                    ? 'مکان'
+                    : 'آیتم'}
               </span>
               {metadataOpen ? <ChevronUp className="w-5 h-5 text-admin-text-tertiary" /> : <ChevronDown className="w-5 h-5 text-admin-text-tertiary" />}
             </button>
@@ -582,19 +608,22 @@ export default function NewItemForm({
                   categorySlug={selectedList.categories.slug}
                   metadata={formData.metadata}
                   onChange={(metadata) => setFormData((prev) => ({ ...prev, metadata }))}
+                  placeFieldsOnly={isLightweightMode && isLifestyle}
                 />
-                <ItemTipField
-                  value={String((formData.metadata as Record<string, unknown>)?.tip ?? '')}
-                  onChange={(tip) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      metadata: {
-                        ...(prev.metadata as Record<string, unknown>),
-                        tip,
-                      },
-                    }))
-                  }
-                />
+                {!isLightweightMode && (
+                  <ItemTipField
+                    value={String((formData.metadata as Record<string, unknown>)?.tip ?? '')}
+                    onChange={(tip) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        metadata: {
+                          ...(prev.metadata as Record<string, unknown>),
+                          tip,
+                        },
+                      }))
+                    }
+                  />
+                )}
               </div>
             </div>
           </section>

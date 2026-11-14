@@ -22,8 +22,28 @@ describe('buildListItemQuickActions', () => {
     expect(actions[2]?.href).toBe('https://www.instagram.com/my_cafe');
   });
 
-  it('returns empty for non-location categories', () => {
-    expect(buildListItemQuickActions({ phone: '021' }, 'movie')).toEqual([]);
+  it('includes website and works for lifestyle places', () => {
+    const actions = buildListItemQuickActions(
+      {
+        mapsUrl: 'https://balad.ir/p/abc',
+        website: 'https://example.ir',
+      },
+      'lifestyle'
+    );
+    expect(actions.map((a) => a.key)).toEqual(['maps', 'website']);
+    expect(actions[1]?.href).toBe('https://example.ir');
+  });
+
+  it('shows place actions from metadata even on movie when signals exist', () => {
+    const actions = buildListItemQuickActions(
+      { website: 'https://place.ir', mapsUrl: 'https://maps.google.com/?q=1' },
+      'movie'
+    );
+    expect(actions.map((a) => a.key)).toEqual(['maps', 'website']);
+  });
+
+  it('returns empty for non-location categories without place signals', () => {
+    expect(buildListItemQuickActions({}, 'movie')).toEqual([]);
   });
 });
 

@@ -23,6 +23,8 @@ export function isLocationCategorySlug(slug: string): boolean {
     s.includes('cafe') ||
     s.includes('restaurant') ||
     s.includes('food') ||
+    s.includes('lifestyle') ||
+    s.includes('travel') ||
     s.includes('رستوران') ||
     s.includes('کافه')
   );

@@ -11,6 +11,7 @@ import {
   ENTRY_KINDS,
   isLightweightEntryKind,
   isMixedListCategory,
+  normalizeEntryKindInput,
   parseEntryKind,
   type EntryKind,
 } from '@/lib/list-entry';
@@ -30,7 +31,10 @@ const baseRawSchema = z.object({
   externalUrl: z.string().optional().nullable(),
   order: z.number().int().optional(),
   tip: z.string().optional().nullable(),
-  entryKind: z.enum(ENTRY_KINDS).optional().nullable(),
+  entryKind: z.preprocess(
+    normalizeEntryKindInput,
+    z.enum(ENTRY_KINDS).optional().nullable()
+  ),
   catalogItemId: z.string().trim().min(1).optional().nullable(),
   /** شناسهٔ جایگاه زندهٔ لیست — برای آپدیت tip/سبک بدون ساخت تکراری */
   liveItemId: z.string().trim().min(1).optional().nullable(),
@@ -256,7 +260,13 @@ function normalizeMovieImportMetadata(
 function normalizeBookImportMetadata(meta: Record<string, unknown> | null | undefined): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (!meta || typeof meta !== 'object') return out;
+  if (meta.mediaType === 'book' || meta.mediaType === 'podcast' || meta.mediaType === 'app') {
+    out.mediaType = meta.mediaType;
+  }
   if (typeof meta.author === 'string' && meta.author.trim()) out.author = meta.author.trim();
+  if (typeof meta.translator === 'string' && meta.translator.trim()) {
+    out.translator = meta.translator.trim();
+  }
   if (typeof meta.genre === 'string' && meta.genre.trim()) out.genre = meta.genre.trim();
   if (typeof meta.tip === 'string' && meta.tip.trim()) out.tip = meta.tip.trim();
   const isbn = meta.isbn ?? meta.ISBN;
@@ -572,7 +582,7 @@ export function getBulkImportJsonHint(categorySlug: string, list?: BulkImportLis
     case 'cafe':
       return `title · description · imageUrl · tip · metadata.address (الزامی) · metadata.priceRange اختیاری ($|$$|$$$|$$$$) · cuisine · phone · instagram · website · mapsUrl${listPart}`;
     default:
-      return `فرمت: { "items": [...] } · entryKind: tip (سبک، بدون کاتالوگ) · آپدیت با liveItemId یا عنوان یکسان در همان لیست · یا بدون entryKind / catalog_ref (کاتالوگ) · catalogItemId برای اتصال مستقیم · title · description · tip · metadata.tags (حداکثر ۸)${listPart}`;
+      return `فرمت: { "items": [...] } · entryKind مجاز: tip | fact | link | catalog_ref · برای مکان/محصول کاتالوگ: بدون entryKind یا catalog_ref (مقدار new یا catalog قبول نمی‌شود و به کاتالوگ تبدیل می‌شود) · آپدیت با liveItemId · metadata.website و mapsUrl برای مکان · title · description · tip · imageUrl${listPart}`;
   }
 }
 

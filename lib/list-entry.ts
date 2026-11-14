@@ -65,9 +65,26 @@ function asMetaRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
+/**
+ * نرمال‌سازی aliasهای رایج تیم محتوا قبل از اعتبارسنجی.
+ * - `new` / خالی → بدون نوع سبک (کاتالوگ جدید)
+ * - `catalog` → `catalog_ref`
+ */
+export function normalizeEntryKindInput(value: unknown): unknown {
+  if (value == null) return value;
+  if (typeof value !== 'string') return value;
+  const raw = value.trim().toLowerCase();
+  if (!raw || raw === 'new') return undefined;
+  if (raw === 'catalog') return 'catalog_ref';
+  return value.trim();
+}
+
 export function parseEntryKind(value: unknown): EntryKind | null {
-  if (typeof value !== 'string') return null;
-  return ENTRY_KINDS.includes(value as EntryKind) ? (value as EntryKind) : null;
+  const normalized = normalizeEntryKindInput(value);
+  if (typeof normalized !== 'string') return null;
+  return ENTRY_KINDS.includes(normalized as EntryKind)
+    ? (normalized as EntryKind)
+    : null;
 }
 
 /** تعیین نوع ورودی — از metadata یا catalogItemId */

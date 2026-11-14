@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import type { ListBadge, Prisma, PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import { nanoid } from 'nanoid';
 import { sanitizeBulkImportJsonText, validateBulkImportRow } from '@/lib/admin/bulk-import';
 import { executeBulkImportForList } from '@/lib/admin/bulk-import-execute';
@@ -11,6 +11,7 @@ import {
   type IngestIssue,
   type IngestKind,
   type IngestListInput,
+  type IngestWarning,
 } from '@/lib/content/ingest-models';
 
 const IMPORT_CHUNK = 100;
@@ -56,6 +57,7 @@ export type IngestReport = {
   preview?: IngestPreview;
   rows?: IngestRowReport[];
   issues?: IngestIssue[];
+  warnings?: IngestWarning[];
   error?: string;
   cacheRevalidated?: boolean;
   cacheNote?: string;
@@ -108,7 +110,7 @@ function rowReports(document: IngestDocument): IngestRowReport[] {
       title: row.title || item.title || '',
       valid: row.valid,
       errors: row.errors,
-      warnings: row.warnings,
+      warnings: [...row.warnings, ...warningsForRow(document, index)],
     };
   });
 }
@@ -140,14 +142,18 @@ function listPatch(list: IngestListInput, categoryId: string): Prisma.listsUpdat
     categories: { connect: { id: categoryId } },
   };
   if (list.description !== undefined) data.description = list.description || null;
-  if (list.badge !== undefined) data.badge = list.badge;
   if (list.isPublic !== undefined) data.isPublic = list.isPublic;
-  if (list.isFeatured !== undefined) data.isFeatured = list.isFeatured;
   if (list.isActive !== undefined) data.isActive = list.isActive;
   if (list.commentsEnabled !== undefined) data.commentsEnabled = list.commentsEnabled;
   if (list.itemDetailEnabled !== undefined) data.itemDetailEnabled = list.itemDetailEnabled;
-  if (list.tags !== undefined) data.tags = list.tags;
+  // بات: isFeatured / badge / tags هرگز از ingest نوشته نمی‌شوند
   return data;
+}
+
+function warningsForRow(document: IngestDocument, index: number): string[] {
+  return document.warnings
+    .filter((w) => w.path === `items.${index}` || w.path.startsWith(`items.${index}.`))
+    .map((w) => w.message);
 }
 
 async function revalidateIngestedList(slug: string, categoryId: string): Promise<boolean> {
@@ -239,6 +245,8 @@ export async function ingestListDocument(
     match: matches[index]?.kind,
   }));
 
+  const documentWarnings = document.warnings;
+
   if (options.dryRun) {
     return {
       ok: true,
@@ -262,6 +270,7 @@ export async function ingestListDocument(
       },
       preview: previewCounts(previewRows),
       rows: previewRows,
+      warnings: documentWarnings,
     };
   }
 
@@ -276,13 +285,14 @@ export async function ingestListDocument(
         description: document.list.description || null,
         categoryId: category.id,
         userId,
-        badge: (document.list.badge ?? null) as ListBadge | null,
+        // بات: ویژه/badge/تگ همیشه خاموش
+        badge: null,
         isPublic: document.list.isPublic ?? true,
-        isFeatured: document.list.isFeatured ?? false,
+        isFeatured: false,
         isActive: document.list.isActive ?? true,
         commentsEnabled: document.list.commentsEnabled ?? true,
         itemDetailEnabled: document.list.itemDetailEnabled ?? true,
-        tags: document.list.tags ?? [],
+        tags: [],
       },
     });
     listId = created.id;
@@ -363,6 +373,7 @@ export async function ingestListDocument(
       lightweight,
     },
     rows: imported,
+    warnings: documentWarnings,
     cacheRevalidated,
     cacheNote: cacheRevalidated
       ? undefined

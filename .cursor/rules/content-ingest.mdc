@@ -13,14 +13,14 @@ alwaysApply: false
 4. اول `npm run content:ingest -- --file … --dry-run`. اگر `ok` نبود، چیزی را بدون dry-run اجرا نکن. `preview` می‌گوید هر آیتم جدید است، در کاتالوگ هست، یا از قبل در همین لیست است.
 5. بعد همان دستور را بدون `--dry-run` بزن. بار دوم باید `created` برابر ۰ باشد.
 
-مدل آیتم را از `kind` در خروجی `content:categories` بردار:
+مدل آیتم را از `kind` در خروجی `content:categories` بردار. تصمیم‌های قفل: `docs/ingest-api-decisions.md`.
 
-- movie (`movies`): عنوان + لینک IMDb یا `metadata.imdbId`
-- book (`bookspodcast`): عنوان + `metadata.author`
-- cafe (`cafe`): عنوان + `metadata.address` + `metadata.priceRange` یکی از `$` `$$` `$$$` `$$$$`
-- mixed (`lifestyle`، `car`، `khanoadgi`): `entryKind` برابر `tip` یا `fact` یا `link` یا `catalog_ref`
+- movie (`movies`): عنوان `English - فارسی` + لینک IMDb یا `metadata.imdbId`
+- book (`bookspodcast`): عنوان + برای کتاب `metadata.author`؛ پادکست/اپ با `mediaType`؛ `translator` اختیاری
+- cafe (`cafe`): عنوان + `metadata.address` اجباری؛ `priceRange` اختیاری (نبودن = هشدار)؛ `cuisine` متن آزاد
+- mixed (`lifestyle`، `kids-and-teens`، …): فقط `entryKind` برابر `tip` یا `catalog_ref` (+ `catalogItemId`)
 
-عنوان فارسی، slug لیست لاتین. دستهٔ تازه نساز.
+بات `isFeatured`، `badge` و `tags` را تنظیم نکند. عنوان فارسی، slug لیست لاتین. دستهٔ تازه نساز.
 
 بات کلاد به ریپو دسترسی ندارد. با هدر `Authorization: Bearer` این‌ها را بزند:
 

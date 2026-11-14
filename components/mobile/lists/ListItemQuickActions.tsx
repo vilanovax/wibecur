@@ -1,11 +1,12 @@
 'use client';
 
-import { Instagram, MapPin, Phone } from 'lucide-react';
+import { Globe, Instagram, MapPin, Phone } from 'lucide-react';
 import type { ListItemQuickAction, ListItemQuickActionKey } from '@/lib/list-item-quick-actions';
 
 const ICONS: Record<ListItemQuickActionKey, typeof Phone> = {
   phone: Phone,
   maps: MapPin,
+  website: Globe,
   instagram: Instagram,
 };
 

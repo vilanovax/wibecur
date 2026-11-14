@@ -72,11 +72,13 @@ export const BookMetadataSchema = z
   .object({
     ...tipField,
     ...catalogPlacementFields,
+    mediaType: z.enum(['book', 'podcast', 'app']).optional(),
     author: z.string().optional(),
+    translator: z.string().optional(),
     genre: z.string().optional(),
     isbn: z.string().optional(),
     ISBN: z.string().optional(),
-    source: z.enum(['taaghche', 'fidibo', 'ketabrah']).optional(),
+    source: z.enum(['taaghche', 'fidibo', 'ketabrah', 'castbox']).optional(),
     sourceId: z.string().optional(),
     contentType: z.enum(['ebook', 'audiobook']).optional(),
   })
@@ -116,6 +118,11 @@ export const CafeMetadataSchema = z
       .string()
       .optional()
       .transform((val) => normalizeMapsUrl(val)),
+    region: z.string().optional(),
+    area: z.string().optional(),
+    hours: z.string().optional(),
+    lat: z.number().finite().optional(),
+    lng: z.number().finite().optional(),
   })
   .passthrough();
 
@@ -133,6 +140,12 @@ export const LifestyleEntrySchema = z
     sourceCategorySlug: z.string().optional(),
     tags: z.array(z.string().min(1)).max(8).optional(),
     duration: z.string().max(40).optional(),
+    // مکان‌های لایف‌استایل (کتاب‌فروشی، عمارت، …)
+    address: z.string().optional(),
+    phone: z.string().optional(),
+    instagram: z.string().optional(),
+    website: z.string().optional(),
+    mapsUrl: z.string().optional(),
   })
   .passthrough();
 

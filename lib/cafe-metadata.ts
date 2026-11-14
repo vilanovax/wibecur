@@ -87,6 +87,15 @@ export function normalizeCafeMetadataFields(
   const cuisine = trimOptional(meta.cuisine);
   if (cuisine) out.cuisine = cuisine;
 
+  const region = trimOptional(meta.region);
+  if (region) out.region = region;
+  const area = trimOptional(meta.area);
+  if (area) out.area = area;
+  const hours = trimOptional(meta.hours);
+  if (hours) out.hours = hours;
+  if (typeof meta.lat === 'number' && Number.isFinite(meta.lat)) out.lat = meta.lat;
+  if (typeof meta.lng === 'number' && Number.isFinite(meta.lng)) out.lng = meta.lng;
+
   const tip = trimOptional(meta.tip);
   if (tip) out.tip = tip;
 
