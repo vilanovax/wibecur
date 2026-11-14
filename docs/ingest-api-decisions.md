@@ -48,7 +48,9 @@
 | stale check با `list.updatedAt` | ✅ |
 | عمر preview ۳۰ دقیقه | ✅ |
 | Idempotency ۲۴ ساعت | ✅ |
-| PATCH placement / PUT order / catalog lookup / images / audit | هنوز نه |
+| PATCH placement (`scope:placement` فقط) | ✅ |
+| PUT list order (`orderedIds` → ۰..n−۱) | ✅ |
+| catalog lookup / images / audit | هنوز نه |
 
 ## Backlog مرتبط
 

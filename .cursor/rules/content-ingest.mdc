@@ -29,3 +29,5 @@ alwaysApply: false
 - `POST /api/ingest/lists` با همان JSON و `dryRun: true` → `previewId` بگیر
 - `POST /api/ingest/lists/commit` با `{ "previewId" }` و هدر `Idempotency-Key`
 - نوشتن مستقیم `dryRun: false` هنوز کار می‌کند ولی `Idempotency-Key` اجباری است؛ ترجیح با preview→commit است.
+- `PATCH /api/ingest/placements/{id}` با `scope:"placement"` و `Idempotency-Key` — فقط همین ردیف
+- `PUT /api/ingest/lists/{id}/order` با `{ orderedIds }` و `Idempotency-Key`

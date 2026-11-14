@@ -537,6 +537,22 @@ export function renderIngestModels() {
         headers: ['Idempotency-Key (اجباری برای dryRun:false)'],
         body: 'همان JSON + dryRun:false — سازگاری قدیمی؛ مسیر توصیه‌شده preview→commit است',
       },
+      getPlacement: {
+        method: 'GET',
+        path: '/api/ingest/placements/{placementId}',
+      },
+      patchPlacement: {
+        method: 'PATCH',
+        path: '/api/ingest/placements/{placementId}',
+        headers: ['Idempotency-Key'],
+        body: '{ "scope":"placement", "title?", "description?", "imageUrl?", "tip?", "metadata?", "listNote?" } — فقط همین ردیف؛ catalog_and_all ممنوع',
+      },
+      putOrder: {
+        method: 'PUT',
+        path: '/api/ingest/lists/{listId}/order',
+        headers: ['Idempotency-Key'],
+        body: '{ "orderedIds": ["placementId", ...] } — مجموعه کامل؛ order به ۰..n−۱ فشرده می‌شود',
+      },
     },
     kinds: {
       movie: {
