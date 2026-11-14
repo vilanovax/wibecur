@@ -9,7 +9,8 @@
 |---|--------|------------|
 | A | بات `isFeatured` و `badge` تنظیم نمی‌کند | `isFeatured:true` یا `badge` غیرnull → خطا؛ در نوشتن همیشه `isFeatured=false` و `badge=null` |
 | B | `scope: catalog_and_all` برای بات ممنوع | در ingest اعمال نمی‌شود؛ فقط override سطح placement |
-| C | حذف placement / حذف کاتالوگ / merge فقط دستی | خارج از API بات |
+| C | حذف کاتالوگ / merge فقط دستی؛ برداشتن از یک لیست برای بات مجاز | `DELETE /api/ingest/placements/:id` فقط همان ردیف را از لیست جدا می‌کند؛ کاتالوگ و لیست‌های دیگر دست نمی‌خورند |
+| C۲ | ورود به لیست موجود فقط افزودن است | `mode: "add_only"` (پیش‌فرض و تنها مقدار)؛ جایگزینی کامل اعضا نیست |
 | D | قالب عنوان فیلم `English - فارسی` | فقط هشدار |
 | E | توضیح آیتم > ۳۲۰ کاراکتر | فقط هشدار (ذخیره کامل می‌ماند) |
 
@@ -49,6 +50,10 @@
 | عمر preview ۳۰ دقیقه | ✅ |
 | Idempotency ۲۴ ساعت | ✅ |
 | PATCH placement (`scope:placement` فقط) | ✅ |
+| DELETE placement (فقط از همین لیست) | ✅ |
+| `mode: add_only` صریح روی POST lists | ✅ |
+| پیش‌نمایش: `itemCountBefore` / `itemCountAfter` + `catalogItemId`/`catalogTitle` | ✅ |
+| فیلد سریال: `metadata.tmdbId` / `creator` / `episodes` | ✅ |
 | PUT list order (`orderedIds` → ۰..n−۱) | ✅ |
 | catalog lookup / images / audit | هنوز نه |
 

@@ -23,6 +23,10 @@ export type IngestRowReport = {
   errors: string[];
   warnings: string[];
   match?: 'new' | 'existing_catalog' | 'already_in_list' | 'lightweight';
+  /** شناسهٔ کاتالوگ جفت‌شده (برای existing_catalog / already_in_list) */
+  catalogItemId?: string | null;
+  /** عنوان کاتالوگ جفت‌شده */
+  catalogTitle?: string | null;
   status?: string;
   message?: string;
 };
@@ -32,11 +36,19 @@ export type IngestPreview = {
   existing_catalog: number;
   already_in_list: number;
   lightweight: number;
+  /** همیشه add_only در این API */
+  mode: 'add_only';
+  /** تعداد آیتم زندهٔ لیست قبل از این ورود */
+  itemCountBefore: number;
+  /** برآورد تعداد بعد از commit (افزودن بدون جایگزینی) */
+  itemCountAfter: number;
 };
 
 export type IngestReport = {
   ok: boolean;
   dryRun: boolean;
+  /** همیشه add_only: به انتهای لیست موجود اضافه می‌شود؛ اعضا جایگزین نمی‌شوند */
+  mode?: 'add_only';
   categorySlug?: string;
   categoryName?: string;
   kind?: IngestKind;
@@ -47,6 +59,8 @@ export type IngestReport = {
     title: string;
     /** نسخهٔ لیست هنگام preview — برای تشخیص stale در commit */
     updatedAt?: string | null;
+    itemCountBefore?: number;
+    itemCountAfter?: number;
   };
   summary?: {
     total: number;
@@ -96,16 +110,26 @@ export function readIngestFile(filePath: string): unknown {
   }
 }
 
-function previewCounts(rows: IngestRowReport[]): IngestPreview {
+function previewCounts(
+  rows: IngestRowReport[],
+  itemCountBefore: number
+): IngestPreview {
   const preview: IngestPreview = {
     new: 0,
     existing_catalog: 0,
     already_in_list: 0,
     lightweight: 0,
+    mode: 'add_only',
+    itemCountBefore,
+    itemCountAfter: itemCountBefore,
   };
   for (const row of rows) {
     if (row.match) preview[row.match] += 1;
   }
+  const willAdd = rows.filter(
+    (row) => row.valid && row.match && row.match !== 'already_in_list'
+  ).length;
+  preview.itemCountAfter = itemCountBefore + willAdd;
   return preview;
 }
 
@@ -243,6 +267,9 @@ export async function ingestListDocument(
   }
 
   const listAction = existing ? 'update' : 'create';
+  const itemCountBefore = existing
+    ? await db.items.count({ where: { listId: existing.id, deletedAt: null } })
+    : 0;
   const matches =
     document.items.length > 0
       ? await resolveBulkImportMatchesBatch(db, category.slug, existing?.id ?? '', document.items)
@@ -250,7 +277,10 @@ export async function ingestListDocument(
   const previewRows = rows.map((row, index) => ({
     ...row,
     match: matches[index]?.kind,
+    catalogItemId: matches[index]?.catalogId ?? null,
+    catalogTitle: matches[index]?.catalogTitle ?? null,
   }));
+  const preview = previewCounts(previewRows, itemCountBefore);
 
   const documentWarnings = document.warnings;
 
@@ -258,6 +288,7 @@ export async function ingestListDocument(
     return {
       ok: true,
       dryRun: true,
+      mode: 'add_only',
       categorySlug: category.slug,
       categoryName: category.name,
       kind: document.kind,
@@ -267,6 +298,8 @@ export async function ingestListDocument(
         slug: document.list.slug,
         title: document.list.title,
         updatedAt: existing?.updatedAt?.toISOString() ?? null,
+        itemCountBefore: preview.itemCountBefore,
+        itemCountAfter: preview.itemCountAfter,
       },
       summary: {
         total: previewRows.length,
@@ -276,7 +309,7 @@ export async function ingestListDocument(
         updated: 0,
         lightweight: 0,
       },
-      preview: previewCounts(previewRows),
+      preview,
       rows: previewRows,
       warnings: documentWarnings,
       committable: true,
@@ -351,6 +384,8 @@ export async function ingestListDocument(
         errors: row.status === 'error' && row.message ? [row.message] : [],
         warnings: preview?.warnings ?? [],
         match: preview?.match,
+        catalogItemId: preview?.catalogItemId ?? row.catalogItemId ?? null,
+        catalogTitle: preview?.catalogTitle ?? null,
         status: row.status,
         message: row.message,
       });

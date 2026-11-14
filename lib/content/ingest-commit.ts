@@ -7,13 +7,14 @@ import {
   saveIngestPreview,
 } from '@/lib/content/ingest-preview-store';
 import type { IngestDocument } from '@/lib/content/ingest-models';
+import { INGEST_LIST_MODE_ADD_ONLY } from '@/lib/content/ingest-http';
 
 export async function runIngestPreview(
   db: PrismaClient,
   document: IngestDocument
 ): Promise<IngestReport> {
   const report = await ingestListDocument(db, document, { dryRun: true });
-  if (!report.ok) return report;
+  if (!report.ok) return { ...report, mode: INGEST_LIST_MODE_ADD_ONLY };
 
   const saved = await saveIngestPreview({
     document,
@@ -26,6 +27,7 @@ export async function runIngestPreview(
 
   return {
     ...report,
+    mode: INGEST_LIST_MODE_ADD_ONLY,
     previewId: saved.previewId,
     previewExpiresAt: saved.expiresAt,
     committable: isPreviewCommittable(report),
@@ -94,9 +96,10 @@ export async function runIngestCommit(
   }
 
   const report = await ingestListDocument(db, record.document, { dryRun: false });
-  await markIngestPreviewCommitted(record.previewId, report);
+  const withMode = { ...report, mode: INGEST_LIST_MODE_ADD_ONLY as const };
+  await markIngestPreviewCommitted(record.previewId, withMode);
   return {
-    ...report,
+    ...withMode,
     previewId: record.previewId,
   };
 }

@@ -92,10 +92,15 @@ const movieItemSchema = z
         year: z.union([z.number().int(), z.string().trim()]).optional(),
         genre: z.string().trim().optional(),
         director: z.string().trim().optional(),
+        /** سازنده / شورانر سریال */
+        creator: z.string().trim().optional(),
+        /** تعداد قسمت سریال (عدد یا متن کوتاه مثل «۸ قسمت») */
+        episodes: z.union([z.number().int().positive(), z.string().trim().min(1)]).optional(),
         actors: z.union([z.array(z.string().trim().min(1)).max(2), z.string().trim()]).optional(),
         imdbRating: z.string().trim().optional(),
         country: z.string().trim().optional(),
         imdbId: z.string().trim().optional(),
+        tmdbId: z.union([z.number().int().positive(), z.string().trim().min(1)]).optional(),
       })
       .strict()
       .optional(),
@@ -501,14 +506,18 @@ export function renderIngestModels() {
     rules: [
       'دسته را نسازید. categorySlug باید از قبل در دیتابیس باشد.',
       'همین فایل هم لیست را در آن دسته می‌سازد، هم آیتم‌ها را وارد می‌کند.',
-      'اگر slug لیست وجود داشته باشد و دسته یکی باشد، به‌روز می‌شود و آیتم تکراری دوبله نمی‌شود.',
+      'mode فقط add_only است (پیش‌فرض و تنها مقدار مجاز): به انتهای لیست موجود اضافه می‌شود؛ اعضا جایگزین نمی‌شوند؛ تکراری دوبله نمی‌شود.',
+      'اگر slug لیست وجود داشته باشد و دسته یکی باشد، متادیتای لیست به‌روز می‌شود و آیتم‌های جدید اضافه می‌شوند.',
+      'کاور و بنر فقط با نشانی مستقیم HTTP؛ شناسهٔ تصویر (imageId) لازم نیست و پذیرفته نمی‌شود.',
+      'غیرفعال‌سازی بدون فرستادن دوبارهٔ آیتم‌ها: همان slug + isActive:false و items خالی یا جاافتاده.',
       'kind را در JSON ننویسید. از slug دسته تشخیص داده می‌شود.',
       'عنوان‌ها فارسی (فیلم: English - فارسی). slug لیست لاتین.',
       'بات isFeatured، badge و tags را تنظیم نمی‌کند.',
       'لیست تازه پیش‌فرض منتشر است (isPublic/isActive=true). برای برداشتن فوری: isActive=false.',
       'imdbRating برای کاربر نمایش داده می‌شود؛ داخل متن توضیح نیاید؛ منبع رسمی IMDb.',
-      'حذف و merge و catalog_and_all خارج از API بات است.',
+      'برداشتن از یک لیست با DELETE /placements/:id مجاز است؛ حذف کاتالوگ و merge و catalog_and_all خارج از API بات است.',
       'لینک بین‌دسته‌ای با catalog_ref + catalogItemId مجاز است.',
+      'جست‌وجوی کاتالوگ و آپلود تصویر اختصاصی هنوز آماده نیست.',
     ],
     commands: {
       models: 'npm run content:models',
@@ -523,7 +532,7 @@ export function renderIngestModels() {
       preview: {
         method: 'POST',
         path: '/api/ingest/lists',
-        body: 'همان JSON مدل + dryRun:true → پاسخ previewId و committable',
+        body: 'همان JSON مدل + dryRun:true + mode:"add_only" (اختیاری؛ پیش‌فرض) → پاسخ previewId و committable',
       },
       commit: {
         method: 'POST',
@@ -535,7 +544,7 @@ export function renderIngestModels() {
         method: 'POST',
         path: '/api/ingest/lists',
         headers: ['Idempotency-Key (اجباری برای dryRun:false)'],
-        body: 'همان JSON + dryRun:false — سازگاری قدیمی؛ مسیر توصیه‌شده preview→commit است',
+        body: 'همان JSON + dryRun:false + mode:"add_only" — سازگاری قدیمی؛ مسیر توصیه‌شده preview→commit است',
       },
       getPlacement: {
         method: 'GET',
@@ -546,6 +555,12 @@ export function renderIngestModels() {
         path: '/api/ingest/placements/{placementId}',
         headers: ['Idempotency-Key'],
         body: '{ "scope":"placement", "title?", "description?", "imageUrl?", "tip?", "metadata?", "listNote?" } — فقط همین ردیف؛ catalog_and_all ممنوع',
+      },
+      deletePlacement: {
+        method: 'DELETE',
+        path: '/api/ingest/placements/{placementId}',
+        headers: ['Idempotency-Key'],
+        body: 'بدون بدنه یا {} — فقط از همین لیست برمی‌دارد؛ کاتالوگ دست نمی‌خورد',
       },
       putOrder: {
         method: 'PUT',
@@ -565,14 +580,18 @@ export function renderIngestModels() {
           'metadata.year',
           'metadata.genre',
           'metadata.director',
-          'metadata.actors',
+          'metadata.creator (سازنده/شورانر سریال)',
+          'metadata.episodes (تعداد قسمت سریال)',
+          'metadata.actors (حداکثر ۲ نفر)',
           'metadata.imdbRating',
           'metadata.country',
           'metadata.imdbId',
+          'metadata.tmdbId',
         ],
         warnings: [
           'عنوان بدون قالب English - فارسی',
           `توضیح بیشتر از ${ITEM_DESCRIPTION_SOFT_MAX} کاراکتر`,
+          'آدرس image.tmdb.org با پوستر OMDb جایگزین می‌شود اگر imdbId باشد؛ آدرس ParsPack خودمان دست نخورده می‌ماند',
         ],
         example: INGEST_EXAMPLES.movie,
       },

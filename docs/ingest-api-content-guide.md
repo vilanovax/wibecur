@@ -23,6 +23,19 @@ curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
 
 ## ۱) ساخت یا به‌روزرسانی یک لیست کامل (مسیر اصلی)
 
+### حالت ورود: فقط افزودن (`add_only`)
+
+| موضوع | رفتار |
+|--------|--------|
+| `mode` | فقط `"add_only"` مجاز است (اگر نفرستید هم همین است) |
+| لیست تازه | ساخته می‌شود و آیتم‌ها اضافه می‌شوند |
+| لیست موجود (همان `slug` و همان دسته) | متادیتای لیست به‌روز می‌شود؛ آیتم‌های ارسالی به **انتهای** لیست اضافه می‌شوند |
+| آیتم تکراری | دوبله نمی‌شود |
+| آیتم‌هایی که در JSON نیستند | از لیست **حذف نمی‌شوند** |
+| جایگزینی کامل اعضا | **پشتیبانی نمی‌شود** — اگر `mode` دیگری بفرستید خطا می‌گیرید |
+| پیش‌نمایش | `preview.mode`، `preview.itemCountBefore`، `preview.itemCountAfter`؛ در هر ردیف `catalogItemId` و `catalogTitle` اگر جفت شد |
+| فیلد جاافتادهٔ لیست | `description` / `coverImage` / `horizontalImage` اگر نفرستید **پاک نمی‌شوند** |
+
 ### گام الف — پیش‌نمایش (هیچ‌چیز نوشته نمی‌شود)
 
 همان JSON لیست + آیتم‌ها را بفرستید، با `dryRun: true`:
@@ -39,6 +52,7 @@ curl -sS -X POST "$BASE/api/ingest/lists" \
 ```json
 {
   "dryRun": true,
+  "mode": "add_only",
   "categorySlug": "movies",
   "list": {
     "title": "بهترین فیلم‌های اکشن",
@@ -63,6 +77,7 @@ curl -sS -X POST "$BASE/api/ingest/lists" \
 | فیلد | معنی |
 |------|------|
 | `ok` | باید `true` باشد |
+| `mode` | همیشه `add_only` |
 | `committable` | باید `true` باشد |
 | `previewId` | برای مرحلهٔ بعد لازم است (حدود ۳۰ دقیقه اعتبار) |
 | `warnings` | هشدارند؛ لیست را رد نمی‌کنند — بخوانید |
@@ -82,6 +97,45 @@ curl -sS -X POST "$BASE/api/ingest/lists/commit" \
 - اگر همان کلید را با همان بدنه دوباره بفرستید، دوباره‌نویسی نمی‌شود.
 - اگر لیست بین preview و commit عوض شده باشد: `409 preview_stale` → دوباره preview بگیرید.
 
+### کاور و بنر و توضیح لیست
+
+| موضوع | قانون |
+|--------|--------|
+| فیلدها | `list.coverImage` و `list.horizontalImage` و `list.description` |
+| مقدار تصویر | فقط **نشانی مستقیم HTTP(S)** |
+| شناسهٔ تصویر | لازم نیست و در مدل ingest پذیرفته نمی‌شود |
+| رفتار | سرور تصویر را از همان آدرس می‌گیرد و ذخیره می‌کند |
+| جاافتاده | اگر فقط `slug` و `title` بفرستید، توضیح و کاور و بنر فعلی **پاک نمی‌شوند** |
+| خالی عمدی | برای پاک کردن توضیح، `description: ""` بفرستید |
+
+### تصویر آیتم (TMDB در برابر ParsPack)
+
+| آدرس | رفتار |
+|--------|--------|
+| `image.tmdb.org` + داشتن `imdbId` | هشدار می‌آید؛ در import معمولاً با پوستر OMDb جایگزین می‌شود — تصویر TMDB ارسالی شما نگه داشته نمی‌شود |
+| آدرس ParsPack / فضای ذخیره‌سازی خود وایب | دست نخورده می‌ماند؛ هشدار TMDB نمی‌گیرید |
+| لینک مستقیم غیر-TMDB | دانلود و ذخیره می‌شود |
+
+### غیرفعال کردن لیست بدون فرستادن دوبارهٔ آیتم‌ها
+
+بله. همان `slug` را با `isActive: false` بفرستید و `items` را خالی بگذارید یا اصلاً نفرستید:
+
+```json
+{
+  "dryRun": true,
+  "mode": "add_only",
+  "categorySlug": "movies",
+  "list": {
+    "title": "بهترین فیلم‌های اکشن",
+    "slug": "best-action-movies",
+    "isActive": false
+  },
+  "items": []
+}
+```
+
+بعد از preview موفق، commit کنید. اعضا دست نمی‌خورند؛ لیست از دید کاربر خارج می‌شود.
+
 ---
 
 ## ۲) قوانین مهم محتوا (بات نباید نقض کند)
@@ -90,16 +144,17 @@ curl -sS -X POST "$BASE/api/ingest/lists/commit" \
 |--------|--------|
 | ویژه / badge / tags | نفرستید |
 | انتشار | لیست تازه پیش‌فرض منتشر است |
-| برداشتن فوری از سایت | همان لیست را با `isActive: false` بفرستید (بدون حذف) |
+| برداشتن فوری از سایت | همان لیست را با `isActive: false` بفرستید (بدون حذف؛ آیتم‌ها لازم نیست) |
 | فیلم | عنوان `English - فارسی`؛ امتیاز فقط در `metadata.imdbRating` نه داخل متن |
 | کتاب | `metadata.author` اجباری؛ پادکست/اپ: `metadata.mediaType: "podcast"` یا `"app"` |
 | کافه | `metadata.address` اجباری؛ `priceRange` اختیاری |
 | lifestyle | فقط `tip` یا `catalog_ref` (+ `catalogItemId`)؛ یا بدون entryKind برای آیتم تازه |
-| حذف / merge | از این API ممکن نیست |
+| حذف کاتالوگ / merge | از این API ممکن نیست |
+| برداشتن از یک لیست | با `DELETE` روی placement — بخش ۳ |
 
 ---
 
-## ۳) اصلاح یک ردیف (جای مداد پنل)
+## ۳) اصلاح یا برداشتن یک ردیف (جای مداد پنل)
 
 فقط همان ردیف لیست عوض می‌شود؛ کاتالوگ و لیست‌های دیگر نه.
 
@@ -125,6 +180,18 @@ curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
 `scope: "catalog_and_all"` ممنوع است و `403` می‌گیرید.
 
 پاک‌کردن یک فیلد: همان فیلد را `null` بفرستید (کلید جاافتاده = بدون تغییر).
+
+### برداشتن فقط از همین لیست
+
+کاتالوگ دست نمی‌خورد؛ فقط این ردیف از لیست جدا می‌شود:
+
+```bash
+curl -sS -X DELETE "$BASE/api/ingest/placements/PLACEMENT_ID" \
+  -H "Authorization: Bearer $WIBE_INGEST_KEY" \
+  -H "Idempotency-Key: elenor-remove-PLACEMENT_ID"
+```
+
+در پاسخ موفق: `removed: true` و `catalogUntouched: true`.
 
 ---
 
@@ -157,17 +224,17 @@ TAG="elenor-$(date +%Y%m%d)-my-list"
 
 # 1) preview
 PREVIEW=$(curl -sS -X POST "$BASE/api/ingest/lists" "${AUTH[@]}" --data @upload.json)
-echo "$PREVIEW" | jq '{ok, committable, previewId, warnings}'
+echo "$PREVIEW" | jq '{ok, mode, committable, previewId, warnings}'
 test "$(echo "$PREVIEW" | jq -r .committable)" = "true"
 
 # 2) commit
 curl -sS -X POST "$BASE/api/ingest/lists/commit" "${AUTH[@]}" \
   -H "Idempotency-Key: $TAG-commit" \
   -d "$(jq -n --arg p "$(echo "$PREVIEW" | jq -r .previewId)" '{previewId:$p}')" \
-  | jq '{ok, list, summary}'
+  | jq '{ok, mode, list, summary}'
 ```
 
-توجه: در فایل `upload.json` مقدار `"dryRun": true` باشد.
+توجه: در فایل `upload.json` مقدار `"dryRun": true` و ترجیحاً `"mode": "add_only"` باشد.
 
 ---
 
@@ -186,10 +253,11 @@ curl -sS -X POST "$BASE/api/ingest/lists/commit" "${AUTH[@]}" \
 | کد / وضعیت | معنی | کار شما |
 |------------|------|---------|
 | `401` | کلید اشتباه | کلید را چک کنید |
-| `idempotency_key_required` | هدر جا افتاده | برای commit / patch / order بفرستید |
+| `idempotency_key_required` | هدر جا افتاده | برای commit / patch / delete / order بفرستید |
 | `preview_expired` / `410` | preview کهنه | دوباره preview |
 | `preview_stale` / `409` | لیست عوض شده | دوباره preview |
 | `forbidden_scope` / `403` | مثلاً ویژه یا catalog_and_all | آن فیلد را برندارید |
 | `order_set_mismatch` | orderedIds کامل نیست | همهٔ idهای زنده را بفرستید |
+| پیام دربارهٔ `mode` | مقدار غیر از `add_only` | فقط `add_only` بفرستید یا حذف کنید |
 
 مدل و سقف فیلدها را هر بار از `GET /api/ingest/models` بخوانید، نه از حافظه.

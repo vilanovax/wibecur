@@ -184,7 +184,9 @@ function collectImportImageWarnings(
       (typeof metadata.imdbId === 'string' && metadata.imdbId.trim()) ||
       extractImdbIdFromUrl(externalUrl);
     if (imdbId) {
-      warnings.push('تصویر TMDB — در import از OMDb poster استفاده می‌شود');
+      warnings.push(
+        'آدرس TMDB شما با پوستر OMDb جایگزین می‌شود؛ برای نگه‌داشتن تصویر خودتان آدرس ParsPack/مستقیم غیر-TMDB بفرستید'
+      );
     } else {
       warnings.push('تصویر TMDB بدون imdbId — ممکن است آپلود نشود');
     }
@@ -232,6 +234,15 @@ function normalizeMovieImportMetadata(
   }
   if (typeof meta.genre === 'string' && meta.genre.trim()) out.genre = meta.genre.trim();
   if (typeof meta.director === 'string' && meta.director.trim()) out.director = meta.director.trim();
+  if (typeof meta.creator === 'string' && meta.creator.trim()) out.creator = meta.creator.trim();
+  if (meta.episodes != null) {
+    if (typeof meta.episodes === 'number' && Number.isFinite(meta.episodes) && meta.episodes > 0) {
+      out.episodes = Math.trunc(meta.episodes);
+    } else if (typeof meta.episodes === 'string' && meta.episodes.trim()) {
+      const n = parseInt(meta.episodes.replace(/[^\d]/g, ''), 10);
+      out.episodes = !Number.isNaN(n) && n > 0 ? n : meta.episodes.trim();
+    }
+  }
   if (typeof meta.country === 'string' && meta.country.trim()) out.country = meta.country.trim();
   if (meta.actors != null) {
     const actors = Array.isArray(meta.actors)

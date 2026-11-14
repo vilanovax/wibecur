@@ -54,6 +54,10 @@ export const MovieMetadataSchema = z
       }),
     imdbId: z.string().optional(),
     imdbID: z.string().optional(),
+    /** سازنده / شورانر سریال */
+    creator: z.string().optional(),
+    /** تعداد قسمت سریال */
+    episodes: z.union([z.number(), z.string()]).optional(),
     tmdbId: z.union([z.number(), z.string()]).optional().transform((val) => {
       if (val === undefined || val === null || val === '') return undefined;
       const n = typeof val === 'number' ? val : parseInt(String(val), 10);

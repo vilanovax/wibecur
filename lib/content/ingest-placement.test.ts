@@ -1,5 +1,26 @@
-import { describe, expect, it, vi } from 'vitest';
-import { patchIngestPlacement } from '@/lib/content/ingest-placement';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  patchIngestPlacement,
+  removeIngestPlacement,
+} from '@/lib/content/ingest-placement';
+
+vi.mock('@/lib/admin/remove-item-from-list', () => ({
+  removeItemFromList: vi.fn(),
+  RemoveFromListError: class RemoveFromListError extends Error {
+    status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.status = status;
+      this.name = 'RemoveFromListError';
+    }
+  },
+}));
+
+import { removeItemFromList } from '@/lib/admin/remove-item-from-list';
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe('patchIngestPlacement guards', () => {
   it('rejects catalog_and_all scope', async () => {
@@ -88,5 +109,50 @@ describe('patchIngestPlacement guards', () => {
       tip: 'جدید',
       listOverrides: { tip: true },
     });
+  });
+});
+
+describe('removeIngestPlacement', () => {
+  it('removes only from this list and leaves catalog untouched', async () => {
+    vi.mocked(removeItemFromList).mockResolvedValue({
+      removedId: 'p1',
+      listId: 'L1',
+      catalogItemId: 'cat1',
+      itemCount: 4,
+    });
+
+    const prisma = {
+      items: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: 'p1',
+          listId: 'L1',
+          catalogItemId: 'cat1',
+          lists: { deletedAt: null },
+        }),
+      },
+    };
+
+    const result = await removeIngestPlacement(prisma as never, 'p1');
+    expect(result).toEqual({
+      ok: true,
+      removed: true,
+      catalogUntouched: true,
+      placementId: 'p1',
+      listId: 'L1',
+      catalogItemId: 'cat1',
+      itemCount: 4,
+    });
+    expect(removeItemFromList).toHaveBeenCalledWith(prisma, 'L1', 'p1');
+  });
+
+  it('returns not_found when placement is missing', async () => {
+    const prisma = {
+      items: {
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
+    };
+    const result = await removeIngestPlacement(prisma as never, 'missing');
+    expect(result).toMatchObject({ ok: false, status: 404, code: 'not_found' });
+    expect(removeItemFromList).not.toHaveBeenCalled();
   });
 });

@@ -72,6 +72,32 @@ describe('ingest models', () => {
     ).toBe(true);
   });
 
+  it('accepts series fields tmdbId, creator, and episodes on movies', () => {
+    const parsed = parseIngestDocument({
+      categorySlug: 'movies',
+      list: { title: 'لیست', slug: 'series-meta' },
+      items: [
+        {
+          title: 'Severance - جدایی',
+          externalUrl: 'https://www.imdb.com/title/tt11280740',
+          metadata: {
+            tmdbId: 95396,
+            creator: 'Dan Erickson',
+            episodes: 19,
+            actors: ['Adam Scott', 'Britt Lower'],
+          },
+        },
+      ],
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.document.items[0]?.metadata).toMatchObject({
+      tmdbId: 95396,
+      creator: 'Dan Erickson',
+      episodes: 19,
+    });
+  });
+
   it('allows publish defaults and explicit deactivate', () => {
     const published = parseIngestDocument({
       categorySlug: 'movies',

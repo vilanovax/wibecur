@@ -2,6 +2,10 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import { ensureImageInLiara } from '@/lib/object-storage';
 import { withPlacementOverrides, type PlacementOverrideField } from '@/lib/admin/placement-overrides';
 import {
+  removeItemFromList,
+  RemoveFromListError,
+} from '@/lib/admin/remove-item-from-list';
+import {
   revalidateCategoryCache,
   revalidateItemDetailCache,
   revalidateListDetailCache,
@@ -36,6 +40,19 @@ export type IngestPlacementResult =
       };
       otherPlacementsAffected: 0;
       scope: 'placement';
+    }
+  | { ok: false; status: number; code: string; error: string };
+
+export type IngestPlacementRemoveResult =
+  | {
+      ok: true;
+      removed: true;
+      /** کاتالوگ و لیست‌های دیگر دست نخورده‌اند */
+      catalogUntouched: true;
+      placementId: string;
+      listId: string;
+      catalogItemId: string | null;
+      itemCount: number;
     }
   | { ok: false; status: number; code: string; error: string };
 
@@ -284,4 +301,49 @@ export async function getIngestPlacement(
       updatedAt: item.updatedAt.toISOString(),
     },
   };
+}
+
+/**
+ * برداشتن فقط از همین لیست — کاتالوگ و لیست‌های دیگر دست نخورده می‌مانند.
+ * حذف کاتالوگ / merge از این API ممکن نیست.
+ */
+export async function removeIngestPlacement(
+  db: PrismaClient,
+  placementId: string
+): Promise<IngestPlacementRemoveResult> {
+  const existing = await db.items.findFirst({
+    where: { id: placementId },
+    select: {
+      id: true,
+      listId: true,
+      catalogItemId: true,
+      lists: { select: { deletedAt: true } },
+    },
+  });
+  if (!existing || existing.lists.deletedAt) {
+    return { ok: false, status: 404, code: 'not_found', error: 'placement پیدا نشد' };
+  }
+
+  try {
+    const result = await removeItemFromList(db, existing.listId, existing.id);
+    return {
+      ok: true,
+      removed: true,
+      catalogUntouched: true,
+      placementId: result.removedId,
+      listId: result.listId,
+      catalogItemId: result.catalogItemId,
+      itemCount: result.itemCount,
+    };
+  } catch (error) {
+    if (error instanceof RemoveFromListError) {
+      return {
+        ok: false,
+        status: error.status,
+        code: error.status === 404 ? 'not_found' : 'remove_failed',
+        error: error.message,
+      };
+    }
+    throw error;
+  }
 }

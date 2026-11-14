@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       {
         ok: false,
         dryRun: split.dryRun,
+        mode: split.mode,
         error: 'JSON با مدل این دسته جور نیست. چیزی نوشته نشد.',
         issues: parsed.issues,
       },
@@ -86,7 +87,10 @@ export async function POST(request: Request) {
     }
 
     try {
-      const report = await ingestListDocument(prisma, parsed.document, { dryRun: false });
+      const report = {
+        ...(await ingestListDocument(prisma, parsed.document, { dryRun: false })),
+        mode: split.mode,
+      };
       const status = report.ok ? 200 : report.error?.includes('پیدا نشد') ? 404 : 400;
       await completeIdempotency({
         method: 'POST',
@@ -99,7 +103,7 @@ export async function POST(request: Request) {
       return NextResponse.json(report, { status });
     } catch (error) {
       console.error('ingest lists:', error);
-      const body = { ok: false, error: publicIngestError(error) };
+      const body = { ok: false, mode: split.mode, error: publicIngestError(error) };
       await completeIdempotency({
         method: 'POST',
         path: PATH,
@@ -113,11 +117,17 @@ export async function POST(request: Request) {
   }
 
   try {
-    const report = await runIngestPreview(prisma, parsed.document);
+    const report = {
+      ...(await runIngestPreview(prisma, parsed.document)),
+      mode: split.mode,
+    };
     const status = report.ok ? 200 : report.error?.includes('پیدا نشد') ? 404 : 400;
     return NextResponse.json(report, { status });
   } catch (error) {
     console.error('ingest lists preview:', error);
-    return NextResponse.json({ ok: false, error: publicIngestError(error) }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, mode: split.mode, error: publicIngestError(error) },
+      { status: 500 }
+    );
   }
 }

@@ -51,7 +51,37 @@ describe('ingest http body', () => {
     expect(split.ok).toBe(true);
     if (!split.ok) return;
     expect(split.dryRun).toBe(true);
+    expect(split.mode).toBe('add_only');
     expect(parseIngestDocument(split.document).ok).toBe(true);
+  });
+
+  it('defaults mode to add_only and accepts explicit add_only', () => {
+    const movie = INGEST_EXAMPLES.movie;
+    if (!movie || typeof movie !== 'object' || Array.isArray(movie)) return;
+    const withMode = readIngestHttpBody({
+      ...(movie as Record<string, unknown>),
+      dryRun: true,
+      mode: 'add_only',
+    });
+    expect(withMode.ok).toBe(true);
+    if (!withMode.ok) return;
+    expect(withMode.mode).toBe('add_only');
+    expect(
+      (withMode.document as Record<string, unknown>).mode
+    ).toBeUndefined();
+  });
+
+  it('rejects replace or unknown mode', () => {
+    const movie = INGEST_EXAMPLES.movie;
+    if (!movie || typeof movie !== 'object' || Array.isArray(movie)) return;
+    const split = readIngestHttpBody({
+      ...(movie as Record<string, unknown>),
+      dryRun: true,
+      mode: 'replace',
+    });
+    expect(split.ok).toBe(false);
+    if (split.ok) return;
+    expect(split.error).toContain('add_only');
   });
 
   it('rejects a missing dryRun', () => {
