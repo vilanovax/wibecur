@@ -72,6 +72,44 @@ describe('ingest models', () => {
     ).toBe(true);
   });
 
+  it('allows publish defaults and explicit deactivate', () => {
+    const published = parseIngestDocument({
+      categorySlug: 'movies',
+      list: { title: 'لیست', slug: 'pub-list', isPublic: true, isActive: true },
+      items: [],
+    });
+    expect(published.ok).toBe(true);
+
+    const offline = parseIngestDocument({
+      categorySlug: 'movies',
+      list: { title: 'لیست', slug: 'off-list', isActive: false, isPublic: false },
+      items: [],
+    });
+    expect(offline.ok).toBe(true);
+    if (!offline.ok) return;
+    expect(offline.document.list.isActive).toBe(false);
+  });
+
+  it('warns when movie description embeds a rating', () => {
+    const parsed = parseIngestDocument({
+      categorySlug: 'movies',
+      list: { title: 'لیست', slug: 'rating-in-copy' },
+      items: [
+        {
+          title: 'Oldboy - اولدبوی',
+          externalUrl: 'https://www.imdb.com/title/tt0364569',
+          description: 'امتیاز IMDb این فیلم ۸٫۴ از ۱۰ است.',
+          metadata: { imdbRating: '8.4' },
+        },
+      ],
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(
+      parsed.document.warnings.some((w) => w.code === 'content_rule.rating_in_description')
+    ).toBe(true);
+  });
+
   it('rejects bot setting isFeatured, badge, or tags', () => {
     expect(
       parseIngestDocument({

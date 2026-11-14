@@ -260,6 +260,18 @@ export function looksLikeFilmTitleFormat(title: string): boolean {
   return /\S+\s+-\s+\S+/.test(title.trim());
 }
 
+/** امتیاز/رأی داخل متن توضیح — باید فقط در metadata.imdbRating باشد */
+export function descriptionLooksLikeHasRating(text: string): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  return (
+    /\bIMDb\b/i.test(t) ||
+    /امتیاز/.test(t) ||
+    /\b\d+(?:[.,]\d+)?\s*\/\s*10\b/.test(t) ||
+    /\b\d+(?:[.,]\d+)?\s*از\s*۱۰\b/.test(t)
+  );
+}
+
 export function ingestKindForSlug(slug: string | null | undefined): IngestKind {
   const kind = getBulkImportCategoryKind(slug);
   return kind === 'general' ? 'mixed' : kind;
@@ -330,6 +342,14 @@ function collectItemWarnings(
       path: `${path}.title`,
       code: 'content_rule.film_title_format',
       message: 'عنوان فیلم بهتر است به شکل English - فارسی باشد',
+    });
+  }
+
+  if (kind === 'movie' && descriptionLooksLikeHasRating(description)) {
+    warnings.push({
+      path: `${path}.description`,
+      code: 'content_rule.rating_in_description',
+      message: 'امتیاز را در metadata.imdbRating بگذارید، نه داخل متن توضیح',
     });
   }
 
@@ -485,6 +505,8 @@ export function renderIngestModels() {
       'kind را در JSON ننویسید. از slug دسته تشخیص داده می‌شود.',
       'عنوان‌ها فارسی (فیلم: English - فارسی). slug لیست لاتین.',
       'بات isFeatured، badge و tags را تنظیم نمی‌کند.',
+      'لیست تازه پیش‌فرض منتشر است (isPublic/isActive=true). برای برداشتن فوری: isActive=false.',
+      'imdbRating برای کاربر نمایش داده می‌شود؛ داخل متن توضیح نیاید؛ منبع رسمی IMDb.',
       'حذف و merge و catalog_and_all خارج از API بات است.',
       'لینک بین‌دسته‌ای با catalog_ref + catalogItemId مجاز است.',
     ],

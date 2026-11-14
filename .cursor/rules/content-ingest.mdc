@@ -20,7 +20,7 @@ alwaysApply: false
 - cafe (`cafe`): عنوان + `metadata.address` اجباری؛ `priceRange` اختیاری (نبودن = هشدار)؛ `cuisine` متن آزاد
 - mixed (`lifestyle`، `kids-and-teens`، …): فقط `entryKind` برابر `tip` یا `catalog_ref` (+ `catalogItemId`)
 
-بات `isFeatured`، `badge` و `tags` را تنظیم نکند. عنوان فارسی، slug لیست لاتین. دستهٔ تازه نساز.
+بات `isFeatured`، `badge` و `tags` را تنظیم نکند. لیست تازه پیش‌فرض منتشر است؛ برای برداشتن فوری `isActive: false`. امتیاز IMDb فقط در `metadata.imdbRating` (نه متن توضیح). عنوان فارسی، slug لیست لاتین. دستهٔ تازه نساز.
 
 بات کلاد به ریپو دسترسی ندارد. با هدر `Authorization: Bearer` این‌ها را بزند:
 
