@@ -45,6 +45,8 @@ export type IngestReport = {
     id?: string;
     slug: string;
     title: string;
+    /** نسخهٔ لیست هنگام preview — برای تشخیص stale در commit */
+    updatedAt?: string | null;
   };
   summary?: {
     total: number;
@@ -55,10 +57,15 @@ export type IngestReport = {
     lightweight: number;
   };
   preview?: IngestPreview;
+  /** شناسهٔ پیش‌نمایش ذخیره‌شده برای commit */
+  previewId?: string;
+  previewExpiresAt?: string;
+  committable?: boolean;
   rows?: IngestRowReport[];
   issues?: IngestIssue[];
   warnings?: IngestWarning[];
   error?: string;
+  code?: string;
   cacheRevalidated?: boolean;
   cacheNote?: string;
 };
@@ -259,6 +266,7 @@ export async function ingestListDocument(
         id: existing?.id,
         slug: document.list.slug,
         title: document.list.title,
+        updatedAt: existing?.updatedAt?.toISOString() ?? null,
       },
       summary: {
         total: previewRows.length,
@@ -271,6 +279,7 @@ export async function ingestListDocument(
       preview: previewCounts(previewRows),
       rows: previewRows,
       warnings: documentWarnings,
+      committable: true,
     };
   }
 

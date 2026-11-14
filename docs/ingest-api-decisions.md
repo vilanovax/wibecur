@@ -38,6 +38,19 @@
 | ۱۷ | کاور/بنر ابعاد معیار؛ پوستر غیراستاندارد | کاور/بنر سخت‌گیرانه در مسیر تصویر؛ پوستر فقط هشدار؛ ۶۰۰×۹۰۰ OK |
 | ۱۸ | وضعیت «در انتظار بررسی» | لازم نیست |
 
+## پیاده‌سازی فعلی (MVP روی `/api/ingest`)
+
+| قابلیت | وضعیت |
+|--------|--------|
+| preview با `previewId` (`dryRun:true`) | ✅ |
+| commit با `POST /api/ingest/lists/commit` | ✅ |
+| `Idempotency-Key` روی commit و نوشتن مستقیم | ✅ |
+| stale check با `list.updatedAt` | ✅ |
+| عمر preview ۳۰ دقیقه | ✅ |
+| Idempotency ۲۴ ساعت | ✅ |
+| PATCH placement / PUT order / catalog lookup / images / audit | هنوز نه |
+
 ## Backlog مرتبط
 
 - Job دوره‌ای برای هم‌خوان‌سازی `imdbRating` از دیتاست رسمی IMDb برای آیتم‌هایی که `imdbId` دارند.
+- بقیهٔ endpointهای مشخصات (placement، order، catalog lookup، images، audit، `/api/v1`).

@@ -35,7 +35,8 @@
 |-------|-------|
 | `NEXT_PUBLIC_SKIP_EXTERNAL_IMAGES` | `true` = غیرفعال کردن تصاویر خارجی |
 | `CRON_SECRET` / `REVALIDATE_SECRET` | برای cron های `/api/cron/*` |
-| `INGEST_TOKEN` | توکن بات برای `POST /api/ingest/lists`. بدون آن مسیر بسته است |
+| `INGEST_TOKEN` | توکن بات برای `/api/ingest/*` (preview/commit/lists). بدون آن مسیر بسته است |
+| `REDIS_URL` | اختیاری؛ برای اشتراک preview و Idempotency-Key بین پروسه‌ها. بدون آن حافظهٔ محلی استفاده می‌شود |
 | `OMDB_API_KEY` | API OMDB (ادمین – جستجوی فیلم) |
 | `PORT` | پورت سرور (پیش‌فرض: 3000) |
 

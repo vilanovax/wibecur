@@ -520,10 +520,22 @@ export function renderIngestModels() {
       auth: 'Authorization: Bearer <INGEST_TOKEN>',
       categories: { method: 'GET', path: '/api/ingest/categories' },
       models: { method: 'GET', path: '/api/ingest/models' },
-      lists: {
+      preview: {
         method: 'POST',
         path: '/api/ingest/lists',
-        body: 'همان JSON مدل، به‌اضافهٔ dryRun. true فقط پیش‌نمایش است و false می‌نویسد.',
+        body: 'همان JSON مدل + dryRun:true → پاسخ previewId و committable',
+      },
+      commit: {
+        method: 'POST',
+        path: '/api/ingest/lists/commit',
+        headers: ['Idempotency-Key (اجباری)'],
+        body: '{ "previewId": "prev_…" }',
+      },
+      listsLegacyWrite: {
+        method: 'POST',
+        path: '/api/ingest/lists',
+        headers: ['Idempotency-Key (اجباری برای dryRun:false)'],
+        body: 'همان JSON + dryRun:false — سازگاری قدیمی؛ مسیر توصیه‌شده preview→commit است',
       },
     },
     kinds: {
