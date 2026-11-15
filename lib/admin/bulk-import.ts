@@ -234,6 +234,9 @@ function normalizeMovieImportMetadata(
   }
   if (typeof meta.genre === 'string' && meta.genre.trim()) out.genre = meta.genre.trim();
   if (typeof meta.director === 'string' && meta.director.trim()) out.director = meta.director.trim();
+  if (meta.mediaType === 'movie' || meta.mediaType === 'series') {
+    out.mediaType = meta.mediaType;
+  }
   if (typeof meta.creator === 'string' && meta.creator.trim()) out.creator = meta.creator.trim();
   if (meta.episodes != null) {
     if (typeof meta.episodes === 'number' && Number.isFinite(meta.episodes) && meta.episodes > 0) {

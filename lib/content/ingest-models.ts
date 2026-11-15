@@ -92,6 +92,8 @@ const movieItemSchema = z
         year: z.union([z.number().int(), z.string().trim()]).optional(),
         genre: z.string().trim().optional(),
         director: z.string().trim().optional(),
+        /** فیلم یا سریال — برای جست‌وجو و فیلتر mediaType */
+        mediaType: z.enum(['movie', 'series']).optional(),
         /** سازنده / شورانر سریال */
         creator: z.string().trim().optional(),
         /** تعداد قسمت سریال (عدد یا متن کوتاه مثل «۸ قسمت») */
@@ -519,7 +521,7 @@ export function renderIngestModels() {
       'خواندن لیست: GET /lists/{id|slug} بدون کش؛ حتی غیرفعال/خصوصی؛ همهٔ فیلدهای ردیف شامل tip و metadata.',
       'حذف کاتالوگ و merge و catalog_and_all خارج از API بات است.',
       'لینک بین‌دسته‌ای با catalog_ref + catalogItemId مجاز است.',
-      'جست‌وجوی کاتالوگ: GET /catalog?q=&imdbId=&mediaType= — شناسه، عنوان، type.',
+      'جست‌وجوی کاتالوگ: GET /catalog?q=&imdbId=&mediaType= — listCount فقط جایگاه زنده؛ type/mediaType برای فیلم و سریال جدا؛ فیلترهای مجاز در mediaTypeFilters پاسخ.',
       'آپلود تصویر اختصاصی و لاگ ممیزی هنوز آماده نیست.',
       'PATCH placement: metadata.mapsUrl و website و author پذیرفته می‌شوند (فقط همین ردیف).',
     ],
@@ -536,7 +538,7 @@ export function renderIngestModels() {
       catalogLookup: {
         method: 'GET',
         path: '/api/ingest/catalog?q=&imdbId=&mediaType=&limit=',
-        body: 'حداقل q یا imdbId؛ پاسخ items[{ catalogItemId, title, type, imdbId, mediaType, categorySlug, listCount }]',
+        body: 'حداقل q یا imdbId؛ mediaType اختیاری: movie|film|cinema|series|tv|show|book|podcast|app|cafe|restaurant|food؛ پاسخ items + mediaTypeFilters؛ listCount=جایگاه زنده',
       },
       preview: {
         method: 'POST',
@@ -600,6 +602,7 @@ export function renderIngestModels() {
           'metadata.year',
           'metadata.genre',
           'metadata.director',
+          'metadata.mediaType: movie|series',
           'metadata.creator (سازنده/شورانر سریال)',
           'metadata.episodes (تعداد قسمت سریال)',
           'metadata.actors (حداکثر ۲ نفر)',

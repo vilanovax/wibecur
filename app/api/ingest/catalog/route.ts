@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/ingest/catalog?q=&imdbId=&mediaType=&limit=
  * جست‌وجوی کاتالوگ برای جلوگیری از تکرار — بدون کش.
+ * listCount فقط جایگاه‌های زنده است. mediaTypeFilters در پاسخ آمده.
  */
 export async function GET(request: Request) {
   const denied = await requireIngestAuth(request);
@@ -32,7 +33,14 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json(
-    { ok: true, data: { items: result.items, query: result.query } },
+    {
+      ok: true,
+      data: {
+        items: result.items,
+        query: result.query,
+        mediaTypeFilters: result.mediaTypeFilters,
+      },
+    },
     {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate',

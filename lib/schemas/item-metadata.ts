@@ -54,6 +54,8 @@ export const MovieMetadataSchema = z
       }),
     imdbId: z.string().optional(),
     imdbID: z.string().optional(),
+    /** فیلم یا سریال */
+    mediaType: z.enum(['movie', 'series']).optional(),
     /** سازنده / شورانر سریال */
     creator: z.string().optional(),
     /** تعداد قسمت سریال */

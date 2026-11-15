@@ -280,13 +280,27 @@ curl -sS -X POST "$BASE/api/ingest/lists/commit" "${AUTH[@]}" \
 curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
   "$BASE/api/ingest/catalog?q=Dune&mediaType=movie" | jq .
 
+# سریال (tv و series هر دو OK)
+curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
+  "$BASE/api/ingest/catalog?q=Breaking&mediaType=tv" | jq .
+
 # با IMDb
 curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
   "$BASE/api/ingest/catalog?imdbId=tt15239678" | jq .
 ```
 
-حداقل یکی از `q` (۲+ کاراکتر) یا `imdbId` لازم است.  
-`mediaType` اختیاری: `movie` | `book` | `podcast` | `app` | `cafe`.
+حداقل یکی از `q` (۲+ کاراکتر) یا `imdbId` لازم است.
+
+**فیلتر `mediaType` (اختیاری) — مقادیر مجاز:**  
+`movie` | `film` | `cinema` | `series` | `tv` | `show` | `book` | `podcast` | `app` | `cafe` | `restaurant` | `food`  
+لیست زنده همیشه در پاسخِ `data.mediaTypeFilters` هم هست. مقدار نامعتبر → `400`.
+
+| موضوع | رفتار |
+|--------|--------|
+| `listCount` | فقط جایگاه‌های **زنده** (`deletedAt` خالی) — برای جست‌وجوی اسم و IMDb یکسان |
+| `type` / `mediaType` | برای فیلم/سریال پر می‌شود: `movie` یا `series` (دیگر خالی نمی‌ماند) |
+| تشخیص سریال | `metadata.mediaType=series` یا سیگنال‌هایی مثل `episodes` / `creator` / `type=tv` |
+| سریال در ingest | روی آیتم فیلم بفرستید: `"metadata": { "mediaType": "series", "episodes": 62 }` |
 
 هر نتیجه: `catalogItemId`، `title`، `type`، `imdbId`، `mediaType`، `categorySlug`، `listCount`.  
 اگر پیدا شد، در ingest از `catalog_ref` + همان `catalogItemId` استفاده کنید.

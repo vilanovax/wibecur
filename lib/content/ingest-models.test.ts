@@ -72,7 +72,7 @@ describe('ingest models', () => {
     ).toBe(true);
   });
 
-  it('accepts series fields tmdbId, creator, and episodes on movies', () => {
+  it('accepts series fields tmdbId, creator, episodes, and mediaType on movies', () => {
     const parsed = parseIngestDocument({
       categorySlug: 'movies',
       list: { title: 'لیست', slug: 'series-meta' },
@@ -81,6 +81,7 @@ describe('ingest models', () => {
           title: 'Severance - جدایی',
           externalUrl: 'https://www.imdb.com/title/tt11280740',
           metadata: {
+            mediaType: 'series',
             tmdbId: 95396,
             creator: 'Dan Erickson',
             episodes: 19,
@@ -92,6 +93,7 @@ describe('ingest models', () => {
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
     expect(parsed.document.items[0]?.metadata).toMatchObject({
+      mediaType: 'series',
       tmdbId: 95396,
       creator: 'Dan Erickson',
       episodes: 19,

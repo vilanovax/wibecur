@@ -6,20 +6,46 @@ import {
 import { extractCatalogImdbId } from '@/lib/missing-image-utils';
 import { getBulkImportCategoryKind } from '@/lib/admin/bulk-import';
 
+/** مقدارهای مجاز query param mediaType برای بات */
+export const INGEST_CATALOG_MEDIA_TYPE_FILTERS = [
+  'movie',
+  'film',
+  'cinema',
+  'series',
+  'tv',
+  'show',
+  'book',
+  'podcast',
+  'app',
+  'cafe',
+  'restaurant',
+  'food',
+] as const;
+
+export type IngestCatalogMediaTypeFilter =
+  (typeof INGEST_CATALOG_MEDIA_TYPE_FILTERS)[number];
+
 export type IngestCatalogHit = {
   catalogItemId: string;
   title: string;
-  /** نوع برای بات: movie | book | podcast | app | cafe | mixed */
+  /** نوع برای بات: movie | series | book | podcast | app | cafe | mixed */
   type: string;
   categorySlug: string | null;
   imdbId: string | null;
+  /** همیشه پر می‌شود وقتی type شناخته‌شده باشد (نه فقط از metadata خام) */
   mediaType: string | null;
   imageUrl: string | null;
+  /** تعداد جایگاه زنده در لیست‌ها (deletedAt=null) */
   listCount: number;
 };
 
 export type IngestCatalogSearchResult =
-  | { ok: true; items: IngestCatalogHit[]; query: { q: string | null; imdbId: string | null; mediaType: string | null } }
+  | {
+      ok: true;
+      items: IngestCatalogHit[];
+      query: { q: string | null; imdbId: string | null; mediaType: string | null };
+      mediaTypeFilters: readonly string[];
+    }
   | { ok: false; status: number; code: string; error: string };
 
 function asMeta(value: unknown): Record<string, unknown> {
@@ -38,27 +64,80 @@ function normalizeImdbId(raw: string): string | null {
   return null;
 }
 
-function resolveType(
+function readMetaString(meta: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const v = meta[key];
+    if (typeof v === 'string' && v.trim()) return v.trim().toLowerCase();
+  }
+  return null;
+}
+
+function hasSeriesSignal(meta: Record<string, unknown>): boolean {
+  if (meta.episodes != null && String(meta.episodes).trim() !== '') return true;
+  if (meta.totalSeasons != null && String(meta.totalSeasons).trim() !== '') return true;
+  if (meta.seasons != null && String(meta.seasons).trim() !== '') return true;
+  if (typeof meta.creator === 'string' && meta.creator.trim()) return true;
+  return false;
+}
+
+/**
+ * تشخیص نوع موجودیت برای بات.
+ * فیلم و سریال هر دو در دسته movies می‌نشینند؛ با metadata / سیگنال سریال جدا می‌شوند.
+ */
+export function resolveIngestCatalogType(
   categorySlug: string | null | undefined,
   metadata: Record<string, unknown>
 ): string {
-  const media =
-    typeof metadata.mediaType === 'string' ? metadata.mediaType.trim().toLowerCase() : '';
-  if (media === 'book' || media === 'podcast' || media === 'app') return media;
+  const explicit = readMetaString(metadata, ['mediaType', 'type', 'kind']) ?? '';
+  if (
+    explicit === 'book' ||
+    explicit === 'podcast' ||
+    explicit === 'app' ||
+    explicit === 'cafe' ||
+    explicit === 'movie' ||
+    explicit === 'series'
+  ) {
+    return explicit;
+  }
+  if (explicit === 'tv' || explicit === 'show' || explicit === 'tvseries') {
+    return 'series';
+  }
+  if (explicit === 'film' || explicit === 'cinema') {
+    return 'movie';
+  }
 
   const kind = getBulkImportCategoryKind(categorySlug);
-  if (kind === 'movie') return 'movie';
-  if (kind === 'book') return 'book';
-  if (kind === 'cafe') return 'cafe';
+  if (kind === 'movie') {
+    return hasSeriesSignal(metadata) ? 'series' : 'movie';
+  }
+  if (kind === 'book') {
+    return 'book';
+  }
+  if (kind === 'cafe') {
+    return 'cafe';
+  }
   return 'mixed';
+}
+
+function normalizeFilter(raw: string): string {
+  return raw.trim().toLowerCase();
+}
+
+export function isAllowedCatalogMediaTypeFilter(raw: string): boolean {
+  return (INGEST_CATALOG_MEDIA_TYPE_FILTERS as readonly string[]).includes(
+    normalizeFilter(raw)
+  );
 }
 
 function matchesMediaTypeFilter(type: string, mediaType: string | null): boolean {
   if (!mediaType) return true;
-  const want = mediaType.trim().toLowerCase();
+  const want = normalizeFilter(mediaType);
   if (!want) return true;
-  if (want === 'movie' || want === 'film' || want === 'series' || want === 'cinema') {
+  if (want === 'movie' || want === 'film' || want === 'cinema') {
     return type === 'movie';
+  }
+  if (want === 'series' || want === 'tv' || want === 'show') {
+    return type === 'series';
   }
   if (want === 'book' || want === 'podcast' || want === 'app') {
     return type === want;
@@ -66,13 +145,20 @@ function matchesMediaTypeFilter(type: string, mediaType: string | null): boolean
   if (want === 'cafe' || want === 'restaurant' || want === 'food') {
     return type === 'cafe';
   }
-  return type === want || type.includes(want);
+  return type === want;
 }
 
 function categorySlugForMediaType(mediaType: string | null): string | undefined {
   if (!mediaType) return undefined;
-  const want = mediaType.trim().toLowerCase();
-  if (want === 'movie' || want === 'film' || want === 'series' || want === 'cinema') {
+  const want = normalizeFilter(mediaType);
+  if (
+    want === 'movie' ||
+    want === 'film' ||
+    want === 'cinema' ||
+    want === 'series' ||
+    want === 'tv' ||
+    want === 'show'
+  ) {
     return 'movies';
   }
   if (want === 'book' || want === 'podcast' || want === 'app') {
@@ -84,35 +170,60 @@ function categorySlugForMediaType(mediaType: string | null): string | undefined 
   return undefined;
 }
 
-function toHit(row: {
-  id: string;
-  title: string;
-  imageUrl: string | null;
-  categorySlug: string | null;
-  metadata: unknown;
-  externalUrl?: string | null;
-  externalKey?: string | null;
-  listCount: number;
-}): IngestCatalogHit {
+function toHit(
+  row: {
+    id: string;
+    title: string;
+    imageUrl: string | null;
+    categorySlug: string | null;
+    metadata: unknown;
+    externalUrl?: string | null;
+    externalKey?: string | null;
+  },
+  listCount: number
+): IngestCatalogHit {
   const metadata = asMeta(row.metadata);
-  const mediaType =
-    typeof metadata.mediaType === 'string' && metadata.mediaType.trim()
-      ? metadata.mediaType.trim().toLowerCase()
-      : null;
+  const type = resolveIngestCatalogType(row.categorySlug, metadata);
   return {
     catalogItemId: row.id,
     title: row.title,
-    type: resolveType(row.categorySlug, metadata),
+    type,
     categorySlug: row.categorySlug,
     imdbId: extractCatalogImdbId({
       metadata: row.metadata,
       externalUrl: row.externalUrl ?? null,
       externalKey: row.externalKey ?? null,
     }),
-    mediaType,
+    mediaType: type === 'mixed' ? null : type,
     imageUrl: row.imageUrl,
-    listCount: row.listCount,
+    listCount,
   };
+}
+
+/** شمارش جایگاه‌های زنده برای چند کاتالوگ — یکسان برای q و imdbId */
+async function liveListCountsByCatalogId(
+  db: PrismaClient,
+  catalogIds: string[]
+): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  if (catalogIds.length === 0) return map;
+  for (const id of catalogIds) map.set(id, 0);
+
+  const grouped = await db.items.groupBy({
+    by: ['catalogItemId'],
+    where: {
+      catalogItemId: { in: catalogIds },
+      deletedAt: null,
+    },
+    _count: { _all: true },
+  });
+
+  for (const row of grouped) {
+    if (row.catalogItemId) {
+      map.set(row.catalogItemId, row._count._all);
+    }
+  }
+  return map;
 }
 
 /**
@@ -125,7 +236,8 @@ export async function searchIngestCatalog(
 ): Promise<IngestCatalogSearchResult> {
   const q = opts.q?.trim() || null;
   const imdbRaw = opts.imdbId?.trim() || null;
-  const mediaType = opts.mediaType?.trim() || null;
+  const mediaTypeRaw = opts.mediaType?.trim() || null;
+  const mediaType = mediaTypeRaw ? normalizeFilter(mediaTypeRaw) : null;
   const limit = Math.min(Math.max(opts.limit ?? 20, 1), 50);
 
   const imdbId = imdbRaw ? normalizeImdbId(imdbRaw) : null;
@@ -135,6 +247,15 @@ export async function searchIngestCatalog(
       status: 400,
       code: 'bad_request',
       error: 'imdbId نامعتبر است؛ نمونه: tt15239678',
+    };
+  }
+
+  if (mediaType && !isAllowedCatalogMediaTypeFilter(mediaType)) {
+    return {
+      ok: false,
+      status: 400,
+      code: 'bad_request',
+      error: `mediaType نامعتبر است. مقادیر مجاز: ${INGEST_CATALOG_MEDIA_TYPE_FILTERS.join('، ')}`,
     };
   }
 
@@ -155,16 +276,21 @@ export async function searchIngestCatalog(
     };
   }
 
-  const hits: IngestCatalogHit[] = [];
+  const candidateRows: Array<{
+    id: string;
+    title: string;
+    imageUrl: string | null;
+    categorySlug: string | null;
+    metadata: unknown;
+    externalUrl: string | null;
+    externalKey: string | null;
+  }> = [];
   const seen = new Set<string>();
 
   if (imdbId) {
     const byKey = await findCatalogByExternalKey(db, `imdb:${imdbId}`);
     if (byKey) {
-      const count = await db.items.count({
-        where: { catalogItemId: byKey.id, deletedAt: null },
-      });
-      const hit = toHit({
+      candidateRows.push({
         id: byKey.id,
         title: byKey.title,
         imageUrl: byKey.imageUrl,
@@ -172,12 +298,8 @@ export async function searchIngestCatalog(
         metadata: byKey.metadata,
         externalUrl: byKey.externalUrl,
         externalKey: byKey.externalKey,
-        listCount: count,
       });
-      if (matchesMediaTypeFilter(hit.type, mediaType)) {
-        hits.push(hit);
-        seen.add(hit.catalogItemId);
-      }
+      seen.add(byKey.id);
     }
   }
 
@@ -188,7 +310,6 @@ export async function searchIngestCatalog(
       categorySlug,
     });
     const missingIds = rows.map((r) => r.id).filter((id) => !seen.has(id));
-    const listCountById = new Map(rows.map((r) => [r.id, r.listCount]));
     if (missingIds.length > 0) {
       const fullRows = await db.catalog_items.findMany({
         where: { id: { in: missingIds } },
@@ -206,21 +327,29 @@ export async function searchIngestCatalog(
       for (const id of missingIds) {
         const full = byId.get(id);
         if (!full) continue;
-        const hit = toHit({
-          ...full,
-          listCount: listCountById.get(id) ?? 0,
-        });
-        if (!matchesMediaTypeFilter(hit.type, mediaType)) continue;
-        hits.push(hit);
-        seen.add(hit.catalogItemId);
-        if (hits.length >= limit) break;
+        candidateRows.push(full);
+        seen.add(full.id);
       }
     }
   }
 
+  const counts = await liveListCountsByCatalogId(
+    db,
+    candidateRows.map((r) => r.id)
+  );
+
+  const hits: IngestCatalogHit[] = [];
+  for (const row of candidateRows) {
+    const hit = toHit(row, counts.get(row.id) ?? 0);
+    if (!matchesMediaTypeFilter(hit.type, mediaType)) continue;
+    hits.push(hit);
+    if (hits.length >= limit) break;
+  }
+
   return {
     ok: true,
-    items: hits.slice(0, limit),
+    items: hits,
     query: { q, imdbId, mediaType },
+    mediaTypeFilters: INGEST_CATALOG_MEDIA_TYPE_FILTERS,
   };
 }
