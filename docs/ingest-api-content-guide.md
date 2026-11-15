@@ -300,7 +300,8 @@ curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
 | `listCount` | فقط جایگاه‌های **زنده** (`deletedAt` خالی) — برای جست‌وجوی اسم و IMDb یکسان |
 | `type` / `mediaType` | برای فیلم/سریال پر می‌شود: `movie` یا `series` (دیگر خالی نمی‌ماند) |
 | تشخیص سریال | `metadata.mediaType=series` یا سیگنال‌هایی مثل `episodes` / `creator` / `type=tv` |
-| سریال در ingest | روی آیتم فیلم بفرستید: `"metadata": { "mediaType": "series", "episodes": 62 }` |
+| سریال در ingest | **همیشه** برای سریال بفرستید: `"metadata": { "mediaType": "series", ... }` |
+| دادهٔ قدیمی | با `npm run db:catalog:media-type` از OMDb Type یک‌جا پر می‌شود (`--dry-run` برای پیش‌نمایش) |
 
 هر نتیجه: `catalogItemId`، `title`، `type`، `imdbId`، `mediaType`، `categorySlug`، `listCount`.  
 اگر پیدا شد، در ingest از `catalog_ref` + همان `catalogItemId` استفاده کنید.

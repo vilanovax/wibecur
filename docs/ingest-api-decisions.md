@@ -64,4 +64,5 @@
 ## Backlog مرتبط
 
 - Job دوره‌ای برای هم‌خوان‌سازی `imdbRating` از دیتاست رسمی IMDb برای آیتم‌هایی که `imdbId` دارند.
-- بقیهٔ endpointهای مشخصات (placement، order، catalog lookup، images، audit، `/api/v1`).
+- تکمیل `npm run db:catalog:media-type` برای ردیف‌هایی که OMDb خطا داد (~۱۰۰ مورد باقی).
+- بقیهٔ endpointهای مشخصات (images، audit، position، `/api/v1`).
