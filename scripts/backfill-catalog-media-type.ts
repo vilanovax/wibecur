@@ -6,6 +6,7 @@
  * npx tsx scripts/backfill-catalog-media-type.ts --limit=50
  */
 
+import type { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { extractCatalogImdbId } from '../lib/missing-image-utils';
 import { resolveOmdbApiKey } from '../lib/movie-api-keys';
@@ -161,7 +162,7 @@ async function main() {
     await prisma.catalog_items.update({
       where: { id: row.id },
       data: {
-        metadata: meta,
+        metadata: meta as Prisma.InputJsonValue,
         updatedAt: new Date(),
       },
     });
