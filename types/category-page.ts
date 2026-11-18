@@ -113,10 +113,22 @@ export interface CategoryPageData {
   mostDebatedLists?: CategoryListCard[];
   /** ژانرها از تگ‌های لیست (صفحه فیلم) */
   filmGenres?: FilmGenreChip[];
+  /** موضوعات کشف پیشنهادی (کافه/رستوران) */
+  discoveryTopics?: DiscoveryTopicChip[];
   /** آیتم‌های پربذخیره در دسته (برای Most Saved Items) */
   mostSavedItems?: CategoryItemCard[];
   /** تازه‌ترین آیتم‌های اضافه‌شده در این دسته */
   latestItems?: CategoryItemCard[];
+}
+
+/** چیپ موضوع کشف — میان‌بر داده‌محور داخل دسته */
+export interface DiscoveryTopicChip {
+  slug: string;
+  label: string;
+  dimension: string;
+  icon?: string;
+  listCount: number;
+  placeCount: number;
 }
 
 export interface CategoryItemCard {

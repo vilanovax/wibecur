@@ -23,6 +23,9 @@ import { resolveListBannerImage } from '@/lib/list-display-images';
 import { LOCATION_CITIES } from '@/types/category-page';
 import { buildFilmGenreChips, countListIdsByGenre } from '@/lib/film-genres';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
+import { getCategoryDiscoveryChips } from '@/lib/category-discovery/from-db';
+import { supportsCategoryDiscovery } from '@/lib/category-discovery/supports';
+import type { DiscoveryTopicChip } from '@/types/category-page';
 
 function mapListCover(
   item: { coverImage?: string | null; slug: string; title: string },
@@ -825,8 +828,10 @@ export async function getCategoryPageData(
   // getCityBreakdown و getFilmGenres هرکدام همهٔ لیست‌های دسته را اسکن می‌کنند.
   // - City breakdown فقط برای کافه و رستوران در UI نشان داده می‌شود.
   // - Film genres فقط برای دستهٔ فیلم لازم است.
+  // - Discovery topics فقط برای کافه/رستوران.
   const shouldScanCities = slug ? isLocation : false;
   const shouldScanGenres = slug ? isFilm : true;
+  const shouldScanDiscovery = slug ? supportsCategoryDiscovery(slug) : false;
 
   const [
     { category, metrics },
@@ -836,6 +841,7 @@ export async function getCategoryPageData(
     mostSavedItemsRaw,
     latestItemsRaw,
     filmGenres,
+    discoveryTopics,
   ] = await Promise.all([
     getCategoryAndMetrics(prisma, categoryId),
     getTrendingAndViralLists(prisma, categoryId),
@@ -848,6 +854,9 @@ export async function getCategoryPageData(
     shouldScanGenres
       ? getFilmGenres(prisma, categoryId)
       : Promise.resolve([] as Awaited<ReturnType<typeof getFilmGenres>>),
+    shouldScanDiscovery
+      ? getCategoryDiscoveryChips(prisma, categoryId)
+      : Promise.resolve([] as DiscoveryTopicChip[]),
   ]);
 
   const resolvedGenreCount =
@@ -867,5 +876,6 @@ export async function getCategoryPageData(
     mostSavedItems: mapCategoryItemCards(mostSavedItemsRaw, category.slug),
     latestItems: mapCategoryItemCards(latestItemsRaw, category.slug),
     filmGenres,
+    discoveryTopics,
   };
 }

@@ -1,0 +1,269 @@
+import type { PrismaClient } from '@prisma/client';
+import { CAFE_DISCOVERY_TOPICS, resolveCafeTopic } from '@/lib/category-discovery/cafe-catalog';
+import {
+  extractItemDiscoveryFields,
+  itemMatchesTopic,
+  listTopicMatchLevel,
+} from '@/lib/category-discovery/match';
+import { normalizeDiscoveryText } from '@/lib/category-discovery/normalize';
+import {
+  selectDiscoveryChips,
+  type DiscoveryScanList,
+} from '@/lib/category-discovery/select-chips';
+import type {
+  DiscoveryPlaceCard,
+  DiscoveryTopicBrowseResult,
+  DiscoveryTopicChip,
+  DiscoveryTopicDefinition,
+} from '@/lib/category-discovery/types';
+import type { CategoryListCard } from '@/types/category-page';
+import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
+
+const LIST_SCAN_TAKE = 120;
+const ITEMS_PER_LIST_SCAN = 80;
+const RESULTS_LIST_LIMIT = 40;
+const RESULTS_PLACE_LIMIT = 60;
+
+type DbListRow = {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  coverImage: string | null;
+  horizontalImage: string | null;
+  saveCount: number | null;
+  likeCount: number | null;
+  itemCount: number | null;
+  badge: string | null;
+  tags: string[];
+  users: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    image: string | null;
+    curatorLevel: string | null;
+  } | null;
+  items: Array<{
+    id: string;
+    title: string;
+    imageUrl: string | null;
+    metadata: unknown;
+    catalogItemId: string | null;
+  }>;
+};
+
+function placeKeyFor(catalogItemId: string | null | undefined, title: string): string {
+  if (catalogItemId) return `c:${catalogItemId}`;
+  return `t:${normalizeDiscoveryText(title)}`;
+}
+
+function itemMeta(
+  metadata: unknown
+): Record<string, unknown> | null {
+  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+    return metadata as Record<string, unknown>;
+  }
+  return null;
+}
+
+async function loadDbLists(
+  prisma: PrismaClient,
+  categoryId: string
+): Promise<DbListRow[]> {
+  return prisma.lists.findMany({
+    where: {
+      categoryId,
+      deletedAt: null,
+      isActive: true,
+      isPublic: true,
+      users: { role: { not: 'USER' } },
+    },
+    orderBy: [{ saveCount: 'desc' }, { createdAt: 'desc' }],
+    take: LIST_SCAN_TAKE,
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      description: true,
+      coverImage: true,
+      horizontalImage: true,
+      saveCount: true,
+      likeCount: true,
+      itemCount: true,
+      badge: true,
+      tags: true,
+      users: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
+          curatorLevel: true,
+        },
+      },
+      items: {
+        where: { deletedAt: null },
+        take: ITEMS_PER_LIST_SCAN,
+        select: {
+          id: true,
+          title: true,
+          imageUrl: true,
+          metadata: true,
+          catalogItemId: true,
+        },
+      },
+    },
+  });
+}
+
+function toScanLists(rows: DbListRow[]): DiscoveryScanList[] {
+  return rows.map((l) => ({
+    id: l.id,
+    title: l.title,
+    description: l.description,
+    tags: l.tags,
+    itemCount: l.itemCount ?? l.items.length,
+    saveCount: l.saveCount ?? 0,
+    items: l.items.map((it) => ({
+      id: it.id,
+      title: it.title,
+      metadata: itemMeta(it.metadata),
+      placeKey: placeKeyFor(it.catalogItemId, it.title),
+    })),
+  }));
+}
+
+function toListCard(meta: DbListRow): CategoryListCard {
+  return {
+    id: meta.id,
+    title: meta.title,
+    slug: meta.slug,
+    description: meta.description,
+    coverImage: meta.coverImage,
+    horizontalImage: meta.horizontalImage,
+    saveCount: meta.saveCount ?? 0,
+    likeCount: meta.likeCount ?? 0,
+    itemCount: meta.itemCount ?? 0,
+    badge: meta.badge,
+    tags: (meta.tags ?? []).length > 0 ? meta.tags : undefined,
+    creator: meta.users
+      ? {
+          id: meta.users.id,
+          name: meta.users.name,
+          username: meta.users.username,
+          image: meta.users.image,
+          curatorLevel: meta.users.curatorLevel ?? 'EXPLORER',
+        }
+      : {
+          id: '',
+          name: null,
+          username: null,
+          image: null,
+          curatorLevel: 'EXPLORER',
+        },
+  };
+}
+
+export async function getCategoryDiscoveryChips(
+  prisma: PrismaClient,
+  categoryId: string,
+  catalog: DiscoveryTopicDefinition[] = CAFE_DISCOVERY_TOPICS
+): Promise<DiscoveryTopicChip[]> {
+  const rows = await loadDbLists(prisma, categoryId);
+  return selectDiscoveryChips(toScanLists(rows), catalog);
+}
+
+export async function browseCategoryDiscoveryTopic(
+  prisma: PrismaClient,
+  categoryId: string,
+  categorySlug: string,
+  topicRaw: string
+): Promise<DiscoveryTopicBrowseResult | null> {
+  const topic = resolveCafeTopic(topicRaw);
+  if (!topic) return null;
+
+  const rows = await loadDbLists(prisma, categoryId);
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const scanLists = toScanLists(rows);
+
+  const strongLists: CategoryListCard[] = [];
+  type PlaceAcc = DiscoveryPlaceCard & { saveHint: number };
+  const placeMap = new Map<string, PlaceAcc>();
+
+  for (const list of scanLists) {
+    const meta = byId.get(list.id)!;
+    let matched = 0;
+
+    for (const item of list.items) {
+      const raw = meta.items.find((i) => i.id === item.id);
+      const fields = extractItemDiscoveryFields(item.title, item.metadata);
+      if (!itemMatchesTopic(fields, topic)) continue;
+      matched += 1;
+
+      const existing = placeMap.get(item.placeKey);
+      if (existing) {
+        existing.listAppearances += 1;
+        existing.saveHint = Math.max(existing.saveHint, meta.saveCount ?? 0);
+      } else {
+        const imageUrl = raw?.imageUrl ?? null;
+        placeMap.set(item.placeKey, {
+          id: item.id,
+          title: item.title,
+          imageUrl,
+          displayImageUrl: resolveItemDisplayImage({
+            id: item.id,
+            imageUrl,
+            title: item.title,
+            metadata: item.metadata,
+            categorySlug,
+          }),
+          listSlug: meta.slug,
+          listTitle: meta.title,
+          listAppearances: 1,
+          area: fields.area,
+          cuisine: fields.cuisine,
+          saveHint: meta.saveCount ?? 0,
+        });
+      }
+    }
+
+    const level = listTopicMatchLevel(
+      {
+        title: list.title,
+        description: list.description,
+        tags: list.tags,
+        itemCount: list.itemCount || list.items.length,
+      },
+      topic,
+      matched
+    );
+    if (level === 'strong') {
+      strongLists.push(toListCard(meta));
+    }
+  }
+
+  strongLists.sort((a, b) => (b.saveCount ?? 0) - (a.saveCount ?? 0));
+
+  const places: DiscoveryPlaceCard[] = [...placeMap.values()]
+    .sort(
+      (a, b) =>
+        b.listAppearances - a.listAppearances || b.saveHint - a.saveHint
+    )
+    .slice(0, RESULTS_PLACE_LIMIT)
+    .map(({ saveHint: _s, ...rest }) => rest);
+
+  return {
+    topic: {
+      slug: topic.slug,
+      label: topic.label,
+      dimension: topic.dimension,
+      icon: topic.icon,
+      listCount: strongLists.length,
+      placeCount: placeMap.size,
+    },
+    lists: strongLists.slice(0, RESULTS_LIST_LIMIT),
+    places,
+    listCount: strongLists.length,
+    placeCount: placeMap.size,
+  };
+}

@@ -35,3 +35,10 @@ export const CategoryCreateCTALazy = dynamic(() => import('./CategoryCreateCTA')
 export const GenreScrollBarLazy = dynamic(() => import('./film/GenreScrollBar'), {
   loading: () => <Skeleton className="h-12 w-full rounded-xl" />,
 });
+
+export const DiscoveryTopicsBarLazy = dynamic(
+  () => import('./discovery/DiscoveryTopicsBar'),
+  {
+    loading: () => <Skeleton className="h-28 w-full rounded-xl" />,
+  }
+);

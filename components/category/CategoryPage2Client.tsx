@@ -9,6 +9,7 @@ import {
   isFilmCategorySlug,
   isLocationCategorySlug,
 } from '@/lib/category-layout';
+import { supportsCategoryDiscovery } from '@/lib/category-discovery/supports';
 import { isPortraitCoverCategory } from '@/lib/resolve-item-image';
 import HomeDeferredMount from '@/components/mobile/home/HomeDeferredMount';
 import PageBreadcrumb from '@/components/shared/PageBreadcrumb';
@@ -28,6 +29,7 @@ import {
   MostSavedItemsCafeLazy,
   LatestItemsSectionLazy,
   GenreScrollBarLazy,
+  DiscoveryTopicsBarLazy,
 } from './category-lazy-sections';
 
 interface CategoryPage2ClientProps {
@@ -105,6 +107,7 @@ export default function CategoryPage2Client({
     newLists,
     cityBreakdown = [],
     filmGenres = [],
+    discoveryTopics = [],
     mostSavedItems = [],
     latestItems = [],
   } = data;
@@ -114,6 +117,8 @@ export default function CategoryPage2Client({
   // فقط کافه و رستوران — روی فیلم و کتاب معنی ندارد
   const showCityExplorer = isLocationCategorySlug(category.slug);
   const showGenreBar = isFilmCategorySlug(category.slug);
+  const showDiscoveryTopics =
+    supportsCategoryDiscovery(category.slug) && discoveryTopics.length > 0;
 
   const featuredSpotlight =
     viralSpotlight && viralSpotlight.id !== trendingLists[0]?.id ? viralSpotlight : null;
@@ -193,6 +198,17 @@ export default function CategoryPage2Client({
         {showGenreBar && (
           <SectionReveal>
             <GenreScrollBarLazy categorySlug={category.slug} genres={filmGenres} inset />
+          </SectionReveal>
+        )}
+
+        {showDiscoveryTopics && (
+          <SectionReveal>
+            <DiscoveryTopicsBarLazy
+              categorySlug={category.slug}
+              categoryName={category.name}
+              topics={discoveryTopics}
+              inset
+            />
           </SectionReveal>
         )}
 

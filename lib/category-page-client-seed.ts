@@ -69,5 +69,6 @@ export function toCategoryClientSeed(data: CategoryPageData): CategoryPageData {
       sampleLists: [],
     })),
     filmGenres: data.filmGenres ?? [],
+    discoveryTopics: data.discoveryTopics ?? [],
   };
 }
