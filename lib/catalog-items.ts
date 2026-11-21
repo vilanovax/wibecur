@@ -461,7 +461,7 @@ export async function syncPlacementsFromCatalog(
             : {};
         placementForMerge = {
           ...placement,
-          metadata: withPlacementOverrides(meta, ['imageUrl']),
+          metadata: withPlacementOverrides(meta, ['imageUrl']) as Prisma.JsonValue,
         };
       }
     }
