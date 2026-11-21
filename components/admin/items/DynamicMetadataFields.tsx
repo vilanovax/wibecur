@@ -93,15 +93,17 @@ export default function DynamicMetadataFields({
         <>
           <div>
             <label className="mb-2 block text-sm font-medium text-(--color-text)">
-              بازه قیمت <span className="text-red-500">*</span>
+              بازه قیمت{' '}
+              <span className="text-xs font-normal text-wibe-secondary">(اختیاری)</span>
             </label>
             <select
-              required
               value={metadata?.priceRange || ''}
-              onChange={(e) => handleChange('priceRange', e.target.value)}
+              onChange={(e) =>
+                handleChange('priceRange', e.target.value ? e.target.value : undefined)
+              }
               className={inputClass}
             >
-              <option value="">انتخاب کنید...</option>
+              <option value="">نامشخص</option>
               {PRICE_RANGES.map((range) => (
                 <option key={range.value} value={range.value}>
                   {range.label}

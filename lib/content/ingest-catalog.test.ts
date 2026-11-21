@@ -34,9 +34,43 @@ describe('resolveIngestCatalogType', () => {
 });
 
 describe('searchIngestCatalog', () => {
-  it('requires q or imdbId', async () => {
+  it('requires id, q, or imdbId', async () => {
     const result = await searchIngestCatalog({} as never, {});
     expect(result).toMatchObject({ ok: false, status: 400, code: 'bad_request' });
+  });
+
+  it('finds by catalog id', async () => {
+    const prisma = {
+      catalog_items: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: 'cat-by-id',
+          title: 'خشم و هیاهو',
+          imageUrl: null,
+          categorySlug: 'bookspodcast',
+          metadata: { author: 'فاکنر' },
+          externalUrl: null,
+          externalKey: null,
+        }),
+        findMany: vi.fn(),
+      },
+      items: {
+        groupBy: vi
+          .fn()
+          .mockResolvedValue([{ catalogItemId: 'cat-by-id', _count: { _all: 4 } }]),
+      },
+    };
+
+    const result = await searchIngestCatalog(prisma as never, { id: 'cat-by-id' });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.query.id).toBe('cat-by-id');
+    expect(result.items).toEqual([
+      expect.objectContaining({
+        catalogItemId: 'cat-by-id',
+        title: 'خشم و هیاهو',
+        listCount: 4,
+      }),
+    ]);
   });
 
   it('rejects unknown mediaType filter like foo', async () => {

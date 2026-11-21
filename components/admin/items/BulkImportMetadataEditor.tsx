@@ -112,13 +112,13 @@ export default function BulkImportMetadataEditor({ kind, row, onUpdate }: Props)
           />
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-wibe-secondary">بازه قیمت *</label>
+          <label className="text-[10px] font-semibold text-wibe-secondary">بازه قیمت</label>
           <select
             value={String(m.priceRange ?? '')}
             onChange={(e) => set('priceRange', e.target.value || undefined)}
             className={fieldClass}
           >
-            <option value="">—</option>
+            <option value="">نامشخص</option>
             {PRICE_RANGES.map((p) => (
               <option key={p.value} value={p.value}>
                 {p.label}

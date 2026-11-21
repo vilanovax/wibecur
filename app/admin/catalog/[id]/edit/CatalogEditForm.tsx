@@ -60,6 +60,8 @@ export default function CatalogEditForm({
   const [imageSearchModalOpen, setImageSearchModalOpen] = useState(false);
   const [mediaTab, setMediaTab] = useState<ImageUploadDisplayMode>('upload');
   const [isDisabled, setIsDisabled] = useState(Boolean(catalog.isDisabled));
+  /** پیش‌فرض روشن: کاور کاتالوگ عکس اختصاصی ردیف‌ها را بازنویسی نکند */
+  const [catalogOnlyImage, setCatalogOnlyImage] = useState(true);
   const [form, setForm] = useState({
     title: catalog.title,
     description: catalog.description ?? '',
@@ -258,6 +260,7 @@ export default function CatalogEditForm({
           imageUrl: form.imageUrl,
           externalUrl: form.externalUrl,
           categorySlug: form.categorySlug || null,
+          catalogOnlyImage,
           metadata: (() => {
             const metadata = { ...form.metadata };
             const tip = typeof metadata.tip === 'string' ? metadata.tip.trim() : '';
@@ -293,6 +296,21 @@ export default function CatalogEditForm({
         <strong>{catalog.listCount.toLocaleString('fa-IR')} جایگاه</strong> در لیست‌های مختلف
         اعمال می‌شود.
       </p>
+
+      <label className="mb-4 flex min-h-11 cursor-pointer items-start gap-2 rounded-xl border border-border bg-background px-3 py-3 text-sm text-(--color-text)">
+        <input
+          type="checkbox"
+          className="mt-1 rounded border-border"
+          checked={catalogOnlyImage}
+          onChange={(e) => setCatalogOnlyImage(e.target.checked)}
+        />
+        <span>
+          <span className="font-medium">فقط کاتالوگ برای تصویر</span>
+          <span className="mt-0.5 block text-xs text-muted-foreground">
+            عکس اختصاصی ردیف‌های دیگر بازنویسی نمی‌شود؛ عنوان و توضیح همچنان همگام می‌شوند.
+          </span>
+        </span>
+      </label>
 
       <CatalogVisibilityControl
         catalogId={catalog.id}

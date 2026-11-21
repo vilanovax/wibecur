@@ -43,7 +43,12 @@ export type IngestCatalogSearchResult =
   | {
       ok: true;
       items: IngestCatalogHit[];
-      query: { q: string | null; imdbId: string | null; mediaType: string | null };
+      query: {
+        id: string | null;
+        q: string | null;
+        imdbId: string | null;
+        mediaType: string | null;
+      };
       mediaTypeFilters: readonly string[];
     }
   | { ok: false; status: number; code: string; error: string };
@@ -228,12 +233,19 @@ async function liveListCountsByCatalogId(
 
 /**
  * جست‌وجوی کاتالوگ برای بات — جلوگیری از ساخت تکراری.
- * حداقل یکی از q (حداقل ۲ کاراکتر) یا imdbId لازم است.
+ * حداقل یکی از id، q (حداقل ۲ کاراکتر) یا imdbId لازم است.
  */
 export async function searchIngestCatalog(
   db: PrismaClient,
-  opts: { q?: string | null; imdbId?: string | null; mediaType?: string | null; limit?: number }
+  opts: {
+    id?: string | null;
+    q?: string | null;
+    imdbId?: string | null;
+    mediaType?: string | null;
+    limit?: number;
+  }
 ): Promise<IngestCatalogSearchResult> {
+  const id = opts.id?.trim() || null;
   const q = opts.q?.trim() || null;
   const imdbRaw = opts.imdbId?.trim() || null;
   const mediaTypeRaw = opts.mediaType?.trim() || null;
@@ -259,12 +271,12 @@ export async function searchIngestCatalog(
     };
   }
 
-  if (!q && !imdbId) {
+  if (!id && !q && !imdbId) {
     return {
       ok: false,
       status: 400,
       code: 'bad_request',
-      error: 'حداقل یکی از q یا imdbId لازم است',
+      error: 'حداقل یکی از id، q یا imdbId لازم است',
     };
   }
   if (q && q.length < 2) {
@@ -286,6 +298,32 @@ export async function searchIngestCatalog(
     externalKey: string | null;
   }> = [];
   const seen = new Set<string>();
+
+  if (id) {
+    const byId = await db.catalog_items.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        imageUrl: true,
+        categorySlug: true,
+        metadata: true,
+        externalUrl: true,
+        externalKey: true,
+      },
+    });
+    if (byId) {
+      candidateRows.push(byId);
+      seen.add(byId.id);
+    } else if (!q && !imdbId) {
+      return {
+        ok: true,
+        items: [],
+        query: { q: null, imdbId: null, mediaType, id },
+        mediaTypeFilters: INGEST_CATALOG_MEDIA_TYPE_FILTERS,
+      };
+    }
+  }
 
   if (imdbId) {
     const byKey = await findCatalogByExternalKey(db, `imdb:${imdbId}`);
@@ -349,7 +387,7 @@ export async function searchIngestCatalog(
   return {
     ok: true,
     items: hits,
-    query: { q, imdbId, mediaType },
+    query: { id, q, imdbId, mediaType },
     mediaTypeFilters: INGEST_CATALOG_MEDIA_TYPE_FILTERS,
   };
 }

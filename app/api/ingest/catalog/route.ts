@@ -7,9 +7,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/ingest/catalog?q=&imdbId=&mediaType=&limit=
+ * GET /api/ingest/catalog?id=&q=&imdbId=&mediaType=&limit=
  * جست‌وجوی کاتالوگ برای جلوگیری از تکرار — بدون کش.
- * listCount فقط جایگاه‌های زنده است. mediaTypeFilters در پاسخ آمده.
+ * با id می‌توان یک موجودیت مشخص را گرفت. listCount فقط جایگاه‌های زنده است.
  */
 export async function GET(request: Request) {
   const denied = await requireIngestAuth(request);
@@ -17,6 +17,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const result = await searchIngestCatalog(prisma, {
+    id: url.searchParams.get('id'),
     q: url.searchParams.get('q'),
     imdbId: url.searchParams.get('imdbId'),
     mediaType: url.searchParams.get('mediaType'),

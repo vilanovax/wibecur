@@ -38,13 +38,23 @@ export async function PUT(
     await requireAdmin();
     const { id } = await params;
     const body = await request.json();
-    const { title, description, imageUrl, externalUrl, categorySlug, metadata } = body as {
+    const {
+      title,
+      description,
+      imageUrl,
+      externalUrl,
+      categorySlug,
+      metadata,
+      catalogOnlyImage,
+    } = body as {
       title?: string;
       description?: string;
       imageUrl?: string;
       externalUrl?: string;
       categorySlug?: string | null;
       metadata?: Record<string, unknown> | null;
+      /** فقط کاتالوگ: عکس اختصاصی ردیف‌ها را بازنویسی نکن */
+      catalogOnlyImage?: boolean;
     };
 
     if (!title?.trim()) {
@@ -57,16 +67,21 @@ export async function PUT(
     const finalImage =
       imageUrl !== undefined ? await ensureImageInLiara(imageUrl, 'items') : undefined;
 
-    const updated = await updateCatalogItem(prisma, id, {
-      title: title.trim(),
-      description,
-      externalUrl,
-      categorySlug: categorySlug.trim(),
-      ...(metadata !== undefined && {
-        metadata: (metadata ?? {}) as Prisma.InputJsonValue,
-      }),
-      ...(finalImage !== undefined && { imageUrl: finalImage }),
-    });
+    const updated = await updateCatalogItem(
+      prisma,
+      id,
+      {
+        title: title.trim(),
+        description,
+        externalUrl,
+        categorySlug: categorySlug.trim(),
+        ...(metadata !== undefined && {
+          metadata: (metadata ?? {}) as Prisma.InputJsonValue,
+        }),
+        ...(finalImage !== undefined && { imageUrl: finalImage }),
+      },
+      { catalogOnlyImage: catalogOnlyImage !== false }
+    );
 
     return NextResponse.json(updated);
   } catch (error: unknown) {

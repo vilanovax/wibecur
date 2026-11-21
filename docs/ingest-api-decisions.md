@@ -53,7 +53,7 @@
 | DELETE placement (فقط از همین لیست) | ✅ |
 | DELETE تو در تو `/lists/{id}/placements/{id}` + dryRun + before/after | ✅ |
 | GET list برای بات (بدون کش؛ غیرفعال/خصوصی OK) | ✅ |
-| GET catalog lookup (`q` / `imdbId` / `mediaType`) | ✅ |
+| GET catalog lookup (`id` / `q` / `imdbId` / `mediaType`) | ✅ |
 | catalog: listCount زنده یکسان + type/series + mediaTypeFilters | ✅ |
 | `mode: add_only` صریح روی POST lists | ✅ |
 | پیش‌نمایش: `itemCountBefore` / `itemCountAfter` + `catalogItemId`/`catalogTitle` | ✅ |

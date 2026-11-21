@@ -287,9 +287,13 @@ curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
 # با IMDb
 curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
   "$BASE/api/ingest/catalog?imdbId=tt15239678" | jq .
+
+# با شناسهٔ کاتالوگ (وقتی از قبل دارید)
+curl -sS -H "Authorization: Bearer $WIBE_INGEST_KEY" \
+  "$BASE/api/ingest/catalog?id=CATALOG_ITEM_ID" | jq .
 ```
 
-حداقل یکی از `q` (۲+ کاراکتر) یا `imdbId` لازم است.
+حداقل یکی از `id`، `q` (۲+ کاراکتر) یا `imdbId` لازم است.
 
 **فیلتر `mediaType` (اختیاری) — مقادیر مجاز:**  
 `movie` | `film` | `cinema` | `series` | `tv` | `show` | `book` | `podcast` | `app` | `cafe` | `restaurant` | `food`  

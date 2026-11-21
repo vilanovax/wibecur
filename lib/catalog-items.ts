@@ -406,16 +406,29 @@ export async function createCatalogItem(
   return resolveOrCreateCatalogItem(prisma, input);
 }
 
+export type SyncPlacementsOptions = {
+  /**
+   * فقط کاتالوگ برای تصویر: جایگاه‌هایی که خودشان عکس دارند
+   * بازنویسی نمی‌شوند و listOverrides.imageUrl می‌گیرند.
+   */
+  catalogOnlyImage?: boolean;
+};
+
 export async function syncPlacementsFromCatalog(
   prisma: PrismaClient,
-  catalogItemId: string
+  catalogItemId: string,
+  options: SyncPlacementsOptions = {}
 ) {
   const catalog = await catalogDb(prisma).findUnique({
     where: { id: catalogItemId },
   });
   if (!catalog) return;
 
-  const { mergeCatalogIntoPlacement } = await import('@/lib/admin/placement-overrides');
+  const {
+    mergeCatalogIntoPlacement,
+    withPlacementOverrides,
+    readPlacementOverrides,
+  } = await import('@/lib/admin/placement-overrides');
 
   const placements = await prisma.items.findMany({
     where: { catalogItemId },
@@ -431,9 +444,31 @@ export async function syncPlacementsFromCatalog(
 
   const now = new Date();
   for (const placement of placements) {
+    let placementForMerge = placement;
+    if (
+      options.catalogOnlyImage &&
+      typeof placement.imageUrl === 'string' &&
+      placement.imageUrl.trim() &&
+      placement.imageUrl.trim() !== (catalog.imageUrl ?? '').trim()
+    ) {
+      const overrides = readPlacementOverrides(placement.metadata);
+      if (!overrides.imageUrl) {
+        const meta =
+          placement.metadata != null &&
+          typeof placement.metadata === 'object' &&
+          !Array.isArray(placement.metadata)
+            ? (placement.metadata as Record<string, unknown>)
+            : {};
+        placementForMerge = {
+          ...placement,
+          metadata: withPlacementOverrides(meta, ['imageUrl']),
+        };
+      }
+    }
+
     const merged = mergeCatalogIntoPlacement({
       catalog,
-      placement,
+      placement: placementForMerge,
       catalogRefMetadata,
     });
     await prisma.items.update({
@@ -1395,10 +1430,16 @@ export async function getCatalogCategoryFilters(
   return { total, categories };
 }
 
+export type UpdateCatalogItemOptions = {
+  /** تصویر جایگاه‌های اختصاصی را بازنویسی نکن */
+  catalogOnlyImage?: boolean;
+};
+
 export async function updateCatalogItem(
   prisma: PrismaClient,
   id: string,
-  input: Partial<CatalogItemInput>
+  input: Partial<CatalogItemInput>,
+  options: UpdateCatalogItemOptions = {}
 ) {
   const existing = await catalogDb(prisma).findUnique({ where: { id } });
   if (!existing) throw new Error('کاتالوگ یافت نشد');
@@ -1441,7 +1482,9 @@ export async function updateCatalogItem(
       },
     });
 
-    await syncPlacementsFromCatalog(prisma, id);
+    await syncPlacementsFromCatalog(prisma, id, {
+      catalogOnlyImage: options.catalogOnlyImage === true,
+    });
     return updated;
   } catch (error) {
     if (

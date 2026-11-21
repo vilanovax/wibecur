@@ -23,6 +23,11 @@ function cacheKey(query: ListsIntelligenceQuery): string[] {
 async function loadListsIntelligence(
   query: ListsIntelligenceQuery
 ): Promise<ListsIntelligenceData> {
+  // شمارندهٔ ذخیره‌شده گاهی کهنه می‌ماند؛ قبل از لود ادمین هم‌تراز کن
+  const { syncStoredListItemCounts } = await import('@/lib/list-item-count');
+  const { prisma } = await import('@/lib/prisma');
+  await syncStoredListItemCounts(prisma);
+
   return getListsIntelligenceData(query.trash, {
     page: query.page,
     categoryId: query.categoryId === 'all' ? undefined : query.categoryId,
