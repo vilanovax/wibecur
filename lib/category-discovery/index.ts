@@ -40,6 +40,12 @@ export {
 } from '@/lib/category-discovery/topic-search-route';
 
 export {
+  AREA_TO_REGION,
   buildAreaFacets,
   extractPlaceAreaLabel,
 } from '@/lib/category-discovery/place-area';
+
+export {
+  suggestCafeMeta,
+  cafeMetaNeedsAttention,
+} from '@/lib/category-discovery/suggest-cafe-meta';
