@@ -120,7 +120,7 @@ export function extractPlaceAreaLabel(input: {
 export type AreaFacet = { label: string; count: number };
 
 export function buildAreaFacets(
-  places: Array<{ areaLabel: string | null | undefined }>,
+  places: Array<{ areaLabel?: string | null }>,
   max = 8
 ): AreaFacet[] {
   const counts = new Map<string, number>();

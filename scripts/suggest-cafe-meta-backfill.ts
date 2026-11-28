@@ -9,7 +9,7 @@
  *   npx tsx scripts/suggest-cafe-meta-backfill.ts --apply --high-only
  */
 
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { supportsCategoryDiscovery } from '../lib/category-discovery/supports';
 import {
   cafeMetaNeedsAttention,
@@ -112,7 +112,7 @@ async function main() {
 
     await prisma.items.update({
       where: { id: item.id },
-      data: { metadata: merged },
+      data: { metadata: merged as Prisma.InputJsonValue },
     });
     applied += 1;
   }

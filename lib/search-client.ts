@@ -1,4 +1,5 @@
 import type { UnifiedSearchHasMore, UnifiedSearchList, UnifiedSearchItem } from '@/lib/unified-search';
+import type { AreaFacet } from '@/lib/category-discovery/place-area';
 import type { SearchQueryIntent } from '@/lib/search-keywords';
 import type { SearchResultTab } from '@/components/mobile/search/SearchResultsSummary';
 
@@ -49,6 +50,7 @@ export type UnifiedSearchPayload = {
   indirectLists: UnifiedSearchList[];
   relatedItems: UnifiedSearchItem[];
   similarItems: UnifiedSearchItem[];
+  areaFacets?: AreaFacet[];
   totals: { items: number; lists: number };
   hasMore: UnifiedSearchHasMore;
 };
