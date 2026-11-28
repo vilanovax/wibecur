@@ -9,15 +9,25 @@ RUN apk add --no-cache libc6-compat openssl vips
 WORKDIR /app
 
 FROM base AS deps
-ARG NPM_LOGLEVEL=verbose
+# verbose در Jenkins لاگ را پر می‌کند و حس «گیر کردن» می‌دهد؛ warn کافی است.
+ARG NPM_LOGLEVEL=warn
 # binaries.prisma.sh از بعضی شبکه‌ها (از جمله ایران) قطع می‌شود.
 # میرور npmmirror همان مسیر all_commits را دارد؛ postinstall موتورها را از اینجا می‌گیرد.
 ARG PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 ENV PRISMA_ENGINES_MIRROR=$PRISMA_ENGINES_MIRROR
 ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
+# میرور لیارا گاهی کند/قطع است — retry و timeout بلندتر
+ENV npm_config_fetch_retries=5 \
+    npm_config_fetch_retry_mintimeout=20000 \
+    npm_config_fetch_retry_maxtimeout=120000 \
+    npm_config_fetch_timeout=300000 \
+    npm_config_maxsockets=10
 COPY package.json package-lock.json .npmrc ./
 COPY scripts/install-git-hooks.mjs ./scripts/install-git-hooks.mjs
-RUN npm install --loglevel ${NPM_LOGLEVEL}
+# کش npm بین بیلدها (حتی وقتی lock عوض شود) تا cache miss میرور تکرار نشود.
+# نیاز به BuildKit دارد (Docker Compose v2 پیش‌فرض روشن است).
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --prefer-offline --no-audit --no-fund --loglevel ${NPM_LOGLEVEL}
 
 # sharp prebuilt برای x86-64-v2 است؛ روی هاست قدیمی لود نمی‌شود.
 # از سورس با libvips سیستمی و -march=x86-64 بساز تا روی CPUهای v1 هم کار کند.
@@ -30,10 +40,14 @@ RUN apk add --no-cache vips-dev fftw-dev build-base python3 \
   && apk del --no-network build-base python3 vips-dev fftw-dev || true
 
 FROM base AS builder
-ARG NPM_LOGLEVEL=verbose
+ARG NPM_LOGLEVEL=warn
 ARG PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 ENV PRISMA_ENGINES_MIRROR=$PRISMA_ENGINES_MIRROR
 ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
+ENV npm_config_fetch_retries=5 \
+    npm_config_fetch_retry_mintimeout=20000 \
+    npm_config_fetch_retry_maxtimeout=120000 \
+    npm_config_fetch_timeout=300000
 # در بیلد/ران از libvips سیستمی استفاده کن — prebuilt @img/sharp-libvips-* را نادیده بگیر
 ENV SHARP_FORCE_GLOBAL_LIBVIPS=1
 COPY --from=deps /app/node_modules ./node_modules

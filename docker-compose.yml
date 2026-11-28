@@ -17,7 +17,7 @@ services:
       dockerfile: Dockerfile
       args:
         DOCKER_MIRROR: ${DOCKER_MIRROR:-docker-mirror.liara.ir}
-        NPM_LOGLEVEL: ${NPM_LOGLEVEL:-verbose}
+        NPM_LOGLEVEL: ${NPM_LOGLEVEL:-warn}
         PRISMA_ENGINES_MIRROR: ${PRISMA_ENGINES_MIRROR:-https://registry.npmmirror.com/-/binary/prisma}
         NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-docker-build-placeholder}
         ENCRYPTION_KEY: ${ENCRYPTION_KEY:-docker-build-placeholder}
