@@ -85,12 +85,18 @@ export function normalizeCafeMetadataFields(
   if (priceRange) out.priceRange = priceRange;
 
   const cuisine = trimOptional(meta.cuisine);
-  if (cuisine) out.cuisine = cuisine;
+  if (cuisine) {
+    // نرمال سبک: فاصله دور جداکننده‌ها و نیم‌فاصله‌های رایج
+    out.cuisine = cuisine
+      .replace(/\s*[|،,/]+\s*/g, ' | ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
 
   const region = trimOptional(meta.region);
-  if (region) out.region = region;
+  if (region) out.region = region.trim();
   const area = trimOptional(meta.area);
-  if (area) out.area = area;
+  if (area) out.area = area.trim();
   const hours = trimOptional(meta.hours);
   if (hours) out.hours = hours;
   if (typeof meta.lat === 'number' && Number.isFinite(meta.lat)) out.lat = meta.lat;

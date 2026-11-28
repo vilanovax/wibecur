@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import {
   SearchItemRow,
   SearchListRow,
@@ -10,9 +11,12 @@ import SearchResultsSummary, {
 } from '@/components/mobile/search/SearchResultsSummary';
 import type { UnifiedSearchHasMore, UnifiedSearchItem, UnifiedSearchList } from '@/lib/unified-search';
 import type { SearchQueryIntent } from '@/lib/search-keywords';
+import type { AreaFacet } from '@/lib/category-discovery/place-area';
+import { normalizeDiscoveryText } from '@/lib/category-discovery/normalize';
 import { searchHasLoadMore } from '@/lib/search-client';
 import { Button } from '@/components/ui/button';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
+import { fa } from '@/lib/utils';
 
 type Props = {
   query: string;
@@ -23,6 +27,7 @@ type Props = {
   subThemes?: string[];
   similarItems: UnifiedSearchItem[];
   lists: UnifiedSearchList[];
+  areaFacets?: AreaFacet[];
   totals: { items: number; lists: number };
   hasMore: UnifiedSearchHasMore;
   viewTab: SearchResultTab;
@@ -34,6 +39,12 @@ type Props = {
   showSummary?: boolean;
   compactSimilar?: boolean;
 };
+
+function filterByArea(items: UnifiedSearchItem[], area: string | null): UnifiedSearchItem[] {
+  if (!area) return items;
+  const key = normalizeDiscoveryText(area);
+  return items.filter((i) => i.areaLabel && normalizeDiscoveryText(i.areaLabel) === key);
+}
 
 function toListRowData(list: UnifiedSearchList): SearchListRowData {
   return {
@@ -58,6 +69,7 @@ export default function SearchResultsPanel({
   subThemes = [],
   similarItems,
   lists,
+  areaFacets = [],
   totals,
   hasMore,
   viewTab,
@@ -69,13 +81,35 @@ export default function SearchResultsPanel({
   showSummary = true,
   compactSimilar = true,
 }: Props) {
+  const [areaFilter, setAreaFilter] = useState<string | null>(null);
+  useEffect(() => {
+    setAreaFilter(null);
+  }, [query]);
+
+  const filteredDirect = useMemo(
+    () => filterByArea(directItems, areaFilter),
+    [directItems, areaFilter]
+  );
+  const filteredIndirect = useMemo(
+    () => filterByArea(indirectItems, areaFilter),
+    [indirectItems, areaFilter]
+  );
+  const filteredTopPicks = useMemo(
+    () => filterByArea(topPicks, areaFilter),
+    [topPicks, areaFilter]
+  );
+  const filteredSimilar = useMemo(
+    () => filterByArea(similarItems, areaFilter),
+    [similarItems, areaFilter]
+  );
+
   const isBroad = queryIntent === 'broad';
   const showItems = viewTab === 'items';
   const showLists = viewTab === 'lists';
-  const shownTopPicks = topPicks.length;
+  const shownTopPicks = filteredTopPicks.length;
   const shownItemCount = isBroad
-    ? directItems.length + topPicks.length + similarItems.length
-    : directItems.length + indirectItems.length + similarItems.length;
+    ? filteredDirect.length + filteredTopPicks.length + filteredSimilar.length
+    : filteredDirect.length + filteredIndirect.length + filteredSimilar.length;
   const shownLists = lists.length;
   const canLoadMore = onLoadMore && searchHasLoadMore(hasMore, viewTab, queryIntent);
 
@@ -115,6 +149,39 @@ export default function SearchResultsPanel({
         </div>
       )}
 
+      {showItems && areaFacets.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <button
+            type="button"
+            onClick={() => setAreaFilter(null)}
+            className={`flex h-11 shrink-0 items-center rounded-full border px-4 text-sm font-medium ${
+              !areaFilter
+                ? 'border-brand/40 bg-brand/10 text-foreground'
+                : 'border-border bg-popover text-muted-foreground'
+            }`}
+          >
+            همه مناطق
+          </button>
+          {areaFacets.map((facet) => (
+            <button
+              key={facet.label}
+              type="button"
+              onClick={() =>
+                setAreaFilter((prev) => (prev === facet.label ? null : facet.label))
+              }
+              className={`flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium ${
+                areaFilter === facet.label
+                  ? 'border-brand/40 bg-brand/10 text-foreground'
+                  : 'border-border bg-popover text-foreground'
+              }`}
+            >
+              {facet.label}
+              <span className="tabular-nums text-xs text-muted-foreground">{fa(facet.count)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {showLists && loadingMore && lists.length === 0 && (
         <SearchResultSkeleton rows={3} />
       )}
@@ -139,21 +206,21 @@ export default function SearchResultsPanel({
         </section>
       )}
 
-      {showItems && directItems.length > 0 && (
+      {showItems && filteredDirect.length > 0 && (
         <section>
           <div className="space-y-2">
-            {directItems.map((item) => (
+            {filteredDirect.map((item) => (
               <SearchItemRow key={item.id} item={item} highlightQuery={highlightQuery} variant="direct" />
             ))}
           </div>
         </section>
       )}
 
-      {showItems && isBroad && topPicks.length > 0 && (
+      {showItems && isBroad && filteredTopPicks.length > 0 && (
         <section>
           <h2 className="mb-2 wibe-caption font-medium text-muted-foreground">پیشنهادهای برتر</h2>
           <div className="space-y-2">
-            {topPicks.map((item) => (
+            {filteredTopPicks.map((item) => (
               <SearchItemRow
                 key={item.id}
                 item={item}
@@ -165,22 +232,22 @@ export default function SearchResultsPanel({
         </section>
       )}
 
-      {showItems && !isBroad && indirectItems.length > 0 && (
+      {showItems && !isBroad && filteredIndirect.length > 0 && (
         <section>
           <h2 className="mb-2 wibe-caption font-medium text-muted-foreground">مرتبط با جستجو</h2>
           <div className="space-y-2">
-            {indirectItems.map((item) => (
+            {filteredIndirect.map((item) => (
               <SearchItemRow key={item.id} item={item} highlightQuery={highlightQuery} />
             ))}
           </div>
         </section>
       )}
 
-      {showItems && !isBroad && similarItems.length > 0 && (
+      {showItems && !isBroad && filteredSimilar.length > 0 && (
         <section>
           <h2 className="mb-2 wibe-caption font-medium text-muted-foreground">پیشنهاد مرتبط</h2>
           <div className="space-y-2">
-            {similarItems.map((item) => (
+            {filteredSimilar.map((item) => (
               <SearchItemRow
                 key={`sim-${item.id}`}
                 item={item}
@@ -191,6 +258,15 @@ export default function SearchResultsPanel({
           </div>
         </section>
       )}
+
+      {showItems &&
+        areaFilter &&
+        filteredDirect.length + filteredIndirect.length + filteredTopPicks.length + filteredSimilar.length ===
+          0 && (
+          <p className="text-center text-sm text-muted-foreground">
+            در «{areaFilter}» نتیجه‌ای نبود. فیلتر منطقه را بردار.
+          </p>
+        )}
 
       {showItems && remainingItems > 0 && !canLoadMore && (
         <p className="text-center wibe-caption text-muted-foreground">

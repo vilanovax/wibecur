@@ -93,6 +93,7 @@ export default function SearchPageClient({
           subThemes={search.subThemes}
           similarItems={search.similarItems}
           lists={search.lists}
+          areaFacets={search.areaFacets}
           totals={search.totals}
           hasMore={search.hasMore}
           viewTab={search.viewTab}

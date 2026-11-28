@@ -33,3 +33,13 @@ export {
 } from '@/lib/category-discovery/from-db';
 
 export { supportsCategoryDiscovery } from '@/lib/category-discovery/supports';
+
+export {
+  discoveryTopicResultsHref,
+  resolveExactCafeDiscoveryTopic,
+} from '@/lib/category-discovery/topic-search-route';
+
+export {
+  buildAreaFacets,
+  extractPlaceAreaLabel,
+} from '@/lib/category-discovery/place-area';

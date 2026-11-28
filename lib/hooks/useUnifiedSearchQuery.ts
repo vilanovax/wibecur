@@ -16,6 +16,7 @@ import type {
   UnifiedSearchList,
   UnifiedSearchResult,
 } from '@/lib/unified-search';
+import type { AreaFacet } from '@/lib/category-discovery/place-area';
 import type { SearchQueryIntent } from '@/lib/search-keywords';
 import type { SearchResultTab } from '@/components/mobile/search/SearchResultsSummary';
 
@@ -60,6 +61,9 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
     () => initialData?.relatedItems ?? initialData?.similarItems ?? []
   );
   const [lists, setLists] = useState<UnifiedSearchList[]>(() => initialData?.lists ?? []);
+  const [areaFacets, setAreaFacets] = useState<AreaFacet[]>(
+    () => initialData?.areaFacets ?? []
+  );
   const [totals, setTotals] = useState(() => initialData?.totals ?? { items: 0, lists: 0 });
   const [hasMore, setHasMore] = useState<UnifiedSearchHasMore>(
     () => initialData?.hasMore ?? EMPTY_HAS_MORE
@@ -95,6 +99,7 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
     queryIntentRef.current = 'specific';
     setSimilarItems([]);
     setLists([]);
+    setAreaFacets([]);
     setTotals({ items: 0, lists: 0 });
     setHasMore(EMPTY_HAS_MORE);
     setViewTab('items');
@@ -146,6 +151,7 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
         queryIntentRef.current = data.queryIntent;
         setSimilarItems(data.relatedItems ?? data.similarItems ?? []);
         setLists([]);
+        setAreaFacets(data.areaFacets ?? []);
         setTotals((prev) => ({ items: data.totals.items, lists: prev.lists || 0 }));
         setHasMore((prev) => ({
           directItems: data.hasMore.directItems,
@@ -260,6 +266,7 @@ export function useUnifiedSearchQuery(rawQuery: string, options?: Options) {
     queryIntent,
     similarItems,
     lists,
+    areaFacets,
     totals,
     hasMore,
     viewTab,

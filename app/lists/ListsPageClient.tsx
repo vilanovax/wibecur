@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import SearchResultSkeleton from '@/components/mobile/search/SearchResultSkeleton';
 import { filterListsByQuery, normalizeSearchQuery, pushRecentSearch, SEARCH_MIN_LENGTH } from '@/lib/list-search';
+import { discoveryTopicResultsHref } from '@/lib/category-discovery/topic-search-route';
 import { useUnifiedSearchQuery } from '@/lib/hooks/useUnifiedSearchQuery';
 import { trackSearch } from '@/lib/analytics';
 import { useSearch } from '@/contexts/SearchContext';
@@ -490,6 +491,29 @@ export default function ListsPageClient({
       return () => window.clearTimeout(timer);
     }
   }, [initialSearch]);
+
+  // کوئری موضوع‌محور کافه (مثل سوخاری) → صفحهٔ کشف، نه سرچ عنوان‌محور
+  useEffect(() => {
+    const q = normalizeSearchQuery(searchQuery);
+    if (q.length < SEARCH_MIN_LENGTH) return;
+    const catId =
+      filterState.categories.size === 1 ? [...filterState.categories][0] : null;
+    const cat = catId
+      ? activeCategories.find((c) => c.id === catId)
+      : initialCategory
+        ? activeCategories.find((c) => c.id === initialCategory || c.slug === initialCategory)
+        : null;
+    if (!cat?.slug) return;
+    const href = discoveryTopicResultsHref(cat.slug, q, 'lists');
+    if (!href) return;
+    router.replace(href);
+  }, [
+    searchQuery,
+    filterState.categories,
+    activeCategories,
+    initialCategory,
+    router,
+  ]);
 
   useEffect(() => {
     const q = normalizeSearchQuery(searchQuery);
@@ -1184,6 +1208,7 @@ export default function ListsPageClient({
                 subThemes={search.subThemes}
                 similarItems={search.similarItems}
                 lists={search.lists}
+                areaFacets={search.areaFacets}
                 totals={search.totals}
                 hasMore={search.hasMore}
                 viewTab={search.viewTab}

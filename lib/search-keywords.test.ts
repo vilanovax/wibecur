@@ -143,6 +143,43 @@ describe('buildItemSearchWhere', () => {
     // moderation clause + one clause per meaningful token
     expect(and.length).toBeGreaterThanOrEqual(3);
   });
+
+  it('includes cuisine metadata in item clauses for food queries', () => {
+    const where = buildItemSearchWhere('سوخاری', { isPublic: true });
+    const serialized = JSON.stringify(where);
+    expect(serialized).toContain('cuisine');
+    expect(serialized).toContain('tip');
+  });
+});
+
+describe('scoreItemForSearch cuisine + topic list', () => {
+  it('ranks cuisine match as direct without title hit', () => {
+    const scored = scoreItemForSearch(
+      {
+        title: 'مین چیک',
+        metadata: { cuisine: 'فست‌فود | سوخاری' },
+      },
+      'سوخاری'
+    );
+    expect(scored.score).toBeGreaterThan(0);
+    expect(scored.intrinsic).toBe(true);
+    expect(scored.matchTier).toBe('direct');
+    expect(scored.reason).toBe('cuisine');
+  });
+
+  it('surfaces cafe items from topic lists even without cuisine word in title', () => {
+    const scored = scoreItemForSearch(
+      {
+        title: 'مین چیک',
+        metadata: { cuisine: 'فست‌فود', address: 'سعادت‌آباد' },
+        listTitle: 'سوخاری‌های خوب تهران',
+        categoryName: 'کافه و رستوران',
+      },
+      'سوخاری'
+    );
+    expect(scored.score).toBeGreaterThanOrEqual(42);
+    expect(scored.matchHint).toContain('از لیست');
+  });
 });
 
 describe('meaningfulSearchTokens', () => {

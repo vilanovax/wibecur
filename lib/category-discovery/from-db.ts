@@ -16,6 +16,10 @@ import type {
   DiscoveryTopicChip,
   DiscoveryTopicDefinition,
 } from '@/lib/category-discovery/types';
+import {
+  buildAreaFacets,
+  extractPlaceAreaLabel,
+} from '@/lib/category-discovery/place-area';
 import type { CategoryListCard } from '@/types/category-page';
 import { resolveItemDisplayImage } from '@/lib/resolve-item-image';
 
@@ -187,46 +191,16 @@ export async function browseCategoryDiscoveryTopic(
   const scanLists = toScanLists(rows);
 
   const strongLists: CategoryListCard[] = [];
+  const strongListIds = new Set<string>();
   type PlaceAcc = DiscoveryPlaceCard & { saveHint: number };
   const placeMap = new Map<string, PlaceAcc>();
 
   for (const list of scanLists) {
-    const meta = byId.get(list.id)!;
     let matched = 0;
-
     for (const item of list.items) {
-      const raw = meta.items.find((i) => i.id === item.id);
       const fields = extractItemDiscoveryFields(item.title, item.metadata);
-      if (!itemMatchesTopic(fields, topic)) continue;
-      matched += 1;
-
-      const existing = placeMap.get(item.placeKey);
-      if (existing) {
-        existing.listAppearances += 1;
-        existing.saveHint = Math.max(existing.saveHint, meta.saveCount ?? 0);
-      } else {
-        const imageUrl = raw?.imageUrl ?? null;
-        placeMap.set(item.placeKey, {
-          id: item.id,
-          title: item.title,
-          imageUrl,
-          displayImageUrl: resolveItemDisplayImage({
-            id: item.id,
-            imageUrl,
-            title: item.title,
-            metadata: item.metadata,
-            categorySlug,
-          }),
-          listSlug: meta.slug,
-          listTitle: meta.title,
-          listAppearances: 1,
-          area: fields.area,
-          cuisine: fields.cuisine,
-          saveHint: meta.saveCount ?? 0,
-        });
-      }
+      if (itemMatchesTopic(fields, topic)) matched += 1;
     }
-
     const level = listTopicMatchLevel(
       {
         title: list.title,
@@ -238,7 +212,69 @@ export async function browseCategoryDiscoveryTopic(
       matched
     );
     if (level === 'strong') {
+      const meta = byId.get(list.id)!;
       strongLists.push(toListCard(meta));
+      strongListIds.add(list.id);
+    }
+  }
+
+  function upsertPlace(
+    list: (typeof scanLists)[number],
+    item: (typeof scanLists)[number]['items'][number],
+    viaStrongList: boolean
+  ) {
+    const meta = byId.get(list.id)!;
+    const raw = meta.items.find((i) => i.id === item.id);
+    const fields = extractItemDiscoveryFields(item.title, item.metadata);
+    const areaLabel = extractPlaceAreaLabel({
+      title: item.title,
+      area: fields.area,
+      region: fields.region,
+      address: fields.address,
+    });
+    const existing = placeMap.get(item.placeKey);
+    if (existing) {
+      existing.listAppearances += 1;
+      existing.saveHint = Math.max(existing.saveHint, meta.saveCount ?? 0);
+      if (viaStrongList) existing.viaStrongList = true;
+      if (!existing.areaLabel && areaLabel) existing.areaLabel = areaLabel;
+      return;
+    }
+    const imageUrl = raw?.imageUrl ?? null;
+    placeMap.set(item.placeKey, {
+      id: item.id,
+      title: item.title,
+      imageUrl,
+      displayImageUrl: resolveItemDisplayImage({
+        id: item.id,
+        imageUrl,
+        title: item.title,
+        metadata: item.metadata,
+        categorySlug,
+      }),
+      listSlug: meta.slug,
+      listTitle: meta.title,
+      listAppearances: 1,
+      area: fields.area,
+      areaLabel,
+      cuisine: fields.cuisine,
+      viaStrongList,
+      saveHint: meta.saveCount ?? 0,
+    });
+  }
+
+  // همهٔ مکان‌های لیست‌های strong + مکان‌های match‌شده در بقیه
+  for (const list of scanLists) {
+    const isStrong = strongListIds.has(list.id);
+    for (const item of list.items) {
+      if (isStrong) {
+        upsertPlace(list, item, true);
+        continue;
+      }
+      const fields = extractItemDiscoveryFields(item.title, item.metadata);
+      if (itemMatchesTopic(fields, topic)) {
+        upsertPlace(list, item, false);
+      }
     }
   }
 
@@ -247,10 +283,14 @@ export async function browseCategoryDiscoveryTopic(
   const places: DiscoveryPlaceCard[] = [...placeMap.values()]
     .sort(
       (a, b) =>
-        b.listAppearances - a.listAppearances || b.saveHint - a.saveHint
+        Number(b.viaStrongList) - Number(a.viaStrongList) ||
+        b.listAppearances - a.listAppearances ||
+        b.saveHint - a.saveHint
     )
     .slice(0, RESULTS_PLACE_LIMIT)
     .map(({ saveHint: _s, ...rest }) => rest);
+
+  const areaFacets = buildAreaFacets(places);
 
   return {
     topic: {
@@ -263,6 +303,7 @@ export async function browseCategoryDiscoveryTopic(
     },
     lists: strongLists.slice(0, RESULTS_LIST_LIMIT),
     places,
+    areaFacets,
     listCount: strongLists.length,
     placeCount: placeMap.size,
   };

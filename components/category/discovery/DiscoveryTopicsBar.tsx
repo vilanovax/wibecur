@@ -5,6 +5,7 @@ import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { CATEGORY_SECTION } from '@/lib/category-layout';
+import { discoveryTopicResultsHref } from '@/lib/category-discovery/topic-search-route';
 import { fa } from '@/lib/utils';
 import type { DiscoveryTopicChip } from '@/types/category-page';
 
@@ -33,6 +34,12 @@ export default function DiscoveryTopicsBar({
     const q = query.trim();
     if (q.length < 2) {
       router.push(`/lists?category=${encodeURIComponent(categorySlug)}`);
+      return;
+    }
+    // موضوع شناخته‌شده → صفحهٔ کشف با لیست/مکان؛ وگرنه سرچ متنی دسته
+    const topicHref = discoveryTopicResultsHref(categorySlug, q, 'lists');
+    if (topicHref) {
+      router.push(topicHref);
       return;
     }
     router.push(

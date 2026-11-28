@@ -2,15 +2,20 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import CategoryListCardImproved from '@/components/category/CategoryListCardImproved';
 import CategoryItemChipLink from '@/components/category/CategoryItemChipLink';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fa } from '@/lib/utils';
+import { normalizeDiscoveryText } from '@/lib/category-discovery/normalize';
 import type { CategoryListCard } from '@/types/category-page';
-import type { DiscoveryPlaceCard, DiscoveryTopicChip } from '@/lib/category-discovery/types';
+import type {
+  DiscoveryAreaFacet,
+  DiscoveryPlaceCard,
+  DiscoveryTopicChip,
+} from '@/lib/category-discovery/types';
 
 type Tab = 'lists' | 'places';
 
@@ -25,6 +30,7 @@ interface DiscoveryResultsClientProps {
     topic: DiscoveryTopicChip;
     lists: CategoryListCard[];
     places: DiscoveryPlaceCard[];
+    areaFacets?: DiscoveryAreaFacet[];
     listCount: number;
     placeCount: number;
   } | null;
@@ -44,6 +50,11 @@ export default function DiscoveryResultsClient({
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState(initialData);
+  const [areaFilter, setAreaFilter] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAreaFilter(null);
+  }, [topicSlug]);
 
   useEffect(() => {
     if (initialData) {
@@ -136,7 +147,16 @@ export default function DiscoveryResultsClient({
   }
 
   const { topic, lists, places, listCount, placeCount } = data;
+  const areaFacets = data.areaFacets ?? [];
   const emptyBoth = listCount === 0 && placeCount === 0;
+
+  const filteredPlaces = useMemo(() => {
+    if (!areaFilter) return places;
+    const key = normalizeDiscoveryText(areaFilter);
+    return places.filter(
+      (p) => p.areaLabel && normalizeDiscoveryText(p.areaLabel) === key
+    );
+  }, [places, areaFilter]);
 
   return (
     <div className="py-4">
@@ -219,6 +239,41 @@ export default function DiscoveryResultsClient({
         </p>
       ) : null}
 
+      {tab === 'places' && areaFacets.length > 0 ? (
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <button
+            type="button"
+            onClick={() => setAreaFilter(null)}
+            className={`flex h-11 shrink-0 items-center rounded-full border px-4 text-sm font-medium ${
+              !areaFilter
+                ? 'border-brand/40 bg-brand/10 text-foreground'
+                : 'border-border bg-popover text-muted-foreground'
+            }`}
+          >
+            همه مناطق
+          </button>
+          {areaFacets.map((facet) => (
+            <button
+              key={facet.label}
+              type="button"
+              onClick={() =>
+                setAreaFilter((prev) => (prev === facet.label ? null : facet.label))
+              }
+              className={`flex h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium ${
+                areaFilter === facet.label
+                  ? 'border-brand/40 bg-brand/10 text-foreground'
+                  : 'border-border bg-popover text-foreground'
+              }`}
+            >
+              {facet.label}
+              <span className="tabular-nums text-xs text-muted-foreground">
+                {fa(facet.count)}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       {tab === 'lists' && !emptyBoth ? (
         lists.length === 0 ? (
           <EmptyState
@@ -241,11 +296,16 @@ export default function DiscoveryResultsClient({
       ) : null}
 
       {tab === 'places' && !emptyBoth ? (
-        places.length === 0 ? (
-          <EmptyState title="مکانی پیدا نشد" description="تب لیست‌ها را ببین." />
+        filteredPlaces.length === 0 ? (
+          <EmptyState
+            title={areaFilter ? `در «${areaFilter}» مکانی نبود` : 'مکانی پیدا نشد'}
+            description={
+              areaFilter ? 'فیلتر منطقه را بردار یا منطقه دیگری را امتحان کن.' : 'تب لیست‌ها را ببین.'
+            }
+          />
         ) : (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
-            {places.map((place) => (
+            {filteredPlaces.map((place) => (
               <CategoryItemChipLink
                 key={place.id}
                 item={{

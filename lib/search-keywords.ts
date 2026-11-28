@@ -6,6 +6,7 @@ import { expandDbSearchAnchors, fuzzyMatchInText } from '@/lib/search-fuzzy';
 export type SearchMatchReason =
   | 'title'
   | 'genre'
+  | 'cuisine'
   | 'actor'
   | 'director'
   | 'author'
@@ -348,9 +349,11 @@ export function buildItemSearchHaystack(item: SearchableItemFields): string {
     metaActors(meta),
     metaString(meta, 'country'),
     metaString(meta, 'cuisine'),
+    metaString(meta, 'tip'),
     metaString(meta, 'address'),
     metaString(meta, 'neighborhood'),
     metaString(meta, 'area'),
+    metaString(meta, 'region'),
     metaString(meta, 'priceRange'),
     meta.year != null ? String(meta.year) : '',
     extractSearchProfileText(meta),
@@ -398,6 +401,14 @@ export function resolveItemMatchTier(
   if (actors && terms.some((t) => termMatches(actors, t))) return 'direct';
   if (director && terms.some((t) => termMatches(director, t))) return 'direct';
   if (author && terms.some((t) => termMatches(author, t))) return 'direct';
+  const cuisine = metaString(meta, 'cuisine');
+  if (cuisine && (termMatches(cuisine, q) || terms.some((t) => termMatches(cuisine, t)))) {
+    return 'direct';
+  }
+  const tip = metaString(meta, 'tip');
+  if (tip && (termMatches(tip, q) || terms.some((t) => termMatches(tip, t)))) {
+    return 'direct';
+  }
   if (genre && (termMatches(genre, q) || terms.some((t) => termMatches(genre, t)))) return 'indirect';
   if (profileText && terms.some((t) => termMatches(profileText, t))) return 'indirect';
 
@@ -462,6 +473,29 @@ export function scoreItemForSearch(
     }
   }
 
+  const cuisine = metaString(meta, 'cuisine');
+  if (cuisine) {
+    const cuisineHit = firstMatchingTerm(cuisine, terms) ?? (termMatches(cuisine, q) ? q : null);
+    if (cuisineHit) {
+      score += 75;
+      intrinsic = true;
+      if (reason !== 'title') {
+        reason = 'cuisine';
+        matchHint = `نوع غذا: ${cuisine.split(/[,،|]+/)[0]?.trim() || cuisine}`;
+      }
+    }
+  }
+
+  const tip = metaString(meta, 'tip');
+  if (tip && (termMatches(tip, q) || terms.some((t) => termMatches(tip, t)))) {
+    score += 45;
+    intrinsic = true;
+    if (!reason) {
+      reason = 'keyword';
+      matchHint = 'در نکتهٔ مکان';
+    }
+  }
+
   const director = metaString(meta, 'director');
   if (director && (termMatches(director, q) || terms.some((t) => termMatches(director, t)))) {
     score += 55;
@@ -517,23 +551,33 @@ export function scoreItemForSearch(
     }
   }
 
-  // پوستهٔ لیست — فقط تقویت ضعیف؛ به‌تنهایی آیتم را بالا نمی‌آورد
+  // پوستهٔ لیست — برای کافه/رستوران عضویت در لیست موضوعی سیگنال قوی است
   let listOnlyBoost = 0;
   const listTitle = (item.listTitle ?? '').toLowerCase();
   const listDesc = (item.listDescription ?? '').toLowerCase();
-  if (listTitle && (listTitle.includes(q) || terms.some((t) => listTitle.includes(t)))) {
-    listOnlyBoost = Math.max(listOnlyBoost, 14);
+  const cafeLikeItem = Boolean(
+    cuisine ||
+      metaString(meta, 'address') ||
+      /کافه|رستوران|cafe|food|restaurant/i.test(item.categoryName ?? '')
+  );
+  const listTitleHitsTopic =
+    listTitle && (listTitle.includes(q) || terms.some((t) => t.length >= 3 && listTitle.includes(t)));
+  if (listTitleHitsTopic) {
+    listOnlyBoost = Math.max(listOnlyBoost, cafeLikeItem ? 42 : 14);
+    const hintPrefix = cafeLikeItem ? 'از لیست' : 'در لیست';
     if (!reason) {
       reason = 'keyword';
-      matchHint = `در لیست: ${item.listTitle}`;
+      matchHint = `${hintPrefix}: ${item.listTitle}`;
     } else if (reason !== 'title' && !matchHint) {
-      matchHint = `در لیست: ${item.listTitle}`;
+      matchHint = `${hintPrefix}: ${item.listTitle}`;
     }
   } else if (listDesc && (listDesc.includes(q) || terms.some((t) => listDesc.includes(t)))) {
-    listOnlyBoost = Math.max(listOnlyBoost, 10);
+    listOnlyBoost = Math.max(listOnlyBoost, cafeLikeItem ? 18 : 10);
     if (!reason) {
       reason = 'keyword';
-      matchHint = item.listTitle ? `در لیست: ${item.listTitle}` : 'در توضیحات لیست';
+      matchHint = item.listTitle
+        ? `${cafeLikeItem ? 'از لیست' : 'در لیست'}: ${item.listTitle}`
+        : 'در توضیحات لیست';
     }
   }
 
@@ -598,7 +642,9 @@ export function scoreItemForSearch(
   } else if (score > 0 && !matchHint && reason === 'description') {
     matchHint = 'در توضیحات';
   } else if (score > 0 && !matchHint && reason === 'genre' && genre) {
-    matchHint = `ژانر: ${genre.split(/[,،]/)[0]?.trim() || genre}`;
+    matchHint = `ژانر: ${genre.split(/[,،|]+/)[0]?.trim() || genre}`;
+  } else if (score > 0 && !matchHint && reason === 'cuisine' && cuisine) {
+    matchHint = `نوع غذا: ${cuisine.split(/[,،|]+/)[0]?.trim() || cuisine}`;
   }
 
   const matchTier = score > 0 ? resolveItemMatchTier(item, rawQuery, terms) : 'indirect';
@@ -624,6 +670,10 @@ function catalogTermOrClauses(term: string): Prisma.catalog_itemsWhereInput[] {
     { metadata: metadataStringContains(term, ['genre']) },
     { metadata: metadataStringContains(term, ['director']) },
     { metadata: metadataStringContains(term, ['author']) },
+    { metadata: metadataStringContains(term, ['cuisine']) },
+    { metadata: metadataStringContains(term, ['tip']) },
+    { metadata: metadataStringContains(term, ['area']) },
+    { metadata: metadataStringContains(term, ['region']) },
     { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
     { metadata: metadataStringContains(term, ['searchProfile', 'themes']) },
     { metadata: metadataStringContains(term, ['searchProfile', 'keywords']) },
@@ -710,17 +760,24 @@ function itemClausesForTerm(term: string): Prisma.itemsWhereInput[] {
     { metadata: metadataStringContains(term, ['director']) },
     { metadata: metadataStringContains(term, ['author']) },
     { metadata: metadataStringContains(term, ['country']) },
+    { metadata: metadataStringContains(term, ['cuisine']) },
+    { metadata: metadataStringContains(term, ['tip']) },
     { metadata: metadataStringContains(term, ['address']) },
     { metadata: metadataStringContains(term, ['neighborhood']) },
     { metadata: metadataStringContains(term, ['area']) },
+    { metadata: metadataStringContains(term, ['region']) },
     { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
     {
       catalog_items: {
         is: {
           OR: [
             { metadata: metadataStringContains(term, ['genre']) },
+            { metadata: metadataStringContains(term, ['cuisine']) },
+            { metadata: metadataStringContains(term, ['tip']) },
             { metadata: metadataStringContains(term, ['address']) },
             { metadata: metadataStringContains(term, ['neighborhood']) },
+            { metadata: metadataStringContains(term, ['area']) },
+            { metadata: metadataStringContains(term, ['region']) },
             { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
           ],
         },
@@ -825,6 +882,10 @@ export function buildExtendedListSearchOrClauses(
               { metadata: metadataStringContains(term, ['director']) },
               { metadata: metadataStringContains(term, ['author']) },
               { metadata: metadataStringContains(term, ['country']) },
+              { metadata: metadataStringContains(term, ['cuisine']) },
+              { metadata: metadataStringContains(term, ['tip']) },
+              { metadata: metadataStringContains(term, ['area']) },
+              { metadata: metadataStringContains(term, ['region']) },
               { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
               {
                 catalog_items: {
@@ -833,6 +894,10 @@ export function buildExtendedListSearchOrClauses(
                     { description: { contains: term, mode: 'insensitive' } },
                     { metadata: metadataStringContains(term, ['genre']) },
                     { metadata: metadataStringContains(term, ['country']) },
+                    { metadata: metadataStringContains(term, ['cuisine']) },
+                    { metadata: metadataStringContains(term, ['tip']) },
+                    { metadata: metadataStringContains(term, ['area']) },
+                    { metadata: metadataStringContains(term, ['region']) },
                     { metadata: metadataStringContains(term, ['searchProfile', 'searchText']) },
                   ],
                 },

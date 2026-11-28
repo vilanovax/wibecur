@@ -39,13 +39,23 @@ export type DiscoveryPlaceCard = {
   /** چند لیست این مکان را دارند (تقریبی در اسکن) */
   listAppearances: number;
   area?: string | null;
+  /** محله استخراج‌شده برای فیلتر */
+  areaLabel?: string | null;
   cuisine?: string | null;
+  /** از لیست موضوعی آمده، نه لزوماً cuisine صریح */
+  viaStrongList?: boolean;
+};
+
+export type DiscoveryAreaFacet = {
+  label: string;
+  count: number;
 };
 
 export type DiscoveryTopicBrowseResult = {
   topic: DiscoveryTopicChip;
   lists: import('@/types/category-page').CategoryListCard[];
   places: DiscoveryPlaceCard[];
+  areaFacets: DiscoveryAreaFacet[];
   listCount: number;
   placeCount: number;
 };

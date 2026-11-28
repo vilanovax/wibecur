@@ -16,6 +16,11 @@ import {
   type SearchMatchTier,
   type SearchQueryIntent,
 } from '@/lib/search-keywords';
+import {
+  buildAreaFacets,
+  extractPlaceAreaLabel,
+  type AreaFacet,
+} from '@/lib/category-discovery/place-area';
 
 export type UnifiedSearchItem = {
   id: string;
@@ -30,6 +35,8 @@ export type UnifiedSearchItem = {
   matchHint?: string | null;
   matchTier?: SearchMatchTier;
   relevanceScore?: number;
+  /** محله برای فیلتر نتایج (کافه/رستوران) */
+  areaLabel?: string | null;
 };
 
 export type UnifiedSearchList = {
@@ -70,6 +77,8 @@ export type UnifiedSearchResult = {
   relatedItems: UnifiedSearchItem[];
   /** alias برای سازگاری */
   similarItems: UnifiedSearchItem[];
+  /** فیلتر منطقه روی نتایج آیتم (facet) */
+  areaFacets: AreaFacet[];
   totals: { items: number; lists: number };
   hasMore: UnifiedSearchHasMore;
 };
@@ -150,6 +159,15 @@ function mapItemRow(
   row: ItemRow,
   scored?: { matchHint: string | null; matchTier: SearchMatchTier; score: number }
 ): UnifiedSearchItem {
+  const meta = (row.metadata as Record<string, unknown> | null) ?? null;
+  const catalogMeta = (row.catalog_items?.metadata as Record<string, unknown> | null) ?? null;
+  const merged = { ...(catalogMeta ?? {}), ...(meta ?? {}) };
+  const areaLabel = extractPlaceAreaLabel({
+    title: row.title,
+    area: typeof merged.area === 'string' ? merged.area : null,
+    region: typeof merged.region === 'string' ? merged.region : null,
+    address: typeof merged.address === 'string' ? merged.address : null,
+  });
   return {
     id: row.id,
     title: row.title,
@@ -158,7 +176,7 @@ function mapItemRow(
       id: row.id,
       imageUrl: row.imageUrl,
       title: row.title,
-      metadata: (row.metadata as Record<string, unknown> | null) ?? null,
+      metadata: meta,
       categorySlug: row.lists?.categories?.slug ?? null,
     }),
     categoryName: row.lists?.categories?.name ?? null,
@@ -169,6 +187,7 @@ function mapItemRow(
     matchHint: scored?.matchHint ?? null,
     matchTier: scored?.matchTier,
     relevanceScore: scored?.score,
+    areaLabel,
   };
 }
 
@@ -680,6 +699,7 @@ export async function unifiedSearch(
     indirectLists: [],
     relatedItems: [],
     similarItems: [],
+    areaFacets: [],
     totals: { items: 0, lists: 0 },
     hasMore: emptyHasMore,
   };
@@ -853,6 +873,15 @@ export async function unifiedSearch(
 
   const resolvedListTotal = needItemCounts ? listTotal : listBuckets.lists.length;
 
+  const areaFacets = buildAreaFacets(
+    [
+      ...resolvedItems.directItems,
+      ...resolvedItems.indirectItems,
+      ...resolvedItems.topPicks,
+      ...relatedItems,
+    ].map((i) => ({ areaLabel: i.areaLabel }))
+  );
+
   return {
     query: q,
     queryIntent,
@@ -866,6 +895,7 @@ export async function unifiedSearch(
     indirectLists: listBuckets.indirectLists,
     relatedItems,
     similarItems: relatedItems,
+    areaFacets,
     totals: { items: itemTotal, lists: resolvedListTotal },
     hasMore: {
       directItems: isBroad ? false : resolvedItems.hasMore.directItems,
